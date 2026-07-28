@@ -1,0 +1,145 @@
+import { useCallback, useRef } from 'react';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { COLORS } from '@/constants/design';
+import { DiscussionComposer } from '@/features/discussions/discussion-composer';
+import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
+import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
+
+export default function TopicScreen() {
+  const { topicId } = useLocalSearchParams<{ topicId: string }>();
+  const topicQuery = useBangumiSubjectTopic(Number(topicId));
+  const topic = topicQuery.data;
+  const replies = topic?.replies ?? [];
+  const replyNavigation = useReplyNavigation(replies);
+  const inputRef = useRef<TextInput>(null);
+  const focusComposer = useCallback(() => inputRef.current?.focus(), []);
+  const disabledReason = '真实发布需要 Bangumi 登录和人机验证，登录流程接通后开放。';
+
+  if (!topic && !topicQuery.isPending && !topicQuery.isError) {
+    return (
+      <SafeAreaView edges={['bottom']} style={styles.screen}>
+        <Stack.Screen options={{ title: '话题不存在' }} />
+        <View style={styles.errorState}>
+          <Text style={styles.errorTitle}>没有找到这个讨论话题</Text>
+          <Text style={styles.errorText}>可能已被删除，请返回后刷新。</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <Stack.Screen options={{ title: '讨论' }} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+        style={styles.keyboardView}
+      >
+        <FlatList
+          contentContainerStyle={styles.listContent}
+          data={replies}
+          initialNumToRender={8}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
+          keyExtractor={(reply) => reply.id}
+          maxToRenderPerBatch={8}
+          onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
+          ref={replyNavigation.listRef}
+          removeClippedSubviews={Platform.OS === 'android'}
+          ListHeaderComponent={
+            <>
+              <DiscussionStatus
+                isError={topicQuery.isError}
+                isPending={topicQuery.isPending}
+                onRetry={() => void topicQuery.refetch()}
+              />
+              {topic ? (
+                <View style={styles.topicHeader}>
+                  <Text style={styles.topicTitle}>{topic.title}</Text>
+                  <View style={styles.topicMetaRow}>
+                    {topic.authorUsername ? (
+                      <Link
+                        asChild
+                        href={{
+                          pathname: '/user/[username]',
+                          params: { username: topic.authorUsername },
+                        }}
+                      >
+                        <Pressable>
+                          <Text style={styles.topicAuthor}>{topic.author}</Text>
+                        </Pressable>
+                      </Link>
+                    ) : (
+                      <Text style={styles.topicAuthor}>{topic.author}</Text>
+                    )}
+                    <Text style={styles.topicMeta}> · {topic.createdAt}</Text>
+                  </View>
+                </View>
+              ) : null}
+            </>
+          }
+          renderItem={({ index, item }) => (
+            <ReplyListItem
+              floor={index + 1}
+              isHighlighted={item.id === replyNavigation.highlightedReplyId}
+              onOpenReference={replyNavigation.openReply}
+              onReply={focusComposer}
+              reply={item}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          updateCellsBatchingPeriod={40}
+          windowSize={7}
+        />
+
+        <DiscussionComposer
+          disabledReason={disabledReason}
+          draft=""
+          inputRef={inputRef}
+          onCancelReply={() => {}}
+          onChangeDraft={() => {}}
+          onSend={() => {}}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: COLORS.background },
+  keyboardView: { flex: 1 },
+  listContent: { padding: 20, paddingBottom: 28 },
+  topicHeader: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 22,
+    marginBottom: 14,
+    padding: 20,
+  },
+  topicTitle: {
+    color: COLORS.ink,
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    lineHeight: 30,
+  },
+  topicMetaRow: { flexDirection: 'row', marginTop: 8 },
+  topicAuthor: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  topicMeta: { color: COLORS.subtle, fontSize: 13 },
+  errorState: { flex: 1, justifyContent: 'center', padding: 32 },
+  errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
+  errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+});
