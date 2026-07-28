@@ -2,8 +2,8 @@ import type { DiscussionsProvider } from '@/features/discussions/model';
 
 import {
   mapBangumiEpisodeComments,
+  mapBangumiSubjectTopicPage,
   mapBangumiTopic,
-  mapBangumiTopicSummary,
 } from './adapter';
 import {
   getBangumiEpisodeComments,
@@ -20,11 +20,8 @@ export const bangumiDiscussionsProvider: DiscussionsProvider = {
     const topic = await getBangumiSubjectTopic(topicId);
     return mapBangumiTopic(topic);
   },
-  async getSubjectTopics(subjectId, limit) {
-    const page = await getBangumiSubjectTopics(subjectId, limit);
-    return {
-      topics: page.data.map(mapBangumiTopicSummary),
-      total: page.total,
-    };
+  async getSubjectTopics(subjectId, limit, offset) {
+    const page = await getBangumiSubjectTopics(subjectId, limit, offset);
+    return mapBangumiSubjectTopicPage(page, offset);
   },
 };

@@ -28,6 +28,7 @@ export type DiscussionTopic = {
 };
 
 export type DiscussionTopicPage = {
+  nextOffset?: number;
   topics: DiscussionTopic[];
   total: number;
 };
@@ -38,5 +39,6 @@ export type DiscussionsProvider = {
   getSubjectTopics: (
     subjectId: number,
     limit: number,
+    offset: number,
   ) => Promise<DiscussionTopicPage>;
 };

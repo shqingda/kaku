@@ -249,6 +249,9 @@ export type BangumiDiscussionReply = {
 export type BangumiSubjectTopicSummary = z.infer<
   typeof bangumiSubjectTopicSummarySchema
 >;
+export type BangumiSubjectTopicPage = z.infer<
+  typeof bangumiSubjectTopicPageSchema
+>;
 export type BangumiSubjectTopic = z.infer<typeof bangumiSubjectTopicSchema>;
 export type BangumiSubjectComments = z.infer<
   typeof bangumiSubjectCommentsSchema

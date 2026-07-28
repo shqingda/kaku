@@ -1,13 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useQuery,
+} from '@tanstack/react-query';
 
 import { bangumiDiscussionsProvider } from '@/infrastructure/bangumi/discussions/provider';
 import { queryKeys } from '@/lib/query-keys';
 
+import type { DiscussionTopicPage } from './model';
+
 export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
-  return useQuery({
+  return useInfiniteQuery<
+    DiscussionTopicPage,
+    Error,
+    InfiniteData<DiscussionTopicPage>,
+    ReturnType<typeof queryKeys.subjectTopics>,
+    number
+  >({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () =>
-      bangumiDiscussionsProvider.getSubjectTopics(subjectId, limit),
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      bangumiDiscussionsProvider.getSubjectTopics(
+        subjectId,
+        limit,
+        pageParam,
+      ),
     queryKey: queryKeys.subjectTopics(subjectId, limit),
     retry: 2,
     staleTime: 60 * 1000,

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,14 +8,20 @@ import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { TopicList } from '@/features/discussions/topic-list';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 export default function SubjectDiscussionsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const subjectId = Number(id);
   const subjectQuery = useCatalogSubject(subjectId);
-  const discussionQuery = useBangumiSubjectTopics(subjectId, 50);
-  const subjectTopics = discussionQuery.data?.topics ?? [];
+  const discussionQuery = useBangumiSubjectTopics(subjectId, 30);
+  const subjectTopics = useMemo(
+    () =>
+      discussionQuery.data?.pages.flatMap((page) => page.topics) ?? [],
+    [discussionQuery.data],
+  );
+  const topicTotal = discussionQuery.data?.pages[0]?.total ?? 0;
 
   if (subjectQuery.isError) {
     return (
@@ -33,6 +40,22 @@ export default function SubjectDiscussionsScreen() {
       <Stack.Screen options={{ title: '讨论版' }} />
       <ScrollView
         contentContainerStyle={styles.content}
+        onScroll={({ nativeEvent }) => {
+          const distanceFromBottom =
+            nativeEvent.contentSize.height -
+            nativeEvent.layoutMeasurement.height -
+            nativeEvent.contentOffset.y;
+
+          if (
+            distanceFromBottom < 240 &&
+            discussionQuery.hasNextPage &&
+            !discussionQuery.isFetchingNextPage &&
+            !discussionQuery.isFetchNextPageError
+          ) {
+            void discussionQuery.fetchNextPage();
+          }
+        }}
+        scrollEventThrottle={160}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
@@ -42,12 +65,12 @@ export default function SubjectDiscussionsScreen() {
           <Text style={styles.title}>讨论版</Text>
           <Text style={styles.subtitle}>
             {discussionQuery.data
-              ? `Bangumi 共 ${discussionQuery.data.total} 个话题`
+              ? `Bangumi 共 ${topicTotal} 个话题`
               : '正在从 Bangumi 读取话题'}
           </Text>
         </View>
         <DiscussionStatus
-          isError={discussionQuery.isError}
+          isError={discussionQuery.isError && subjectTopics.length === 0}
           isPending={discussionQuery.isPending}
           onRetry={() => void discussionQuery.refetch()}
         />
@@ -64,6 +87,18 @@ export default function SubjectDiscussionsScreen() {
             })
           }
           topics={subjectTopics}
+          footer={
+            subjectTopics.length > 0 ? (
+              <PagedListFooter
+                hasNextPage={discussionQuery.hasNextPage}
+                isError={discussionQuery.isFetchNextPageError}
+                isFetching={discussionQuery.isFetchingNextPage}
+                loadedCount={subjectTopics.length}
+                onRetry={() => void discussionQuery.fetchNextPage()}
+                total={topicTotal}
+              />
+            ) : null
+          }
         />
       </ScrollView>
     </SafeAreaView>

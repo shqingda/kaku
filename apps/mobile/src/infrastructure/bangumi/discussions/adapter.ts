@@ -1,12 +1,15 @@
 import type {
   BangumiDiscussionReply,
+  BangumiSubjectTopicPage,
   BangumiSubjectTopic,
   BangumiSubjectTopicSummary,
 } from '../api-next/schemas';
 import type {
   DiscussionReply,
   DiscussionTopic,
-} from '../../../features/discussions/model';
+  DiscussionTopicPage,
+} from '../../../features/discussions/model.ts';
+import { getNextTopicOffset } from '../../../features/discussions/topic-pagination';
 import { formatActivityTime } from '../../../lib/format-activity-time';
 
 function authorName(reply: BangumiDiscussionReply) {
@@ -104,6 +107,17 @@ export function mapBangumiTopicSummary(
     subjectId: topic.parentID,
     title: topic.title,
     updatedAt: toIsoTime(topic.updatedAt),
+  };
+}
+
+export function mapBangumiSubjectTopicPage(
+  page: BangumiSubjectTopicPage,
+  offset = 0,
+): DiscussionTopicPage {
+  return {
+    nextOffset: getNextTopicOffset(offset, page.data.length, page.total),
+    topics: page.data.map(mapBangumiTopicSummary),
+    total: page.total,
   };
 }
 
