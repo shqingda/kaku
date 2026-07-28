@@ -9,3 +9,6 @@ This repository is both a product and a learning project.
 - The owner must personally complete at least one small modification or bug fix per slice.
 - Keep the product provider-neutral. Bangumi is an adapter, not the domain model.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.
+- Let Codex handle staging, commits, and pushes. Before every commit, inspect the
+  complete diff, exclude generated or sensitive files, run the relevant checks,
+  and summarize the resulting commit and remote branch.
