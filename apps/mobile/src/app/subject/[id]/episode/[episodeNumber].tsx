@@ -1,13 +1,10 @@
-import { useCallback, useRef } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
-import { DiscussionComposer } from '@/features/discussions/discussion-composer';
+import { DiscussionReadOnlyNotice } from '@/features/discussions/discussion-read-only';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
@@ -33,7 +30,6 @@ export default function EpisodeScreen() {
     id: string;
   }>();
   const { items, toggleEpisodeWatched } = useWatching();
-  const inputRef = useRef<TextInput>(null);
   const subjectId = Number(id);
   const episodeNumber = Number(episodeParam);
   const catalogQuery = useCatalogSubject(subjectId);
@@ -51,7 +47,6 @@ export default function EpisodeScreen() {
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id);
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const focusComposer = useCallback(() => inputRef.current?.focus(), []);
 
   if (!subject && catalogQuery.isPending) {
     return (
@@ -98,17 +93,11 @@ export default function EpisodeScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: `第 ${episodeNumber} 集` }} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.content}
           data={replies}
           initialNumToRender={8}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
           keyExtractor={(reply) => reply.id}
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
@@ -187,12 +176,16 @@ export default function EpisodeScreen() {
               />
             </>
           }
+          ListFooterComponent={
+            !commentsQuery.isPending && !commentsQuery.isError ? (
+              <DiscussionReadOnlyNotice />
+            ) : null
+          }
           renderItem={({ index, item }) => (
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={focusComposer}
               reply={item}
             />
           )}
@@ -200,22 +193,14 @@ export default function EpisodeScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
-        <DiscussionComposer
-          disabledReason="真实发布需要 Bangumi 登录和人机验证，登录流程接通后开放。"
-          draft=""
-          inputRef={inputRef}
-          onCancelReply={() => {}}
-          onChangeDraft={() => {}}
-          onSend={() => {}}
-        />
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
-  keyboardView: { flex: 1 },
+  contentView: { flex: 1 },
   content: { padding: 20, paddingBottom: 28 },
   episodeCard: {
     alignItems: 'flex-start',

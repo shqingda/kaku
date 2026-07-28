@@ -1,20 +1,20 @@
-import { useCallback, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { usePublicGroupTopic } from '@/features/community/use-community';
-import { DiscussionComposer } from '@/features/discussions/discussion-composer';
+import {
+  DiscussionReadOnlyNotice,
+  EmptyDiscussionReplies,
+} from '@/features/discussions/discussion-read-only';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -26,24 +26,20 @@ export default function GroupTopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const inputRef = useRef<TextInput>(null);
-  const focusComposer = useCallback(() => inputRef.current?.focus(), []);
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '小组话题' }} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.listContent}
           data={replies}
           initialNumToRender={8}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
           keyExtractor={(reply) => reply.id}
+          ListEmptyComponent={
+            topic && !topicQuery.isError ? <EmptyDiscussionReplies /> : null
+          }
+          ListFooterComponent={topic ? <DiscussionReadOnlyNotice /> : null}
           ListHeaderComponent={
             <>
               <DiscussionStatus
@@ -87,7 +83,6 @@ export default function GroupTopicScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={focusComposer}
               reply={item}
             />
           )}
@@ -95,23 +90,14 @@ export default function GroupTopicScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
-
-        <DiscussionComposer
-          disabledReason="真实发布需要 Bangumi 登录和人机验证，登录流程接通后开放。"
-          draft=""
-          inputRef={inputRef}
-          onCancelReply={() => {}}
-          onChangeDraft={() => {}}
-          onSend={() => {}}
-        />
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
-  keyboardView: { flex: 1 },
+  contentView: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   topicHeader: {
     backgroundColor: COLORS.surface,

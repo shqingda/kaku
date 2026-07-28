@@ -11,7 +11,7 @@ type ReplyListItemProps = {
   floor: number;
   isHighlighted?: boolean;
   onOpenReference: (replyId: string) => void;
-  onReply: (reply: DiscussionReply) => void;
+  onReply?: (reply: DiscussionReply) => void;
   reply: DiscussionReply;
 };
 
@@ -35,7 +35,9 @@ export const ReplyListItem = memo(function ReplyListItem({
           >
             <Pressable style={({ pressed }) => pressed && styles.pressed}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{reply.author.slice(0, 1)}</Text>
+                <Text style={styles.avatarText}>
+                  {reply.author.slice(0, 1)}
+                </Text>
                 {reply.authorAvatarUrl ? (
                   <Image
                     contentFit="cover"
@@ -90,15 +92,17 @@ export const ReplyListItem = memo(function ReplyListItem({
         </Pressable>
       ) : null}
       <Text style={styles.body}>{reply.body}</Text>
-      <Pressable
-        accessibilityLabel={`回复 ${reply.author}`}
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => onReply(reply)}
-        style={({ pressed }) => pressed && styles.pressed}
-      >
-        <Text style={styles.replyAction}>回复</Text>
-      </Pressable>
+      {onReply ? (
+        <Pressable
+          accessibilityLabel={`回复 ${reply.author}`}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => onReply(reply)}
+          style={({ pressed }) => pressed && styles.pressed}
+        >
+          <Text style={styles.replyAction}>回复</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 });

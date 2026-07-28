@@ -1,19 +1,19 @@
-import { useCallback, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import { DiscussionComposer } from '@/features/discussions/discussion-composer';
+import {
+  DiscussionReadOnlyNotice,
+  EmptyDiscussionReplies,
+} from '@/features/discussions/discussion-read-only';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -29,33 +29,20 @@ export default function SubjectReviewScreen() {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const inputRef = useRef<TextInput>(null);
-  const focusComposer = useCallback(() => inputRef.current?.focus(), []);
-  const disabledReason = '真实发布需要 Bangumi 登录和人机验证，登录流程接通后开放。';
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '评论' }} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.listContent}
           data={replies}
           initialNumToRender={8}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
           keyExtractor={(reply) => reply.id}
           ListEmptyComponent={
-            review && replies.length === 0 ? (
-              <View style={styles.emptyReplies}>
-                <Text style={styles.emptyTitle}>还没有回复</Text>
-                <Text style={styles.emptyText}>登录功能接通后可以参与讨论。</Text>
-              </View>
-            ) : null
+            review && replies.length === 0 ? <EmptyDiscussionReplies /> : null
           }
+          ListFooterComponent={review ? <DiscussionReadOnlyNotice /> : null}
           ListHeaderComponent={
             <>
               <DiscussionStatus
@@ -108,7 +95,6 @@ export default function SubjectReviewScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={focusComposer}
               reply={item}
             />
           )}
@@ -116,23 +102,14 @@ export default function SubjectReviewScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
-
-        <DiscussionComposer
-          disabledReason={disabledReason}
-          draft=""
-          inputRef={inputRef}
-          onCancelReply={() => {}}
-          onChangeDraft={() => {}}
-          onSend={() => {}}
-        />
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
-  keyboardView: { flex: 1 },
+  contentView: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   reviewHeader: {
     backgroundColor: COLORS.surface,
@@ -164,14 +141,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 22,
     paddingTop: 16,
-  },
-  emptyReplies: { alignItems: 'center', padding: 28 },
-  emptyTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
-  emptyText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 6,
-    textAlign: 'center',
   },
 });
