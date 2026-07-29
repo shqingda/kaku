@@ -29,25 +29,32 @@ export function CollectionControls({
   onChangeStatus: (status?: CollectionStatus) => void;
 }) {
   function selectStatus(status?: CollectionStatus) {
+    const cancelsCollection =
+      status === undefined && item.collectionStatus != null;
     const clearsProgress =
       item.watchedEpisodeNumbers.length > 0 &&
       (status === 'wish' || status === undefined);
 
-    if (clearsProgress) {
-      const action = status === 'wish' ? '改为想看' : '取消收藏';
+    if (cancelsCollection || clearsProgress) {
+      const title = clearsProgress ? '清空观看进度？' : '取消收藏？';
+      const message = clearsProgress
+        ? `${
+            status === 'wish' ? '改为想看' : '取消收藏'
+          }会清空已看的 ${item.watchedEpisodeNumbers.length} 集。`
+        : '该条目将不再保留当前收藏状态。';
 
       Alert.alert(
-        '清空观看进度？',
-        `${action}会清空已看的 ${item.watchedEpisodeNumbers.length} 集。`,
+        title,
+        message,
         [
-          { style: 'cancel', text: '取消' },
+          { style: 'cancel', text: '保留' },
           {
             onPress: () => {
               onChangeStatus(status);
               playSelectionHaptic();
             },
             style: 'destructive',
-            text: '清空并继续',
+            text: clearsProgress ? '清空并继续' : '取消收藏',
           },
         ],
       );
