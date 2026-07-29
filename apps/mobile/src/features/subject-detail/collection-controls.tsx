@@ -119,6 +119,13 @@ export function CollectionControls({
               weight="semibold"
             />
             <Text style={styles.title}>收藏盒</Text>
+            {status ? (
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusBadgeText}>
+                  {getCollectionStatusLabel(subjectType, status)}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <View style={styles.editHint}>
             <Text style={styles.editText}>{status ? '编辑' : '添加'}</Text>
@@ -135,53 +142,42 @@ export function CollectionControls({
           </View>
         </View>
 
-        <View style={styles.summary}>
-          {status ? (
-            <>
-              <View style={styles.metric}>
-                <Text style={[styles.metricValue, styles.statusValue]}>
-                  {getCollectionStatusLabel(subjectType, status)}
+        {canShowPersonalData ? (
+          <View style={styles.details}>
+            {supportsProgress ? (
+              <View style={styles.detail}>
+                <Text style={styles.detailValue}>
+                  {item.watchedEpisodeNumbers.length}/{item.totalEpisodes} 集
                 </Text>
               </View>
-              {canShowPersonalData && supportsProgress ? (
-                <>
-                  <View style={styles.divider} />
-                  <View style={styles.metric}>
-                    <Text style={styles.metricValue}>
-                      {item.watchedEpisodeNumbers.length}/{item.totalEpisodes} 集
-                    </Text>
-                  </View>
-                </>
-              ) : null}
-              {canShowPersonalData ? (
-                <>
-                  <View style={styles.divider} />
-                  <View style={styles.metric}>
-                    {item.rating ? (
-                      <View style={styles.ratingValue}>
-                        <RatingStars rating={item.rating} size={9} />
-                        <Text style={styles.ratingLabel}>
-                          {getRatingLabel(item.rating)}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.unsetText}>未评分</Text>
-                    )}
-                  </View>
-                </>
-              ) : null}
-            </>
-          ) : (
-            <View style={styles.emptySummary}>
-              <Text style={styles.emptyTitle}>尚未收藏</Text>
+            ) : null}
+            {supportsProgress ? <View style={styles.divider} /> : null}
+            <View style={styles.detail}>
+              {item.rating ? (
+                <View style={styles.ratingValue}>
+                  <RatingStars rating={item.rating} size={10} />
+                  <Text style={styles.ratingLabel}>
+                    {getRatingLabel(item.rating)}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.unsetText}>未评分</Text>
+              )}
             </View>
-          )}
-        </View>
+          </View>
+        ) : null}
       </Pressable>
 
       <CollectionBoxSheet
         item={item}
         onClose={() => setIsOpen(false)}
+        onRemove={() =>
+          saveDraft({
+            collectionStatus: undefined,
+            rating: undefined,
+            watchedCount: 0,
+          })
+        }
         onSave={saveDraft}
         supportsProgress={supportsProgress}
         visible={isOpen}
@@ -208,35 +204,45 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   title: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
+  statusBadge: {
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 10,
+    justifyContent: 'center',
+    minHeight: 24,
+    paddingHorizontal: 9,
+  },
+  statusBadgeText: {
+    color: COLORS.accent,
+    fontSize: 11,
+    fontWeight: '800',
+  },
   editHint: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 5,
   },
   editText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
-  summary: {
+  details: {
     alignItems: 'center',
     backgroundColor: '#F7F6F2',
     borderRadius: 16,
     flexDirection: 'row',
-    marginTop: 16,
-    minHeight: 62,
+    marginTop: 14,
+    minHeight: 56,
     paddingHorizontal: 8,
-    paddingVertical: 10,
   },
-  metric: {
+  detail: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
   },
-  metricValue: {
+  detailValue: {
     color: COLORS.ink,
-    fontSize: 16,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
-  statusValue: { color: COLORS.accent, fontSize: 16 },
   divider: {
     backgroundColor: COLORS.track,
     height: 32,
@@ -245,11 +251,9 @@ const styles = StyleSheet.create({
   ratingValue: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
+    gap: 6,
   },
-  ratingLabel: { color: COLORS.ink, fontSize: 12, fontWeight: '800' },
-  unsetText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  emptySummary: { flex: 1, paddingHorizontal: 6 },
-  emptyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  ratingLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
+  unsetText: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
   pressed: { opacity: 0.58 },
 });

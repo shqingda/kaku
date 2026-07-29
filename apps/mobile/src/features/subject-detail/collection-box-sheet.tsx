@@ -41,12 +41,14 @@ const RATING_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 export function CollectionBoxSheet({
   item,
   onClose,
+  onRemove,
   onSave,
   supportsProgress,
   visible,
 }: {
   item: WatchingItem;
   onClose: () => void;
+  onRemove: () => void;
   onSave: (draft: CollectionBoxDraft) => void;
   supportsProgress: boolean;
   visible: boolean;
@@ -293,42 +295,35 @@ export function CollectionBoxSheet({
                 )}
               </View>
             </View>
+          </ScrollView>
 
+          <View style={styles.footer}>
             {item.collectionStatus ? (
               <Pressable
-                accessibilityRole="button"
                 accessibilityLabel="取消收藏"
-                onPress={() => setStatus(undefined)}
+                accessibilityRole="button"
+                onPress={onRemove}
                 style={({ pressed }) => [
+                  styles.footerButton,
                   styles.removeButton,
                   pressed && styles.pressed,
                 ]}
               >
-                <SymbolView
-                  name={{
-                    android: 'bookmark_remove',
-                    ios: 'bookmark.slash',
-                    web: 'bookmark_remove',
-                  }}
-                  size={14}
-                  tintColor={COLORS.accent}
-                  weight="semibold"
-                />
                 <Text style={styles.removeText}>取消收藏</Text>
               </Pressable>
             ) : null}
-          </ScrollView>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={save}
-            style={({ pressed }) => [
-              styles.saveButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.saveText}>保存</Text>
-          </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={save}
+              style={({ pressed }) => [
+                styles.footerButton,
+                styles.saveButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.saveText}>保存</Text>
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -426,7 +421,7 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
   progressControl: {
-    alignItems: 'center',
+    alignItems: 'baseline',
     backgroundColor: COLORS.surface,
     borderColor: COLORS.track,
     borderRadius: 12,
@@ -440,16 +435,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
+    height: 20,
+    includeFontPadding: false,
     lineHeight: 20,
     minWidth: 34,
     padding: 0,
     textAlign: 'right',
+    textAlignVertical: 'center',
   },
   progressTotal: {
     color: COLORS.muted,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
+    includeFontPadding: false,
     lineHeight: 20,
   },
   ratingRecord: { gap: 12 },
@@ -511,24 +510,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  removeButton: {
+  footer: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
     flexDirection: 'row',
-    gap: 6,
-    minHeight: 44,
-    justifyContent: 'center',
-    marginTop: 10,
+    gap: 10,
+    paddingTop: 10,
   },
-  removeText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
-  saveButton: {
+  footerButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
     borderRadius: 15,
+    flex: 1,
     justifyContent: 'center',
     minHeight: 48,
   },
+  removeButton: { backgroundColor: COLORS.accentSoft },
+  removeText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
+  saveButton: { backgroundColor: COLORS.accent },
   saveText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
   pressed: { opacity: 0.58 },
 });
