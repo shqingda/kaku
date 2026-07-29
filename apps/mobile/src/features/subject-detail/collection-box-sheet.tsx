@@ -126,7 +126,10 @@ export function CollectionBoxSheet({
               accessibilityRole="button"
               hitSlop={8}
               onPress={onClose}
-              style={({ pressed }) => pressed && styles.pressed}
+              style={({ pressed }) => [
+                styles.closeButton,
+                pressed && styles.pressed,
+              ]}
             >
               <SymbolView
                 name={{
@@ -146,7 +149,7 @@ export function CollectionBoxSheet({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View>
+            <View style={styles.section}>
               <Text style={styles.sectionLabel}>收藏状态</Text>
               <View style={styles.statusOptions}>
                 {STATUS_OPTIONS.map((option) => {
@@ -172,100 +175,133 @@ export function CollectionBoxSheet({
                       >
                         {getCollectionStatusLabel(item.type ?? 2, option)}
                       </Text>
-                      {isSelected ? (
-                        <SymbolView
-                          name={{
-                            android: 'check',
-                            ios: 'checkmark',
-                            web: 'check',
-                          }}
-                          size={15}
-                          tintColor={COLORS.accent}
-                          weight="bold"
-                        />
-                      ) : null}
+                      <View
+                        style={[
+                          styles.selectionIndicator,
+                          isSelected && styles.selectedIndicator,
+                        ]}
+                      >
+                        {isSelected ? (
+                          <SymbolView
+                            name={{
+                              android: 'check',
+                              ios: 'checkmark',
+                              web: 'check',
+                            }}
+                            size={12}
+                            tintColor={COLORS.surface}
+                            weight="bold"
+                          />
+                        ) : null}
+                      </View>
                     </Pressable>
                   );
                 })}
               </View>
             </View>
 
-            {showsProgress ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>观看进度</Text>
-                <View style={styles.progressControl}>
-                  <TextInput
-                    accessibilityLabel="已看集数"
-                    keyboardType="number-pad"
-                    maxLength={String(item.totalEpisodes).length}
-                    onChangeText={(value) =>
-                      setWatchedCount(value.replace(/\D/g, ''))
-                    }
-                    selectTextOnFocus
-                    style={styles.progressInput}
-                    value={watchedCount}
-                  />
-                  <Text style={styles.progressTotal}>
-                    / {item.totalEpisodes} 集
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-
-            {canEditPersonalData ? (
-              <View style={styles.section}>
-                <View style={styles.ratingHeading}>
-                  <Text style={styles.sectionLabel}>我的评分</Text>
-                  {rating ? (
-                    <View style={styles.currentRating}>
-                      <RatingStars rating={rating} size={13} />
-                      <Text style={styles.currentRatingText}>{rating} 分</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.unsetText}>未评分</Text>
-                  )}
-                </View>
-                <View style={styles.ratingOptions}>
-                  {RATING_OPTIONS.map((option) => {
-                    const isSelected = rating === option;
-
-                    return (
-                      <Pressable
-                        accessibilityLabel={`${option} 分`}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: isSelected }}
-                        key={option}
-                        onPress={() =>
-                          setRating(isSelected ? undefined : option)
-                        }
-                        style={({ pressed }) => [
-                          styles.ratingOption,
-                          isSelected && styles.selectedRatingOption,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.ratingOptionText,
-                            isSelected && styles.selectedRatingOptionText,
-                          ]}
-                        >
-                          {option}
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>个人记录</Text>
+              <View style={styles.records}>
+                {showsProgress ? (
+                  <>
+                    <View style={styles.recordRow}>
+                      <View>
+                        <Text style={styles.recordTitle}>观看进度</Text>
+                        <Text style={styles.recordHint}>直接输入已看集数</Text>
+                      </View>
+                      <View style={styles.progressControl}>
+                        <TextInput
+                          accessibilityLabel="已看集数"
+                          keyboardType="number-pad"
+                          maxLength={String(item.totalEpisodes).length}
+                          onChangeText={(value) =>
+                            setWatchedCount(value.replace(/\D/g, ''))
+                          }
+                          selectTextOnFocus
+                          style={styles.progressInput}
+                          value={watchedCount}
+                        />
+                        <Text style={styles.progressTotal}>
+                          / {item.totalEpisodes} 集
                         </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                      </View>
+                    </View>
+                    <View style={styles.recordDivider} />
+                  </>
+                ) : null}
+
+                {canEditPersonalData ? (
+                  <View style={styles.ratingRecord}>
+                    <View style={styles.ratingHeading}>
+                      <View>
+                        <Text style={styles.recordTitle}>我的评分</Text>
+                        <Text style={styles.recordHint}>10 分对应五颗星</Text>
+                      </View>
+                      {rating ? (
+                        <View style={styles.currentRating}>
+                          <RatingStars rating={rating} size={12} />
+                          <Text style={styles.currentRatingText}>
+                            {rating} 分
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.unsetText}>未评分</Text>
+                      )}
+                    </View>
+                    <View style={styles.ratingOptions}>
+                      {RATING_OPTIONS.map((option) => {
+                        const isSelected = rating === option;
+
+                        return (
+                          <Pressable
+                            accessibilityLabel={`${option} 分`}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected }}
+                            key={option}
+                            onPress={() =>
+                              setRating(isSelected ? undefined : option)
+                            }
+                            style={({ pressed }) => [
+                              styles.ratingOption,
+                              isSelected && styles.selectedRatingOption,
+                              pressed && styles.pressed,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.ratingOptionText,
+                                isSelected &&
+                                  styles.selectedRatingOptionText,
+                              ]}
+                            >
+                              {option}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.inactiveNotice}>
+                    <SymbolView
+                      name={{
+                        android: 'info',
+                        ios: 'info.circle',
+                        web: 'info',
+                      }}
+                      size={15}
+                      tintColor={COLORS.subtle}
+                    />
+                    <Text style={styles.inactiveNoticeText}>
+                      {status === 'wish'
+                        ? '想看状态不记录观看进度和评分'
+                        : '选择收藏状态后可记录进度和评分'}
+                    </Text>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View style={styles.inactiveNotice}>
-                <Text style={styles.inactiveNoticeText}>
-                  {status === 'wish'
-                    ? '想看状态不记录观看进度和评分'
-                    : '选择收藏状态后可记录进度和评分'}
-                </Text>
-              </View>
-            )}
+            </View>
 
             {item.collectionStatus ? (
               <Pressable
@@ -276,6 +312,16 @@ export function CollectionBoxSheet({
                   pressed && styles.pressed,
                 ]}
               >
+                <SymbolView
+                  name={{
+                    android: 'bookmark_remove',
+                    ios: 'bookmark.slash',
+                    web: 'bookmark_remove',
+                  }}
+                  size={14}
+                  tintColor={COLORS.accent}
+                  weight="semibold"
+                />
                 <Text style={styles.removeText}>移出收藏盒</Text>
               </Pressable>
             ) : null}
@@ -326,56 +372,95 @@ const styles = StyleSheet.create({
   },
   title: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
   hint: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
-  content: { paddingBottom: 14, paddingTop: 20 },
-  section: { marginTop: 20 },
+  closeButton: {
+    alignItems: 'center',
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  content: { paddingBottom: 12, paddingTop: 8 },
+  section: { marginTop: 16 },
   sectionLabel: {
-    color: COLORS.ink,
-    fontSize: 13,
+    color: COLORS.muted,
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   statusOptions: {
     backgroundColor: '#F7F6F2',
     borderRadius: 16,
-    overflow: 'hidden',
-    paddingHorizontal: 14,
+    padding: 4,
   },
   statusOption: {
     alignItems: 'center',
-    borderBottomColor: COLORS.track,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 48,
-    paddingHorizontal: 4,
+    minHeight: 43,
+    paddingHorizontal: 12,
   },
-  selectedStatusOption: { backgroundColor: COLORS.accentSoft },
+  selectedStatusOption: { backgroundColor: COLORS.surface },
   statusText: { color: COLORS.ink, fontSize: 14, fontWeight: '600' },
   selectedStatusText: { color: COLORS.accent, fontWeight: '800' },
+  selectionIndicator: {
+    alignItems: 'center',
+    borderColor: COLORS.track,
+    borderRadius: 9,
+    borderWidth: 1,
+    height: 18,
+    justifyContent: 'center',
+    width: 18,
+  },
+  selectedIndicator: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  records: {
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    padding: 14,
+  },
+  recordRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  recordTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  recordHint: { color: COLORS.subtle, fontSize: 10, marginTop: 3 },
+  recordDivider: {
+    backgroundColor: COLORS.track,
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 14,
+  },
   progressControl: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#F7F6F2',
-    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    minHeight: 48,
-    paddingHorizontal: 14,
+    minHeight: 42,
+    paddingHorizontal: 12,
   },
   progressInput: {
     color: COLORS.accent,
-    fontSize: 18,
+    fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
-    minWidth: 42,
+    minWidth: 34,
     padding: 0,
     textAlign: 'right',
   },
   progressTotal: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: 12,
     fontVariant: ['tabular-nums'],
     fontWeight: '600',
   },
+  ratingRecord: { gap: 12 },
   ratingHeading: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -385,7 +470,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 10,
   },
   currentRatingText: {
     color: COLORS.muted,
@@ -395,7 +479,6 @@ const styles = StyleSheet.create({
   unsetText: {
     color: COLORS.subtle,
     fontSize: 11,
-    marginBottom: 10,
   },
   ratingOptions: {
     flexDirection: 'row',
@@ -404,14 +487,14 @@ const styles = StyleSheet.create({
   },
   ratingOption: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: COLORS.surface,
     borderColor: 'transparent',
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     flexBasis: '17%',
     flexGrow: 1,
     justifyContent: 'center',
-    minHeight: 42,
+    minHeight: 38,
   },
   selectedRatingOption: {
     backgroundColor: COLORS.accentSoft,
@@ -425,10 +508,11 @@ const styles = StyleSheet.create({
   },
   selectedRatingOptionText: { color: COLORS.accent, fontWeight: '800' },
   inactiveNotice: {
-    backgroundColor: '#F7F6F2',
-    borderRadius: 14,
-    marginTop: 20,
-    padding: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 46,
+    paddingHorizontal: 2,
   },
   inactiveNoticeText: {
     color: COLORS.subtle,
@@ -437,17 +521,19 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
     minHeight: 44,
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 6,
   },
   removeText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   saveButton: {
     alignItems: 'center',
     backgroundColor: COLORS.accent,
-    borderRadius: 16,
+    borderRadius: 15,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: 48,
   },
   saveText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
   pressed: { opacity: 0.58 },

@@ -137,32 +137,49 @@ export function CollectionControls({
         <View style={styles.summary}>
           {status ? (
             <>
-              <View style={[styles.chip, styles.statusChip]}>
-                <Text style={styles.statusChipText}>
+              <View style={styles.metric}>
+                <Text style={styles.metricLabel}>状态</Text>
+                <Text style={[styles.metricValue, styles.statusValue]}>
                   {getCollectionStatusLabel(subjectType, status)}
                 </Text>
               </View>
               {canShowPersonalData && supportsProgress ? (
-                <View style={styles.chip}>
-                  <Text style={styles.chipLabel}>进度</Text>
-                  <Text style={styles.chipValue}>
-                    {item.watchedEpisodeNumbers.length}/{item.totalEpisodes} 集
-                  </Text>
-                </View>
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.metric}>
+                    <Text style={styles.metricLabel}>观看进度</Text>
+                    <Text style={styles.metricValue}>
+                      {item.watchedEpisodeNumbers.length}/{item.totalEpisodes}
+                      <Text style={styles.metricUnit}> 集</Text>
+                    </Text>
+                  </View>
+                </>
               ) : null}
               {canShowPersonalData ? (
-                <View style={styles.chip}>
-                  <Text style={styles.chipLabel}>评分</Text>
-                  {item.rating ? (
-                    <RatingStars rating={item.rating} size={12} />
-                  ) : (
-                    <Text style={styles.unsetText}>未评分</Text>
-                  )}
-                </View>
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.metric}>
+                    <Text style={styles.metricLabel}>我的评分</Text>
+                    {item.rating ? (
+                      <View style={styles.ratingValue}>
+                        <Text style={styles.metricValue}>
+                          {item.rating}
+                          <Text style={styles.metricUnit}> 分</Text>
+                        </Text>
+                        <RatingStars rating={item.rating} size={10} />
+                      </View>
+                    ) : (
+                      <Text style={styles.unsetText}>未评分</Text>
+                    )}
+                  </View>
+                </>
               ) : null}
             </>
           ) : (
-            <Text style={styles.emptyText}>尚未收藏</Text>
+            <View style={styles.emptySummary}>
+              <Text style={styles.emptyTitle}>尚未收藏</Text>
+              <Text style={styles.emptyText}>添加到收藏盒后可记录个人进度</Text>
+            </View>
           )}
         </View>
       </Pressable>
@@ -204,30 +221,48 @@ const styles = StyleSheet.create({
   editText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
   summary: {
     alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-  },
-  chip: {
-    alignItems: 'center',
     backgroundColor: '#F7F6F2',
-    borderRadius: 12,
+    borderRadius: 16,
     flexDirection: 'row',
-    gap: 5,
-    minHeight: 34,
-    paddingHorizontal: 11,
+    marginTop: 16,
+    minHeight: 70,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
   },
-  statusChip: { backgroundColor: COLORS.accentSoft },
-  statusChipText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
-  chipLabel: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
-  chipValue: {
+  metric: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    minWidth: 0,
+  },
+  metricLabel: {
+    color: COLORS.subtle,
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  metricValue: {
     color: COLORS.ink,
-    fontSize: 12,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  unsetText: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
-  emptyText: { color: COLORS.subtle, fontSize: 13 },
+  metricUnit: { color: COLORS.muted, fontSize: 10, fontWeight: '600' },
+  statusValue: { color: COLORS.accent, fontSize: 16 },
+  divider: {
+    backgroundColor: COLORS.track,
+    height: 32,
+    width: StyleSheet.hairlineWidth,
+  },
+  ratingValue: { alignItems: 'center', gap: 2 },
+  unsetText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  emptySummary: { flex: 1, paddingHorizontal: 6 },
+  emptyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  emptyText: {
+    color: COLORS.subtle,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 3,
+  },
   pressed: { opacity: 0.58 },
 });
