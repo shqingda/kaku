@@ -18,8 +18,13 @@ export type PublicIndexItem = {
 export type PublicIndexDetail = PublicIndexSummary & {
   collects: number;
   description: string;
-  items: PublicIndexItem[];
   replyCount: number;
+};
+
+export type PublicIndexItemPage = {
+  items: PublicIndexItem[];
+  nextOffset?: number;
+  total: number;
 };
 
 export type PublicIndexPage = {
@@ -30,6 +35,10 @@ export type PublicIndexPage = {
 
 export type IndexesProvider = {
   getIndex: (indexId: number) => Promise<PublicIndexDetail>;
+  getIndexItems: (
+    indexId: number,
+    offset: number,
+  ) => Promise<PublicIndexItemPage>;
   getSubjectIndexes: (
     subjectId: number,
     offset: number,

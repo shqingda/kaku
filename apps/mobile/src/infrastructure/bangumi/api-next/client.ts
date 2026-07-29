@@ -155,17 +155,25 @@ export async function getBangumiSubjectIndexes(
 }
 
 export async function getBangumiIndex(indexId: number) {
-  const [detailJson, relatedJson] = await Promise.all([
-    requestJson(`/p1/indexes/${indexId}`),
-    requestJson(
-      `/p1/indexes/${indexId}/related?cat=0&type=2&limit=100&offset=0`,
-    ),
-  ]);
+  const json = await requestJson(`/p1/indexes/${indexId}`);
+  return bangumiIndexSchema.parse(json);
+}
 
-  return {
-    detail: bangumiIndexSchema.parse(detailJson),
-    related: bangumiIndexRelatedSchema.parse(relatedJson),
-  };
+export async function getBangumiIndexRelated(
+  indexId: number,
+  offset: number,
+  limit: number,
+) {
+  const query = new URLSearchParams({
+    cat: '0',
+    limit: String(limit),
+    offset: String(offset),
+    type: '2',
+  });
+  const json = await requestJson(
+    `/p1/indexes/${indexId}/related?${query}`,
+  );
+  return bangumiIndexRelatedSchema.parse(json);
 }
 
 export async function getBangumiCommunity() {

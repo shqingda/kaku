@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -5,25 +6,66 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
-import { usePublicIndex } from '@/features/indexes/use-indexes';
+import {
+  usePublicIndex,
+  usePublicIndexItems,
+} from '@/features/indexes/use-indexes';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 export default function PublicIndexScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const indexQuery = usePublicIndex(Number(id));
+  const indexId = Number(id);
+  const indexQuery = usePublicIndex(indexId);
+  const itemsQuery = usePublicIndexItems(indexId);
   const index = indexQuery.data;
+  const items = useMemo(
+    () => itemsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [itemsQuery.data],
+  );
+  const itemTotal = itemsQuery.data?.pages[0]?.total ?? 0;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: index?.title ?? '目录' }} />
       <FlatList
         contentContainerStyle={styles.content}
-        data={index?.items ?? []}
+        data={items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          index ? (
+          itemsQuery.isPending ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>正在读取目录条目。</Text>
+            </View>
+          ) : itemsQuery.isError ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>目录条目读取失败。</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void itemsQuery.refetch()}
+                style={({ pressed }) => [
+                  styles.retry,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.retryText}>重试</Text>
+              </Pressable>
+            </View>
+          ) : (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>目录中暂无动画条目。</Text>
             </View>
+          )
+        }
+        ListFooterComponent={
+          items.length > 0 ? (
+            <PagedListFooter
+              hasNextPage={Boolean(itemsQuery.hasNextPage)}
+              isError={itemsQuery.isFetchNextPageError}
+              isFetching={itemsQuery.isFetchingNextPage}
+              loadedCount={items.length}
+              onRetry={() => void itemsQuery.fetchNextPage()}
+              total={itemTotal}
+            />
           ) : null
         }
         ListHeaderComponent={
@@ -62,10 +104,25 @@ export default function PublicIndexScreen() {
               </View>
             ) : null}
             {index ? (
-              <Text style={styles.sectionTitle}>动画条目</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>动画条目</Text>
+                <Text style={styles.sectionMeta}>
+                  {items.length} / {itemTotal}
+                </Text>
+              </View>
             ) : null}
           </>
         }
+        onEndReached={() => {
+          if (
+            itemsQuery.hasNextPage &&
+            !itemsQuery.isFetchingNextPage &&
+            !itemsQuery.isFetchNextPageError
+          ) {
+            void itemsQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
         renderItem={({ item }) => (
           <Pressable
             onPress={() =>
@@ -142,9 +199,15 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     fontSize: 19,
     fontWeight: '800',
+  },
+  sectionHeader: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: 4,
     paddingTop: 14,
   },
+  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
   subjectRow: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,
@@ -180,4 +243,12 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
   emptyText: { color: COLORS.muted, fontSize: 14 },
+  retry: {
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 12,
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
 });

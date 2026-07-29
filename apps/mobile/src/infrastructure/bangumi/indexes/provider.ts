@@ -2,9 +2,11 @@ import type { IndexesProvider } from '@/features/indexes/model';
 
 import {
   getBangumiIndex,
+  getBangumiIndexRelated,
   getBangumiSubjectIndexes,
 } from '../api-next/client';
 import {
+  toPublicIndexItemPage,
   toPublicIndexPage,
   toPublicIndexSummary,
 } from './adapter';
@@ -20,32 +22,19 @@ export const bangumiIndexesProvider: IndexesProvider = {
     return toPublicIndexPage(page, offset, limit);
   },
   async getIndex(indexId) {
-    const { detail, related } = await getBangumiIndex(indexId);
+    const detail = await getBangumiIndex(indexId);
     const summary = toPublicIndexSummary(detail);
 
     return {
       ...summary,
       collects: detail.collects,
       description: detail.desc,
-      items: related.data.flatMap((relatedItem) => {
-        const subject = relatedItem.subject;
-
-        return subject
-          ? [
-              {
-                comment: relatedItem.comment,
-                coverUrl:
-                  subject.images?.common ??
-                  subject.images?.medium ??
-                  subject.images?.small,
-                id: subject.id,
-                score: subject.rating?.score,
-                title: subject.nameCN.trim() || subject.name,
-              },
-            ]
-          : [];
-      }),
       replyCount: detail.replies,
     };
+  },
+  async getIndexItems(indexId, offset) {
+    const limit = 50;
+    const page = await getBangumiIndexRelated(indexId, offset, limit);
+    return toPublicIndexItemPage(page, offset);
   },
 };

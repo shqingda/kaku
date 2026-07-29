@@ -4,7 +4,10 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-import type { PublicIndexPage } from './model';
+import type {
+  PublicIndexItemPage,
+  PublicIndexPage,
+} from './model';
 import { bangumiIndexesProvider } from '@/infrastructure/bangumi/indexes/provider';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -32,6 +35,25 @@ export function usePublicIndex(indexId: number) {
     enabled: Number.isInteger(indexId) && indexId > 0,
     queryFn: () => bangumiIndexesProvider.getIndex(indexId),
     queryKey: queryKeys.publicIndex(indexId),
+    retry: 2,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function usePublicIndexItems(indexId: number) {
+  return useInfiniteQuery<
+    PublicIndexItemPage,
+    Error,
+    InfiniteData<PublicIndexItemPage>,
+    ReturnType<typeof queryKeys.publicIndexItems>,
+    number
+  >({
+    enabled: Number.isInteger(indexId) && indexId > 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      bangumiIndexesProvider.getIndexItems(indexId, pageParam),
+    queryKey: queryKeys.publicIndexItems(indexId),
     retry: 2,
     staleTime: 10 * 60 * 1000,
   });

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  toPublicIndexItemPage,
   toPublicIndexPage,
 } from '../src/infrastructure/bangumi/indexes/adapter.ts';
 
@@ -47,4 +48,47 @@ test('subject index page stops on its final or empty response', () => {
 
   assert.equal(finalPage.nextOffset, undefined);
   assert.equal(emptyPage.nextOffset, undefined);
+});
+
+test('index item page maps subjects and exposes its next offset', () => {
+  const page = toPublicIndexItemPage(
+    {
+      data: [
+        {
+          comment: '推荐',
+          subject: {
+            id: 400602,
+            images: { common: 'https://lain.bgm.tv/frieren.jpg' },
+            name: 'Sousou no Frieren',
+            nameCN: '葬送的芙莉莲',
+            rating: { score: 8.5 },
+          },
+        },
+      ],
+      total: 2,
+    },
+    0,
+  );
+
+  assert.equal(page.nextOffset, 1);
+  assert.deepEqual(page.items[0], {
+    comment: '推荐',
+    coverUrl: 'https://lain.bgm.tv/frieren.jpg',
+    id: 400602,
+    score: 8.5,
+    title: '葬送的芙莉莲',
+  });
+});
+
+test('index item page stops at the end', () => {
+  const page = toPublicIndexItemPage(
+    {
+      data: [{ comment: '', subject: undefined }],
+      total: 1,
+    },
+    0,
+  );
+
+  assert.equal(page.nextOffset, undefined);
+  assert.deepEqual(page.items, []);
 });
