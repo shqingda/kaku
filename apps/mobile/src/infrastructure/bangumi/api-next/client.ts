@@ -139,9 +139,17 @@ export async function getBangumiUserFriends(
   return bangumiUserFriendsSchema.parse(json);
 }
 
-export async function getBangumiSubjectIndexes(subjectId: number) {
+export async function getBangumiSubjectIndexes(
+  subjectId: number,
+  offset: number,
+  limit: number,
+) {
+  const query = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
   const json = await requestJson(
-    `/p1/subjects/${subjectId}/indexes?limit=30&offset=0`,
+    `/p1/subjects/${subjectId}/indexes?${query}`,
   );
   return bangumiIndexPageSchema.parse(json);
 }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -5,12 +6,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function SubjectIndexesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const indexesQuery = useSubjectIndexes(Number(id));
-  const indexes = indexesQuery.data?.items ?? [];
+  const indexes = useMemo(
+    () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [indexesQuery.data],
+  );
+  const total = indexesQuery.data?.pages[0]?.total ?? 0;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -33,7 +39,7 @@ export default function SubjectIndexesScreen() {
               <Text style={styles.title}>相关目录</Text>
               <Text style={styles.meta}>
                 {indexesQuery.data
-                  ? `显示 ${indexes.length} / ${indexesQuery.data.total}`
+                  ? `显示 ${indexes.length} / ${total}`
                   : '公开内容'}
               </Text>
             </View>
@@ -46,6 +52,28 @@ export default function SubjectIndexesScreen() {
             />
           </>
         }
+        ListFooterComponent={
+          indexes.length > 0 ? (
+            <PagedListFooter
+              hasNextPage={Boolean(indexesQuery.hasNextPage)}
+              isError={indexesQuery.isFetchNextPageError}
+              isFetching={indexesQuery.isFetchingNextPage}
+              loadedCount={indexes.length}
+              onRetry={() => void indexesQuery.fetchNextPage()}
+              total={total}
+            />
+          ) : null
+        }
+        onEndReached={() => {
+          if (
+            indexesQuery.hasNextPage &&
+            !indexesQuery.isFetchingNextPage &&
+            !indexesQuery.isFetchNextPageError
+          ) {
+            void indexesQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
         renderItem={({ item }) => (
           <Pressable
             onPress={() =>

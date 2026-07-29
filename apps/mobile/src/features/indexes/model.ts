@@ -24,10 +24,14 @@ export type PublicIndexDetail = PublicIndexSummary & {
 
 export type PublicIndexPage = {
   items: PublicIndexSummary[];
+  nextOffset?: number;
   total: number;
 };
 
 export type IndexesProvider = {
   getIndex: (indexId: number) => Promise<PublicIndexDetail>;
-  getSubjectIndexes: (subjectId: number) => Promise<PublicIndexPage>;
+  getSubjectIndexes: (
+    subjectId: number,
+    offset: number,
+  ) => Promise<PublicIndexPage>;
 };

@@ -1,40 +1,27 @@
-import type {
-  IndexesProvider,
-  PublicIndexSummary,
-} from '@/features/indexes/model';
+import type { IndexesProvider } from '@/features/indexes/model';
 
 import {
   getBangumiIndex,
   getBangumiSubjectIndexes,
 } from '../api-next/client';
-import type { BangumiIndexPage } from '../api-next/schemas';
-
-function toSummary(
-  index: BangumiIndexPage['data'][number],
-): PublicIndexSummary {
-  return {
-    author:
-      index.user?.nickname || index.user?.username || '未知用户',
-    authorUsername: index.user?.username,
-    id: index.id,
-    itemCount: index.total,
-    title: index.title,
-    updatedAt: index.updatedAt,
-  };
-}
+import {
+  toPublicIndexPage,
+  toPublicIndexSummary,
+} from './adapter';
 
 export const bangumiIndexesProvider: IndexesProvider = {
-  async getSubjectIndexes(subjectId) {
-    const page = await getBangumiSubjectIndexes(subjectId);
-
-    return {
-      items: page.data.map(toSummary),
-      total: page.total,
-    };
+  async getSubjectIndexes(subjectId, offset) {
+    const limit = 30;
+    const page = await getBangumiSubjectIndexes(
+      subjectId,
+      offset,
+      limit,
+    );
+    return toPublicIndexPage(page, offset, limit);
   },
   async getIndex(indexId) {
     const { detail, related } = await getBangumiIndex(indexId);
-    const summary = toSummary(detail);
+    const summary = toPublicIndexSummary(detail);
 
     return {
       ...summary,
