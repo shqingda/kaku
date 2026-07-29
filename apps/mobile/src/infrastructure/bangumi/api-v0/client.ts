@@ -55,23 +55,10 @@ export async function getBangumiPerson(personId: number) {
 }
 
 export async function getBangumiPublicUser(username: string) {
-  const encodedUsername = encodeURIComponent(username);
-  const collectionQuery = new URLSearchParams({
-    limit: '20',
-    offset: '0',
-    subject_type: '2',
-  });
-  const [profileJson, collectionsJson] = await Promise.all([
-    requestJson(`/v0/users/${encodedUsername}`),
-    requestJson(
-      `/v0/users/${encodedUsername}/collections?${collectionQuery}`,
-    ),
-  ]);
-
-  return {
-    collections: bangumiUserCollectionsSchema.parse(collectionsJson),
-    profile: bangumiPublicUserSchema.parse(profileJson),
-  };
+  const json = await requestJson(
+    `/v0/users/${encodeURIComponent(username)}`,
+  );
+  return bangumiPublicUserSchema.parse(json);
 }
 
 export async function getBangumiUserCollections(

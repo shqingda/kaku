@@ -5,45 +5,29 @@ import {
   getBangumiUserCollections,
 } from '../api-v0/client';
 import {
-  getBangumiUserBlogs,
   getBangumiUserFriends,
-  getBangumiUserSocial,
+  getBangumiUserBlogs,
   getBangumiUserTimeline,
 } from '../api-next/client';
 import {
-  toPublicUserBlog,
   toPublicUserBlogPage,
-  toPublicUserCollection,
   toPublicUserCollectionPage,
-  toPublicUserFriend,
   toPublicUserFriendPage,
-  toPublicTimelineItem,
   toPublicTimelinePage,
 } from './adapter';
 
 export const bangumiUsersProvider: UsersProvider = {
   async getPublicUser(username) {
-    const [{ collections, profile }, blogs, social] = await Promise.all([
-      getBangumiPublicUser(username),
-      getBangumiUserBlogs(username),
-      getBangumiUserSocial(username),
-    ]);
+    const profile = await getBangumiPublicUser(username);
 
     return {
       avatarUrl:
         profile.avatar?.large ??
         profile.avatar?.medium ??
         profile.avatar?.small,
-      collections: collections.data.map(toPublicUserCollection),
-      blogs: blogs.data.map(toPublicUserBlog),
-      blogTotal: blogs.total,
-      friends: social.friends.data.map(toPublicUserFriend),
-      friendTotal: social.friends.total,
-      collectionTotal: collections.total,
       id: profile.id,
       nickname: profile.nickname || profile.username,
       sign: profile.sign,
-      timeline: social.timeline.map(toPublicTimelineItem),
       username: profile.username,
     };
   },

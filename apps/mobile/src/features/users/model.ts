@@ -55,16 +55,9 @@ export type PublicTimelinePage = {
 
 export type PublicUserProfile = {
   avatarUrl?: string;
-  collections: PublicUserCollection[];
-  blogs: PublicUserBlog[];
-  blogTotal: number;
-  friends: PublicUserFriend[];
-  friendTotal: number;
-  collectionTotal: number;
   id: number;
   nickname: string;
   sign: string;
-  timeline: PublicTimelineItem[];
   username: string;
 };
 

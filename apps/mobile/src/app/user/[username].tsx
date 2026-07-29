@@ -15,18 +15,36 @@ import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
-import { usePublicUser } from '@/features/users/use-public-user';
+import {
+  usePublicUser,
+  usePublicUserBlogs,
+  usePublicUserCollections,
+  usePublicUserFriends,
+  usePublicUserTimeline,
+} from '@/features/users/use-public-user';
 
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const userQuery = usePublicUser(username);
+  const blogsQuery = usePublicUserBlogs(username);
+  const collectionsQuery = usePublicUserCollections(username);
+  const friendsQuery = usePublicUserFriends(username);
+  const timelineQuery = usePublicUserTimeline(username);
   const user = userQuery.data;
+  const blogsPage = blogsQuery.data?.pages[0];
+  const collectionsPage = collectionsQuery.data?.pages[0];
+  const friendsPage = friendsQuery.data?.pages[0];
+  const timelinePage = timelineQuery.data?.pages[0];
+  const blogs = blogsPage?.items ?? [];
+  const collections = collectionsPage?.items ?? [];
+  const friends = friendsPage?.items ?? [];
+  const timeline = timelinePage?.items ?? [];
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: user?.nickname ?? '用户主页' }} />
       {userQuery.isPending ? (
-        <State text="正在读取公开资料和收藏。" title="加载中" />
+        <State text="正在读取公开资料。" title="加载中" />
       ) : userQuery.isError || !user ? (
         <State
           action={() => void userQuery.refetch()}
@@ -36,12 +54,15 @@ export default function PublicUserScreen() {
       ) : (
         <FlatList
           contentContainerStyle={styles.content}
-          data={user.collections}
+          data={collections}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>该用户没有公开动画收藏。</Text>
-            </View>
+            <SectionStatus
+              emptyText="该用户没有公开动画收藏。"
+              isError={collectionsQuery.isError}
+              isPending={collectionsQuery.isPending}
+              onRetry={() => void collectionsQuery.refetch()}
+            />
           }
           ListHeaderComponent={
             <>
@@ -73,9 +94,14 @@ export default function PublicUserScreen() {
                 <Text style={styles.sectionTitle}>好友</Text>
                 <View style={styles.sectionRight}>
                   <Text style={styles.sectionMeta}>
-                    {user.friends.length} / {user.friendTotal}
+                    {sectionMeta(
+                      friendsQuery.isPending,
+                      friendsQuery.isError,
+                      friends.length,
+                      friendsPage?.total,
+                    )}
                   </Text>
-                  {user.friendTotal > user.friends.length ? (
+                  {friendsQuery.hasNextPage ? (
                     <Pressable
                       accessibilityRole="button"
                       onPress={() =>
@@ -95,13 +121,13 @@ export default function PublicUserScreen() {
                   ) : null}
                 </View>
               </View>
-              {user.friends.length > 0 ? (
+              {friends.length > 0 ? (
                 <ScrollView
                   contentContainerStyle={styles.friendList}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                 >
-                  {user.friends.map((friend) => (
+                  {friends.map((friend) => (
                     <PublicUserFriendCard
                       compact
                       friend={friend}
@@ -116,15 +142,24 @@ export default function PublicUserScreen() {
                   ))}
                 </ScrollView>
               ) : (
-                <Text style={styles.inlineEmpty}>暂无公开好友。</Text>
+                <SectionStatus
+                  emptyText="暂无公开好友。"
+                  isError={friendsQuery.isError}
+                  isPending={friendsQuery.isPending}
+                  onRetry={() => void friendsQuery.refetch()}
+                />
               )}
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>时间线</Text>
                 <View style={styles.sectionRight}>
                   <Text style={styles.sectionMeta}>
-                    最近 {user.timeline.length} 条
+                    {timelineQuery.isPending
+                      ? '读取中'
+                      : timelineQuery.isError
+                        ? '暂不可用'
+                        : `最近 ${timeline.length} 条`}
                   </Text>
-                  {user.timeline.length >= 10 ? (
+                  {timelineQuery.hasNextPage ? (
                     <Pressable
                       accessibilityRole="button"
                       onPress={() =>
@@ -145,10 +180,15 @@ export default function PublicUserScreen() {
                 </View>
               </View>
               <View style={styles.timelineList}>
-                {user.timeline.length === 0 ? (
-                  <Text style={styles.inlineEmpty}>暂无公开动态。</Text>
+                {timeline.length === 0 ? (
+                  <SectionStatus
+                    emptyText="暂无公开动态。"
+                    isError={timelineQuery.isError}
+                    isPending={timelineQuery.isPending}
+                    onRetry={() => void timelineQuery.refetch()}
+                  />
                 ) : null}
-                {user.timeline.map((item, index) => (
+                {timeline.map((item, index) => (
                   <PublicUserTimelineRow
                     hasDivider={index > 0}
                     item={item}
@@ -169,9 +209,15 @@ export default function PublicUserScreen() {
                 <Text style={styles.sectionTitle}>日志</Text>
                 <View style={styles.sectionRight}>
                   <Text style={styles.sectionMeta}>
-                    最近 {user.blogs.length} / {user.blogTotal}
+                    {sectionMeta(
+                      blogsQuery.isPending,
+                      blogsQuery.isError,
+                      blogs.length,
+                      blogsPage?.total,
+                      '最近 ',
+                    )}
                   </Text>
-                  {user.blogTotal > user.blogs.length ? (
+                  {blogsQuery.hasNextPage ? (
                     <Pressable
                       accessibilityRole="button"
                       onPress={() =>
@@ -192,10 +238,15 @@ export default function PublicUserScreen() {
                 </View>
               </View>
               <View style={styles.blogList}>
-                {user.blogs.length === 0 ? (
-                  <Text style={styles.blogEmpty}>暂无公开日志。</Text>
+                {blogs.length === 0 ? (
+                  <SectionStatus
+                    emptyText="暂无公开日志。"
+                    isError={blogsQuery.isError}
+                    isPending={blogsQuery.isPending}
+                    onRetry={() => void blogsQuery.refetch()}
+                  />
                 ) : null}
-                {user.blogs.map((blog, index) => (
+                {blogs.map((blog, index) => (
                   <PublicUserBlogRow
                     hasDivider={index > 0}
                     item={blog}
@@ -213,9 +264,14 @@ export default function PublicUserScreen() {
                 <Text style={styles.sectionTitle}>动画收藏</Text>
                 <View style={styles.sectionRight}>
                   <Text style={styles.sectionMeta}>
-                    {user.collections.length} / {user.collectionTotal}
+                    {sectionMeta(
+                      collectionsQuery.isPending,
+                      collectionsQuery.isError,
+                      collections.length,
+                      collectionsPage?.total,
+                    )}
                   </Text>
-                  {user.collectionTotal > user.collections.length ? (
+                  {collectionsQuery.hasNextPage ? (
                     <Pressable
                       accessibilityRole="button"
                       onPress={() =>
@@ -255,6 +311,60 @@ export default function PublicUserScreen() {
       )}
     </SafeAreaView>
   );
+}
+
+function sectionMeta(
+  isPending: boolean,
+  isError: boolean,
+  count: number,
+  total?: number,
+  prefix = '',
+) {
+  if (isPending) {
+    return '读取中';
+  }
+
+  if (isError) {
+    return '暂不可用';
+  }
+
+  return `${prefix}${count} / ${total ?? count}`;
+}
+
+function SectionStatus({
+  emptyText,
+  isError,
+  isPending,
+  onRetry,
+}: {
+  emptyText: string;
+  isError: boolean;
+  isPending: boolean;
+  onRetry: () => void;
+}) {
+  if (isPending) {
+    return <Text style={styles.inlineEmpty}>正在读取…</Text>;
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.inlineStatus}>
+        <Text style={styles.inlineEmpty}>这一部分暂时读取失败。</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={({ pressed }) => [
+            styles.inlineRetry,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={styles.inlineRetryText}>重试</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return <Text style={styles.inlineEmpty}>{emptyText}</Text>;
 }
 
 function State({
@@ -346,6 +456,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingHorizontal: 4,
     paddingVertical: 14,
+  },
+  inlineStatus: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  inlineRetry: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  inlineRetryText: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: '700',
   },
   blogList: {
     backgroundColor: COLORS.surface,

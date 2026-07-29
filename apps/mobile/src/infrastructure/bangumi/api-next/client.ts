@@ -95,19 +95,6 @@ export async function getBangumiUserBlogs(
   return bangumiUserBlogsSchema.parse(json);
 }
 
-export async function getBangumiUserSocial(username: string) {
-  const encodedUsername = encodeURIComponent(username);
-  const [friendsJson, timeline] = await Promise.all([
-    requestJson(`/p1/users/${encodedUsername}/friends?limit=20&offset=0`),
-    getBangumiUserTimeline(username),
-  ]);
-
-  return {
-    friends: bangumiUserFriendsSchema.parse(friendsJson),
-    timeline,
-  };
-}
-
 export async function getBangumiUserTimeline(
   username: string,
   until?: number,
