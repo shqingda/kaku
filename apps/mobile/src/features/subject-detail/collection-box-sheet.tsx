@@ -117,10 +117,7 @@ export function CollectionBoxSheet({
         >
           <View style={styles.handle} />
           <View style={styles.heading}>
-            <View>
-              <Text style={styles.title}>收藏盒</Text>
-              <Text style={styles.hint}>设置收藏状态和个人记录</Text>
-            </View>
+            <Text style={styles.title}>收藏盒</Text>
             <Pressable
               accessibilityLabel="关闭收藏盒"
               accessibilityRole="button"
@@ -206,10 +203,7 @@ export function CollectionBoxSheet({
                 {showsProgress ? (
                   <>
                     <View style={styles.recordRow}>
-                      <View>
-                        <Text style={styles.recordTitle}>观看进度</Text>
-                        <Text style={styles.recordHint}>直接输入已看集数</Text>
-                      </View>
+                      <Text style={styles.recordTitle}>观看进度</Text>
                       <View style={styles.progressControl}>
                         <TextInput
                           accessibilityLabel="已看集数"
@@ -223,7 +217,7 @@ export function CollectionBoxSheet({
                           value={watchedCount}
                         />
                         <Text style={styles.progressTotal}>
-                          / {item.totalEpisodes} 集
+                          /{item.totalEpisodes} 集
                         </Text>
                       </View>
                     </View>
@@ -234,10 +228,7 @@ export function CollectionBoxSheet({
                 {canEditPersonalData ? (
                   <View style={styles.ratingRecord}>
                     <View style={styles.ratingHeading}>
-                      <View>
-                        <Text style={styles.recordTitle}>我的评分</Text>
-                        <Text style={styles.recordHint}>10 分对应五颗星</Text>
-                      </View>
+                      <Text style={styles.recordTitle}>我的评分</Text>
                       {rating ? (
                         <View style={styles.currentRating}>
                           <RatingStars rating={rating} size={12} />
@@ -306,6 +297,7 @@ export function CollectionBoxSheet({
             {item.collectionStatus ? (
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="取消收藏"
                 onPress={() => setStatus(undefined)}
                 style={({ pressed }) => [
                   styles.removeButton,
@@ -322,7 +314,7 @@ export function CollectionBoxSheet({
                   tintColor={COLORS.accent}
                   weight="semibold"
                 />
-                <Text style={styles.removeText}>移出收藏盒</Text>
+                <Text style={styles.removeText}>取消收藏</Text>
               </Pressable>
             ) : null}
           </ScrollView>
@@ -371,7 +363,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
-  hint: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
   closeButton: {
     alignItems: 'center',
     backgroundColor: '#F7F6F2',
@@ -429,7 +420,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   recordTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
-  recordHint: { color: COLORS.subtle, fontSize: 10, marginTop: 3 },
   recordDivider: {
     backgroundColor: COLORS.track,
     height: StyleSheet.hairlineWidth,
@@ -447,18 +437,20 @@ const styles = StyleSheet.create({
   },
   progressInput: {
     color: COLORS.accent,
-    fontSize: 16,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
+    lineHeight: 20,
     minWidth: 34,
     padding: 0,
     textAlign: 'right',
   },
   progressTotal: {
     color: COLORS.muted,
-    fontSize: 12,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
-    fontWeight: '600',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   ratingRecord: { gap: 12 },
   ratingHeading: {
@@ -521,13 +513,15 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 13,
     flexDirection: 'row',
     gap: 6,
     minHeight: 44,
     justifyContent: 'center',
-    marginTop: 6,
+    marginTop: 10,
   },
-  removeText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  removeText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
   saveButton: {
     alignItems: 'center',
     backgroundColor: COLORS.accent,

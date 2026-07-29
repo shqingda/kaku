@@ -7,6 +7,7 @@ import {
   getCollectionStatusLabel,
   supportsWatchProgress,
 } from '@/features/catalog/subject-types';
+import { getRatingLabel } from '@/features/reviews/rating-label';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import type {
   CollectionStatus,
@@ -70,7 +71,7 @@ export function CollectionControls({
     }
 
     const action =
-      draft.collectionStatus === 'wish' ? '改为想看' : '移出收藏盒';
+      draft.collectionStatus === 'wish' ? '改为想看' : '取消收藏';
     const clearedRecords = [
       clearsProgress
         ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
@@ -79,7 +80,7 @@ export function CollectionControls({
     ].filter(Boolean);
 
     Alert.alert(
-      clearedRecords.length > 0 ? '清空个人记录？' : '移出收藏盒？',
+      clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？',
       clearedRecords.length > 0
         ? `${action}会清空${clearedRecords.join('和')}。`
         : '该条目将不再保留当前收藏状态。',
@@ -88,7 +89,7 @@ export function CollectionControls({
         {
           onPress: () => applyDraft(draft),
           style: 'destructive',
-          text: clearedRecords.length > 0 ? '清空并继续' : '移出',
+          text: clearedRecords.length > 0 ? '清空并继续' : '取消收藏',
         },
       ],
     );
@@ -138,7 +139,6 @@ export function CollectionControls({
           {status ? (
             <>
               <View style={styles.metric}>
-                <Text style={styles.metricLabel}>状态</Text>
                 <Text style={[styles.metricValue, styles.statusValue]}>
                   {getCollectionStatusLabel(subjectType, status)}
                 </Text>
@@ -147,10 +147,8 @@ export function CollectionControls({
                 <>
                   <View style={styles.divider} />
                   <View style={styles.metric}>
-                    <Text style={styles.metricLabel}>观看进度</Text>
                     <Text style={styles.metricValue}>
-                      {item.watchedEpisodeNumbers.length}/{item.totalEpisodes}
-                      <Text style={styles.metricUnit}> 集</Text>
+                      {item.watchedEpisodeNumbers.length}/{item.totalEpisodes} 集
                     </Text>
                   </View>
                 </>
@@ -159,14 +157,12 @@ export function CollectionControls({
                 <>
                   <View style={styles.divider} />
                   <View style={styles.metric}>
-                    <Text style={styles.metricLabel}>我的评分</Text>
                     {item.rating ? (
                       <View style={styles.ratingValue}>
-                        <Text style={styles.metricValue}>
-                          {item.rating}
-                          <Text style={styles.metricUnit}> 分</Text>
+                        <RatingStars rating={item.rating} size={9} />
+                        <Text style={styles.ratingLabel}>
+                          {getRatingLabel(item.rating)}
                         </Text>
-                        <RatingStars rating={item.rating} size={10} />
                       </View>
                     ) : (
                       <Text style={styles.unsetText}>未评分</Text>
@@ -178,7 +174,6 @@ export function CollectionControls({
           ) : (
             <View style={styles.emptySummary}>
               <Text style={styles.emptyTitle}>尚未收藏</Text>
-              <Text style={styles.emptyText}>添加到收藏盒后可记录个人进度</Text>
             </View>
           )}
         </View>
@@ -225,9 +220,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     flexDirection: 'row',
     marginTop: 16,
-    minHeight: 70,
+    minHeight: 62,
     paddingHorizontal: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   metric: {
     alignItems: 'center',
@@ -235,34 +230,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 0,
   },
-  metricLabel: {
-    color: COLORS.subtle,
-    fontSize: 10,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
   metricValue: {
     color: COLORS.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
-  metricUnit: { color: COLORS.muted, fontSize: 10, fontWeight: '600' },
   statusValue: { color: COLORS.accent, fontSize: 16 },
   divider: {
     backgroundColor: COLORS.track,
     height: 32,
     width: StyleSheet.hairlineWidth,
   },
-  ratingValue: { alignItems: 'center', gap: 2 },
+  ratingValue: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  ratingLabel: { color: COLORS.ink, fontSize: 12, fontWeight: '800' },
   unsetText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
   emptySummary: { flex: 1, paddingHorizontal: 6 },
   emptyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
-  emptyText: {
-    color: COLORS.subtle,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 3,
-  },
   pressed: { opacity: 0.58 },
 });
