@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { bangumiCatalogProvider } from '@/infrastructure/bangumi/catalog/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 const CATALOG_QUERY_VERSION = 4;
 
@@ -10,7 +11,7 @@ export function useCatalogSubject(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     queryFn: () => bangumiCatalogProvider.getSubject(subjectId),
     queryKey: queryKeys.catalogSubject(subjectId, CATALOG_QUERY_VERSION),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -11,6 +11,7 @@ import {
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
 import {
   changeCollectionStatus,
+  changeRating,
   changeWatchedEpisodeCount,
   resizeWatchedEpisodes,
   shouldShowWatchProgress,
@@ -59,7 +60,7 @@ test('updateWatchingList adds, updates, and removes progress items', () => {
   assert.deepEqual(removed, []);
 });
 
-test('collection status, rating, and progress retain items independently', () => {
+test('collection status retains items while rating requires an active status', () => {
   const subject = {
     coverUrl: 'cover',
     episodeAirDates: [],
@@ -74,12 +75,16 @@ test('collection status, rating, and progress retain items independently', () =>
     ...subject,
     collectionStatus: 'wish',
   });
-  const rated = updateWatchingList([], { ...subject, rating: 8 });
+  const unratedWish = changeRating(wished[0], 8);
+  const ratedDoing = changeRating(
+    { ...subject, collectionStatus: 'doing' },
+    8,
+  );
 
   assert.equal(wished[0].collectionStatus, 'wish');
   assert.deepEqual(wished[0].watchedEpisodeNumbers, []);
-  assert.equal(rated[0].rating, 8);
-  assert.equal(rated[0].collectionStatus, undefined);
+  assert.equal(unratedWish.rating, undefined);
+  assert.equal(ratedDoing.rating, 8);
 });
 
 test('watch progress starts watching while wish clears progress', () => {
@@ -95,16 +100,19 @@ test('watch progress starts watching while wish clears progress', () => {
     year: 2026,
   };
   const progressed = changeWatchedEpisodeCount(subject, 2);
-  const wished = changeCollectionStatus(progressed, 'wish');
-  const uncollected = changeCollectionStatus(progressed);
+  const ratedProgressed = changeRating(progressed, 9);
+  const wished = changeCollectionStatus(ratedProgressed, 'wish');
+  const uncollected = changeCollectionStatus(ratedProgressed);
   const watchedOne = toggleWatchedEpisode(wished, 1);
 
   assert.equal(progressed.collectionStatus, 'doing');
   assert.deepEqual(progressed.watchedEpisodeNumbers, [1, 2]);
   assert.equal(wished.collectionStatus, 'wish');
   assert.deepEqual(wished.watchedEpisodeNumbers, []);
+  assert.equal(wished.rating, undefined);
   assert.equal(uncollected.collectionStatus, null);
   assert.deepEqual(uncollected.watchedEpisodeNumbers, []);
+  assert.equal(uncollected.rating, undefined);
   assert.equal(watchedOne.collectionStatus, 'doing');
   assert.deepEqual(watchedOne.watchedEpisodeNumbers, [1]);
 });

@@ -7,12 +7,13 @@ import {
 import type { DiscoverSubjectPage } from './model';
 import { bangumiDiscoverProvider } from '@/infrastructure/bangumi/discover/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useBangumiCalendar() {
   return useQuery({
     queryFn: () => bangumiDiscoverProvider.getCalendar(),
     queryKey: queryKeys.calendar(),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
   });
 }
@@ -30,7 +31,7 @@ export function useBangumiRankedSubjects() {
     queryFn: ({ pageParam }) =>
       bangumiDiscoverProvider.getRankedSubjects(pageParam),
     queryKey: queryKeys.rankedSubjects(),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
   });
 }
@@ -53,7 +54,7 @@ export function useBangumiSearch(keyword: string, subjectType: number) {
         pageParam,
       ),
     queryKey: queryKeys.subjectSearch(keyword, subjectType),
-    retry: 1,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }

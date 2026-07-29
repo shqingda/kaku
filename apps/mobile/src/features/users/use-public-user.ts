@@ -12,13 +12,14 @@ import type {
 } from './model';
 import { bangumiUsersProvider } from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function usePublicUser(username: string) {
   return useQuery({
     enabled: username.trim().length > 0,
     queryFn: () => bangumiUsersProvider.getPublicUser(username),
     queryKey: queryKeys.publicUser(username),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -40,7 +41,7 @@ export function usePublicUserCollections(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserCollections(username),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -62,7 +63,7 @@ export function usePublicUserBlogs(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserBlogs(username),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -84,7 +85,7 @@ export function usePublicUserFriends(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserFriends(username),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -106,7 +107,7 @@ export function usePublicUserTimeline(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserTimeline(username),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }

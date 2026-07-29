@@ -23,16 +23,21 @@ test('watching storage codec round-trips valid items', () => {
   ]);
 });
 
-test('watching storage clears progress for wish items', () => {
+test('watching storage clears progress and rating for wish items', () => {
   const stored = {
     ...item,
     collectionStatus: 'wish',
     rating: 9,
     watchedEpisodeNumbers: [1, 2],
   };
+  const { rating: _rating, ...storedWithoutRating } = stored;
 
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
-    { ...stored, type: 2, watchedEpisodeNumbers: [] },
+    {
+      ...storedWithoutRating,
+      type: 2,
+      watchedEpisodeNumbers: [],
+    },
   ]);
 });
 
@@ -45,6 +50,17 @@ test('watching storage repairs old progress-only records as doing', () => {
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
     { ...stored, collectionStatus: 'doing', type: 2 },
   ]);
+});
+
+test('watching storage removes a legacy rating without a collection status', () => {
+  const stored = {
+    ...item,
+    collectionStatus: null,
+    rating: 8,
+    watchedEpisodeNumbers: [],
+  };
+
+  assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), []);
 });
 
 test('watching storage codec rejects malformed JSON', () => {

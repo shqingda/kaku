@@ -15,6 +15,7 @@ import type { CollectionStatus, WatchingItem } from './model';
 import { watchingStorage } from './watching-storage';
 import {
   changeCollectionStatus,
+  changeRating,
   changeWatchedEpisodeCount,
   toggleWatchedEpisode,
 } from './progress';
@@ -151,11 +152,7 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
   function setRating(subject: WatchingItem, rating?: number) {
     setItems((current) => {
       const item = current.find((entry) => entry.id === subject.id) ?? subject;
-      return updateWatchingList(current, {
-        ...item,
-        collectionStatus: item.collectionStatus ?? null,
-        rating,
-      });
+      return updateWatchingList(current, changeRating(item, rating));
     });
   }
 

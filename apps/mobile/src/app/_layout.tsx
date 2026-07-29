@@ -3,6 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 
 import { WatchingProvider } from '@/features/watching/watching-provider';
+import {
+  bangumiRetryDelay,
+  shouldRetryBangumiQuery,
+} from '@/lib/query-retry';
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -12,6 +16,8 @@ export default function RootLayout() {
           queries: {
             gcTime: 30 * 60 * 1000,
             refetchOnReconnect: true,
+            retry: shouldRetryBangumiQuery,
+            retryDelay: bangumiRetryDelay,
           },
         },
       }),

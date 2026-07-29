@@ -24,16 +24,29 @@ const watchingItemSchema = z.object({
     watchedEpisodeNumbers.length > 0 && item.collectionStatus == null
       ? 'doing' as const
       : item.collectionStatus ?? null;
+  const { rating, ...itemWithoutRating } = item;
 
   return {
-    ...item,
+    ...itemWithoutRating,
     collectionStatus,
+    ...(collectionStatus != null &&
+    collectionStatus !== 'wish' &&
+    rating !== undefined
+      ? { rating }
+      : {}),
     type: item.type ?? 2,
     watchedEpisodeNumbers,
   };
 });
 
-const watchingItemsSchema = z.array(watchingItemSchema);
+const watchingItemsSchema = z.array(watchingItemSchema).transform((items) =>
+  items.filter(
+    (item) =>
+      item.collectionStatus != null ||
+      item.rating !== undefined ||
+      item.watchedEpisodeNumbers.length > 0,
+  ),
+);
 
 export function decodeWatchingItems(value: string): WatchingItem[] {
   return watchingItemsSchema.parse(JSON.parse(value));

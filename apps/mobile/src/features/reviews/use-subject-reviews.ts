@@ -6,6 +6,7 @@ import {
 
 import { bangumiReviewsProvider } from '@/infrastructure/bangumi/reviews/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import type {
   SubjectCommentPage,
@@ -27,7 +28,7 @@ export function useSubjectComments(subjectId: number) {
     queryFn: ({ pageParam }) =>
       bangumiReviewsProvider.getComments(subjectId, pageParam),
     queryKey: queryKeys.subjectComments(subjectId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -46,7 +47,7 @@ export function useSubjectReviews(subjectId: number) {
     queryFn: ({ pageParam }) =>
       bangumiReviewsProvider.getReviews(subjectId, pageParam),
     queryKey: queryKeys.subjectReviews(subjectId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -56,7 +57,7 @@ export function useSubjectReview(reviewId: number) {
     enabled: Number.isInteger(reviewId) && reviewId > 0,
     queryFn: () => bangumiReviewsProvider.getReview(reviewId),
     queryKey: queryKeys.subjectReview(reviewId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }

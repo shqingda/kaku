@@ -10,6 +10,7 @@ import type {
 } from './model';
 import { bangumiIndexesProvider } from '@/infrastructure/bangumi/indexes/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useSubjectIndexes(subjectId: number) {
   return useInfiniteQuery<
@@ -25,7 +26,7 @@ export function useSubjectIndexes(subjectId: number) {
     queryFn: ({ pageParam }) =>
       bangumiIndexesProvider.getSubjectIndexes(subjectId, pageParam),
     queryKey: queryKeys.subjectIndexes(subjectId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -35,7 +36,7 @@ export function usePublicIndex(indexId: number) {
     enabled: Number.isInteger(indexId) && indexId > 0,
     queryFn: () => bangumiIndexesProvider.getIndex(indexId),
     queryKey: queryKeys.publicIndex(indexId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -54,7 +55,7 @@ export function usePublicIndexItems(indexId: number) {
     queryFn: ({ pageParam }) =>
       bangumiIndexesProvider.getIndexItems(indexId, pageParam),
     queryKey: queryKeys.publicIndexItems(indexId),
-    retry: 2,
+    retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
 }

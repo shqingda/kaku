@@ -1,5 +1,11 @@
 import type { CollectionStatus, WatchingItem } from './model';
 
+export function canRateCollectionStatus(
+  collectionStatus?: CollectionStatus | null,
+) {
+  return collectionStatus != null && collectionStatus !== 'wish';
+}
+
 export function shouldShowWatchProgress({
   collectionStatus,
   totalEpisodes,
@@ -64,13 +70,24 @@ export function changeCollectionStatus(
   item: WatchingItem,
   collectionStatus?: CollectionStatus,
 ) {
-  const clearsProgress =
+  const clearsPersonalData =
     collectionStatus === 'wish' || collectionStatus === undefined;
 
   return {
     ...item,
     collectionStatus: collectionStatus ?? null,
-    watchedEpisodeNumbers: clearsProgress ? [] : item.watchedEpisodeNumbers,
+    rating: clearsPersonalData ? undefined : item.rating,
+    watchedEpisodeNumbers:
+      clearsPersonalData ? [] : item.watchedEpisodeNumbers,
+  };
+}
+
+export function changeRating(item: WatchingItem, rating?: number) {
+  return {
+    ...item,
+    rating: canRateCollectionStatus(item.collectionStatus)
+      ? rating
+      : undefined,
   };
 }
 

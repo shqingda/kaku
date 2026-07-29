@@ -29,10 +29,12 @@ export default function TopicScreen() {
   if (!topic && !topicQuery.isPending && !topicQuery.isError) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen options={{ title: '话题不存在' }} />
+        <Stack.Screen options={{ title: '话题不可用' }} />
         <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>没有找到这个讨论话题</Text>
-          <Text style={styles.errorText}>可能已被删除，请返回后刷新。</Text>
+          <Text style={styles.errorTitle}>暂时无法查看这个话题</Text>
+          <Text style={styles.errorText}>
+            该话题可能需要登录，也可能正在审核或已被删除。接入登录功能后可以再次尝试。
+          </Text>
         </View>
       </SafeAreaView>
     );

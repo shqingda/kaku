@@ -1,4 +1,13 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { SymbolView } from 'expo-symbols';
+import {
+  Alert,
+  type GestureResponderEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import {
@@ -9,6 +18,7 @@ import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
+import { canRateCollectionStatus } from '@/features/watching/progress';
 import { playSelectionHaptic } from '@/lib/haptics';
 
 const STATUS_OPTIONS: CollectionStatus[] = [
@@ -23,10 +33,12 @@ export function CollectionControls({
   item,
   onChangeRating,
   onChangeStatus,
+  progressControl,
 }: {
   item: WatchingItem;
   onChangeRating: (rating?: number) => void;
   onChangeStatus: (status?: CollectionStatus) => void;
+  progressControl?: ReactNode;
 }) {
   function selectStatus(status?: CollectionStatus) {
     const cancelsCollection =
@@ -34,14 +46,24 @@ export function CollectionControls({
     const clearsProgress =
       item.watchedEpisodeNumbers.length > 0 &&
       (status === 'wish' || status === undefined);
+    const clearsRating =
+      item.rating !== undefined &&
+      (status === 'wish' || status === undefined);
 
-    if (cancelsCollection || clearsProgress) {
-      const title = clearsProgress ? '清空观看进度？' : '取消收藏？';
-      const message = clearsProgress
-        ? `${
-            status === 'wish' ? '改为想看' : '取消收藏'
-          }会清空已看的 ${item.watchedEpisodeNumbers.length} 集。`
-        : '该条目将不再保留当前收藏状态。';
+    if (cancelsCollection || clearsProgress || clearsRating) {
+      const action = status === 'wish' ? '改为想看' : '取消收藏';
+      const clearedRecords = [
+        clearsProgress
+          ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
+          : null,
+        clearsRating ? `${item.rating} 分评分` : null,
+      ].filter(Boolean);
+      const title =
+        clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？';
+      const message =
+        clearedRecords.length > 0
+          ? `${action}会清空${clearedRecords.join('和')}。`
+          : '该条目将不再保留当前收藏状态。';
 
       Alert.alert(
         title,
@@ -54,7 +76,8 @@ export function CollectionControls({
               playSelectionHaptic();
             },
             style: 'destructive',
-            text: clearsProgress ? '清空并继续' : '取消收藏',
+            text:
+              clearedRecords.length > 0 ? '清空并继续' : '取消收藏',
           },
         ],
       );
@@ -65,10 +88,18 @@ export function CollectionControls({
     playSelectionHaptic();
   }
 
-  function selectRating(rating?: number) {
-    onChangeRating(rating);
+  function selectRating(
+    event: GestureResponderEvent,
+    starIndex: number,
+  ) {
+    const rating =
+      starIndex * 2 + (event.nativeEvent.locationX < 22 ? 1 : 2);
+    onChangeRating(item.rating === rating ? undefined : rating);
     playSelectionHaptic();
   }
+
+  const canRate = canRateCollectionStatus(item.collectionStatus);
+  const wishLabel = getCollectionStatusLabel(item.type ?? 2, 'wish');
 
   return (
     <View style={styles.panel}>
@@ -80,16 +111,29 @@ export function CollectionControls({
             accessibilityRole="button"
             hitSlop={8}
             onPress={() => selectStatus(undefined)}
-            style={({ pressed }) => pressed && styles.pressed}
+            style={({ pressed }) => [
+              styles.clear,
+              pressed && styles.pressed,
+            ]}
           >
-            <Text style={styles.clear}>取消收藏</Text>
+            <SymbolView
+              name={{
+                android: 'bookmark_remove',
+                ios: 'bookmark.slash',
+                web: 'bookmark_remove',
+              }}
+              size={13}
+              tintColor={COLORS.accent}
+              weight="semibold"
+            />
+            <Text style={styles.clearText}>取消收藏</Text>
           </Pressable>
         ) : null}
       </View>
       <Text style={styles.hint}>
         {supportsWatchProgress(item.type ?? 2)
-          ? '收藏状态、评分和观看进度彼此独立'
-          : '收藏状态和评分彼此独立'}
+          ? `${wishLabel}状态不记录观看进度和评分`
+          : `${wishLabel}状态不记录评分`}
       </Text>
 
       <View style={styles.statuses}>
@@ -121,41 +165,74 @@ export function CollectionControls({
         })}
       </View>
 
-      <View style={styles.ratingHeader}>
-        <Text style={styles.ratingLabel}>评分</Text>
-        <Text style={styles.ratingValue}>
-          {item.rating ? `${item.rating} / 10` : '未评分'}
-        </Text>
-      </View>
-      <View style={styles.ratings}>
-        {Array.from({ length: 10 }, (_, index) => index + 1).map((rating) => {
-          const isSelected = item.rating === rating;
+      {progressControl}
 
-          return (
-            <Pressable
-              accessibilityLabel={`评分 ${rating} 分`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
-              key={rating}
-              onPress={() => selectRating(isSelected ? undefined : rating)}
-              style={({ pressed }) => [
-                styles.rating,
-                isSelected && styles.selectedRating,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.ratingText,
-                  isSelected && styles.selectedRatingText,
-                ]}
-              >
-                {rating}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {canRate ? (
+        <>
+          <View style={styles.ratingHeader}>
+            <Text style={styles.ratingLabel}>我的评分</Text>
+            <Text style={styles.ratingValue}>
+              {item.rating
+                ? `${(item.rating / 2).toFixed(
+                    item.rating % 2 === 0 ? 0 : 1,
+                  )} 星`
+                : '未评分'}
+            </Text>
+          </View>
+          <View style={styles.ratings}>
+            {Array.from({ length: 5 }, (_, starIndex) => {
+              const fullRating = (starIndex + 1) * 2;
+              const state =
+                (item.rating ?? 0) >= fullRating
+                  ? 'full'
+                  : item.rating === fullRating - 1
+                    ? 'half'
+                    : 'empty';
+
+              return (
+                <Pressable
+                  accessibilityHint="点击左半边选择半星，右半边选择整星；再次点击相同评分可取消"
+                  accessibilityLabel={`第 ${starIndex + 1} 颗评分星`}
+                  accessibilityRole="button"
+                  key={starIndex}
+                  onPress={(event) => selectRating(event, starIndex)}
+                  style={({ pressed }) => [
+                    styles.rating,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <SymbolView
+                    name={
+                      state === 'full'
+                        ? {
+                            android: 'star',
+                            ios: 'star.fill',
+                            web: 'star',
+                          }
+                        : state === 'half'
+                          ? {
+                              android: 'star_half',
+                              ios: 'star.leadinghalf.filled',
+                              web: 'star_half',
+                            }
+                          : {
+                              android: 'star_border',
+                              ios: 'star',
+                              web: 'star_border',
+                            }
+                    }
+                    size={28}
+                    tintColor={
+                      state === 'empty' ? COLORS.subtle : COLORS.accent
+                    }
+                    weight="medium"
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -173,7 +250,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  clear: { color: COLORS.subtle, fontSize: 12, fontWeight: '700' },
+  clear: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  clearText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
   hint: { color: COLORS.subtle, fontSize: 11, marginTop: 5 },
   statuses: {
     flexDirection: 'row',
@@ -206,24 +292,15 @@ const styles = StyleSheet.create({
   },
   ratings: {
     flexDirection: 'row',
-    gap: 5,
+    gap: 8,
+    justifyContent: 'space-between',
     marginTop: 10,
   },
   rating: {
     alignItems: 'center',
-    aspectRatio: 1,
-    backgroundColor: '#F1F0EB',
-    borderRadius: 9,
-    flex: 1,
+    height: 42,
     justifyContent: 'center',
+    width: 44,
   },
-  selectedRating: { backgroundColor: COLORS.accentSoft },
-  ratingText: {
-    color: COLORS.muted,
-    fontSize: 11,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-  },
-  selectedRatingText: { color: COLORS.accent, fontWeight: '900' },
   pressed: { opacity: 0.62 },
 });
