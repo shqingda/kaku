@@ -177,15 +177,20 @@ export async function getBangumiIndexRelated(
 }
 
 export async function getBangumiCommunity() {
-  const [groupsJson, topicsJson] = await Promise.all([
-    requestJson('/p1/groups?sort=members&limit=12&offset=0'),
-    requestJson('/p1/groups/-/topics?mode=all&limit=30&offset=0'),
-  ]);
+  const json = await requestJson(
+    '/p1/groups?sort=members&limit=12&offset=0',
+  );
+  return bangumiGroupPageSchema.parse(json);
+}
 
-  return {
-    groups: bangumiGroupPageSchema.parse(groupsJson),
-    topics: bangumiGroupTopicPageSchema.parse(topicsJson),
-  };
+export async function getBangumiCommunityTopics(
+  offset: number,
+  limit: number,
+) {
+  const json = await requestJson(
+    `/p1/groups/-/topics?mode=all&limit=${limit}&offset=${offset}`,
+  );
+  return bangumiGroupTopicPageSchema.parse(json);
 }
 
 export async function getBangumiGroup(groupName: string) {
@@ -197,10 +202,11 @@ export async function getBangumiGroup(groupName: string) {
 export async function getBangumiGroupTopics(
   groupName: string,
   offset: number,
+  limit: number,
 ) {
   const encodedName = encodeURIComponent(groupName);
   const json = await requestJson(
-    `/p1/groups/${encodedName}/topics?limit=50&offset=${offset}`,
+    `/p1/groups/${encodedName}/topics?limit=${limit}&offset=${offset}`,
   );
   return bangumiGroupTopicPageSchema.parse(json);
 }

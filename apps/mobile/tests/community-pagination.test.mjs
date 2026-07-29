@@ -23,6 +23,7 @@ test('group topic page keeps its offset and group context', () => {
   const page = toPublicGroupTopicPage(
     { data: [topic], total: 52 },
     50,
+    1,
     { name: 'anime', title: '补旧番' },
   );
 
@@ -45,6 +46,27 @@ test('group topic page stops after its last item', () => {
   const page = toPublicGroupTopicPage(
     { data: [topic], total: 51 },
     50,
+    1,
+  );
+
+  assert.equal(page.nextOffset, undefined);
+});
+
+test('community topic page advances by the requested window', () => {
+  const page = toPublicGroupTopicPage(
+    { data: [topic], total: 100 },
+    0,
+    30,
+  );
+
+  assert.equal(page.nextOffset, 30);
+});
+
+test('community topic page stops on an empty response', () => {
+  const page = toPublicGroupTopicPage(
+    { data: [], total: 100 },
+    30,
+    30,
   );
 
   assert.equal(page.nextOffset, undefined);

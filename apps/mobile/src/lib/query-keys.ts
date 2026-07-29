@@ -44,6 +44,8 @@ export const queryKeys = {
   publicIndexItems: (indexId: number) =>
     ['indexes', 'bangumi', indexId, 'items'] as const,
   community: () => ['community', 'bangumi'] as const,
+  communityTopics: () =>
+    ['community', 'bangumi', 'topics'] as const,
   group: (groupName: string) =>
     ['community', 'bangumi', 'group', groupName] as const,
   groupTopics: (groupName: string) =>

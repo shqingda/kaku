@@ -7,6 +7,7 @@ import {
 import type { PublicGroupTopicPage } from './model';
 import {
   getPublicCommunity,
+  getPublicCommunityTopics,
   getPublicGroup,
   getPublicGroupTopic,
   getPublicGroupTopics,
@@ -17,6 +18,24 @@ export function usePublicCommunity() {
   return useQuery({
     queryFn: getPublicCommunity,
     queryKey: queryKeys.community(),
+    retry: 2,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function usePublicCommunityTopics() {
+  return useInfiniteQuery<
+    PublicGroupTopicPage,
+    Error,
+    InfiniteData<PublicGroupTopicPage>,
+    ReturnType<typeof queryKeys.communityTopics>,
+    number
+  >({
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      getPublicCommunityTopics(pageParam),
+    queryKey: queryKeys.communityTopics(),
     retry: 2,
     staleTime: 2 * 60 * 1000,
   });

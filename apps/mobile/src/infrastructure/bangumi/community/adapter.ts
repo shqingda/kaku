@@ -42,9 +42,10 @@ export function toPublicGroupTopic(
 export function toPublicGroupTopicPage(
   response: BangumiGroupTopicPage,
   offset: number,
+  limit: number,
   group?: Pick<PublicGroup, 'name' | 'title'>,
 ): PublicGroupTopicPage {
-  const nextOffset = response.data.length + offset;
+  const nextOffset = limit + offset;
 
   return {
     items: response.data.map((topic) => ({
@@ -53,7 +54,9 @@ export function toPublicGroupTopicPage(
       groupTitle: group?.title ?? topic.group?.title,
     })),
     nextOffset:
-      nextOffset < response.total ? nextOffset : undefined,
+      response.data.length > 0 && nextOffset < response.total
+        ? nextOffset
+        : undefined,
     total: response.total,
   };
 }

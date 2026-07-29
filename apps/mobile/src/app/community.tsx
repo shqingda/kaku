@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import {
@@ -13,24 +14,46 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
-import { usePublicCommunity } from '@/features/community/use-community';
+import {
+  usePublicCommunity,
+  usePublicCommunityTopics,
+} from '@/features/community/use-community';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 export default function CommunityScreen() {
   const communityQuery = usePublicCommunity();
+  const topicsQuery = usePublicCommunityTopics();
   const community = communityQuery.data;
+  const topics = useMemo(
+    () => topicsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [topicsQuery.data],
+  );
+  const topicTotal = topicsQuery.data?.pages[0]?.total ?? 0;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '社区' }} />
       <FlatList
         contentContainerStyle={styles.content}
-        data={community?.topics ?? []}
+        data={topics}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          !communityQuery.isPending && !communityQuery.isError ? (
+          !topicsQuery.isPending && !topicsQuery.isError ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>暂无公开话题。</Text>
             </View>
+          ) : null
+        }
+        ListFooterComponent={
+          topics.length > 0 ? (
+            <PagedListFooter
+              hasNextPage={Boolean(topicsQuery.hasNextPage)}
+              isError={topicsQuery.isFetchNextPageError}
+              isFetching={topicsQuery.isFetchingNextPage}
+              loadedCount={topics.length}
+              onRetry={() => void topicsQuery.fetchNextPage()}
+              total={topicTotal}
+            />
           ) : null
         }
         ListHeaderComponent={
@@ -85,17 +108,41 @@ export default function CommunityScreen() {
                     </Pressable>
                   ))}
                 </ScrollView>
-                <Text style={styles.sectionTitle}>最新话题</Text>
               </>
             ) : null}
+            <View style={styles.topicHeader}>
+              <Text style={styles.sectionTitle}>最新话题</Text>
+              {topics.length > 0 ? (
+                <Text style={styles.sectionMeta}>
+                  {topics.length} / {topicTotal}
+                </Text>
+              ) : null}
+            </View>
+            <DiscussionStatus
+              errorText="最新话题加载失败，请检查网络后重试。"
+              isError={topicsQuery.isError}
+              isPending={topicsQuery.isPending}
+              loadingText="正在读取最新话题…"
+              onRetry={() => void topicsQuery.refetch()}
+            />
           </>
         }
+        onEndReached={() => {
+          if (
+            topicsQuery.hasNextPage &&
+            !topicsQuery.isFetchingNextPage &&
+            !topicsQuery.isFetchNextPageError
+          ) {
+            void topicsQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
         renderItem={({ index, item }) => (
           <View
             style={[
               styles.topicList,
               index === 0 && styles.firstTopicList,
-              index === (community?.topics.length ?? 0) - 1 &&
+              index === topics.length - 1 &&
                 styles.lastTopicList,
             ]}
           >
@@ -129,6 +176,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 20,
   },
+  topicHeader: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
   groupList: { gap: 10, paddingBottom: 8, paddingTop: 2 },
   groupCard: {
     backgroundColor: COLORS.surface,

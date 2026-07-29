@@ -21,7 +21,6 @@ export type PublicGroupTopicSummary = {
 
 export type PublicCommunity = {
   groups: PublicGroup[];
-  topics: PublicGroupTopicSummary[];
 };
 
 export type PublicGroupDetail = PublicGroup & {

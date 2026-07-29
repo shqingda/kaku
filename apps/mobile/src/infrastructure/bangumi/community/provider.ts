@@ -13,21 +13,35 @@ import {
 } from './adapter';
 import {
   getBangumiCommunity,
+  getBangumiCommunityTopics,
   getBangumiGroup,
   getBangumiGroupTopic,
   getBangumiGroupTopics,
 } from '../api-next/client';
 
 export async function getPublicCommunity(): Promise<PublicCommunity> {
-  const { groups, topics } = await getBangumiCommunity();
+  const groups = await getBangumiCommunity();
 
   return {
     groups: groups.data
       .filter((group) => !group.nsfw)
       .map(toPublicGroup),
-    topics: topics.data
-      .filter((topic) => !topic.group?.nsfw)
-      .map(toPublicGroupTopic),
+  };
+}
+
+export async function getPublicCommunityTopics(
+  offset: number,
+): Promise<PublicGroupTopicPage> {
+  const limit = 30;
+  const topics = await getBangumiCommunityTopics(offset, limit);
+  const page = toPublicGroupTopicPage(topics, offset, limit);
+
+  return {
+    ...page,
+    items: page.items.filter((_, index) => {
+      const topic = topics.data[index];
+      return !topic?.group?.nsfw;
+    }),
   };
 }
 
@@ -47,8 +61,13 @@ export async function getPublicGroupTopics(
   groupName: string,
   offset: number,
 ): Promise<PublicGroupTopicPage> {
-  const topics = await getBangumiGroupTopics(groupName, offset);
-  return toPublicGroupTopicPage(topics, offset);
+  const limit = 50;
+  const topics = await getBangumiGroupTopics(
+    groupName,
+    offset,
+    limit,
+  );
+  return toPublicGroupTopicPage(topics, offset, limit);
 }
 
 export async function getPublicGroupTopic(
