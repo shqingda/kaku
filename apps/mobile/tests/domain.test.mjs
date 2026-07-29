@@ -53,6 +53,29 @@ test('updateWatchingList adds, updates, and removes progress items', () => {
   assert.deepEqual(removed, []);
 });
 
+test('collection status, rating, and progress retain items independently', () => {
+  const subject = {
+    coverUrl: 'cover',
+    episodeAirDates: [],
+    id: 1,
+    summary: '',
+    title: '条目',
+    totalEpisodes: 12,
+    watchedEpisodeNumbers: [],
+    year: 2026,
+  };
+  const wished = updateWatchingList([], {
+    ...subject,
+    collectionStatus: 'wish',
+  });
+  const rated = updateWatchingList([], { ...subject, rating: 8 });
+
+  assert.equal(wished[0].collectionStatus, 'wish');
+  assert.deepEqual(wished[0].watchedEpisodeNumbers, []);
+  assert.equal(rated[0].rating, 8);
+  assert.equal(rated[0].collectionStatus, undefined);
+});
+
 test('Bangumi comments and reviews map into separate domain models', () => {
   const user = { id: 1, nickname: '', username: 'alice' };
   const comments = mapBangumiComments({

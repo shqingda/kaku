@@ -1,10 +1,24 @@
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
+
+const TYPE_LABELS: Record<number, string> = {
+  1: '书籍',
+  2: '动画',
+  3: '音乐',
+  4: '游戏',
+  6: '三次元',
+};
 
 export default function SubjectRelationsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +37,6 @@ export default function SubjectRelationsScreen() {
         />
       ) : (
         <FlatList
-          columnWrapperStyle={styles.row}
           contentContainerStyle={styles.content}
           data={relationsQuery.data}
           keyExtractor={(item) => `${item.type}-${item.id}`}
@@ -38,7 +51,6 @@ export default function SubjectRelationsScreen() {
               </Text>
             </View>
           }
-          numColumns={2}
           renderItem={({ item }) => (
             <Link
               asChild
@@ -51,10 +63,7 @@ export default function SubjectRelationsScreen() {
                 accessibilityLabel={`打开${item.title}详情`}
                 accessibilityRole="button"
                 accessibilityHint="进入该关联条目的详情页面"
-                style={({ pressed }) => [
-                  styles.card,
-                  pressed && styles.cardPressed,
-                ]}
+                style={styles.card}
               >
                 <Link.AppleZoom>
                   <View style={styles.cover}>
@@ -69,14 +78,23 @@ export default function SubjectRelationsScreen() {
                         transition={140}
                       />
                     ) : null}
+                  </View>
+                </Link.AppleZoom>
+                <View style={styles.cardMain}>
+                  <View style={styles.badges}>
                     <View style={styles.relationBadge}>
                       <Text style={styles.relationText}>{item.relation}</Text>
                     </View>
+                    <Text style={styles.type}>
+                      {TYPE_LABELS[item.type] ?? '条目'}
+                    </Text>
                   </View>
-                </Link.AppleZoom>
-                <Text numberOfLines={2} style={styles.name}>
-                  {item.title}
-                </Text>
+                  <Text numberOfLines={3} style={styles.name}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.openHint}>查看条目详情</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
               </Pressable>
             </Link>
           )}
@@ -112,7 +130,6 @@ function State({
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
-  row: { gap: 14 },
   header: { paddingBottom: 20, paddingTop: 14 },
   title: {
     color: COLORS.ink,
@@ -121,34 +138,44 @@ const styles = StyleSheet.create({
     letterSpacing: -0.7,
   },
   meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
-  card: { flex: 1, marginBottom: 22, maxWidth: '48%' },
-  cardPressed: { opacity: 0.68 },
+  card: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    flexDirection: 'row',
+    marginBottom: 12,
+    minHeight: 132,
+    padding: 12,
+  },
   cover: {
     alignItems: 'center',
-    aspectRatio: 0.72,
     backgroundColor: COLORS.track,
-    borderRadius: 18,
+    borderRadius: 13,
+    height: 108,
     justifyContent: 'center',
     overflow: 'hidden',
+    width: 78,
   },
   fallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '700' },
+  cardMain: { flex: 1, marginLeft: 14 },
+  badges: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   relationBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
-    bottom: 9,
-    left: 9,
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 9,
     paddingHorizontal: 8,
-    paddingVertical: 5,
-    position: 'absolute',
+    paddingVertical: 4,
   },
-  relationText: { color: COLORS.ink, fontSize: 10, fontWeight: '800' },
+  relationText: { color: COLORS.accent, fontSize: 10, fontWeight: '800' },
+  type: { color: COLORS.subtle, fontSize: 11, fontWeight: '700' },
   name: {
     color: COLORS.ink,
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 19,
-    marginTop: 9,
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 21,
+    marginTop: 8,
   },
+  openHint: { color: COLORS.subtle, fontSize: 11, marginTop: 7 },
+  chevron: { color: COLORS.subtle, fontSize: 28, marginLeft: 8 },
   state: { alignItems: 'center', padding: 32 },
   stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
   stateText: {

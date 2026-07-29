@@ -1,13 +1,35 @@
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import type { WatchingItem } from '@/features/watching/model';
+import type {
+  CollectionStatus,
+  WatchingItem,
+} from '@/features/watching/model';
 import { useWatching } from '@/features/watching/watching-provider';
+
+const COLLECTION_TABS: {
+  label: string;
+  value: CollectionStatus;
+}[] = [
+  { label: '在看', value: 'doing' },
+  { label: '想看', value: 'wish' },
+  { label: '看过', value: 'completed' },
+  { label: '搁置', value: 'onHold' },
+  { label: '抛弃', value: 'dropped' },
+];
 
 function Cover({ item, featured = false }: { item: WatchingItem; featured?: boolean }) {
   return (
@@ -26,9 +48,12 @@ function Cover({ item, featured = false }: { item: WatchingItem; featured?: bool
 }
 
 function Progress({ item }: { item: WatchingItem }) {
-  const percentage = Math.round(
-    (item.watchedEpisodeNumbers.length / item.totalEpisodes) * 100,
-  );
+  const percentage =
+    item.totalEpisodes > 0
+      ? Math.round(
+          (item.watchedEpisodeNumbers.length / item.totalEpisodes) * 100,
+        )
+      : 0;
 
   return (
     <View style={styles.progressTrack}>
@@ -39,20 +64,30 @@ function Progress({ item }: { item: WatchingItem }) {
 
 export default function HomeScreen() {
   const { items: watchingItems } = useWatching();
+  const [selectedStatus, setSelectedStatus] =
+    useState<CollectionStatus>('doing');
+  const selectedTab =
+    COLLECTION_TABS.find((tab) => tab.value === selectedStatus) ??
+    COLLECTION_TABS[0];
+  const visibleItems = watchingItems.filter(
+    (item) => item.collectionStatus === selectedStatus,
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
       <FlatList
         contentContainerStyle={styles.content}
-        data={watchingItems}
+        data={visibleItems}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>还没有正在看的条目</Text>
+            <Text style={styles.emptyTitle}>
+              还没有{selectedTab.label}的条目
+            </Text>
             <Text style={styles.emptyText}>
-              搜索真实条目并记录观看进度后，会显示在这里。
+              在条目详情选择“{selectedTab.label}”后，会显示在这里。
             </Text>
             <Pressable
               accessibilityLabel="前往发现条目"
@@ -68,33 +103,66 @@ export default function HomeScreen() {
           </View>
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>在看</Text>
-              <Text style={styles.subtitle}>{watchingItems.length} 部动画</Text>
+          <>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>{selectedTab.label}</Text>
+                <Text style={styles.subtitle}>{visibleItems.length} 个条目</Text>
+              </View>
+              <Link asChild href="/explore">
+                <Pressable
+                  accessibilityLabel="搜索与每日放送"
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.exploreButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <SymbolView
+                    name={{
+                      android: 'search',
+                      ios: 'magnifyingglass',
+                      web: 'search',
+                    }}
+                    size={19}
+                    tintColor={COLORS.ink}
+                    weight="semibold"
+                  />
+                </Pressable>
+              </Link>
             </View>
-            <Link asChild href="/explore">
-              <Pressable
-                accessibilityLabel="搜索与每日放送"
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.exploreButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <SymbolView
-                  name={{
-                    android: 'search',
-                    ios: 'magnifyingglass',
-                    web: 'search',
-                  }}
-                  size={19}
-                  tintColor={COLORS.ink}
-                  weight="semibold"
-                />
-              </Pressable>
-            </Link>
-          </View>
+            <ScrollView
+              contentContainerStyle={styles.tabs}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {COLLECTION_TABS.map((tab) => {
+                const isSelected = tab.value === selectedStatus;
+
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    key={tab.value}
+                    onPress={() => setSelectedStatus(tab.value)}
+                    style={[
+                      styles.tab,
+                      isSelected && styles.selectedTab,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tabText,
+                        isSelected && styles.selectedTabText,
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
         }
         renderItem={({ index, item }) => {
           if (index === 0) {
@@ -115,7 +183,7 @@ export default function HomeScreen() {
                   >
                     <Cover featured item={item} />
                     <View style={styles.featureDetails}>
-                      <Text style={styles.sectionLabel}>继续观看</Text>
+                      <Text style={styles.sectionLabel}>{selectedTab.label}</Text>
                       <Text numberOfLines={2} style={styles.featureTitle}>
                         {item.title}
                       </Text>
@@ -183,6 +251,16 @@ const styles = StyleSheet.create({
     paddingBottom: 26,
     paddingTop: 18,
   },
+  tabs: { gap: 8, paddingBottom: 18 },
+  tab: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  selectedTab: { backgroundColor: COLORS.accentSoft },
+  tabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  selectedTabText: { color: COLORS.accent },
   exploreButton: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,

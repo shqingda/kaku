@@ -4,7 +4,12 @@ export function updateWatchingList(
   items: WatchingItem[],
   nextItem: WatchingItem,
 ) {
-  if (nextItem.watchedEpisodeNumbers.length === 0) {
+  const shouldKeep =
+    nextItem.collectionStatus != null ||
+    nextItem.rating !== undefined ||
+    nextItem.watchedEpisodeNumbers.length > 0;
+
+  if (!shouldKeep) {
     return items.filter((item) => item.id !== nextItem.id);
   }
 

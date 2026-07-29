@@ -18,7 +18,33 @@ const item = {
 };
 
 test('watching storage codec round-trips valid items', () => {
-  assert.deepEqual(decodeWatchingItems(encodeWatchingItems([item])), [item]);
+  assert.deepEqual(decodeWatchingItems(encodeWatchingItems([item])), [
+    { ...item, collectionStatus: 'doing' },
+  ]);
+});
+
+test('watching storage keeps collection status and rating independent', () => {
+  const stored = {
+    ...item,
+    collectionStatus: 'wish',
+    rating: 9,
+    watchedEpisodeNumbers: [],
+  };
+
+  assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
+    stored,
+  ]);
+});
+
+test('watching storage preserves an explicit uncollected status', () => {
+  const stored = {
+    ...item,
+    collectionStatus: null,
+  };
+
+  assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
+    stored,
+  ]);
 });
 
 test('watching storage codec rejects malformed JSON', () => {

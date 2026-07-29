@@ -11,13 +11,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
-import type { WatchingItem } from './model';
+import type { CollectionStatus, WatchingItem } from './model';
 import { resizeWatchedEpisodes } from './progress';
 import { watchingStorage } from './watching-storage';
 import { updateWatchingList } from './watching-list';
 
 type WatchingContextValue = {
   items: WatchingItem[];
+  setCollectionStatus: (
+    subject: WatchingItem,
+    status?: CollectionStatus,
+  ) => void;
+  setRating: (subject: WatchingItem, rating?: number) => void;
   setWatchedEpisodeCount: (
     subject: WatchingItem,
     watchedCount: number,
@@ -109,7 +114,11 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
         : [...item.watchedEpisodeNumbers, episodeNumber].sort(
             (left, right) => left - right,
           );
-      const nextItem = { ...item, watchedEpisodeNumbers };
+      const nextItem = {
+        ...item,
+        collectionStatus: item.collectionStatus ?? null,
+        watchedEpisodeNumbers,
+      };
 
       return updateWatchingList(current, nextItem);
     });
@@ -129,6 +138,7 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
       const item = existing ?? subject;
       const nextItem = {
         ...item,
+        collectionStatus: item.collectionStatus ?? null,
         watchedEpisodeNumbers: resizeWatchedEpisodes(
           item.watchedEpisodeNumbers,
           watchedCount,
@@ -137,6 +147,30 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
       };
 
       return updateWatchingList(current, nextItem);
+    });
+  }
+
+  function setCollectionStatus(
+    subject: WatchingItem,
+    collectionStatus?: CollectionStatus,
+  ) {
+    setItems((current) => {
+      const item = current.find((entry) => entry.id === subject.id) ?? subject;
+      return updateWatchingList(current, {
+        ...item,
+        collectionStatus: collectionStatus ?? null,
+      });
+    });
+  }
+
+  function setRating(subject: WatchingItem, rating?: number) {
+    setItems((current) => {
+      const item = current.find((entry) => entry.id === subject.id) ?? subject;
+      return updateWatchingList(current, {
+        ...item,
+        collectionStatus: item.collectionStatus ?? null,
+        rating,
+      });
     });
   }
 
@@ -171,6 +205,8 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
     <WatchingContext.Provider
       value={{
         items,
+        setCollectionStatus,
+        setRating,
         setWatchedEpisodeCount,
         toggleEpisodeWatched,
       }}

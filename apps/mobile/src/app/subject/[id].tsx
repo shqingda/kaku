@@ -20,6 +20,7 @@ import {
   useSubjectReviews,
 } from '@/features/reviews/use-subject-reviews';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
+import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
@@ -95,7 +96,12 @@ export default function SubjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items, setWatchedEpisodeCount } = useWatching();
+  const {
+    items,
+    setCollectionStatus,
+    setRating,
+    setWatchedEpisodeCount,
+  } = useWatching();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [isEditingProgress, setIsEditingProgress] = useState(false);
   const [progressDraft, setProgressDraft] = useState('');
@@ -177,6 +183,7 @@ export default function SubjectScreen() {
   const summary = catalogSubject?.summary ?? subject?.summary ?? '暂无简介';
   const year = catalogSubject?.year ?? subject?.year;
   const progressSubject = subject ?? {
+    collectionStatus: null,
     coverUrl: coverUrl ?? '',
     episodeAirDates: (catalogSubject?.episodes ?? []).map(
       (episode) => episode.airDate ?? '',
@@ -283,6 +290,14 @@ export default function SubjectScreen() {
           isPending={catalogQuery.isPending}
           isRefreshing={catalogQuery.isFetching && !catalogQuery.isPending}
           onRetry={() => void catalogQuery.refetch()}
+        />
+
+        <CollectionControls
+          item={progressSubject}
+          onChangeRating={(rating) => setRating(progressSubject, rating)}
+          onChangeStatus={(status) =>
+            setCollectionStatus(progressSubject, status)
+          }
         />
 
         <SubjectOverview
