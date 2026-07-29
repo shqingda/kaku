@@ -298,56 +298,51 @@ export default function SubjectScreen() {
           onChangeStatus={changeStatus}
           progressControl={
             showsWatchProgress ? (
-              <View style={styles.collectionProgressRow}>
-                <Text style={styles.collectionProgressTitle}>
-                  观看进度
-                </Text>
-                {isEditingProgress ? (
-                  <View
-                    onTouchEnd={(event) => event.stopPropagation()}
-                    style={[
-                      styles.heroProgress,
-                      styles.editingHeroProgress,
-                    ]}
-                  >
-                    <TextInput
-                      accessibilityLabel="观看进度"
-                      autoFocus
-                      keyboardType="number-pad"
-                      maxLength={String(totalEpisodes).length}
-                      onChangeText={(value) => {
-                        const nextValue = value.replace(/\D/g, '');
-                        progressDraftRef.current = nextValue;
-                        setProgressDraft(nextValue);
-                      }}
-                      onEndEditing={saveProgress}
-                      selectTextOnFocus
-                      style={styles.heroProgressInput}
-                      value={progressDraft}
-                    />
-                    <Text style={styles.heroProgressLabel}>
-                      / {totalEpisodes} 集
-                    </Text>
-                  </View>
-                ) : (
-                  <Pressable
-                    accessibilityLabel={`观看进度 ${watchedEpisodeNumbers.length} 集，共 ${totalEpisodes} 集，点击编辑`}
-                    accessibilityRole="button"
-                    onPress={startEditingProgress}
-                    style={({ pressed }) => [
-                      styles.heroProgress,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.heroProgressValue}>
-                      {watchedEpisodeNumbers.length}
-                    </Text>
-                    <Text style={styles.heroProgressLabel}>
-                      / {totalEpisodes} 集
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+              isEditingProgress ? (
+                <View
+                  onTouchEnd={(event) => event.stopPropagation()}
+                  style={[
+                    styles.heroProgress,
+                    styles.editingHeroProgress,
+                  ]}
+                >
+                  <TextInput
+                    accessibilityLabel="观看进度"
+                    autoFocus
+                    keyboardType="number-pad"
+                    maxLength={String(totalEpisodes).length}
+                    onChangeText={(value) => {
+                      const nextValue = value.replace(/\D/g, '');
+                      progressDraftRef.current = nextValue;
+                      setProgressDraft(nextValue);
+                    }}
+                    onEndEditing={saveProgress}
+                    selectTextOnFocus
+                    style={styles.heroProgressInput}
+                    value={progressDraft}
+                  />
+                  <Text style={styles.heroProgressLabel}>
+                    / {totalEpisodes} 集
+                  </Text>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityLabel={`观看进度 ${watchedEpisodeNumbers.length} 集，共 ${totalEpisodes} 集，点击编辑`}
+                  accessibilityRole="button"
+                  onPress={startEditingProgress}
+                  style={({ pressed }) => [
+                    styles.heroProgress,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.heroProgressValue}>
+                    {watchedEpisodeNumbers.length}
+                  </Text>
+                  <Text style={styles.heroProgressLabel}>
+                    / {totalEpisodes} 集
+                  </Text>
+                </Pressable>
+              )
             ) : undefined
           }
         />
@@ -565,17 +560,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroSpacing: { height: 20 },
-  collectionProgressRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  collectionProgressTitle: {
-    color: COLORS.ink,
-    fontSize: 14,
-    fontWeight: '800',
-  },
   panel: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,

@@ -1,8 +1,7 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
-  type GestureResponderEvent,
   Pressable,
   StyleSheet,
   Text,
@@ -20,6 +19,8 @@ import type {
 } from '@/features/watching/model';
 import { canRateCollectionStatus } from '@/features/watching/progress';
 import { playSelectionHaptic } from '@/lib/haptics';
+
+import { RatingPicker, RatingStars } from './rating-picker';
 
 const STATUS_OPTIONS: CollectionStatus[] = [
   'wish',
@@ -40,6 +41,8 @@ export function CollectionControls({
   onChangeStatus: (status?: CollectionStatus) => void;
   progressControl?: ReactNode;
 }) {
+  const [isRatingPickerOpen, setIsRatingPickerOpen] = useState(false);
+
   function selectStatus(status?: CollectionStatus) {
     const cancelsCollection =
       status === undefined && item.collectionStatus != null;
@@ -88,13 +91,9 @@ export function CollectionControls({
     playSelectionHaptic();
   }
 
-  function selectRating(
-    event: GestureResponderEvent,
-    starIndex: number,
-  ) {
-    const rating =
-      starIndex * 2 + (event.nativeEvent.locationX < 22 ? 1 : 2);
-    onChangeRating(item.rating === rating ? undefined : rating);
+  function selectRating(rating?: number) {
+    onChangeRating(rating);
+    setIsRatingPickerOpen(false);
     playSelectionHaptic();
   }
 
@@ -130,11 +129,6 @@ export function CollectionControls({
           </Pressable>
         ) : null}
       </View>
-      <Text style={styles.hint}>
-        {supportsWatchProgress(item.type ?? 2)
-          ? `${wishLabel}状态不记录观看进度和评分`
-          : `${wishLabel}状态不记录评分`}
-      </Text>
 
       <View style={styles.statuses}>
         {STATUS_OPTIONS.map((status) => {
@@ -165,74 +159,71 @@ export function CollectionControls({
         })}
       </View>
 
-      {progressControl}
-
-      {canRate ? (
-        <>
-          <View style={styles.ratingHeader}>
-            <Text style={styles.ratingLabel}>我的评分</Text>
-            <Text style={styles.ratingValue}>
-              {item.rating
-                ? `${(item.rating / 2).toFixed(
-                    item.rating % 2 === 0 ? 0 : 1,
-                  )} 星`
-                : '未评分'}
-            </Text>
-          </View>
-          <View style={styles.ratings}>
-            {Array.from({ length: 5 }, (_, starIndex) => {
-              const fullRating = (starIndex + 1) * 2;
-              const state =
-                (item.rating ?? 0) >= fullRating
-                  ? 'full'
-                  : item.rating === fullRating - 1
-                    ? 'half'
-                    : 'empty';
-
-              return (
-                <Pressable
-                  accessibilityHint="点击左半边选择半星，右半边选择整星；再次点击相同评分可取消"
-                  accessibilityLabel={`第 ${starIndex + 1} 颗评分星`}
-                  accessibilityRole="button"
-                  key={starIndex}
-                  onPress={(event) => selectRating(event, starIndex)}
-                  style={({ pressed }) => [
-                    styles.rating,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <SymbolView
-                    name={
-                      state === 'full'
-                        ? {
-                            android: 'star',
-                            ios: 'star.fill',
-                            web: 'star',
-                          }
-                        : state === 'half'
-                          ? {
-                              android: 'star_half',
-                              ios: 'star.leadinghalf.filled',
-                              web: 'star_half',
-                            }
-                          : {
-                              android: 'star_border',
-                              ios: 'star',
-                              web: 'star_border',
-                            }
-                    }
-                    size={28}
-                    tintColor={
-                      state === 'empty' ? COLORS.subtle : COLORS.accent
-                    }
-                    weight="medium"
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
+      {item.collectionStatus === 'wish' ? (
+        <Text style={styles.wishHint}>
+          {supportsWatchProgress(item.type ?? 2)
+            ? `${wishLabel}不记录观看进度和评分`
+            : `${wishLabel}不记录评分`}
+        </Text>
       ) : null}
+
+      {progressControl || canRate ? (
+        <View style={styles.settings}>
+          {progressControl ? (
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>观看进度</Text>
+              {progressControl}
+            </View>
+          ) : null}
+          {canRate ? (
+            <Pressable
+              accessibilityLabel={
+                item.rating
+                  ? `我的评分 ${item.rating} 分，点击修改`
+                  : '我的评分，未评分，点击选择'
+              }
+              accessibilityRole="button"
+              onPress={() => setIsRatingPickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                Boolean(progressControl) && styles.settingDivider,
+                pressed && styles.settingPressed,
+              ]}
+            >
+              <Text style={styles.settingLabel}>我的评分</Text>
+              <View style={styles.ratingSummary}>
+                {item.rating ? (
+                  <>
+                    <RatingStars rating={item.rating} />
+                    <Text style={styles.ratingScore}>
+                      {item.rating} 分
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.settingValue}>未评分</Text>
+                )}
+                <SymbolView
+                  name={{
+                    android: 'chevron_right',
+                    ios: 'chevron.right',
+                    web: 'chevron_right',
+                  }}
+                  size={13}
+                  tintColor={COLORS.subtle}
+                  weight="semibold"
+                />
+              </View>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
+      <RatingPicker
+        onChange={selectRating}
+        onClose={() => setIsRatingPickerOpen(false)}
+        rating={item.rating}
+        visible={isRatingPickerOpen}
+      />
     </View>
   );
 }
@@ -260,47 +251,62 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   clearText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
-  hint: { color: COLORS.subtle, fontSize: 11, marginTop: 5 },
   statuses: {
+    backgroundColor: '#F1F0EB',
+    borderRadius: 15,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
+    marginTop: 18,
+    padding: 3,
   },
   status: {
     alignItems: 'center',
-    backgroundColor: '#F1F0EB',
     borderRadius: 12,
-    minWidth: 54,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 38,
+    paddingHorizontal: 3,
+    paddingVertical: 8,
   },
   selectedStatus: { backgroundColor: COLORS.accent },
-  statusText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  statusText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
   selectedStatusText: { color: COLORS.surface },
-  ratingHeader: {
+  wishHint: {
+    color: COLORS.subtle,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 10,
+  },
+  settings: {
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    marginTop: 18,
+    overflow: 'hidden',
+    paddingHorizontal: 14,
+  },
+  settingRow: {
     alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    minHeight: 58,
+    paddingVertical: 12,
   },
-  ratingLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  ratingValue: {
-    color: COLORS.subtle,
+  settingDivider: {
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  settingPressed: { opacity: 0.58 },
+  settingLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  settingValue: { color: COLORS.subtle, fontSize: 13, fontWeight: '600' },
+  ratingSummary: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+  },
+  ratingScore: {
+    color: COLORS.muted,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
-  },
-  ratings: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  rating: {
-    alignItems: 'center',
-    height: 42,
-    justifyContent: 'center',
-    width: 44,
+    fontWeight: '700',
   },
   pressed: { opacity: 0.62 },
 });
