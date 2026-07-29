@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -40,25 +40,45 @@ export default function SubjectRelationsScreen() {
           }
           numColumns={2}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cover}>
-                <Text style={styles.fallback}>{item.title.slice(0, 1)}</Text>
-                {item.coverUrl ? (
-                  <Image
-                    contentFit="cover"
-                    source={item.coverUrl}
-                    style={StyleSheet.absoluteFill}
-                    transition={140}
-                  />
-                ) : null}
-                <View style={styles.relationBadge}>
-                  <Text style={styles.relationText}>{item.relation}</Text>
-                </View>
-              </View>
-              <Text numberOfLines={2} style={styles.name}>
-                {item.title}
-              </Text>
-            </View>
+            <Link
+              asChild
+              href={{
+                pathname: '/subject/[id]',
+                params: { id: String(item.id) },
+              }}
+            >
+              <Pressable
+                accessibilityLabel={`打开${item.title}详情`}
+                accessibilityRole="button"
+                accessibilityHint="进入该关联条目的详情页面"
+                style={({ pressed }) => [
+                  styles.card,
+                  pressed && styles.cardPressed,
+                ]}
+              >
+                <Link.AppleZoom>
+                  <View style={styles.cover}>
+                    <Text style={styles.fallback}>
+                      {item.title.slice(0, 1)}
+                    </Text>
+                    {item.coverUrl ? (
+                      <Image
+                        contentFit="cover"
+                        source={item.coverUrl}
+                        style={StyleSheet.absoluteFill}
+                        transition={140}
+                      />
+                    ) : null}
+                    <View style={styles.relationBadge}>
+                      <Text style={styles.relationText}>{item.relation}</Text>
+                    </View>
+                  </View>
+                </Link.AppleZoom>
+                <Text numberOfLines={2} style={styles.name}>
+                  {item.title}
+                </Text>
+              </Pressable>
+            </Link>
           )}
           showsVerticalScrollIndicator={false}
         />
@@ -102,6 +122,7 @@ const styles = StyleSheet.create({
   },
   meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
   card: { flex: 1, marginBottom: 22, maxWidth: '48%' },
+  cardPressed: { opacity: 0.68 },
   cover: {
     alignItems: 'center',
     aspectRatio: 0.72,
