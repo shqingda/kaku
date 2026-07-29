@@ -1,5 +1,5 @@
 import { SymbolView } from 'expo-symbols';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
@@ -18,10 +18,58 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
       style={styles.row}
     >
       {Array.from({ length: 5 }, (_, index) => {
+        const fill = Math.max(
+          0,
+          Math.min(1, fivePointRating - index),
+        );
         const starNumber = index + 1;
         const isFull = fivePointRating >= starNumber;
         const isHalf =
           !isFull && fivePointRating >= starNumber - 0.5;
+
+        if (Platform.OS === 'android') {
+          return (
+            <View
+              key={starNumber}
+              style={{ height: size, width: size }}
+            >
+              <Text
+                style={[
+                  styles.androidStar,
+                  {
+                    color: COLORS.subtle,
+                    fontSize: size,
+                    lineHeight: size,
+                  },
+                ]}
+              >
+                ☆
+              </Text>
+              {fill > 0 ? (
+                <View
+                  style={[
+                    styles.androidStarFill,
+                    { width: size * fill },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.androidStar,
+                      {
+                        color: COLORS.accent,
+                        fontSize: size,
+                        lineHeight: size,
+                        width: size,
+                      },
+                    ]}
+                  >
+                    ★
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          );
+        }
 
         return (
           <SymbolView
@@ -51,5 +99,17 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
 }
 
 const styles = StyleSheet.create({
+  androidStar: {
+    left: 0,
+    position: 'absolute',
+    top: 0,
+  },
+  androidStarFill: {
+    bottom: 0,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    top: 0,
+  },
   row: { flexDirection: 'row', gap: 1 },
 });

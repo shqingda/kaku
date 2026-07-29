@@ -64,6 +64,8 @@ export function CollectionBoxSheet({
   const canEditPersonalData = canRateCollectionStatus(status);
   const showsProgress =
     canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
+  const progressDigits = String(item.totalEpisodes).length;
+  const progressTotalWidth = 22 + progressDigits * 10;
 
   useEffect(() => {
     if (!visible) {
@@ -206,21 +208,29 @@ export function CollectionBoxSheet({
                   <>
                     <View style={styles.recordRow}>
                       <Text style={styles.recordTitle}>观看进度</Text>
-                      <View style={styles.progressControl}>
+                      <View style={styles.progressField}>
+                        <View style={styles.progressControl}>
+                          <TextInput
+                            accessibilityLabel="已看集数"
+                            keyboardType="number-pad"
+                            onChangeText={(value) =>
+                              setWatchedCount(value.replace(/\D/g, ''))
+                            }
+                            selectTextOnFocus
+                            style={styles.progressInput}
+                            value={watchedCount}
+                          />
+                        </View>
                         <TextInput
-                          accessibilityLabel="已看集数"
-                          keyboardType="number-pad"
-                          maxLength={String(item.totalEpisodes).length}
-                          onChangeText={(value) =>
-                            setWatchedCount(value.replace(/\D/g, ''))
-                          }
-                          selectTextOnFocus
-                          style={styles.progressInput}
-                          value={watchedCount}
+                          accessibilityElementsHidden
+                          editable={false}
+                          importantForAccessibility="no"
+                          style={[
+                            styles.progressTotal,
+                            { width: progressTotalWidth },
+                          ]}
+                          value={`/ ${item.totalEpisodes}`}
                         />
-                        <Text style={styles.progressTotal}>
-                          /{item.totalEpisodes} 集
-                        </Text>
                       </View>
                     </View>
                     <View style={styles.recordDivider} />
@@ -420,36 +430,46 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: 14,
   },
-  progressControl: {
-    alignItems: 'baseline',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+  progressField: {
+    alignItems: 'center',
     flexDirection: 'row',
-    minHeight: 42,
-    paddingHorizontal: 12,
+    gap: 8,
+  },
+  progressControl: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: '#D8D3CA',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    height: 32,
+    justifyContent: 'center',
+    width: 46,
   },
   progressInput: {
     color: COLORS.accent,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
-    height: 20,
+    height: 32,
     includeFontPadding: false,
     lineHeight: 20,
-    minWidth: 34,
     padding: 0,
-    textAlign: 'right',
+    textAlign: 'center',
     textAlignVertical: 'center',
+    width: 46,
   },
   progressTotal: {
     color: COLORS.muted,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
+    height: 32,
     includeFontPadding: false,
     lineHeight: 20,
+    padding: 0,
+    textAlign: 'left',
+    textAlignVertical: 'center',
   },
   ratingRecord: { gap: 12 },
   ratingHeading: {
