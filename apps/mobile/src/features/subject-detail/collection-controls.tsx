@@ -20,15 +20,8 @@ import type {
 import { canRateCollectionStatus } from '@/features/watching/progress';
 import { playSelectionHaptic } from '@/lib/haptics';
 
+import { CollectionStatusPicker } from './collection-status-picker';
 import { RatingPicker, RatingStars } from './rating-picker';
-
-const STATUS_OPTIONS: CollectionStatus[] = [
-  'wish',
-  'completed',
-  'doing',
-  'onHold',
-  'dropped',
-];
 
 export function CollectionControls({
   item,
@@ -42,8 +35,14 @@ export function CollectionControls({
   progressControl?: ReactNode;
 }) {
   const [isRatingPickerOpen, setIsRatingPickerOpen] = useState(false);
+  const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
+  const subjectType = item.type ?? 2;
+  const canRate = canRateCollectionStatus(item.collectionStatus);
+  const wishLabel = getCollectionStatusLabel(subjectType, 'wish');
 
   function selectStatus(status?: CollectionStatus) {
+    setIsStatusPickerOpen(false);
+
     const cancelsCollection =
       status === undefined && item.collectionStatus != null;
     const clearsProgress =
@@ -61,16 +60,12 @@ export function CollectionControls({
           : null,
         clearsRating ? `${item.rating} 分评分` : null,
       ].filter(Boolean);
-      const title =
-        clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？';
-      const message =
-        clearedRecords.length > 0
-          ? `${action}会清空${clearedRecords.join('和')}。`
-          : '该条目将不再保留当前收藏状态。';
 
       Alert.alert(
-        title,
-        message,
+        clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？',
+        clearedRecords.length > 0
+          ? `${action}会清空${clearedRecords.join('和')}。`
+          : '该条目将不再保留当前收藏状态。',
         [
           { style: 'cancel', text: '保留' },
           {
@@ -97,134 +92,139 @@ export function CollectionControls({
     playSelectionHaptic();
   }
 
-  const canRate = canRateCollectionStatus(item.collectionStatus);
-  const wishLabel = getCollectionStatusLabel(item.type ?? 2, 'wish');
-
   return (
-    <View style={styles.panel}>
-      <View style={styles.headingRow}>
-        <Text style={styles.title}>我的收藏</Text>
-        {item.collectionStatus ? (
-          <Pressable
-            accessibilityLabel="取消收藏状态"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => selectStatus(undefined)}
-            style={({ pressed }) => [
-              styles.clear,
-              pressed && styles.pressed,
-            ]}
-          >
-            <SymbolView
-              name={{
-                android: 'bookmark_remove',
-                ios: 'bookmark.slash',
-                web: 'bookmark_remove',
-              }}
-              size={13}
-              tintColor={COLORS.accent}
-              weight="semibold"
-            />
-            <Text style={styles.clearText}>取消收藏</Text>
-          </Pressable>
+    <>
+      <View style={styles.panel}>
+        <Text style={styles.title}>收藏状态</Text>
+        <Pressable
+          accessibilityLabel={
+            item.collectionStatus
+              ? `当前状态 ${getCollectionStatusLabel(
+                  subjectType,
+                  item.collectionStatus,
+                )}，点击修改`
+              : '选择收藏状态'
+          }
+          accessibilityRole="button"
+          onPress={() => setIsStatusPickerOpen(true)}
+          style={({ pressed }) => [
+            styles.statusControl,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View style={styles.statusLeading}>
+            <View style={styles.statusIcon}>
+              <SymbolView
+                name={{
+                  android: item.collectionStatus
+                    ? 'bookmark'
+                    : 'bookmark_border',
+                  ios: item.collectionStatus ? 'bookmark.fill' : 'bookmark',
+                  web: item.collectionStatus
+                    ? 'bookmark'
+                    : 'bookmark_border',
+                }}
+                size={17}
+                tintColor={
+                  item.collectionStatus ? COLORS.accent : COLORS.muted
+                }
+                weight="semibold"
+              />
+            </View>
+            <Text
+              style={[
+                styles.statusValue,
+                item.collectionStatus && styles.selectedStatusValue,
+              ]}
+            >
+              {item.collectionStatus
+                ? getCollectionStatusLabel(
+                    subjectType,
+                    item.collectionStatus,
+                  )
+                : '选择状态'}
+            </Text>
+          </View>
+          <SymbolView
+            name={{
+              android: 'expand_more',
+              ios: 'chevron.down',
+              web: 'expand_more',
+            }}
+            size={15}
+            tintColor={COLORS.subtle}
+            weight="semibold"
+          />
+        </Pressable>
+        {item.collectionStatus === 'wish' ? (
+          <Text style={styles.wishHint}>
+            {supportsWatchProgress(subjectType)
+              ? `${wishLabel}不记录观看进度和评分`
+              : `${wishLabel}不记录评分`}
+          </Text>
         ) : null}
       </View>
 
-      <View style={styles.statuses}>
-        {STATUS_OPTIONS.map((status) => {
-          const isSelected = item.collectionStatus === status;
-
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
-              key={status}
-              onPress={() => selectStatus(status)}
-              style={({ pressed }) => [
-                styles.status,
-                isSelected && styles.selectedStatus,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  isSelected && styles.selectedStatusText,
-                ]}
-              >
-                {getCollectionStatusLabel(item.type ?? 2, status)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {item.collectionStatus === 'wish' ? (
-        <Text style={styles.wishHint}>
-          {supportsWatchProgress(item.type ?? 2)
-            ? `${wishLabel}不记录观看进度和评分`
-            : `${wishLabel}不记录评分`}
-        </Text>
-      ) : null}
-
-      {progressControl || canRate ? (
-        <View style={styles.settings}>
-          {progressControl ? (
-            <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>观看进度</Text>
-              {progressControl}
-            </View>
-          ) : null}
-          {canRate ? (
-            <Pressable
-              accessibilityLabel={
-                item.rating
-                  ? `我的评分 ${item.rating} 分，点击修改`
-                  : '我的评分，未评分，点击选择'
-              }
-              accessibilityRole="button"
-              onPress={() => setIsRatingPickerOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                Boolean(progressControl) && styles.settingDivider,
-                pressed && styles.settingPressed,
-              ]}
-            >
-              <Text style={styles.settingLabel}>我的评分</Text>
-              <View style={styles.ratingSummary}>
-                {item.rating ? (
-                  <>
-                    <RatingStars rating={item.rating} />
-                    <Text style={styles.ratingScore}>
-                      {item.rating} 分
-                    </Text>
-                  </>
-                ) : (
-                  <Text style={styles.settingValue}>未评分</Text>
-                )}
-                <SymbolView
-                  name={{
-                    android: 'chevron_right',
-                    ios: 'chevron.right',
-                    web: 'chevron_right',
-                  }}
-                  size={13}
-                  tintColor={COLORS.subtle}
-                  weight="semibold"
-                />
-              </View>
-            </Pressable>
-          ) : null}
+      {progressControl ? (
+        <View style={[styles.panel, styles.compactPanel]}>
+          <Text style={styles.title}>观看进度</Text>
+          {progressControl}
         </View>
       ) : null}
 
+      {canRate ? (
+        <Pressable
+          accessibilityLabel={
+            item.rating
+              ? `我的评分 ${item.rating} 分，点击修改`
+              : '我的评分，未评分，点击选择'
+          }
+          accessibilityRole="button"
+          onPress={() => setIsRatingPickerOpen(true)}
+          style={({ pressed }) => [
+            styles.panel,
+            styles.compactPanel,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={styles.title}>我的评分</Text>
+          <View style={styles.ratingSummary}>
+            {item.rating ? (
+              <>
+                <RatingStars rating={item.rating} size={17} />
+                <Text style={styles.ratingScore}>{item.rating} 分</Text>
+              </>
+            ) : (
+              <Text style={styles.emptyValue}>未评分</Text>
+            )}
+            <SymbolView
+              name={{
+                android: 'chevron_right',
+                ios: 'chevron.right',
+                web: 'chevron_right',
+              }}
+              size={13}
+              tintColor={COLORS.subtle}
+              weight="semibold"
+            />
+          </View>
+        </Pressable>
+      ) : null}
+
+      <CollectionStatusPicker
+        currentStatus={item.collectionStatus}
+        onChange={selectStatus}
+        onClose={() => setIsStatusPickerOpen(false)}
+        subjectType={subjectType}
+        visible={isStatusPickerOpen}
+      />
       <RatingPicker
         onChange={selectRating}
         onClose={() => setIsRatingPickerOpen(false)}
         rating={item.rating}
         visible={isRatingPickerOpen}
       />
-    </View>
+    </>
   );
 }
 
@@ -235,72 +235,48 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 20,
   },
-  headingRow: {
+  compactPanel: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 76,
   },
-  title: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  clear: {
+  title: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  statusControl: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 10,
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
     flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    justifyContent: 'space-between',
+    marginTop: 16,
+    minHeight: 56,
+    paddingHorizontal: 14,
   },
-  clearText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
-  statuses: {
-    backgroundColor: '#F1F0EB',
-    borderRadius: 15,
-    flexDirection: 'row',
-    marginTop: 18,
-    padding: 3,
-  },
-  status: {
+  statusLeading: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 11,
+  },
+  statusIcon: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
-    flex: 1,
+    height: 34,
     justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: 3,
-    paddingVertical: 8,
+    width: 34,
   },
-  selectedStatus: { backgroundColor: COLORS.accent },
-  statusText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
-  selectedStatusText: { color: COLORS.surface },
+  statusValue: { color: COLORS.muted, fontSize: 15, fontWeight: '700' },
+  selectedStatusValue: { color: COLORS.accent, fontWeight: '800' },
   wishHint: {
     color: COLORS.subtle,
     fontSize: 11,
     lineHeight: 16,
-    marginTop: 10,
+    marginTop: 9,
   },
-  settings: {
-    backgroundColor: '#F7F6F2',
-    borderRadius: 16,
-    marginTop: 18,
-    overflow: 'hidden',
-    paddingHorizontal: 14,
-  },
-  settingRow: {
-    alignItems: 'baseline',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 58,
-    paddingVertical: 12,
-  },
-  settingDivider: {
-    borderTopColor: COLORS.track,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  settingPressed: { opacity: 0.58 },
-  settingLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
-  settingValue: { color: COLORS.subtle, fontSize: 13, fontWeight: '600' },
   ratingSummary: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 7,
+    gap: 8,
   },
   ratingScore: {
     color: COLORS.muted,
@@ -308,5 +284,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
-  pressed: { opacity: 0.62 },
+  emptyValue: { color: COLORS.subtle, fontSize: 13, fontWeight: '600' },
+  pressed: { opacity: 0.58 },
 });
