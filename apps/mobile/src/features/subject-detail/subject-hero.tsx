@@ -29,7 +29,9 @@ export function SubjectHero({
         </Link.AppleZoomTarget>
       </View>
       <Text style={styles.year}>{year}</Text>
-      <Text style={styles.title}>{title}</Text>
+      <Text selectable style={styles.title}>
+        {title}
+      </Text>
     </View>
   );
 }

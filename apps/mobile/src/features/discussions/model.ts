@@ -35,7 +35,7 @@ export type DiscussionTopicPage = {
 
 export type DiscussionsProvider = {
   getEpisodeComments: (episodeId: number) => Promise<DiscussionReply[]>;
-  getSubjectTopic: (topicId: number) => Promise<DiscussionTopic>;
+  getSubjectTopic: (topicId: number) => Promise<DiscussionTopic | null>;
   getSubjectTopics: (
     subjectId: number,
     limit: number,

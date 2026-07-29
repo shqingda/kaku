@@ -10,6 +10,7 @@ import {
   getBangumiSubjectTopic,
   getBangumiSubjectTopics,
 } from '../api-next/client';
+import { BangumiRequestError } from '../transport/http-client';
 
 export const bangumiDiscussionsProvider: DiscussionsProvider = {
   async getEpisodeComments(episodeId) {
@@ -17,8 +18,16 @@ export const bangumiDiscussionsProvider: DiscussionsProvider = {
     return mapBangumiEpisodeComments(replies);
   },
   async getSubjectTopic(topicId) {
-    const topic = await getBangumiSubjectTopic(topicId);
-    return mapBangumiTopic(topic);
+    try {
+      const topic = await getBangumiSubjectTopic(topicId);
+      return mapBangumiTopic(topic);
+    } catch (error) {
+      if (error instanceof BangumiRequestError && error.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
   },
   async getSubjectTopics(subjectId, limit, offset) {
     const page = await getBangumiSubjectTopics(subjectId, limit, offset);
