@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import type { CatalogSubject } from '@/features/catalog/model';
+import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 
 function formatCount(count?: number) {
   if (count === undefined) {
@@ -34,13 +35,13 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 export function SubjectOverview({
-  isAnime,
+  showsEpisodes,
   subject,
   title,
   totalEpisodes,
   year,
 }: {
-  isAnime: boolean;
+  showsEpisodes: boolean;
   subject?: CatalogSubject;
   title: string;
   totalEpisodes: number;
@@ -50,7 +51,16 @@ export function SubjectOverview({
   const releaseDate =
     subject?.releaseDate?.replaceAll('-', '.') ??
     (year ? String(year) : '时间待定');
-  const format = subject?.format ?? '动画';
+  const subjectType = subject?.type ?? 2;
+  const format = subject?.format ?? getSubjectTypeLabel(subjectType);
+  const releaseLabel =
+    subjectType === 1
+      ? '出版'
+      : subjectType === 2
+        ? '放送'
+        : subjectType === 6
+          ? '首播'
+          : '发行';
   const tags =
     subject?.tags
       .filter((tag) => tag.toLowerCase() !== format.toLowerCase())
@@ -73,9 +83,11 @@ export function SubjectOverview({
       </View>
       <View style={styles.divider} />
       <View style={styles.facts}>
-        <Fact label={isAnime ? '放送' : '发行'} value={releaseDate} />
+        <Fact label={releaseLabel} value={releaseDate} />
         <Fact label="形式" value={format} />
-        {isAnime ? <Fact label="章节" value={`${totalEpisodes} 集`} /> : null}
+        {showsEpisodes ? (
+          <Fact label="章节" value={`${totalEpisodes} 集`} />
+        ) : null}
       </View>
       {subject?.originalTitle && subject.originalTitle !== title ? (
         <View style={styles.originalTitleRow}>

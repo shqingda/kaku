@@ -14,6 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
+import {
+  supportsWatchProgress,
+  usesEpisodeData,
+} from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import {
   useSubjectComments,
@@ -117,10 +121,24 @@ export default function SubjectScreen() {
   const watchedEpisodeNumbers = subject?.watchedEpisodeNumbers ?? [];
   const totalEpisodes =
     catalogSubject?.totalEpisodes ?? subject?.totalEpisodes ?? 0;
-  // Older cached catalog entries may not have `type` yet. An episode count is
-  // also a reliable signal here and keeps "0 / N 集" visible immediately.
-  const isAnime =
-    catalogSubject?.type === 2 || Boolean(subject) || totalEpisodes > 0;
+  // Once the catalog response is available, its Bangumi subject type is the
+  // source of truth. The fallback only exists for older local anime records.
+  const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
+  const tracksWatchProgress = supportsWatchProgress(subjectType);
+  const hasEpisodeData = usesEpisodeData(subjectType);
+  const characterEntry =
+    subjectType === 3
+      ? null
+      : {
+          hint:
+            subjectType === 2 || subjectType === 6
+              ? '角色介绍与演出阵容'
+              : '角色与人物资料',
+          label:
+            subjectType === 2 || subjectType === 6
+              ? '角色与声优'
+              : '角色与人物',
+        };
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
@@ -192,6 +210,7 @@ export default function SubjectScreen() {
     summary,
     title,
     totalEpisodes,
+    type: catalogSubject?.type ?? 2,
     watchedEpisodeNumbers: [],
     year: year ?? 0,
   };
@@ -244,7 +263,7 @@ export default function SubjectScreen() {
         showsVerticalScrollIndicator={false}
       >
         <SubjectHero coverUrl={coverUrl} title={title} year={year} />
-        {isAnime && isEditingProgress ? (
+        {tracksWatchProgress && isEditingProgress ? (
           <View
             onTouchEnd={(event) => event.stopPropagation()}
             style={[styles.heroProgress, styles.editingHeroProgress]}
@@ -266,7 +285,7 @@ export default function SubjectScreen() {
             />
             <Text style={styles.heroProgressLabel}>/ {totalEpisodes} 集</Text>
           </View>
-        ) : isAnime ? (
+        ) : tracksWatchProgress ? (
           <Pressable
             accessibilityLabel={`观看进度 ${watchedEpisodeNumbers.length} 集，共 ${totalEpisodes} 集，点击编辑`}
             accessibilityRole="button"
@@ -305,22 +324,24 @@ export default function SubjectScreen() {
           title={title}
           totalEpisodes={totalEpisodes}
           year={year}
-          isAnime={isAnime}
+          showsEpisodes={tracksWatchProgress && totalEpisodes > 0}
         />
 
           <View style={styles.detailEntries}>
+            {characterEntry ? (
+              <DetailEntry
+                hint={characterEntry.hint}
+                label={characterEntry.label}
+                onPress={() =>
+                  router.push({
+                    pathname: '/subject/[id]/characters',
+                    params: { id: String(subjectId) },
+                  })
+                }
+              />
+            ) : null}
             <DetailEntry
-              hint="角色介绍与配音阵容"
-              label="角色与声优"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/characters',
-                  params: { id: String(subjectId) },
-                })
-              }
-            />
-            <DetailEntry
-              hint="完整职位与参与集数"
+              hint="完整职位与参与信息"
               label="制作人员"
               onPress={() =>
                 router.push({
@@ -328,10 +349,10 @@ export default function SubjectScreen() {
                   params: { id: String(subjectId) },
                 })
               }
-              withBorder
+              withBorder={Boolean(characterEntry)}
             />
             <DetailEntry
-              hint="系列作品、原声与主题曲"
+              hint="系列作品与相关条目"
               label="关联条目"
               onPress={() =>
                 router.push({
@@ -399,13 +420,15 @@ export default function SubjectScreen() {
             ) : null}
           </View>
 
-        {isAnime ? (
+        {hasEpisodeData && totalEpisodes > 0 ? (
           <EpisodeSection
             episodes={catalogSubject?.episodes ?? []}
             fallbackAirDates={subject?.episodeAirDates ?? []}
             key={subjectId}
+            kind={subjectType === 3 ? 'track' : 'episode'}
             onOpenEpisode={openEpisode}
             totalEpisodes={totalEpisodes}
+            tracksWatchProgress={tracksWatchProgress}
             watchedEpisodeNumbers={watchedEpisodeNumbers}
           />
         ) : null}

@@ -3,6 +3,7 @@ import type {
   CatalogProvider,
   CatalogSubject,
 } from '@/features/catalog/model';
+import { usesEpisodeData } from '@/features/catalog/subject-types';
 
 import {
   getBangumiEpisodes,
@@ -96,10 +97,10 @@ function toCatalogSubject(
 
 export const bangumiCatalogProvider: CatalogProvider = {
   async getSubject(subjectId) {
-    const [subject, episodes] = await Promise.all([
-      getBangumiSubject(subjectId),
-      getBangumiEpisodes(subjectId),
-    ]);
+    const subject = await getBangumiSubject(subjectId);
+    const episodes = usesEpisodeData(subject.type)
+      ? await getBangumiEpisodes(subjectId)
+      : [];
 
     return toCatalogSubject(subject, episodes);
   },

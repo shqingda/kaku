@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { bangumiCatalogProvider } from '@/infrastructure/bangumi/catalog/provider';
 import { queryKeys } from '@/lib/query-keys';
 
-const CATALOG_QUERY_VERSION = 3;
+const CATALOG_QUERY_VERSION = 4;
 
 export function useCatalogSubject(subjectId: number) {
   return useQuery({

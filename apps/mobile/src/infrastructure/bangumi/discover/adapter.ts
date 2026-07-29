@@ -17,6 +17,7 @@ function secureImage(url?: string) {
 
 export function toDiscoverSubject(
   subject: PublicSubject,
+  subjectType = 2,
 ): DiscoverSubject {
   return {
     coverUrl: secureImage(
@@ -28,16 +29,20 @@ export function toDiscoverSubject(
     id: subject.id,
     score: subject.rating?.score,
     title: subject.name_cn.trim() || subject.name,
+    type: subjectType,
   };
 }
 
 export function toDiscoverSubjectPage(
   result: BangumiSubjectSearchResponse,
+  subjectType = 2,
 ): DiscoverSubjectPage {
   const nextOffset = result.offset + result.data.length;
 
   return {
-    items: result.data.map(toDiscoverSubject),
+    items: result.data.map((subject) =>
+      toDiscoverSubject(subject, subjectType),
+    ),
     nextOffset: nextOffset < result.total ? nextOffset : undefined,
     total: result.total,
   };

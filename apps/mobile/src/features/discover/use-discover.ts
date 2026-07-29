@@ -35,7 +35,7 @@ export function useBangumiRankedSubjects() {
   });
 }
 
-export function useBangumiSearch(keyword: string) {
+export function useBangumiSearch(keyword: string, subjectType: number) {
   return useInfiniteQuery<
     DiscoverSubjectPage,
     Error,
@@ -47,8 +47,12 @@ export function useBangumiSearch(keyword: string) {
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      bangumiDiscoverProvider.searchSubjects(keyword.trim(), pageParam),
-    queryKey: queryKeys.subjectSearch(keyword),
+      bangumiDiscoverProvider.searchSubjects(
+        keyword.trim(),
+        subjectType,
+        pageParam,
+      ),
+    queryKey: queryKeys.subjectSearch(keyword, subjectType),
     retry: 1,
     staleTime: 10 * 60 * 1000,
   });

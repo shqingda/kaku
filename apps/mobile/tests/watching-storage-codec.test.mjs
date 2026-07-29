@@ -19,7 +19,7 @@ const item = {
 
 test('watching storage codec round-trips valid items', () => {
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([item])), [
-    { ...item, collectionStatus: 'doing' },
+    { ...item, collectionStatus: 'doing', type: 2 },
   ]);
 });
 
@@ -32,7 +32,7 @@ test('watching storage keeps collection status and rating independent', () => {
   };
 
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
-    stored,
+    { ...stored, type: 2 },
   ]);
 });
 
@@ -43,7 +43,7 @@ test('watching storage preserves an explicit uncollected status', () => {
   };
 
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
-    stored,
+    { ...stored, type: 2 },
   ]);
 });
 

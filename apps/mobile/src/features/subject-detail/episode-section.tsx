@@ -25,17 +25,24 @@ function formatAirDate(date?: string) {
 export function EpisodeSection({
   episodes,
   fallbackAirDates,
+  kind,
   onOpenEpisode,
   totalEpisodes,
+  tracksWatchProgress,
   watchedEpisodeNumbers,
 }: {
   episodes: CatalogEpisode[];
   fallbackAirDates: string[];
+  kind?: 'episode' | 'track';
   onOpenEpisode: (episodeNumber: number) => void;
   totalEpisodes: number;
+  tracksWatchProgress?: boolean;
   watchedEpisodeNumbers: number[];
 }) {
-  const [layout, setLayout] = useState<EpisodeLayout>('grid');
+  const isTrack = kind === 'track';
+  const [layout, setLayout] = useState<EpisodeLayout>(
+    isTrack ? 'list' : 'grid',
+  );
   const [rangeIndex, setRangeIndex] = useState(() =>
     getInitialEpisodeRangeIndex(totalEpisodes, watchedEpisodeNumbers),
   );
@@ -54,47 +61,49 @@ export function EpisodeSection({
   return (
     <View style={styles.panel}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.panelTitle}>章节</Text>
-        <View style={styles.layoutActions}>
-          {(['grid', 'list'] as const).map((nextLayout) => {
-            const isActive = layout === nextLayout;
-            return (
-              <Pressable
-                accessibilityLabel={
-                  nextLayout === 'grid' ? '格子布局' : '列表布局'
-                }
-                accessibilityRole="button"
-                accessibilityState={{ selected: isActive }}
-                key={nextLayout}
-                onPress={() => setLayout(nextLayout)}
-                style={({ pressed }) => [
-                  styles.iconButton,
-                  isActive && styles.activeLayoutButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <SymbolView
-                  name={
-                    nextLayout === 'grid'
-                      ? {
-                          android: 'grid_view',
-                          ios: 'square.grid.2x2',
-                          web: 'grid_view',
-                        }
-                      : {
-                          android: 'view_list',
-                          ios: 'list.bullet',
-                          web: 'view_list',
-                        }
+        <Text style={styles.panelTitle}>{isTrack ? '曲目' : '章节'}</Text>
+        {!isTrack ? (
+          <View style={styles.layoutActions}>
+            {(['grid', 'list'] as const).map((nextLayout) => {
+              const isActive = layout === nextLayout;
+              return (
+                <Pressable
+                  accessibilityLabel={
+                    nextLayout === 'grid' ? '格子布局' : '列表布局'
                   }
-                  size={17}
-                  tintColor={isActive ? COLORS.ink : COLORS.subtle}
-                  weight="semibold"
-                />
-              </Pressable>
-            );
-          })}
-        </View>
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActive }}
+                  key={nextLayout}
+                  onPress={() => setLayout(nextLayout)}
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    isActive && styles.activeLayoutButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <SymbolView
+                    name={
+                      nextLayout === 'grid'
+                        ? {
+                            android: 'grid_view',
+                            ios: 'square.grid.2x2',
+                            web: 'grid_view',
+                          }
+                        : {
+                            android: 'view_list',
+                            ios: 'list.bullet',
+                            web: 'view_list',
+                          }
+                    }
+                    size={17}
+                    tintColor={isActive ? COLORS.ink : COLORS.subtle}
+                    weight="semibold"
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
       </View>
       {ranges.length > 1 ? (
         <ScrollView
@@ -107,7 +116,9 @@ export function EpisodeSection({
 
             return (
               <Pressable
-                accessibilityLabel={`显示第 ${start} 到 ${end} 集`}
+                accessibilityLabel={`显示第 ${start} 到 ${end} ${
+                  isTrack ? '曲' : '集'
+                }`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
                 key={start}
@@ -133,20 +144,28 @@ export function EpisodeSection({
       ) : null}
       <Text style={styles.sectionHint}>
         {ranges.length > 1
-          ? `当前显示 ${rangeStart}–${rangeEnd} 集，点击章节进入本集`
-          : '点击章节进入本集'}
+          ? `当前显示 ${rangeStart}–${rangeEnd} ${
+              isTrack ? '曲' : '集'
+            }，点击进入详情`
+          : `点击${isTrack ? '曲目' : '章节'}进入详情`}
       </Text>
 
       {layout === 'grid' ? (
         <View style={styles.episodeGrid}>
           {visibleEpisodeNumbers.map((episodeNumber) => {
-            const isWatched = watchedEpisodeNumbers.includes(episodeNumber);
+            const isWatched =
+              tracksWatchProgress &&
+              watchedEpisodeNumbers.includes(episodeNumber);
 
             return (
               <Pressable
-                accessibilityLabel={`第 ${episodeNumber} 集，${
-                  isWatched ? '已看' : '未看'
-                }，点击进入本集`}
+                accessibilityLabel={`第 ${episodeNumber} ${
+                  isTrack ? '曲' : '集'
+                }${
+                  tracksWatchProgress
+                    ? `，${isWatched ? '已看' : '未看'}`
+                    : ''
+                }，点击进入详情`}
                 accessibilityRole="button"
                 key={episodeNumber}
                 onPress={() => onOpenEpisode(episodeNumber)}
@@ -171,12 +190,16 @@ export function EpisodeSection({
       ) : (
         <View style={styles.episodeList}>
           {visibleEpisodeNumbers.map((episodeNumber, index) => {
-            const isWatched = watchedEpisodeNumbers.includes(episodeNumber);
+            const isWatched =
+              tracksWatchProgress &&
+              watchedEpisodeNumbers.includes(episodeNumber);
             const episode = episodesByNumber.get(episodeNumber);
 
             return (
               <Pressable
-                accessibilityLabel={`第 ${episodeNumber} 集，点击进入本集`}
+                accessibilityLabel={`第 ${episodeNumber} ${
+                  isTrack ? '曲' : '集'
+                }，点击进入详情`}
                 accessibilityRole="button"
                 key={episodeNumber}
                 onPress={() => onOpenEpisode(episodeNumber)}
@@ -203,14 +226,16 @@ export function EpisodeSection({
                 </View>
                 <View style={styles.episodeRowMain}>
                   <Text numberOfLines={1} style={styles.episodeRowTitle}>
-                    第 {episodeNumber} 集
+                    第 {episodeNumber} {isTrack ? '曲' : '集'}
                     {episode?.title ? ` · ${episode.title}` : ''}
                   </Text>
                   <Text style={styles.episodeAirDate}>
-                    {formatAirDate(
-                      episode?.airDate ?? fallbackAirDates[episodeNumber - 1],
-                    )}{' '}
-                    放送{episode?.duration ? ` · ${episode.duration}` : ''}
+                    {isTrack
+                      ? episode?.duration || '时长待定'
+                      : `${formatAirDate(
+                          episode?.airDate ??
+                            fallbackAirDates[episodeNumber - 1],
+                        )} 放送${episode?.duration ? ` · ${episode.duration}` : ''}`}
                   </Text>
                 </View>
                 <View style={styles.replyCount}>

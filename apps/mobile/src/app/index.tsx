@@ -14,21 +14,23 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import {
+  getCollectionStatusLabel,
+  SUBJECT_TYPES,
+  supportsWatchProgress,
+} from '@/features/catalog/subject-types';
 import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
 import { useWatching } from '@/features/watching/watching-provider';
 
-const COLLECTION_TABS: {
-  label: string;
-  value: CollectionStatus;
-}[] = [
-  { label: '在看', value: 'doing' },
-  { label: '想看', value: 'wish' },
-  { label: '看过', value: 'completed' },
-  { label: '搁置', value: 'onHold' },
-  { label: '抛弃', value: 'dropped' },
+const COLLECTION_STATUSES: CollectionStatus[] = [
+  'doing',
+  'wish',
+  'completed',
+  'onHold',
+  'dropped',
 ];
 
 function Cover({ item, featured = false }: { item: WatchingItem; featured?: boolean }) {
@@ -64,13 +66,19 @@ function Progress({ item }: { item: WatchingItem }) {
 
 export default function HomeScreen() {
   const { items: watchingItems } = useWatching();
+  const [selectedType, setSelectedType] = useState(2);
   const [selectedStatus, setSelectedStatus] =
     useState<CollectionStatus>('doing');
-  const selectedTab =
-    COLLECTION_TABS.find((tab) => tab.value === selectedStatus) ??
-    COLLECTION_TABS[0];
+  const selectedStatusLabel = getCollectionStatusLabel(
+    selectedType,
+    selectedStatus,
+  );
+  const selectedTypeLabel =
+    SUBJECT_TYPES.find((type) => type.id === selectedType)?.label ?? '条目';
   const visibleItems = watchingItems.filter(
-    (item) => item.collectionStatus === selectedStatus,
+    (item) =>
+      (item.type ?? 2) === selectedType &&
+      item.collectionStatus === selectedStatus,
   );
 
   return (
@@ -84,10 +92,10 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>
-              还没有{selectedTab.label}的条目
+              还没有{selectedStatusLabel}的{selectedTypeLabel}
             </Text>
             <Text style={styles.emptyText}>
-              在条目详情选择“{selectedTab.label}”后，会显示在这里。
+              在条目详情选择“{selectedStatusLabel}”后，会显示在这里。
             </Text>
             <Pressable
               accessibilityLabel="前往发现条目"
@@ -106,8 +114,10 @@ export default function HomeScreen() {
           <>
             <View style={styles.header}>
               <View>
-                <Text style={styles.title}>{selectedTab.label}</Text>
-                <Text style={styles.subtitle}>{visibleItems.length} 个条目</Text>
+                <Text style={styles.title}>{selectedStatusLabel}</Text>
+                <Text style={styles.subtitle}>
+                  {visibleItems.length} 个{selectedTypeLabel}条目
+                </Text>
               </View>
               <Link asChild href="/explore">
                 <Pressable
@@ -132,19 +142,51 @@ export default function HomeScreen() {
               </Link>
             </View>
             <ScrollView
-              contentContainerStyle={styles.tabs}
+              contentContainerStyle={styles.mediaTabs}
               horizontal
               showsHorizontalScrollIndicator={false}
             >
-              {COLLECTION_TABS.map((tab) => {
-                const isSelected = tab.value === selectedStatus;
+              {SUBJECT_TYPES.map((type) => {
+                const isSelected = type.id === selectedType;
 
                 return (
                   <Pressable
                     accessibilityRole="button"
                     accessibilityState={{ selected: isSelected }}
-                    key={tab.value}
-                    onPress={() => setSelectedStatus(tab.value)}
+                    key={type.id}
+                    onPress={() => setSelectedType(type.id)}
+                    style={[
+                      styles.mediaTab,
+                      isSelected && styles.selectedMediaTab,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.mediaTabText,
+                        isSelected && styles.selectedMediaTabText,
+                      ]}
+                    >
+                      {type.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <ScrollView
+              contentContainerStyle={styles.tabs}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {COLLECTION_STATUSES.map((status) => {
+                const isSelected = status === selectedStatus;
+                const label = getCollectionStatusLabel(selectedType, status);
+
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    key={status}
+                    onPress={() => setSelectedStatus(status)}
                     style={[
                       styles.tab,
                       isSelected && styles.selectedTab,
@@ -156,7 +198,7 @@ export default function HomeScreen() {
                         isSelected && styles.selectedTabText,
                       ]}
                     >
-                      {tab.label}
+                      {label}
                     </Text>
                   </Pressable>
                 );
@@ -176,22 +218,20 @@ export default function HomeScreen() {
                   }}
                 >
                   <Pressable
-                    accessibilityHint="打开番剧详情"
+                    accessibilityHint="打开条目详情"
                     accessibilityLabel={`打开${item.title}详情`}
                     accessibilityRole="button"
                     style={styles.featureMain}
                   >
                     <Cover featured item={item} />
                     <View style={styles.featureDetails}>
-                      <Text style={styles.sectionLabel}>{selectedTab.label}</Text>
+                      <Text style={styles.sectionLabel}>
+                        {selectedStatusLabel}
+                      </Text>
                       <Text numberOfLines={2} style={styles.featureTitle}>
                         {item.title}
                       </Text>
-                      <Text style={styles.featureMeta}>
-                        {item.watchedEpisodeNumbers.length} / {item.totalEpisodes}{' '}
-                        集
-                      </Text>
-                      <Progress item={item} />
+                      <ItemProgress item={item} />
                     </View>
                   </Pressable>
                 </Link>
@@ -213,7 +253,7 @@ export default function HomeScreen() {
                   }}
                 >
                   <Pressable
-                    accessibilityHint="打开番剧详情"
+                    accessibilityHint="打开条目详情"
                     accessibilityLabel={`打开${item.title}详情`}
                     accessibilityRole="button"
                     style={styles.rowMain}
@@ -223,10 +263,7 @@ export default function HomeScreen() {
                       <Text numberOfLines={1} style={styles.rowTitle}>
                         {item.title}
                       </Text>
-                      <Text style={styles.rowMeta}>
-                        {item.watchedEpisodeNumbers.length} / {item.totalEpisodes} 集
-                      </Text>
-                      <Progress item={item} />
+                      <ItemProgress item={item} />
                     </View>
                     <Text style={styles.chevron}>›</Text>
                   </Pressable>
@@ -241,6 +278,25 @@ export default function HomeScreen() {
   );
 }
 
+function ItemProgress({ item }: { item: WatchingItem }) {
+  if (!supportsWatchProgress(item.type ?? 2)) {
+    return (
+      <Text style={styles.rowMeta}>
+        {item.rating ? `我的评分 ${item.rating} / 10` : '未评分'}
+      </Text>
+    );
+  }
+
+  return (
+    <>
+      <Text style={styles.rowMeta}>
+        {item.watchedEpisodeNumbers.length} / {item.totalEpisodes} 集
+      </Text>
+      <Progress item={item} />
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   content: { flexGrow: 1, paddingBottom: 48, paddingHorizontal: 20 },
@@ -251,6 +307,15 @@ const styles = StyleSheet.create({
     paddingBottom: 26,
     paddingTop: 18,
   },
+  mediaTabs: { gap: 8, paddingBottom: 10 },
+  mediaTab: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  selectedMediaTab: { backgroundColor: COLORS.ink },
+  mediaTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  selectedMediaTabText: { color: COLORS.surface },
   tabs: { gap: 8, paddingBottom: 18 },
   tab: {
     backgroundColor: COLORS.surface,

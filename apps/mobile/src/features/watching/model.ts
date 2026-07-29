@@ -16,4 +16,5 @@ export type WatchingItem = {
   year: number;
   summary: string;
   episodeAirDates: string[];
+  type?: number;
 };

@@ -15,6 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import {
+  getSubjectTypeLabel,
+  SUBJECT_TYPES,
+} from '@/features/catalog/subject-types';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
@@ -35,7 +39,8 @@ export default function ExploreScreen() {
   const [draft, setDraft] = useState('');
   const [keyword, setKeyword] = useState('');
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
-  const searchQuery = useBangumiSearch(keyword);
+  const [selectedSearchType, setSelectedSearchType] = useState(2);
+  const searchQuery = useBangumiSearch(keyword, selectedSearchType);
   const searchSubjects = useMemo(
     () => searchQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [searchQuery.data],
@@ -85,10 +90,12 @@ export default function ExploreScreen() {
           isPending={searchQuery.isPending}
           keyword={keyword}
           onChangeDraft={updateDraft}
+          onChangeSubjectType={setSelectedSearchType}
           onLoadMore={() => void searchQuery.fetchNextPage()}
           onRetry={() => void searchQuery.refetch()}
           onSubmit={submitSearch}
           subjects={searchSubjects}
+          subjectType={selectedSearchType}
           total={searchTotal}
         />
       ) : (
@@ -102,6 +109,10 @@ export default function ExploreScreen() {
             draft={draft}
             onChangeDraft={updateDraft}
             onSubmit={submitSearch}
+          />
+          <SubjectTypeTabs
+            onChange={setSelectedSearchType}
+            selectedType={selectedSearchType}
           />
           <View>
             <Pressable
@@ -224,13 +235,56 @@ function SearchField({
         clearButtonMode="while-editing"
         onChangeText={onChangeDraft}
         onSubmitEditing={onSubmit}
-        placeholder="搜索动画"
+        placeholder="搜索条目"
         placeholderTextColor={COLORS.subtle}
         returnKeyType="search"
         style={styles.searchInput}
         value={draft}
       />
     </View>
+  );
+}
+
+function SubjectTypeTabs({
+  onChange,
+  selectedType,
+}: {
+  onChange: (subjectType: number) => void;
+  selectedType: number;
+}) {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.subjectTypeTabs}
+      horizontal
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+    >
+      {SUBJECT_TYPES.map((type) => {
+        const isSelected = type.id === selectedType;
+
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: isSelected }}
+            key={type.id}
+            onPress={() => onChange(type.id)}
+            style={[
+              styles.subjectTypeTab,
+              isSelected && styles.subjectTypeTabSelected,
+            ]}
+          >
+            <Text
+              style={[
+                styles.subjectTypeTabText,
+                isSelected && styles.subjectTypeTabTextSelected,
+              ]}
+            >
+              {type.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -334,10 +388,12 @@ function SearchResults({
   isPending,
   keyword,
   onChangeDraft,
+  onChangeSubjectType,
   onLoadMore,
   onRetry,
   onSubmit,
   subjects,
+  subjectType,
   total,
 }: {
   draft: string;
@@ -348,10 +404,12 @@ function SearchResults({
   isPending: boolean;
   keyword: string;
   onChangeDraft: (value: string) => void;
+  onChangeSubjectType: (subjectType: number) => void;
   onLoadMore: () => void;
   onRetry: () => void;
   onSubmit: () => void;
   subjects: DiscoverSubject[];
+  subjectType: number;
   total: number;
 }) {
   return (
@@ -393,11 +451,16 @@ function SearchResults({
             onChangeDraft={onChangeDraft}
             onSubmit={onSubmit}
           />
+          <SubjectTypeTabs
+            onChange={onChangeSubjectType}
+            selectedType={subjectType}
+          />
           <View style={styles.sectionHeader}>
             <View>
               <Text style={styles.sectionTitle}>搜索结果</Text>
               <Text style={styles.sectionMeta}>
-                “{keyword}” · {total ? `${total} 个条目` : '查询中'}
+                {getSubjectTypeLabel(subjectType)} · “{keyword}” ·{' '}
+                {total ? `${total} 个条目` : '查询中'}
               </Text>
             </View>
           </View>
@@ -529,6 +592,20 @@ const styles = StyleSheet.create({
     height: 50,
     marginLeft: 9,
   },
+  subjectTypeTabs: { gap: 8, paddingBottom: 2, paddingTop: 12 },
+  subjectTypeTab: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  subjectTypeTabSelected: { backgroundColor: COLORS.ink },
+  subjectTypeTabText: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  subjectTypeTabTextSelected: { color: COLORS.surface },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',

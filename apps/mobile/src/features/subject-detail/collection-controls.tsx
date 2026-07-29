@@ -1,21 +1,22 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
+import {
+  getCollectionStatusLabel,
+  supportsWatchProgress,
+} from '@/features/catalog/subject-types';
 import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
 import { playSelectionHaptic } from '@/lib/haptics';
 
-const STATUS_OPTIONS: {
-  label: string;
-  value: CollectionStatus;
-}[] = [
-  { label: '想看', value: 'wish' },
-  { label: '看过', value: 'completed' },
-  { label: '在看', value: 'doing' },
-  { label: '搁置', value: 'onHold' },
-  { label: '抛弃', value: 'dropped' },
+const STATUS_OPTIONS: CollectionStatus[] = [
+  'wish',
+  'completed',
+  'doing',
+  'onHold',
+  'dropped',
 ];
 
 export function CollectionControls({
@@ -53,18 +54,22 @@ export function CollectionControls({
           </Pressable>
         ) : null}
       </View>
-      <Text style={styles.hint}>收藏状态、评分和观看进度彼此独立</Text>
+      <Text style={styles.hint}>
+        {supportsWatchProgress(item.type ?? 2)
+          ? '收藏状态、评分和观看进度彼此独立'
+          : '收藏状态和评分彼此独立'}
+      </Text>
 
       <View style={styles.statuses}>
-        {STATUS_OPTIONS.map((option) => {
-          const isSelected = item.collectionStatus === option.value;
+        {STATUS_OPTIONS.map((status) => {
+          const isSelected = item.collectionStatus === status;
 
           return (
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
-              key={option.value}
-              onPress={() => selectStatus(option.value)}
+              key={status}
+              onPress={() => selectStatus(status)}
               style={({ pressed }) => [
                 styles.status,
                 isSelected && styles.selectedStatus,
@@ -77,7 +82,7 @@ export function CollectionControls({
                   isSelected && styles.selectedStatusText,
                 ]}
               >
-                {option.label}
+                {getCollectionStatusLabel(item.type ?? 2, status)}
               </Text>
             </Pressable>
           );

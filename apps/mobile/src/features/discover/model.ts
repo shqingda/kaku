@@ -4,6 +4,7 @@ export type DiscoverSubject = {
   id: number;
   score?: number;
   title: string;
+  type: number;
 };
 
 export type CalendarDay = {
@@ -23,6 +24,7 @@ export type DiscoverProvider = {
   getRankedSubjects: (offset: number) => Promise<DiscoverSubjectPage>;
   searchSubjects: (
     keyword: string,
+    subjectType: number,
     offset: number,
   ) => Promise<DiscoverSubjectPage>;
 };

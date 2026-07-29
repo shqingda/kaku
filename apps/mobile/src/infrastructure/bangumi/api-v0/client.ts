@@ -98,6 +98,7 @@ export async function getBangumiCalendar() {
 
 export async function searchBangumiSubjects(
   keyword: string,
+  subjectType: number,
   offset: number,
 ) {
   const query = new URLSearchParams({
@@ -106,7 +107,7 @@ export async function searchBangumiSubjects(
   });
   const json = await requestJson(`/v0/search/subjects?${query}`, {
     body: JSON.stringify({
-      filter: { type: [2] },
+      filter: { type: [subjectType] },
       keyword,
       sort: 'match',
     }),

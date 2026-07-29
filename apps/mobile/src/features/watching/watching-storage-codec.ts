@@ -14,10 +14,12 @@ const watchingItemSchema = z.object({
   title: z.string().min(1),
   totalEpisodes: z.number().int().nonnegative(),
   rating: z.number().int().min(1).max(10).optional(),
+  type: z.number().int().positive().optional(),
   watchedEpisodeNumbers: z.array(z.number().int().positive()),
   year: z.number().int().nonnegative(),
 }).transform((item) => ({
   ...item,
+  type: item.type ?? 2,
   collectionStatus:
     item.collectionStatus ??
     (item.collectionStatus === null

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
+import { supportsWatchProgress } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionReadOnlyNotice } from '@/features/discussions/discussion-read-only';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -35,6 +36,9 @@ export default function EpisodeScreen() {
   const catalogQuery = useCatalogSubject(subjectId);
   const subject = items.find((item) => item.id === subjectId);
   const catalogSubject = catalogQuery.data;
+  const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
+  const isTrack = subjectType === 3;
+  const tracksWatchProgress = supportsWatchProgress(subjectType);
   const totalEpisodes =
     catalogSubject?.totalEpisodes ?? subject?.totalEpisodes ?? 0;
   const isValidEpisode =
@@ -51,10 +55,16 @@ export default function EpisodeScreen() {
   if (!subject && catalogQuery.isPending) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen options={{ title: `第 ${episodeNumber} 集` }} />
+        <Stack.Screen
+          options={{ title: `第 ${episodeNumber} ${isTrack ? '曲' : '集'}` }}
+        />
         <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>正在读取章节</Text>
-          <Text style={styles.errorText}>正在从 Bangumi 获取章节资料。</Text>
+          <Text style={styles.errorTitle}>
+            正在读取{isTrack ? '曲目' : '章节'}
+          </Text>
+          <Text style={styles.errorText}>
+            正在从 Bangumi 获取{isTrack ? '曲目' : '章节'}资料。
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -73,7 +83,8 @@ export default function EpisodeScreen() {
   }
 
   const isWatched =
-    subject?.watchedEpisodeNumbers.includes(episodeNumber) ?? false;
+    tracksWatchProgress &&
+    (subject?.watchedEpisodeNumbers.includes(episodeNumber) ?? false);
   const subjectTitle = catalogSubject?.title ?? subject?.title ?? '未知条目';
   const airDate =
     catalogEpisode?.airDate ?? subject?.episodeAirDates[episodeNumber - 1];
@@ -86,13 +97,16 @@ export default function EpisodeScreen() {
     summary: catalogSubject?.summary ?? '',
     title: subjectTitle,
     totalEpisodes,
+    type: subjectType,
     watchedEpisodeNumbers: [],
     year: catalogSubject?.year ?? 0,
   };
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: `第 ${episodeNumber} 集` }} />
+      <Stack.Screen
+        options={{ title: `第 ${episodeNumber} ${isTrack ? '曲' : '集'}` }}
+      />
       <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.content}
@@ -115,39 +129,47 @@ export default function EpisodeScreen() {
             <>
               <View style={styles.episodeCard}>
                 <Text style={styles.subjectTitle}>{subjectTitle}</Text>
-                <Text style={styles.episodeTitle}>第 {episodeNumber} 集</Text>
+                <Text style={styles.episodeTitle}>
+                  第 {episodeNumber} {isTrack ? '曲' : '集'}
+                </Text>
                 {catalogEpisode?.title ? (
                   <Text style={styles.catalogEpisodeTitle}>
                     {catalogEpisode.title}
                   </Text>
                 ) : null}
                 <View style={styles.metaLine}>
-                  <Pressable
-                    accessibilityLabel={
-                      isWatched ? '将本集设为未看' : '将本集标记已看'
-                    }
-                    accessibilityRole="button"
-                    hitSlop={8}
-                    onPress={() => {
-                      toggleEpisodeWatched(progressSubject, episodeNumber);
-                      playEpisodeToggleHaptic(isWatched);
-                    }}
-                    style={({ pressed }) => [
-                      styles.statusBadge,
-                      isWatched && styles.watchedStatusBadge,
-                      pressed && styles.pressedStatusBadge,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        isWatched && styles.watchedStatusText,
+                  {tracksWatchProgress ? (
+                    <Pressable
+                      accessibilityLabel={
+                        isWatched ? '将本集设为未看' : '将本集标记已看'
+                      }
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      onPress={() => {
+                        toggleEpisodeWatched(progressSubject, episodeNumber);
+                        playEpisodeToggleHaptic(isWatched);
+                      }}
+                      style={({ pressed }) => [
+                        styles.statusBadge,
+                        isWatched && styles.watchedStatusBadge,
+                        pressed && styles.pressedStatusBadge,
                       ]}
                     >
-                      {isWatched ? '已看' : '未看'}
-                    </Text>
-                  </Pressable>
-                  <Text style={styles.airDate}>{formatAirDate(airDate)} 放送</Text>
+                      <Text
+                        style={[
+                          styles.statusText,
+                          isWatched && styles.watchedStatusText,
+                        ]}
+                      >
+                        {isWatched ? '已看' : '未看'}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  <Text style={styles.airDate}>
+                    {isTrack
+                      ? catalogEpisode?.duration || '时长待定'
+                      : `${formatAirDate(airDate)} 放送`}
+                  </Text>
                 </View>
                 <Text style={styles.description}>
                   {catalogEpisode?.description ||
@@ -161,7 +183,9 @@ export default function EpisodeScreen() {
                 onRetry={() => void catalogQuery.refetch()}
               />
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>本集讨论</Text>
+                <Text style={styles.sectionTitle}>
+                  本{isTrack ? '曲' : '集'}讨论
+                </Text>
                 <Text style={styles.remoteReplyCount}>
                   Bangumi {catalogEpisode?.discussionCount ?? replies.length}
                 </Text>

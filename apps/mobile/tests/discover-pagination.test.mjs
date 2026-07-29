@@ -22,11 +22,26 @@ test('Bangumi search page exposes the next offset', () => {
 
   assert.equal(page.nextOffset, 31);
   assert.equal(page.total, 50);
+  assert.equal(page.items[0].type, 2);
   assert.equal(page.items[0].title, '中文标题');
   assert.equal(
     page.items[0].coverUrl,
     'https://lain.bgm.tv/pic/cover/m/example.jpg',
   );
+});
+
+test('Bangumi search keeps the selected subject type', () => {
+  const page = toDiscoverSubjectPage(
+    {
+      data: [subject],
+      limit: 30,
+      offset: 0,
+      total: 1,
+    },
+    4,
+  );
+
+  assert.equal(page.items[0].type, 4);
 });
 
 test('Bangumi search page stops at the final result', () => {
