@@ -12,8 +12,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '@/constants/design';
 
 import type { CollectionStatus, WatchingItem } from './model';
-import { resizeWatchedEpisodes } from './progress';
 import { watchingStorage } from './watching-storage';
+import {
+  changeCollectionStatus,
+  changeWatchedEpisodeCount,
+  toggleWatchedEpisode,
+} from './progress';
 import { updateWatchingList } from './watching-list';
 
 type WatchingContextValue = {
@@ -105,22 +109,10 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
     setItems((current) => {
       const existing = current.find((item) => item.id === subject.id);
       const item = existing ?? subject;
-      const watchedEpisodeNumbers = item.watchedEpisodeNumbers.includes(
-        episodeNumber,
-      )
-        ? item.watchedEpisodeNumbers.filter(
-            (number) => number !== episodeNumber,
-          )
-        : [...item.watchedEpisodeNumbers, episodeNumber].sort(
-            (left, right) => left - right,
-          );
-      const nextItem = {
-        ...item,
-        collectionStatus: item.collectionStatus ?? null,
-        watchedEpisodeNumbers,
-      };
-
-      return updateWatchingList(current, nextItem);
+      return updateWatchingList(
+        current,
+        toggleWatchedEpisode(item, episodeNumber),
+      );
     });
   }
 
@@ -136,17 +128,10 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
       }
 
       const item = existing ?? subject;
-      const nextItem = {
-        ...item,
-        collectionStatus: item.collectionStatus ?? null,
-        watchedEpisodeNumbers: resizeWatchedEpisodes(
-          item.watchedEpisodeNumbers,
-          watchedCount,
-          item.totalEpisodes,
-        ),
-      };
-
-      return updateWatchingList(current, nextItem);
+      return updateWatchingList(
+        current,
+        changeWatchedEpisodeCount(item, watchedCount),
+      );
     });
   }
 
@@ -156,10 +141,10 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
   ) {
     setItems((current) => {
       const item = current.find((entry) => entry.id === subject.id) ?? subject;
-      return updateWatchingList(current, {
-        ...item,
-        collectionStatus: collectionStatus ?? null,
-      });
+      return updateWatchingList(
+        current,
+        changeCollectionStatus(item, collectionStatus),
+      );
     });
   }
 

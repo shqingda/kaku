@@ -23,27 +23,27 @@ test('watching storage codec round-trips valid items', () => {
   ]);
 });
 
-test('watching storage keeps collection status and rating independent', () => {
+test('watching storage clears progress for wish items', () => {
   const stored = {
     ...item,
     collectionStatus: 'wish',
     rating: 9,
-    watchedEpisodeNumbers: [],
+    watchedEpisodeNumbers: [1, 2],
   };
 
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
-    { ...stored, type: 2 },
+    { ...stored, type: 2, watchedEpisodeNumbers: [] },
   ]);
 });
 
-test('watching storage preserves an explicit uncollected status', () => {
+test('watching storage repairs old progress-only records as doing', () => {
   const stored = {
     ...item,
     collectionStatus: null,
   };
 
   assert.deepEqual(decodeWatchingItems(encodeWatchingItems([stored])), [
-    { ...stored, type: 2 },
+    { ...stored, collectionStatus: 'doing', type: 2 },
   ]);
 });
 

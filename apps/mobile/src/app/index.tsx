@@ -23,6 +23,7 @@ import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
+import { shouldShowWatchProgress } from '@/features/watching/progress';
 import { useWatching } from '@/features/watching/watching-provider';
 
 const COLLECTION_STATUSES: CollectionStatus[] = [
@@ -285,6 +286,18 @@ function ItemProgress({ item }: { item: WatchingItem }) {
         {item.rating ? `我的评分 ${item.rating} / 10` : '未评分'}
       </Text>
     );
+  }
+
+  if (
+    !shouldShowWatchProgress({
+      collectionStatus: item.collectionStatus,
+      totalEpisodes: item.totalEpisodes,
+      watchedCount: item.watchedEpisodeNumbers.length,
+    })
+  ) {
+    return item.rating ? (
+      <Text style={styles.rowMeta}>我的评分 {item.rating} / 10</Text>
+    ) : null;
   }
 
   return (

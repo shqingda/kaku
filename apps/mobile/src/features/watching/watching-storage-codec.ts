@@ -17,17 +17,21 @@ const watchingItemSchema = z.object({
   type: z.number().int().positive().optional(),
   watchedEpisodeNumbers: z.array(z.number().int().positive()),
   year: z.number().int().nonnegative(),
-}).transform((item) => ({
-  ...item,
-  type: item.type ?? 2,
-  collectionStatus:
-    item.collectionStatus ??
-    (item.collectionStatus === null
-      ? null
-      : item.watchedEpisodeNumbers.length > 0
-        ? 'doing' as const
-        : null),
-}));
+}).transform((item) => {
+  const watchedEpisodeNumbers =
+    item.collectionStatus === 'wish' ? [] : item.watchedEpisodeNumbers;
+  const collectionStatus =
+    watchedEpisodeNumbers.length > 0 && item.collectionStatus == null
+      ? 'doing' as const
+      : item.collectionStatus ?? null;
+
+  return {
+    ...item,
+    collectionStatus,
+    type: item.type ?? 2,
+    watchedEpisodeNumbers,
+  };
+});
 
 const watchingItemsSchema = z.array(watchingItemSchema);
 

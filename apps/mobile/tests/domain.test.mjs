@@ -9,7 +9,13 @@ import {
 import {
   bangumiDiscussionReplySchema,
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
-import { resizeWatchedEpisodes } from '../src/features/watching/progress.ts';
+import {
+  changeCollectionStatus,
+  changeWatchedEpisodeCount,
+  resizeWatchedEpisodes,
+  shouldShowWatchProgress,
+  toggleWatchedEpisode,
+} from '../src/features/watching/progress.ts';
 import { updateWatchingList } from '../src/features/watching/watching-list.ts';
 import { formatActivityTime } from '../src/lib/format-activity-time.ts';
 
@@ -74,6 +80,65 @@ test('collection status, rating, and progress retain items independently', () =>
   assert.deepEqual(wished[0].watchedEpisodeNumbers, []);
   assert.equal(rated[0].rating, 8);
   assert.equal(rated[0].collectionStatus, undefined);
+});
+
+test('watch progress starts watching while wish clears progress', () => {
+  const subject = {
+    collectionStatus: null,
+    coverUrl: 'cover',
+    episodeAirDates: [],
+    id: 1,
+    summary: '',
+    title: '条目',
+    totalEpisodes: 28,
+    watchedEpisodeNumbers: [],
+    year: 2026,
+  };
+  const progressed = changeWatchedEpisodeCount(subject, 2);
+  const wished = changeCollectionStatus(progressed, 'wish');
+  const watchedOne = toggleWatchedEpisode(wished, 1);
+
+  assert.equal(progressed.collectionStatus, 'doing');
+  assert.deepEqual(progressed.watchedEpisodeNumbers, [1, 2]);
+  assert.equal(wished.collectionStatus, 'wish');
+  assert.deepEqual(wished.watchedEpisodeNumbers, []);
+  assert.equal(watchedOne.collectionStatus, 'doing');
+  assert.deepEqual(watchedOne.watchedEpisodeNumbers, [1]);
+});
+
+test('watch progress is visible only after progress or an active collection state', () => {
+  assert.equal(
+    shouldShowWatchProgress({
+      collectionStatus: null,
+      totalEpisodes: 28,
+      watchedCount: 0,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldShowWatchProgress({
+      collectionStatus: 'wish',
+      totalEpisodes: 28,
+      watchedCount: 0,
+    }),
+    false,
+  );
+
+  for (const collectionStatus of [
+    'completed',
+    'doing',
+    'onHold',
+    'dropped',
+  ]) {
+    assert.equal(
+      shouldShowWatchProgress({
+        collectionStatus,
+        totalEpisodes: 28,
+        watchedCount: 0,
+      }),
+      true,
+    );
+  }
 });
 
 test('Bangumi comments and reviews map into separate domain models', () => {

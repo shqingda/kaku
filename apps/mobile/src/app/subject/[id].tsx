@@ -30,6 +30,7 @@ import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-s
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
 import { useWatching } from '@/features/watching/watching-provider';
+import { shouldShowWatchProgress } from '@/features/watching/progress';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 
 function DetailEntry({
@@ -126,6 +127,13 @@ export default function SubjectScreen() {
   const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
+  const showsWatchProgress =
+    tracksWatchProgress &&
+    shouldShowWatchProgress({
+      collectionStatus: subject?.collectionStatus,
+      totalEpisodes,
+      watchedCount: watchedEpisodeNumbers.length,
+    });
   const characterEntry =
     subjectType === 3
       ? null
@@ -263,7 +271,7 @@ export default function SubjectScreen() {
         showsVerticalScrollIndicator={false}
       >
         <SubjectHero coverUrl={coverUrl} title={title} year={year} />
-        {tracksWatchProgress && isEditingProgress ? (
+        {showsWatchProgress && isEditingProgress ? (
           <View
             onTouchEnd={(event) => event.stopPropagation()}
             style={[styles.heroProgress, styles.editingHeroProgress]}
@@ -285,7 +293,7 @@ export default function SubjectScreen() {
             />
             <Text style={styles.heroProgressLabel}>/ {totalEpisodes} 集</Text>
           </View>
-        ) : tracksWatchProgress ? (
+        ) : showsWatchProgress ? (
           <Pressable
             accessibilityLabel={`观看进度 ${watchedEpisodeNumbers.length} 集，共 ${totalEpisodes} 集，点击编辑`}
             accessibilityRole="button"
