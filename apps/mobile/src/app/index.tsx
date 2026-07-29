@@ -51,7 +51,21 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>还没有正在看的条目</Text>
-            <Text style={styles.emptyText}>连接 Bangumi 后会自动显示收藏。</Text>
+            <Text style={styles.emptyText}>
+              搜索真实条目并记录观看进度后，会显示在这里。
+            </Text>
+            <Link asChild href="/explore">
+              <Pressable
+                accessibilityLabel="前往发现条目"
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.emptyAction,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.emptyActionText}>去发现</Text>
+              </Pressable>
+            </Link>
           </View>
         }
         ListHeaderComponent={
@@ -282,8 +296,21 @@ const styles = StyleSheet.create({
   emptyText: {
     color: COLORS.muted,
     fontSize: 14,
+    lineHeight: 21,
     marginTop: 6,
     textAlign: 'center',
+  },
+  emptyAction: {
+    backgroundColor: COLORS.accent,
+    borderRadius: 14,
+    marginTop: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+  },
+  emptyActionText: {
+    color: COLORS.surface,
+    fontSize: 14,
+    fontWeight: '800',
   },
   pressed: { opacity: 0.62 },
 });

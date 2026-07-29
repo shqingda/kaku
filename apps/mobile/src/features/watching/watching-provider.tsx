@@ -11,7 +11,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
-import { INITIAL_WATCHING_ITEMS } from './mock-data';
 import type { WatchingItem } from './model';
 import { resizeWatchedEpisodes } from './progress';
 import { watchingStorage } from './watching-storage';
@@ -47,7 +46,7 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
 
     try {
       const storedItems = await watchingStorage.load();
-      const nextItems = storedItems ?? INITIAL_WATCHING_ITEMS;
+      const nextItems = storedItems ?? [];
       itemsRef.current = nextItems;
       setItems(nextItems);
       setLoadState('ready');
