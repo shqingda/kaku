@@ -403,6 +403,7 @@ export default function SubjectScreen() {
           <EpisodeSection
             episodes={catalogSubject?.episodes ?? []}
             fallbackAirDates={subject?.episodeAirDates ?? []}
+            key={subjectId}
             onOpenEpisode={openEpisode}
             totalEpisodes={totalEpisodes}
             watchedEpisodeNumbers={watchedEpisodeNumbers}

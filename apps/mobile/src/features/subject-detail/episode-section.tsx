@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import type { CatalogEpisode } from '@/features/catalog/model';
+
+import {
+  createEpisodeRanges,
+  getInitialEpisodeRangeIndex,
+} from './episode-ranges';
 
 type EpisodeLayout = 'grid' | 'list';
 
@@ -25,8 +36,19 @@ export function EpisodeSection({
   watchedEpisodeNumbers: number[];
 }) {
   const [layout, setLayout] = useState<EpisodeLayout>('grid');
+  const [rangeIndex, setRangeIndex] = useState(() =>
+    getInitialEpisodeRangeIndex(totalEpisodes, watchedEpisodeNumbers),
+  );
   const episodesByNumber = new Map(
     episodes.map((episode) => [episode.number, episode]),
+  );
+  const ranges = createEpisodeRanges(totalEpisodes);
+  const selectedRange = ranges[rangeIndex];
+  const rangeStart = selectedRange?.start ?? 1;
+  const rangeEnd = selectedRange?.end ?? 0;
+  const visibleEpisodeNumbers = Array.from(
+    { length: Math.max(0, rangeEnd - rangeStart + 1) },
+    (_, index) => rangeStart + index,
   );
 
   return (
@@ -74,12 +96,50 @@ export function EpisodeSection({
           })}
         </View>
       </View>
-      <Text style={styles.sectionHint}>点击章节进入本集</Text>
+      {ranges.length > 1 ? (
+        <ScrollView
+          contentContainerStyle={styles.ranges}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {ranges.map(({ end, start }, index) => {
+            const isSelected = index === rangeIndex;
+
+            return (
+              <Pressable
+                accessibilityLabel={`显示第 ${start} 到 ${end} 集`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                key={start}
+                onPress={() => setRangeIndex(index)}
+                style={({ pressed }) => [
+                  styles.range,
+                  isSelected && styles.selectedRange,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.rangeText,
+                    isSelected && styles.selectedRangeText,
+                  ]}
+                >
+                  {start}–{end}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+      <Text style={styles.sectionHint}>
+        {ranges.length > 1
+          ? `当前显示 ${rangeStart}–${rangeEnd} 集，点击章节进入本集`
+          : '点击章节进入本集'}
+      </Text>
 
       {layout === 'grid' ? (
         <View style={styles.episodeGrid}>
-          {Array.from({ length: totalEpisodes }, (_, index) => {
-            const episodeNumber = index + 1;
+          {visibleEpisodeNumbers.map((episodeNumber) => {
             const isWatched = watchedEpisodeNumbers.includes(episodeNumber);
 
             return (
@@ -110,8 +170,7 @@ export function EpisodeSection({
         </View>
       ) : (
         <View style={styles.episodeList}>
-          {Array.from({ length: totalEpisodes }, (_, index) => {
-            const episodeNumber = index + 1;
+          {visibleEpisodeNumbers.map((episodeNumber, index) => {
             const isWatched = watchedEpisodeNumbers.includes(episodeNumber);
             const episode = episodesByNumber.get(episodeNumber);
 
@@ -181,7 +240,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionHint: { color: COLORS.subtle, fontSize: 12, marginTop: 5 },
+  sectionHint: { color: COLORS.subtle, fontSize: 12, marginTop: 9 },
+  ranges: { gap: 7, paddingTop: 14 },
+  range: {
+    backgroundColor: '#F1F0EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  selectedRange: { backgroundColor: COLORS.accentSoft },
+  rangeText: {
+    color: COLORS.muted,
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+  },
+  selectedRangeText: { color: COLORS.accent },
   layoutActions: {
     backgroundColor: '#EFEEE9',
     borderRadius: 12,
