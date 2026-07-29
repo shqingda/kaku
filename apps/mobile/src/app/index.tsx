@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -54,18 +54,17 @@ export default function HomeScreen() {
             <Text style={styles.emptyText}>
               搜索真实条目并记录观看进度后，会显示在这里。
             </Text>
-            <Link asChild href="/explore">
-              <Pressable
-                accessibilityLabel="前往发现条目"
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.emptyAction,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.emptyActionText}>去发现</Text>
-              </Pressable>
-            </Link>
+            <Pressable
+              accessibilityLabel="前往发现条目"
+              accessibilityRole="button"
+              onPress={() => router.push('/explore')}
+              style={({ pressed }) => [
+                styles.emptyAction,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.emptyActionText}>去发现</Text>
+            </Pressable>
           </View>
         }
         ListHeaderComponent={
