@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
-  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,10 +27,7 @@ import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
-import type { CollectionStatus } from '@/features/watching/model';
 import { useWatching } from '@/features/watching/watching-provider';
-import { shouldShowWatchProgress } from '@/features/watching/progress';
-import { playEpisodeToggleHaptic } from '@/lib/haptics';
 
 function DetailEntry({
   hint,
@@ -109,11 +104,6 @@ export default function SubjectScreen() {
     setWatchedEpisodeCount,
   } = useWatching();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
-  const [isEditingProgress, setIsEditingProgress] = useState(false);
-  const [progressDraft, setProgressDraft] = useState('');
-  const progressDraftRef = useRef('');
-  const isProgressEditActiveRef = useRef(false);
-  const didShowProgressKeyboardRef = useRef(false);
   const subjectId = Number(id);
   const subject = items.find((item) => item.id === Number(id));
   const catalogQuery = useCatalogSubject(Number(id));
@@ -128,13 +118,6 @@ export default function SubjectScreen() {
   const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
-  const showsWatchProgress =
-    tracksWatchProgress &&
-    shouldShowWatchProgress({
-      collectionStatus: subject?.collectionStatus,
-      totalEpisodes,
-      watchedCount: watchedEpisodeNumbers.length,
-    });
   const characterEntry =
     subjectType === 3
       ? null
@@ -148,24 +131,6 @@ export default function SubjectScreen() {
               ? '角色与声优'
               : '角色与人物',
         };
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
-      if (isProgressEditActiveRef.current) {
-        didShowProgressKeyboardRef.current = true;
-      }
-    });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      if (didShowProgressKeyboardRef.current) {
-        saveProgress();
-      }
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [subjectId, totalEpisodes, watchedEpisodeNumbers.length]);
 
   function goBack() {
     if (router.canGoBack()) {
@@ -230,44 +195,6 @@ export default function SubjectScreen() {
     });
   }
 
-  function startEditingProgress() {
-    const currentCount = String(watchedEpisodeNumbers.length);
-    progressDraftRef.current = currentCount;
-    isProgressEditActiveRef.current = true;
-    didShowProgressKeyboardRef.current = false;
-    setProgressDraft(currentCount);
-    setIsEditingProgress(true);
-  }
-
-  function saveProgress() {
-    if (!isProgressEditActiveRef.current) {
-      return;
-    }
-
-    isProgressEditActiveRef.current = false;
-    didShowProgressKeyboardRef.current = false;
-    const draft = progressDraftRef.current;
-    const nextCount = Number(draft);
-
-    if (draft !== '' && Number.isInteger(nextCount)) {
-      setWatchedEpisodeCount(progressSubject, nextCount);
-      playEpisodeToggleHaptic(nextCount < watchedEpisodeNumbers.length);
-    }
-
-    setIsEditingProgress(false);
-  }
-
-  function changeStatus(status?: CollectionStatus) {
-    if (status === 'wish' || status === undefined) {
-      isProgressEditActiveRef.current = false;
-      didShowProgressKeyboardRef.current = false;
-      setIsEditingProgress(false);
-      Keyboard.dismiss();
-    }
-
-    setCollectionStatus(progressSubject, status);
-  }
-
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -276,10 +203,6 @@ export default function SubjectScreen() {
           styles.content,
           { paddingTop: insets.top + 12 },
         ]}
-        keyboardDismissMode="interactive"
-        keyboardShouldPersistTaps="never"
-        onScrollBeginDrag={Keyboard.dismiss}
-        onTouchEnd={isEditingProgress ? saveProgress : undefined}
         showsVerticalScrollIndicator={false}
       >
         <SubjectHero coverUrl={coverUrl} title={title} year={year} />
@@ -295,55 +218,11 @@ export default function SubjectScreen() {
         <CollectionControls
           item={progressSubject}
           onChangeRating={(rating) => setRating(progressSubject, rating)}
-          onChangeStatus={changeStatus}
-          progressControl={
-            showsWatchProgress ? (
-              isEditingProgress ? (
-                <View
-                  onTouchEnd={(event) => event.stopPropagation()}
-                  style={[
-                    styles.heroProgress,
-                    styles.editingHeroProgress,
-                  ]}
-                >
-                  <TextInput
-                    accessibilityLabel="观看进度"
-                    autoFocus
-                    keyboardType="number-pad"
-                    maxLength={String(totalEpisodes).length}
-                    onChangeText={(value) => {
-                      const nextValue = value.replace(/\D/g, '');
-                      progressDraftRef.current = nextValue;
-                      setProgressDraft(nextValue);
-                    }}
-                    onEndEditing={saveProgress}
-                    selectTextOnFocus
-                    style={styles.heroProgressInput}
-                    value={progressDraft}
-                  />
-                  <Text style={styles.heroProgressLabel}>
-                    / {totalEpisodes} 集
-                  </Text>
-                </View>
-              ) : (
-                <Pressable
-                  accessibilityLabel={`观看进度 ${watchedEpisodeNumbers.length} 集，共 ${totalEpisodes} 集，点击编辑`}
-                  accessibilityRole="button"
-                  onPress={startEditingProgress}
-                  style={({ pressed }) => [
-                    styles.heroProgress,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.heroProgressValue}>
-                    {watchedEpisodeNumbers.length}
-                  </Text>
-                  <Text style={styles.heroProgressLabel}>
-                    / {totalEpisodes} 集
-                  </Text>
-                </Pressable>
-              )
-            ) : undefined
+          onChangeStatus={(status) =>
+            setCollectionStatus(progressSubject, status)
+          }
+          onChangeWatchedCount={(watchedCount) =>
+            setWatchedEpisodeCount(progressSubject, watchedCount)
           }
         />
 
@@ -522,42 +401,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     width: 40,
     zIndex: 10,
-  },
-  heroProgress: {
-    alignItems: 'center',
-    backgroundColor: '#EFEEE9',
-    borderColor: 'transparent',
-    borderRadius: 14,
-    borderWidth: 2,
-    flexDirection: 'row',
-    height: 38,
-    paddingHorizontal: 14,
-  },
-  editingHeroProgress: {
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.accent,
-  },
-  heroProgressLabel: {
-    color: COLORS.muted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  heroProgressValue: {
-    color: COLORS.accent,
-    fontSize: 17,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '800',
-    marginRight: 6,
-  },
-  heroProgressInput: {
-    color: COLORS.accent,
-    fontSize: 17,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '800',
-    marginRight: 6,
-    minWidth: 24,
-    padding: 0,
-    textAlign: 'center',
   },
   heroSpacing: { height: 20 },
   panel: {

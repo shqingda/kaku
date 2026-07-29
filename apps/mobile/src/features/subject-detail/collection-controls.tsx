@@ -1,18 +1,13 @@
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import {
   getCollectionStatusLabel,
   supportsWatchProgress,
 } from '@/features/catalog/subject-types';
+import { RatingStars } from '@/features/reviews/rating-stars';
 import type {
   CollectionStatus,
   WatchingItem,
@@ -20,183 +15,112 @@ import type {
 import { canRateCollectionStatus } from '@/features/watching/progress';
 import { playSelectionHaptic } from '@/lib/haptics';
 
-import { CollectionStatusPicker } from './collection-status-picker';
-import { RatingPicker, RatingStars } from './rating-picker';
+import {
+  CollectionBoxSheet,
+  type CollectionBoxDraft,
+} from './collection-box-sheet';
 
 export function CollectionControls({
   item,
   onChangeRating,
   onChangeStatus,
-  progressControl,
+  onChangeWatchedCount,
 }: {
   item: WatchingItem;
   onChangeRating: (rating?: number) => void;
   onChangeStatus: (status?: CollectionStatus) => void;
-  progressControl?: ReactNode;
+  onChangeWatchedCount: (watchedCount: number) => void;
 }) {
-  const [isRatingPickerOpen, setIsRatingPickerOpen] = useState(false);
-  const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const subjectType = item.type ?? 2;
-  const canRate = canRateCollectionStatus(item.collectionStatus);
-  const wishLabel = getCollectionStatusLabel(subjectType, 'wish');
+  const supportsProgress =
+    supportsWatchProgress(subjectType) && item.totalEpisodes > 0;
+  const status = item.collectionStatus ?? undefined;
+  const canShowPersonalData = canRateCollectionStatus(status);
 
-  function selectStatus(status?: CollectionStatus) {
-    setIsStatusPickerOpen(false);
+  function applyDraft(draft: CollectionBoxDraft) {
+    onChangeStatus(draft.collectionStatus);
 
-    const cancelsCollection =
-      status === undefined && item.collectionStatus != null;
-    const clearsProgress =
-      item.watchedEpisodeNumbers.length > 0 &&
-      (status === 'wish' || status === undefined);
-    const clearsRating =
-      item.rating !== undefined &&
-      (status === 'wish' || status === undefined);
-
-    if (cancelsCollection || clearsProgress || clearsRating) {
-      const action = status === 'wish' ? '改为想看' : '取消收藏';
-      const clearedRecords = [
-        clearsProgress
-          ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
-          : null,
-        clearsRating ? `${item.rating} 分评分` : null,
-      ].filter(Boolean);
-
-      Alert.alert(
-        clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？',
-        clearedRecords.length > 0
-          ? `${action}会清空${clearedRecords.join('和')}。`
-          : '该条目将不再保留当前收藏状态。',
-        [
-          { style: 'cancel', text: '保留' },
-          {
-            onPress: () => {
-              onChangeStatus(status);
-              playSelectionHaptic();
-            },
-            style: 'destructive',
-            text:
-              clearedRecords.length > 0 ? '清空并继续' : '取消收藏',
-          },
-        ],
-      );
-      return;
+    if (canRateCollectionStatus(draft.collectionStatus)) {
+      if (supportsProgress) {
+        onChangeWatchedCount(draft.watchedCount);
+      }
+      onChangeRating(draft.rating);
     }
 
-    onChangeStatus(status);
+    setIsOpen(false);
     playSelectionHaptic();
   }
 
-  function selectRating(rating?: number) {
-    onChangeRating(rating);
-    setIsRatingPickerOpen(false);
-    playSelectionHaptic();
+  function saveDraft(draft: CollectionBoxDraft) {
+    const clearsProgress =
+      item.watchedEpisodeNumbers.length > 0 &&
+      (draft.collectionStatus === 'wish' ||
+        draft.collectionStatus === undefined);
+    const clearsRating =
+      item.rating !== undefined &&
+      (draft.collectionStatus === 'wish' ||
+        draft.collectionStatus === undefined);
+    const removesCollection =
+      draft.collectionStatus === undefined && status !== undefined;
+
+    if (!clearsProgress && !clearsRating && !removesCollection) {
+      applyDraft(draft);
+      return;
+    }
+
+    const action =
+      draft.collectionStatus === 'wish' ? '改为想看' : '移出收藏盒';
+    const clearedRecords = [
+      clearsProgress
+        ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
+        : null,
+      clearsRating ? `${item.rating} 分评分` : null,
+    ].filter(Boolean);
+
+    Alert.alert(
+      clearedRecords.length > 0 ? '清空个人记录？' : '移出收藏盒？',
+      clearedRecords.length > 0
+        ? `${action}会清空${clearedRecords.join('和')}。`
+        : '该条目将不再保留当前收藏状态。',
+      [
+        { style: 'cancel', text: '保留' },
+        {
+          onPress: () => applyDraft(draft),
+          style: 'destructive',
+          text: clearedRecords.length > 0 ? '清空并继续' : '移出',
+        },
+      ],
+    );
   }
 
   return (
     <>
-      <View style={styles.panel}>
-        <Text style={styles.title}>收藏状态</Text>
-        <Pressable
-          accessibilityLabel={
-            item.collectionStatus
-              ? `当前状态 ${getCollectionStatusLabel(
-                  subjectType,
-                  item.collectionStatus,
-                )}，点击修改`
-              : '选择收藏状态'
-          }
-          accessibilityRole="button"
-          onPress={() => setIsStatusPickerOpen(true)}
-          style={({ pressed }) => [
-            styles.statusControl,
-            pressed && styles.pressed,
-          ]}
-        >
-          <View style={styles.statusLeading}>
-            <View style={styles.statusIcon}>
-              <SymbolView
-                name={{
-                  android: item.collectionStatus
-                    ? 'bookmark'
-                    : 'bookmark_border',
-                  ios: item.collectionStatus ? 'bookmark.fill' : 'bookmark',
-                  web: item.collectionStatus
-                    ? 'bookmark'
-                    : 'bookmark_border',
-                }}
-                size={17}
-                tintColor={
-                  item.collectionStatus ? COLORS.accent : COLORS.muted
-                }
-                weight="semibold"
-              />
-            </View>
-            <Text
-              style={[
-                styles.statusValue,
-                item.collectionStatus && styles.selectedStatusValue,
-              ]}
-            >
-              {item.collectionStatus
-                ? getCollectionStatusLabel(
-                    subjectType,
-                    item.collectionStatus,
-                  )
-                : '选择状态'}
-            </Text>
+      <Pressable
+        accessibilityLabel="打开收藏盒"
+        accessibilityRole="button"
+        onPress={() => setIsOpen(true)}
+        style={({ pressed }) => [
+          styles.panel,
+          pressed && styles.pressed,
+        ]}
+      >
+        <View style={styles.heading}>
+          <View style={styles.headingTitle}>
+            <SymbolView
+              name={{
+                android: status ? 'bookmark' : 'bookmark_border',
+                ios: status ? 'bookmark.fill' : 'bookmark',
+                web: status ? 'bookmark' : 'bookmark_border',
+              }}
+              size={17}
+              tintColor={status ? COLORS.accent : COLORS.muted}
+              weight="semibold"
+            />
+            <Text style={styles.title}>收藏盒</Text>
           </View>
-          <SymbolView
-            name={{
-              android: 'expand_more',
-              ios: 'chevron.down',
-              web: 'expand_more',
-            }}
-            size={15}
-            tintColor={COLORS.subtle}
-            weight="semibold"
-          />
-        </Pressable>
-        {item.collectionStatus === 'wish' ? (
-          <Text style={styles.wishHint}>
-            {supportsWatchProgress(subjectType)
-              ? `${wishLabel}不记录观看进度和评分`
-              : `${wishLabel}不记录评分`}
-          </Text>
-        ) : null}
-      </View>
-
-      {progressControl ? (
-        <View style={[styles.panel, styles.compactPanel]}>
-          <Text style={styles.title}>观看进度</Text>
-          {progressControl}
-        </View>
-      ) : null}
-
-      {canRate ? (
-        <Pressable
-          accessibilityLabel={
-            item.rating
-              ? `我的评分 ${item.rating} 分，点击修改`
-              : '我的评分，未评分，点击选择'
-          }
-          accessibilityRole="button"
-          onPress={() => setIsRatingPickerOpen(true)}
-          style={({ pressed }) => [
-            styles.panel,
-            styles.compactPanel,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.title}>我的评分</Text>
-          <View style={styles.ratingSummary}>
-            {item.rating ? (
-              <>
-                <RatingStars rating={item.rating} size={17} />
-                <Text style={styles.ratingScore}>{item.rating} 分</Text>
-              </>
-            ) : (
-              <Text style={styles.emptyValue}>未评分</Text>
-            )}
+          <View style={styles.editHint}>
+            <Text style={styles.editText}>{status ? '编辑' : '添加'}</Text>
             <SymbolView
               name={{
                 android: 'chevron_right',
@@ -208,21 +132,47 @@ export function CollectionControls({
               weight="semibold"
             />
           </View>
-        </Pressable>
-      ) : null}
+        </View>
 
-      <CollectionStatusPicker
-        currentStatus={item.collectionStatus}
-        onChange={selectStatus}
-        onClose={() => setIsStatusPickerOpen(false)}
-        subjectType={subjectType}
-        visible={isStatusPickerOpen}
-      />
-      <RatingPicker
-        onChange={selectRating}
-        onClose={() => setIsRatingPickerOpen(false)}
-        rating={item.rating}
-        visible={isRatingPickerOpen}
+        <View style={styles.summary}>
+          {status ? (
+            <>
+              <View style={[styles.chip, styles.statusChip]}>
+                <Text style={styles.statusChipText}>
+                  {getCollectionStatusLabel(subjectType, status)}
+                </Text>
+              </View>
+              {canShowPersonalData && supportsProgress ? (
+                <View style={styles.chip}>
+                  <Text style={styles.chipLabel}>进度</Text>
+                  <Text style={styles.chipValue}>
+                    {item.watchedEpisodeNumbers.length}/{item.totalEpisodes} 集
+                  </Text>
+                </View>
+              ) : null}
+              {canShowPersonalData ? (
+                <View style={styles.chip}>
+                  <Text style={styles.chipLabel}>评分</Text>
+                  {item.rating ? (
+                    <RatingStars rating={item.rating} size={12} />
+                  ) : (
+                    <Text style={styles.unsetText}>未评分</Text>
+                  )}
+                </View>
+              ) : null}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>尚未收藏</Text>
+          )}
+        </View>
+      </Pressable>
+
+      <CollectionBoxSheet
+        item={item}
+        onClose={() => setIsOpen(false)}
+        onSave={saveDraft}
+        supportsProgress={supportsProgress}
+        visible={isOpen}
       />
     </>
   );
@@ -235,55 +185,49 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 20,
   },
-  compactPanel: {
+  heading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 76,
   },
-  title: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  statusControl: {
+  headingTitle: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 9,
+  },
+  title: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
+  editHint: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  editText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
+  summary: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 16,
+  },
+  chip: {
     alignItems: 'center',
     backgroundColor: '#F7F6F2',
-    borderRadius: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    minHeight: 56,
-    paddingHorizontal: 14,
-  },
-  statusLeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 11,
-  },
-  statusIcon: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
     borderRadius: 12,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  statusValue: { color: COLORS.muted, fontSize: 15, fontWeight: '700' },
-  selectedStatusValue: { color: COLORS.accent, fontWeight: '800' },
-  wishHint: {
-    color: COLORS.subtle,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 9,
-  },
-  ratingSummary: {
-    alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: 5,
+    minHeight: 34,
+    paddingHorizontal: 11,
   },
-  ratingScore: {
-    color: COLORS.muted,
+  statusChip: { backgroundColor: COLORS.accentSoft },
+  statusChipText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
+  chipLabel: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
+  chipValue: {
+    color: COLORS.ink,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
-  emptyValue: { color: COLORS.subtle, fontSize: 13, fontWeight: '600' },
+  unsetText: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
+  emptyText: { color: COLORS.subtle, fontSize: 13 },
   pressed: { opacity: 0.58 },
 });
