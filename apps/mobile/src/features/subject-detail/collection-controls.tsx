@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import {
@@ -29,6 +29,31 @@ export function CollectionControls({
   onChangeStatus: (status?: CollectionStatus) => void;
 }) {
   function selectStatus(status?: CollectionStatus) {
+    const clearsProgress =
+      item.watchedEpisodeNumbers.length > 0 &&
+      (status === 'wish' || status === undefined);
+
+    if (clearsProgress) {
+      const action = status === 'wish' ? '改为想看' : '取消收藏';
+
+      Alert.alert(
+        '清空观看进度？',
+        `${action}会清空已看的 ${item.watchedEpisodeNumbers.length} 集。`,
+        [
+          { style: 'cancel', text: '取消' },
+          {
+            onPress: () => {
+              onChangeStatus(status);
+              playSelectionHaptic();
+            },
+            style: 'destructive',
+            text: '清空并继续',
+          },
+        ],
+      );
+      return;
+    }
+
     onChangeStatus(status);
     playSelectionHaptic();
   }

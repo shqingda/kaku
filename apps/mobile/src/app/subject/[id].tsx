@@ -29,6 +29,7 @@ import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
+import type { CollectionStatus } from '@/features/watching/model';
 import { useWatching } from '@/features/watching/watching-provider';
 import { shouldShowWatchProgress } from '@/features/watching/progress';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
@@ -256,6 +257,17 @@ export default function SubjectScreen() {
     setIsEditingProgress(false);
   }
 
+  function changeStatus(status?: CollectionStatus) {
+    if (status === 'wish' || status === undefined) {
+      isProgressEditActiveRef.current = false;
+      didShowProgressKeyboardRef.current = false;
+      setIsEditingProgress(false);
+      Keyboard.dismiss();
+    }
+
+    setCollectionStatus(progressSubject, status);
+  }
+
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -322,9 +334,7 @@ export default function SubjectScreen() {
         <CollectionControls
           item={progressSubject}
           onChangeRating={(rating) => setRating(progressSubject, rating)}
-          onChangeStatus={(status) =>
-            setCollectionStatus(progressSubject, status)
-          }
+          onChangeStatus={changeStatus}
         />
 
         <SubjectOverview

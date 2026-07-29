@@ -96,12 +96,15 @@ test('watch progress starts watching while wish clears progress', () => {
   };
   const progressed = changeWatchedEpisodeCount(subject, 2);
   const wished = changeCollectionStatus(progressed, 'wish');
+  const uncollected = changeCollectionStatus(progressed);
   const watchedOne = toggleWatchedEpisode(wished, 1);
 
   assert.equal(progressed.collectionStatus, 'doing');
   assert.deepEqual(progressed.watchedEpisodeNumbers, [1, 2]);
   assert.equal(wished.collectionStatus, 'wish');
   assert.deepEqual(wished.watchedEpisodeNumbers, []);
+  assert.equal(uncollected.collectionStatus, null);
+  assert.deepEqual(uncollected.watchedEpisodeNumbers, []);
   assert.equal(watchedOne.collectionStatus, 'doing');
   assert.deepEqual(watchedOne.watchedEpisodeNumbers, [1]);
 });

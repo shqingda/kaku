@@ -64,11 +64,13 @@ export function changeCollectionStatus(
   item: WatchingItem,
   collectionStatus?: CollectionStatus,
 ) {
+  const clearsProgress =
+    collectionStatus === 'wish' || collectionStatus === undefined;
+
   return {
     ...item,
     collectionStatus: collectionStatus ?? null,
-    watchedEpisodeNumbers:
-      collectionStatus === 'wish' ? [] : item.watchedEpisodeNumbers,
+    watchedEpisodeNumbers: clearsProgress ? [] : item.watchedEpisodeNumbers,
   };
 }
 
