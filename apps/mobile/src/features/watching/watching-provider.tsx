@@ -14,6 +14,7 @@ import { COLORS } from '@/constants/design';
 import type { WatchingItem } from './model';
 import { resizeWatchedEpisodes } from './progress';
 import { watchingStorage } from './watching-storage';
+import { updateWatchingList } from './watching-list';
 
 type WatchingContextValue = {
   items: WatchingItem[];
@@ -110,11 +111,7 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
           );
       const nextItem = { ...item, watchedEpisodeNumbers };
 
-      return existing
-        ? current.map((currentItem) =>
-            currentItem.id === subject.id ? nextItem : currentItem,
-          )
-        : [...current, nextItem];
+      return updateWatchingList(current, nextItem);
     });
   }
 
@@ -139,11 +136,7 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
         ),
       };
 
-      return existing
-        ? current.map((currentItem) =>
-            currentItem.id === subject.id ? nextItem : currentItem,
-          )
-        : [...current, nextItem];
+      return updateWatchingList(current, nextItem);
     });
   }
 

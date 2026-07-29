@@ -10,6 +10,7 @@ import {
   bangumiDiscussionReplySchema,
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
 import { resizeWatchedEpisodes } from '../src/features/watching/progress.ts';
+import { updateWatchingList } from '../src/features/watching/watching-list.ts';
 import { formatActivityTime } from '../src/lib/format-activity-time.ts';
 
 test('formatActivityTime keeps the original three display ranges', () => {
@@ -24,6 +25,32 @@ test('resizeWatchedEpisodes preserves manual gaps while changing the count', () 
   assert.deepEqual(resizeWatchedEpisodes([1, 3, 5], 4, 6), [1, 2, 3, 5]);
   assert.deepEqual(resizeWatchedEpisodes([1, 3, 5], 2, 6), [1, 3]);
   assert.deepEqual(resizeWatchedEpisodes([0, 1, 99], 9, 3), [1, 2, 3]);
+});
+
+test('updateWatchingList adds, updates, and removes progress items', () => {
+  const subject = {
+    coverUrl: 'cover',
+    episodeAirDates: [],
+    id: 1,
+    summary: '',
+    title: '条目',
+    totalEpisodes: 12,
+    watchedEpisodeNumbers: [],
+    year: 2026,
+  };
+  const added = updateWatchingList([], {
+    ...subject,
+    watchedEpisodeNumbers: [1],
+  });
+  const updated = updateWatchingList(added, {
+    ...subject,
+    watchedEpisodeNumbers: [1, 2],
+  });
+  const removed = updateWatchingList(updated, subject);
+
+  assert.deepEqual(added[0].watchedEpisodeNumbers, [1]);
+  assert.deepEqual(updated[0].watchedEpisodeNumbers, [1, 2]);
+  assert.deepEqual(removed, []);
 });
 
 test('Bangumi comments and reviews map into separate domain models', () => {
