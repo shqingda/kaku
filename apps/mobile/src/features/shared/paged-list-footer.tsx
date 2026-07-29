@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { COLORS } from '@/constants/design';
 
-// Shared by every offset-based public list.
+// Shared by offset- and cursor-based public lists.
 export function PagedListFooter({
   hasNextPage,
   isError,
@@ -16,7 +16,7 @@ export function PagedListFooter({
   isFetching: boolean;
   loadedCount: number;
   onRetry: () => void;
-  total: number;
+  total?: number;
 }) {
   if (isFetching) {
     return (
@@ -49,8 +49,12 @@ export function PagedListFooter({
     <View style={styles.footer}>
       <Text style={styles.text}>
         {hasNextPage
-          ? `继续上滑加载更多 · 已显示 ${loadedCount}/${total}`
-          : `已显示全部 ${loadedCount} 个结果`}
+          ? total === undefined
+            ? `继续上滑加载更多 · 已显示 ${loadedCount} 个结果`
+            : `继续上滑加载更多 · 已显示 ${loadedCount}/${total}`
+          : total === undefined
+            ? `已加载全部 ${loadedCount} 个结果`
+            : `已显示全部 ${loadedCount} 个结果`}
       </Text>
     </View>
   );

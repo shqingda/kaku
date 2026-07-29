@@ -5,8 +5,11 @@ import type {
   PublicUserCollectionPage,
   PublicUserFriend,
   PublicUserFriendPage,
+  PublicTimelineItem,
+  PublicTimelinePage,
 } from '../../../features/users/model.ts';
 import type {
+  BangumiUserTimeline,
   BangumiUserBlogs,
   BangumiUserFriends,
 } from '../api-next/schemas.ts';
@@ -108,5 +111,39 @@ export function toPublicUserFriendPage(
     nextOffset:
       nextOffset < response.total ? nextOffset : undefined,
     total: response.total,
+  };
+}
+
+export function toPublicTimelineItem(
+  item: BangumiUserTimeline[number],
+): PublicTimelineItem {
+  const subjects = item.memo.subject ?? [];
+  const firstSubject = subjects[0]?.subject;
+
+  return {
+    createdAt: item.createdAt,
+    id: item.id,
+    subjectId: subjects.length === 1 ? firstSubject?.id : undefined,
+    text:
+      subjects.length === 0
+        ? '发布了一条公开动态'
+        : subjects.length === 1
+          ? `更新了《${firstSubject?.nameCN.trim() || firstSubject?.name}》的收藏状态`
+          : `更新了 ${subjects.length} 个条目的收藏状态`,
+  };
+}
+
+export function toPublicTimelinePage(
+  timeline: BangumiUserTimeline,
+  limit: number,
+): PublicTimelinePage {
+  const lastItem = timeline.at(-1);
+
+  return {
+    items: timeline.map(toPublicTimelineItem),
+    nextCursor:
+      timeline.length === limit && lastItem
+        ? String(lastItem.id)
+        : undefined,
   };
 }

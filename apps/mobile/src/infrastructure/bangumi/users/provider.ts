@@ -8,6 +8,7 @@ import {
   getBangumiUserBlogs,
   getBangumiUserFriends,
   getBangumiUserSocial,
+  getBangumiUserTimeline,
 } from '../api-next/client';
 import {
   toPublicUserBlog,
@@ -16,6 +17,8 @@ import {
   toPublicUserCollectionPage,
   toPublicUserFriend,
   toPublicUserFriendPage,
+  toPublicTimelineItem,
+  toPublicTimelinePage,
 } from './adapter';
 
 export const bangumiUsersProvider: UsersProvider = {
@@ -40,22 +43,7 @@ export const bangumiUsersProvider: UsersProvider = {
       id: profile.id,
       nickname: profile.nickname || profile.username,
       sign: profile.sign,
-      timeline: social.timeline.map((item) => {
-        const subjects = item.memo.subject ?? [];
-        const firstSubject = subjects[0]?.subject;
-
-        return {
-          createdAt: item.createdAt,
-          id: item.id,
-          subjectId: subjects.length === 1 ? firstSubject?.id : undefined,
-          text:
-            subjects.length === 0
-              ? '发布了一条公开动态'
-              : subjects.length === 1
-                ? `更新了《${firstSubject?.nameCN.trim() || firstSubject?.name}》的收藏状态`
-                : `更新了 ${subjects.length} 个条目的收藏状态`,
-        };
-      }),
+      timeline: social.timeline.map(toPublicTimelineItem),
       username: profile.username,
     };
   },
@@ -70,5 +58,14 @@ export const bangumiUsersProvider: UsersProvider = {
   async getPublicUserFriends(username, offset) {
     const friends = await getBangumiUserFriends(username, offset);
     return toPublicUserFriendPage(friends, offset);
+  },
+  async getPublicUserTimeline(username, cursor) {
+    const limit = 10;
+    const timeline = await getBangumiUserTimeline(
+      username,
+      cursor === undefined ? undefined : Number(cursor),
+      limit,
+    );
+    return toPublicTimelinePage(timeline, limit);
   },
 };

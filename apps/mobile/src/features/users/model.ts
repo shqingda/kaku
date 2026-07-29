@@ -48,6 +48,11 @@ export type PublicTimelineItem = {
   text: string;
 };
 
+export type PublicTimelinePage = {
+  items: PublicTimelineItem[];
+  nextCursor?: string;
+};
+
 export type PublicUserProfile = {
   avatarUrl?: string;
   collections: PublicUserCollection[];
@@ -77,4 +82,8 @@ export type UsersProvider = {
     username: string,
     offset: number,
   ) => Promise<PublicUserFriendPage>;
+  getPublicUserTimeline: (
+    username: string,
+    cursor?: string,
+  ) => Promise<PublicTimelinePage>;
 };

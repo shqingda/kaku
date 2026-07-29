@@ -97,15 +97,32 @@ export async function getBangumiUserBlogs(
 
 export async function getBangumiUserSocial(username: string) {
   const encodedUsername = encodeURIComponent(username);
-  const [friendsJson, timelineJson] = await Promise.all([
+  const [friendsJson, timeline] = await Promise.all([
     requestJson(`/p1/users/${encodedUsername}/friends?limit=20&offset=0`),
-    requestJson(`/p1/users/${encodedUsername}/timeline?limit=10`),
+    getBangumiUserTimeline(username),
   ]);
 
   return {
     friends: bangumiUserFriendsSchema.parse(friendsJson),
-    timeline: bangumiUserTimelineSchema.parse(timelineJson),
+    timeline,
   };
+}
+
+export async function getBangumiUserTimeline(
+  username: string,
+  until?: number,
+  limit = 10,
+) {
+  const query = new URLSearchParams({ limit: String(limit) });
+
+  if (until !== undefined) {
+    query.set('until', String(until));
+  }
+
+  const json = await requestJson(
+    `/p1/users/${encodeURIComponent(username)}/timeline?${query}`,
+  );
+  return bangumiUserTimelineSchema.parse(json);
 }
 
 export async function getBangumiUserFriends(

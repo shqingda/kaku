@@ -122,6 +122,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="user/timeline/[username]"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '时间线',
+            }}
+          />
+          <Stack.Screen
             name="explore"
             options={{
               headerBackButtonDisplayMode: 'minimal',

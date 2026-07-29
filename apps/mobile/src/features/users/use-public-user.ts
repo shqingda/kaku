@@ -8,6 +8,7 @@ import type {
   PublicUserBlogPage,
   PublicUserCollectionPage,
   PublicUserFriendPage,
+  PublicTimelinePage,
 } from './model';
 import { bangumiUsersProvider } from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
@@ -83,6 +84,28 @@ export function usePublicUserFriends(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserFriends(username),
+    retry: 2,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function usePublicUserTimeline(username: string) {
+  return useInfiniteQuery<
+    PublicTimelinePage,
+    Error,
+    InfiniteData<PublicTimelinePage>,
+    ReturnType<typeof queryKeys.publicUserTimeline>,
+    string | undefined
+  >({
+    enabled: username.trim().length > 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) =>
+      bangumiUsersProvider.getPublicUserTimeline(
+        username.trim(),
+        pageParam,
+      ),
+    queryKey: queryKeys.publicUserTimeline(username),
     retry: 2,
     staleTime: 10 * 60 * 1000,
   });

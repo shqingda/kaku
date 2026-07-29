@@ -14,8 +14,8 @@ import { COLORS } from '@/constants/design';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
+import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { usePublicUser } from '@/features/users/use-public-user';
-import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -120,38 +120,49 @@ export default function PublicUserScreen() {
               )}
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>时间线</Text>
-                <Text style={styles.sectionMeta}>最近公开动态</Text>
+                <View style={styles.sectionRight}>
+                  <Text style={styles.sectionMeta}>
+                    最近 {user.timeline.length} 条
+                  </Text>
+                  {user.timeline.length >= 10 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/user/timeline/[username]',
+                          params: { username: user.username },
+                        })
+                      }
+                      style={({ pressed }) => [
+                        styles.sectionAction,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.sectionActionText}>查看全部</Text>
+                      <Text style={styles.sectionActionChevron}>›</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
               <View style={styles.timelineList}>
                 {user.timeline.length === 0 ? (
                   <Text style={styles.inlineEmpty}>暂无公开动态。</Text>
                 ) : null}
                 {user.timeline.map((item, index) => (
-                  <Pressable
-                    accessibilityRole={
-                      item.subjectId ? 'button' : undefined
-                    }
-                    disabled={!item.subjectId}
+                  <PublicUserTimelineRow
+                    hasDivider={index > 0}
+                    item={item}
                     key={item.id}
-                    onPress={() => {
-                      if (item.subjectId) {
-                        router.push({
-                          pathname: '/subject/[id]',
-                          params: { id: String(item.subjectId) },
-                        });
-                      }
-                    }}
-                    style={({ pressed }) => [
-                      styles.timelineRow,
-                      index > 0 && styles.blogBorder,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.timelineText}>{item.text}</Text>
-                    <Text style={styles.blogMeta}>
-                      {formatActivityTime(item.createdAt)}
-                    </Text>
-                  </Pressable>
+                    onPress={
+                      item.subjectId
+                        ? () =>
+                            router.push({
+                              pathname: '/subject/[id]',
+                              params: { id: String(item.subjectId) },
+                            })
+                        : undefined
+                    }
+                  />
                 ))}
               </View>
               <View style={styles.sectionHeader}>
@@ -330,8 +341,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 17,
   },
-  timelineRow: { paddingVertical: 14 },
-  timelineText: { color: COLORS.ink, fontSize: 14, lineHeight: 20 },
   inlineEmpty: {
     color: COLORS.muted,
     fontSize: 13,
@@ -345,11 +354,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 17,
   },
-  blogBorder: {
-    borderTopColor: COLORS.track,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  blogMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 8 },
   blogEmpty: { color: COLORS.muted, fontSize: 13, paddingVertical: 18 },
   collectionCard: {
     backgroundColor: COLORS.surface,
