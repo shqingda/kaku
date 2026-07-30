@@ -38,9 +38,12 @@ export function CollectionControls({
     supportsWatchProgress(subjectType) && item.totalEpisodes > 0;
   const status = item.collectionStatus ?? undefined;
   const canShowPersonalData = canRateCollectionStatus(status);
+  const displayedProgress = supportsProgress
+    ? item.watchedEpisodeNumbers.length
+    : 1;
+  const displayedTotal = supportsProgress ? item.totalEpisodes : 1;
   const hasLongProgress =
-    String(item.watchedEpisodeNumbers.length).length +
-      String(item.totalEpisodes).length >
+    String(displayedProgress).length + String(displayedTotal).length >
     5;
 
   function applyDraft(draft: CollectionBoxDraft) {
@@ -137,26 +140,26 @@ export function CollectionControls({
 
         {canShowPersonalData ? (
           <View style={styles.details}>
-            {supportsProgress ? (
-              <View style={styles.progressDetail}>
-                <View style={styles.progressHeading}>
-                  <View style={styles.progressValue}>
-                    <Text
-                      style={[
-                        styles.watchedValue,
-                        hasLongProgress && styles.compactWatchedValue,
-                      ]}
-                    >
-                      {item.watchedEpisodeNumbers.length}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.totalValue,
-                        hasLongProgress && styles.compactTotalValue,
-                      ]}
-                    >
-                      /{item.totalEpisodes}
-                    </Text>
+            <View style={styles.progressDetail}>
+              <View style={styles.progressHeading}>
+                <View style={styles.progressValue}>
+                  <Text
+                    style={[
+                      styles.watchedValue,
+                      hasLongProgress && styles.compactWatchedValue,
+                    ]}
+                  >
+                    {displayedProgress}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.totalValue,
+                      hasLongProgress && styles.compactTotalValue,
+                    ]}
+                  >
+                    /{displayedTotal}
+                  </Text>
+                  {supportsProgress ? (
                     <Text
                       style={[
                         styles.unitValue,
@@ -165,29 +168,29 @@ export function CollectionControls({
                     >
                       集
                     </Text>
-                  </View>
-                  {!hasLongProgress ? (
-                    <Text style={styles.detailHint}>观看进度</Text>
                   ) : null}
                 </View>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${Math.min(
-                          (item.watchedEpisodeNumbers.length /
-                            item.totalEpisodes) *
-                            100,
-                          100,
-                        )}%`,
-                      },
-                    ]}
-                  />
-                </View>
+                {!hasLongProgress ? (
+                  <Text style={styles.detailHint}>
+                    {supportsProgress ? '观看进度' : '条目进度'}
+                  </Text>
+                ) : null}
               </View>
-            ) : null}
-            {supportsProgress ? <View style={styles.divider} /> : null}
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(
+                        (displayedProgress / displayedTotal) * 100,
+                        100,
+                      )}%`,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+            <View style={styles.divider} />
             <View style={styles.ratingDetail}>
               <Text
                 style={[
