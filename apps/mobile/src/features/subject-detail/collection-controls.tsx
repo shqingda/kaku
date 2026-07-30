@@ -75,7 +75,9 @@ export function CollectionControls({
     }
 
     const action =
-      draft.collectionStatus === 'wish' ? '改为想看' : '取消收藏';
+      draft.collectionStatus === 'wish'
+        ? `改为${getCollectionStatusLabel(subjectType, 'wish')}`
+        : '取消收藏';
     const clearedRecords = [
       clearsProgress
         ? `已看的 ${item.watchedEpisodeNumbers.length} 集`

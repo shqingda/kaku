@@ -298,8 +298,15 @@ export function CollectionBoxSheet({
                     />
                     <Text style={styles.inactiveNoticeText}>
                       {status === 'wish'
-                        ? '想看状态不记录观看进度和评分'
-                        : '选择收藏状态后可记录进度和评分'}
+                        ? `${getCollectionStatusLabel(
+                            item.type ?? 2,
+                            'wish',
+                          )}状态不记录${
+                            supportsProgress ? '观看进度和' : ''
+                          }评分`
+                        : `选择收藏状态后可${
+                            supportsProgress ? '记录进度和' : ''
+                          }评分`}
                     </Text>
                   </View>
                 )}

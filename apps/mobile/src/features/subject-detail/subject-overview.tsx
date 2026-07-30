@@ -34,6 +34,10 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
+function findInfoValue(subject: CatalogSubject | undefined, key: string) {
+  return subject?.info.find((item) => item.key === key)?.value;
+}
+
 export function SubjectOverview({
   showsEpisodes,
   subject,
@@ -52,15 +56,50 @@ export function SubjectOverview({
     subject?.releaseDate?.replaceAll('-', '.') ??
     (year ? String(year) : '时间待定');
   const subjectType = subject?.type ?? 2;
-  const format = subject?.format ?? getSubjectTypeLabel(subjectType);
-  const releaseLabel =
-    subjectType === 1
-      ? '出版'
-      : subjectType === 2
-        ? '放送'
-        : subjectType === 6
-          ? '首播'
-          : '发行';
+  let format = subject?.format ?? getSubjectTypeLabel(subjectType);
+  let formatLabel = '形式';
+  let releaseLabel = '发行';
+  let extraFact: { label: string; value?: string } | undefined;
+
+  switch (subjectType) {
+    case 1:
+      releaseLabel = '出版';
+      extraFact = {
+        label: '页数',
+        value: findInfoValue(subject, '页数'),
+      };
+      break;
+    case 2:
+      releaseLabel = '放送';
+      extraFact = showsEpisodes
+        ? { label: '章节', value: `${totalEpisodes} 集` }
+        : undefined;
+      break;
+    case 3:
+      format = findInfoValue(subject, '版本特性') ?? format;
+      formatLabel = '版本';
+      extraFact =
+        totalEpisodes > 0
+          ? { label: '曲目', value: `${totalEpisodes} 曲` }
+          : undefined;
+      break;
+    case 4:
+      format = findInfoValue(subject, '平台') ?? format;
+      formatLabel = '平台';
+      extraFact = {
+        label: '类型',
+        value: findInfoValue(subject, '游戏类型'),
+      };
+      break;
+    case 6:
+      releaseLabel = '首播';
+      extraFact = showsEpisodes
+        ? { label: '章节', value: `${totalEpisodes} 集` }
+        : undefined;
+      break;
+    default:
+      extraFact = undefined;
+  }
   const tags =
     subject?.tags
       .filter((tag) => tag.toLowerCase() !== format.toLowerCase())
@@ -84,9 +123,9 @@ export function SubjectOverview({
       <View style={styles.divider} />
       <View style={styles.facts}>
         <Fact label={releaseLabel} value={releaseDate} />
-        <Fact label="形式" value={format} />
-        {showsEpisodes ? (
-          <Fact label="章节" value={`${totalEpisodes} 集`} />
+        <Fact label={formatLabel} value={format} />
+        {extraFact?.value ? (
+          <Fact label={extraFact.label} value={extraFact.value} />
         ) : null}
       </View>
       {subject?.originalTitle && subject.originalTitle !== title ? (
