@@ -4,17 +4,23 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
+import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
 
 export default function SubjectCharactersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const charactersQuery = useSubjectCharacters(Number(id));
+  const subjectId = Number(id);
+  const charactersQuery = useSubjectCharacters(subjectId);
+  const subjectQuery = useCatalogSubject(subjectId);
+  const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
+  const title = labels.characters?.label ?? '角色与人物';
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: '角色与声优' }} />
+      <Stack.Screen options={{ title }} />
       {charactersQuery.isPending ? (
-        <State title="正在读取角色资料" text="角色和声优名单加载中。" />
+        <State title="正在读取角色资料" text={`${title}名单加载中。`} />
       ) : charactersQuery.isError ? (
         <State
           action={() => void charactersQuery.refetch()}
@@ -31,7 +37,7 @@ export default function SubjectCharactersScreen() {
           }
           ListHeaderComponent={
             <View style={styles.header}>
-              <Text style={styles.title}>角色与声优</Text>
+              <Text style={styles.title}>{title}</Text>
               <Text style={styles.meta}>
                 {charactersQuery.data.length} 个角色
               </Text>

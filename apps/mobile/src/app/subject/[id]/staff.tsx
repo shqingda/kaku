@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   Pressable,
   SectionList,
@@ -11,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
+import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
 
@@ -79,10 +82,93 @@ function groupStaff(
     });
 }
 
+function StaffAvatar({
+  item,
+  withZoom,
+}: {
+  item: StaffCredit;
+  withZoom: boolean;
+}) {
+  const avatar = (
+    <View style={styles.avatar}>
+      <Text style={styles.avatarFallback}>{item.name.slice(0, 1)}</Text>
+      {item.imageUrl ? (
+        <Image
+          contentFit="cover"
+          source={item.imageUrl}
+          style={StyleSheet.absoluteFill}
+          transition={120}
+        />
+      ) : null}
+    </View>
+  );
+
+  return withZoom ? <Link.AppleZoom>{avatar}</Link.AppleZoom> : avatar;
+}
+
+function StaffRow({ item }: { item: StaffCredit }) {
+  const content = (
+    <>
+      <StaffAvatar item={item} withZoom={!item.isOrganization} />
+      <View style={styles.staffMain}>
+        <Text numberOfLines={1} style={styles.staffName}>
+          {item.name}
+        </Text>
+        <Text style={styles.staffType}>
+          {item.isOrganization ? '机构' : '人物'}
+        </Text>
+      </View>
+      {item.episodeInfo ? (
+        <View style={styles.episodeBadge}>
+          <Text style={styles.episodeBadgeText}>EP.{item.episodeInfo}</Text>
+        </View>
+      ) : null}
+      {!item.isOrganization ? (
+        <SymbolView
+          name={{
+            android: 'chevron_right',
+            ios: 'chevron.right',
+            web: 'chevron_right',
+          }}
+          size={13}
+          tintColor={COLORS.subtle}
+          weight="semibold"
+        />
+      ) : null}
+    </>
+  );
+
+  if (item.isOrganization) {
+    return <View style={styles.staffRow}>{content}</View>;
+  }
+
+  return (
+    <Link
+      asChild
+      href={{
+        pathname: '/person/[id]',
+        params: { id: String(item.id) },
+      }}
+    >
+      <Pressable
+        accessibilityLabel={`查看人物 ${item.name}`}
+        accessibilityRole="button"
+        style={styles.staffRow}
+      >
+        {content}
+      </Pressable>
+    </Link>
+  );
+}
+
 export default function StaffScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = Number(id);
   const staffQuery = useSubjectStaff(subjectId);
+  const subjectQuery = useCatalogSubject(subjectId);
+  const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
+  const title = labels.credits.label;
+  const pageTitle = labels.credits.pageTitle;
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(
     () => new Set(),
   );
@@ -112,17 +198,17 @@ export default function StaffScreen() {
           headerBackButtonDisplayMode: 'minimal',
           headerShown: true,
           headerShadowVisible: false,
-          title: '制作人员',
+          title,
         }}
       />
       {staffQuery.isPending ? (
         <View style={styles.state}>
-          <Text style={styles.stateTitle}>正在读取制作人员</Text>
+          <Text style={styles.stateTitle}>正在读取{title}</Text>
           <Text style={styles.stateText}>名单较长，请稍候。</Text>
         </View>
       ) : staffQuery.isError ? (
         <View style={styles.state}>
-          <Text style={styles.stateTitle}>制作人员读取失败</Text>
+          <Text style={styles.stateTitle}>{title}读取失败</Text>
           <Text style={styles.stateText}>网络恢复后可以重新获取。</Text>
           <Pressable
             accessibilityRole="button"
@@ -147,45 +233,14 @@ export default function StaffScreen() {
           }
           ListHeaderComponent={
             <View style={styles.pageHeader}>
-              <Text style={styles.pageTitle}>完整制作名单</Text>
+              <Text style={styles.pageTitle}>{pageTitle}</Text>
               <Text style={styles.pageMeta}>
                 {staffQuery.data?.length ?? 0} 条记录 · 按职位分组
               </Text>
             </View>
           }
           maxToRenderPerBatch={16}
-          renderItem={({ item }) => (
-            <View style={styles.staffRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarFallback}>
-                  {item.name.slice(0, 1)}
-                </Text>
-                {item.imageUrl ? (
-                  <Image
-                    contentFit="cover"
-                    source={item.imageUrl}
-                    style={StyleSheet.absoluteFill}
-                    transition={120}
-                  />
-                ) : null}
-              </View>
-              <View style={styles.staffMain}>
-                <Text numberOfLines={1} style={styles.staffName}>
-                  {item.name}
-                </Text>
-                <Text style={styles.staffType}>
-                  {item.isOrganization ? '机构' : '人物'}
-                </Text>
-              </View>
-              {item.episodeInfo ? (
-                <View style={styles.episodeBadge}>
-                  <Text style={styles.episodeBadgeText}>
-                    EP.{item.episodeInfo}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          )}
+          renderItem={({ item }) => <StaffRow item={item} />}
           renderSectionFooter={({ section }) =>
             section.totalCount > COLLAPSED_COUNT ? (
               <Pressable

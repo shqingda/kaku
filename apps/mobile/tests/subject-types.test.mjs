@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   getCollectionStatusLabel,
+  getSubjectDetailLabels,
   supportsWatchProgress,
   usesEpisodeData,
 } from '../src/features/catalog/subject-types.ts';
@@ -21,4 +22,12 @@ test('only watchable media exposes watched episode progress', () => {
   assert.equal(supportsWatchProgress(3), false);
   assert.equal(usesEpisodeData(3), true);
   assert.equal(usesEpisodeData(4), false);
+});
+
+test('subject detail labels follow each media type', () => {
+  assert.equal(getSubjectDetailLabels(1).credits.label, '作者与创作');
+  assert.equal(getSubjectDetailLabels(3).credits.label, '艺术家与制作');
+  assert.equal(getSubjectDetailLabels(4).characters.label, '角色与人物');
+  assert.equal(getSubjectDetailLabels(6).credits.label, '演职人员');
+  assert.equal(getSubjectDetailLabels(3).characters, undefined);
 });

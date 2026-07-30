@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { Link, Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -98,41 +99,52 @@ export function EntityDetailScreen({
             </>
           }
           renderItem={({ item }) => (
-            <Pressable
-              accessibilityLabel={`打开${item.title}`}
-              accessibilityRole="button"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-              style={({ pressed }) => [
-                styles.subjectRow,
-                pressed && styles.pressed,
-              ]}
+            <Link
+              asChild
+              href={{
+                pathname: '/subject/[id]',
+                params: { id: String(item.id) },
+              }}
             >
-              <View style={styles.cover}>
-                <Text style={styles.coverFallback}>
-                  {item.title.slice(0, 1)}
-                </Text>
-                {item.coverUrl ? (
-                  <Image
-                    contentFit="cover"
-                    source={item.coverUrl}
-                    style={StyleSheet.absoluteFill}
-                    transition={120}
-                  />
-                ) : null}
-              </View>
-              <View style={styles.subjectMain}>
-                <Text numberOfLines={2} style={styles.subjectTitle}>
-                  {item.title}
-                </Text>
-                <Text style={styles.relation}>{item.relation}</Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
+              <Pressable
+                accessibilityHint="进入相关作品详情"
+                accessibilityLabel={`打开${item.title}`}
+                accessibilityRole="button"
+                style={styles.subjectRow}
+              >
+                <Link.AppleZoom>
+                  <View style={styles.cover}>
+                    <Text style={styles.coverFallback}>
+                      {item.title.slice(0, 1)}
+                    </Text>
+                    {item.coverUrl ? (
+                      <Image
+                        contentFit="cover"
+                        source={item.coverUrl}
+                        style={StyleSheet.absoluteFill}
+                        transition={120}
+                      />
+                    ) : null}
+                  </View>
+                </Link.AppleZoom>
+                <View style={styles.subjectMain}>
+                  <Text numberOfLines={2} style={styles.subjectTitle}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.relation}>{item.relation}</Text>
+                </View>
+                <SymbolView
+                  name={{
+                    android: 'chevron_right',
+                    ios: 'chevron.right',
+                    web: 'chevron_right',
+                  }}
+                  size={14}
+                  tintColor={COLORS.subtle}
+                  weight="semibold"
+                />
+              </Pressable>
+            </Link>
           )}
           showsVerticalScrollIndicator={false}
         />
@@ -254,8 +266,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   relation: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
-  chevron: { color: COLORS.subtle, fontSize: 24, marginLeft: 8 },
-  pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
   emptyText: { color: COLORS.muted, fontSize: 14 },
   state: {

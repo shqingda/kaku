@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
+  getSubjectDetailLabels,
   supportsWatchProgress,
   usesEpisodeData,
 } from '@/features/catalog/subject-types';
@@ -118,19 +119,7 @@ export default function SubjectScreen() {
   const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
-  const characterEntry =
-    subjectType === 3
-      ? null
-      : {
-          hint:
-            subjectType === 2 || subjectType === 6
-              ? '角色介绍与演出阵容'
-              : '角色与人物资料',
-          label:
-            subjectType === 2 || subjectType === 6
-              ? '角色与声优'
-              : '角色与人物',
-        };
+  const detailLabels = getSubjectDetailLabels(subjectType);
 
   function goBack() {
     if (router.canGoBack()) {
@@ -235,10 +224,10 @@ export default function SubjectScreen() {
         />
 
           <View style={styles.detailEntries}>
-            {characterEntry ? (
+            {detailLabels.characters ? (
               <DetailEntry
-                hint={characterEntry.hint}
-                label={characterEntry.label}
+                hint={detailLabels.characters.hint}
+                label={detailLabels.characters.label}
                 onPress={() =>
                   router.push({
                     pathname: '/subject/[id]/characters',
@@ -248,15 +237,15 @@ export default function SubjectScreen() {
               />
             ) : null}
             <DetailEntry
-              hint="完整职位与参与信息"
-              label="制作人员"
+              hint={detailLabels.credits.hint}
+              label={detailLabels.credits.label}
               onPress={() =>
                 router.push({
                   pathname: '/subject/[id]/staff',
                   params: { id: String(subjectId) },
                 })
               }
-              withBorder={Boolean(characterEntry)}
+              withBorder={Boolean(detailLabels.characters)}
             />
             <DetailEntry
               hint="系列作品与相关条目"

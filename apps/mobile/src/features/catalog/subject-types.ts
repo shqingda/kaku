@@ -63,3 +63,64 @@ export function supportsWatchProgress(subjectType: number) {
 export function usesEpisodeData(subjectType: number) {
   return supportsWatchProgress(subjectType) || subjectType === 3;
 }
+
+export function getSubjectDetailLabels(subjectType: number) {
+  switch (subjectType) {
+    case 1:
+      return {
+        characters: {
+          hint: '角色与人物资料',
+          label: '角色与人物',
+        },
+        credits: {
+          hint: '作者、插画与参与信息',
+          label: '作者与创作',
+          pageTitle: '完整创作名单',
+        },
+      };
+    case 3:
+      return {
+        credits: {
+          hint: '艺术家与完整制作信息',
+          label: '艺术家与制作',
+          pageTitle: '完整制作名单',
+        },
+      };
+    case 4:
+      return {
+        characters: {
+          hint: '角色与人物资料',
+          label: '角色与人物',
+        },
+        credits: {
+          hint: '开发与参与信息',
+          label: '制作人员',
+          pageTitle: '完整制作名单',
+        },
+      };
+    case 6:
+      return {
+        characters: {
+          hint: '角色介绍与演出阵容',
+          label: '角色与声优',
+        },
+        credits: {
+          hint: '演员与幕后参与信息',
+          label: '演职人员',
+          pageTitle: '完整演职名单',
+        },
+      };
+    default:
+      return {
+        characters: {
+          hint: '角色介绍与演出阵容',
+          label: '角色与声优',
+        },
+        credits: {
+          hint: '完整职位与参与信息',
+          label: '制作人员',
+          pageTitle: '完整制作名单',
+        },
+      };
+  }
+}

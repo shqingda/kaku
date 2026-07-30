@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Pressable,
@@ -92,9 +93,17 @@ export default function SubjectRelationsScreen() {
                   <Text numberOfLines={3} style={styles.name}>
                     {item.title}
                   </Text>
-                  <Text style={styles.openHint}>查看条目详情</Text>
                 </View>
-                <Text style={styles.chevron}>›</Text>
+                <SymbolView
+                  name={{
+                    android: 'chevron_right',
+                    ios: 'chevron.right',
+                    web: 'chevron_right',
+                  }}
+                  size={14}
+                  tintColor={COLORS.subtle}
+                  weight="semibold"
+                />
               </Pressable>
             </Link>
           )}
@@ -174,8 +183,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 8,
   },
-  openHint: { color: COLORS.subtle, fontSize: 11, marginTop: 7 },
-  chevron: { color: COLORS.subtle, fontSize: 28, marginLeft: 8 },
   state: { alignItems: 'center', padding: 32 },
   stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
   stateText: {
