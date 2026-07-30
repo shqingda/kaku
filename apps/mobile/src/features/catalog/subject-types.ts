@@ -56,6 +56,63 @@ export function getSubjectTypeLabel(subjectType?: number) {
   );
 }
 
+const COMMON_INFO_KEYS = ['中文名', '别名', '官方网站', '链接'] as const;
+
+const SUBJECT_INFO_KEYS: Record<number, readonly string[]> = {
+  1: [
+    ...COMMON_INFO_KEYS,
+    '作者',
+    '出版社',
+    '发售日',
+    '价格',
+    '页数',
+    '话数',
+    'ISBN',
+  ],
+  2: [
+    ...COMMON_INFO_KEYS,
+    '话数',
+    '放送开始',
+    '放送星期',
+    '播放电视台',
+    '其他电视台',
+    'Copyright',
+  ],
+  3: [
+    ...COMMON_INFO_KEYS,
+    '版本特性',
+    '发售日期',
+    '价格',
+    '碟片数量',
+    '艺术家',
+  ],
+  4: [
+    ...COMMON_INFO_KEYS,
+    '平台',
+    '游戏类型',
+    '游玩人数',
+    '发行日期',
+    '售价',
+    '游戏开发商',
+    'website',
+  ],
+  6: [
+    ...COMMON_INFO_KEYS,
+    '集数',
+    '放送星期',
+    '开始',
+    '结束',
+    '类型',
+    '国家/地区',
+    '语言',
+    '电视台',
+  ],
+};
+
+export function getSubjectInfoKeys(subjectType: number) {
+  return SUBJECT_INFO_KEYS[subjectType] ?? COMMON_INFO_KEYS;
+}
+
 export function supportsWatchProgress(subjectType: number) {
   return subjectType === 2 || subjectType === 6;
 }

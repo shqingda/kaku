@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   getCollectionStatusLabel,
   getSubjectDetailLabels,
+  getSubjectInfoKeys,
   supportsWatchProgress,
   usesEpisodeData,
 } from '../src/features/catalog/subject-types.ts';
@@ -30,4 +31,12 @@ test('subject detail labels follow each media type', () => {
   assert.equal(getSubjectDetailLabels(4).characters.label, '角色与人物');
   assert.equal(getSubjectDetailLabels(6).credits.label, '演职人员');
   assert.equal(getSubjectDetailLabels(3).characters, undefined);
+});
+
+test('subject info keeps the metadata relevant to each media type', () => {
+  assert.equal(getSubjectInfoKeys(1).includes('ISBN'), true);
+  assert.equal(getSubjectInfoKeys(3).includes('碟片数量'), true);
+  assert.equal(getSubjectInfoKeys(4).includes('游戏平台'), false);
+  assert.equal(getSubjectInfoKeys(4).includes('平台'), true);
+  assert.equal(getSubjectInfoKeys(6).includes('国家/地区'), true);
 });

@@ -3,28 +3,21 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import {
+  getCollectionStatusLabel,
+  getSubjectInfoKeys,
+  getSubjectTypeLabel,
+} from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import type { CollectionStatus } from '@/features/watching/model';
 
-const PUBLIC_INFO_KEYS = new Set([
-  '中文名',
-  '别名',
-  '话数',
-  '放送开始',
-  '放送星期',
-  '播放电视台',
-  '其他电视台',
-  '官方网站',
-  '链接',
-  'Copyright',
-]);
-
-const COLLECTION_LABELS = [
-  ['wish', '想看'],
-  ['doing', '在看'],
-  ['completed', '看过'],
-  ['onHold', '搁置'],
-  ['dropped', '抛弃'],
-] as const;
+const COLLECTION_STATUSES: CollectionStatus[] = [
+  'wish',
+  'doing',
+  'completed',
+  'onHold',
+  'dropped',
+];
 
 function formatCount(value: number) {
   return value >= 10_000
@@ -36,12 +29,14 @@ export default function SubjectInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectQuery = useCatalogSubject(Number(id));
   const subject = subjectQuery.data;
+  const subjectTypeLabel = getSubjectTypeLabel(subject?.type);
+  const publicInfoKeys = new Set(getSubjectInfoKeys(subject?.type ?? 2));
   const publicInfo =
-    subject?.info.filter((item) => PUBLIC_INFO_KEYS.has(item.key)) ?? [];
+    subject?.info.filter((item) => publicInfoKeys.has(item.key)) ?? [];
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: '条目资料' }} />
+      <Stack.Screen options={{ title: `${subjectTypeLabel}资料` }} />
       {subjectQuery.isPending ? (
         <State title="正在读取条目资料" text="评分与基础资料加载中。" />
       ) : subjectQuery.isError || !subject ? (
@@ -57,7 +52,9 @@ export default function SubjectInfoScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.title}>评分与资料</Text>
-            <Text style={styles.meta}>来自 Bangumi 的公开条目数据</Text>
+            <Text style={styles.meta}>
+              来自 Bangumi 的公开{subjectTypeLabel}数据
+            </Text>
           </View>
 
           <View style={styles.ratingCard}>
@@ -86,12 +83,14 @@ export default function SubjectInfoScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>收藏状态</Text>
               <View style={styles.collectionCard}>
-                {COLLECTION_LABELS.map(([key, label]) => (
-                  <View key={key} style={styles.collectionItem}>
+                {COLLECTION_STATUSES.map((status) => (
+                  <View key={status} style={styles.collectionItem}>
                     <Text style={styles.collectionValue}>
-                      {formatCount(subject.collectionStats?.[key] ?? 0)}
+                      {formatCount(subject.collectionStats?.[status] ?? 0)}
                     </Text>
-                    <Text style={styles.collectionLabel}>{label}</Text>
+                    <Text style={styles.collectionLabel}>
+                      {getCollectionStatusLabel(subject.type, status)}
+                    </Text>
                   </View>
                 ))}
               </View>
