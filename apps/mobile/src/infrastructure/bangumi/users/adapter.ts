@@ -1,3 +1,5 @@
+import type { CollectionStatus } from '@/features/watching/model';
+
 import type {
   PublicUserBlog,
   PublicUserBlogPage,
@@ -15,12 +17,12 @@ import type {
 } from '../api-next/schemas.ts';
 import type { BangumiUserCollectionsResponse } from '../api-v0/schemas.ts';
 
-const COLLECTION_STATUS: Record<number, string> = {
-  1: '想看',
-  2: '看过',
-  3: '在看',
-  4: '搁置',
-  5: '抛弃',
+const COLLECTION_STATUS: Record<number, CollectionStatus> = {
+  1: 'wish',
+  2: 'completed',
+  3: 'doing',
+  4: 'onHold',
+  5: 'dropped',
 };
 
 function secureImage(url?: string) {
@@ -29,8 +31,10 @@ function secureImage(url?: string) {
 
 export function toPublicUserCollection(
   collection: BangumiUserCollectionsResponse['data'][number],
+  subjectType: number,
 ): PublicUserCollection {
   return {
+    collectionStatus: COLLECTION_STATUS[collection.type],
     coverUrl: secureImage(
       collection.subject.images?.common ??
         collection.subject.images?.medium ??
@@ -39,7 +43,7 @@ export function toPublicUserCollection(
     id: collection.subject.id,
     progress: collection.ep_status,
     rate: collection.rate > 0 ? collection.rate : undefined,
-    status: COLLECTION_STATUS[collection.type] ?? '收藏',
+    subjectType,
     title:
       collection.subject.name_cn.trim() || collection.subject.name,
     totalEpisodes: collection.subject.eps,
@@ -49,11 +53,14 @@ export function toPublicUserCollection(
 
 export function toPublicUserCollectionPage(
   response: BangumiUserCollectionsResponse,
+  subjectType = 2,
 ): PublicUserCollectionPage {
   const nextOffset = response.offset + response.data.length;
 
   return {
-    items: response.data.map(toPublicUserCollection),
+    items: response.data.map((collection) =>
+      toPublicUserCollection(collection, subjectType),
+    ),
     nextOffset:
       nextOffset < response.total ? nextOffset : undefined,
     total: response.total,

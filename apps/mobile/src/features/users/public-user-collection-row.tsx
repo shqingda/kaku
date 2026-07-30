@@ -2,6 +2,10 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
+import {
+  getCollectionStatusLabel,
+  supportsWatchProgress,
+} from '@/features/catalog/subject-types';
 
 import type { PublicUserCollection } from './model';
 
@@ -15,11 +19,13 @@ export function PublicUserCollectionRow({
   onPress: () => void;
 }) {
   const progress =
-    item.progress > 0
+    supportsWatchProgress(item.subjectType) && item.progress > 0
       ? `${item.progress}${item.totalEpisodes > 0 ? `/${item.totalEpisodes}` : ''} 集`
       : undefined;
   const meta = [
-    item.status,
+    item.collectionStatus
+      ? getCollectionStatusLabel(item.subjectType, item.collectionStatus)
+      : '收藏',
     progress,
     item.rate ? `${item.rate} 分` : undefined,
   ]

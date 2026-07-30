@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -11,13 +11,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import {
+  getSubjectTypeLabel,
+  SUBJECT_TYPES,
+} from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
 
 export default function PublicUserCollectionsScreen() {
-  const { username } = useLocalSearchParams<{ username: string }>();
-  const collectionsQuery = usePublicUserCollections(username);
+  const { type, username } = useLocalSearchParams<{
+    type?: string;
+    username: string;
+  }>();
+  const initialType = Number(type);
+  const [subjectType, setSubjectType] = useState(() =>
+    SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
+  );
+  const subjectTypeLabel = getSubjectTypeLabel(subjectType);
+  const collectionsQuery = usePublicUserCollections(username, subjectType);
   const collections = useMemo(
     () =>
       collectionsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -31,7 +44,7 @@ export default function PublicUserCollectionsScreen() {
         options={{
           headerBackButtonDisplayMode: 'minimal',
           headerShadowVisible: false,
-          title: '动画收藏',
+          title: `${subjectTypeLabel}收藏`,
         }}
       />
       <FlatList
@@ -42,7 +55,7 @@ export default function PublicUserCollectionsScreen() {
         ListEmptyComponent={
           collectionsQuery.isPending ? (
             <CollectionState
-              text="正在读取公开动画收藏。"
+              text={`正在读取公开${subjectTypeLabel}收藏。`}
               title="收藏加载中"
             />
           ) : collectionsQuery.isError ? (
@@ -53,7 +66,7 @@ export default function PublicUserCollectionsScreen() {
             />
           ) : (
             <CollectionState
-              text="该用户没有公开动画收藏。"
+              text={`该用户没有公开${subjectTypeLabel}收藏。`}
               title="暂无收藏"
             />
           )
@@ -71,12 +84,19 @@ export default function PublicUserCollectionsScreen() {
           ) : null
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.title}>动画收藏</Text>
-            <Text style={styles.subtitle}>
-              @{username} · {total ? `${total} 个条目` : '读取中'}
-            </Text>
-          </View>
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>{subjectTypeLabel}收藏</Text>
+              <Text style={styles.subtitle}>
+                @{username} · {total ? `${total} 个条目` : '读取中'}
+              </Text>
+            </View>
+            <SubjectTypeTabs
+              contentContainerStyle={styles.subjectTypeTabs}
+              onChange={setSubjectType}
+              selectedType={subjectType}
+            />
+          </>
         }
         maxToRenderPerBatch={12}
         onEndReached={() => {
@@ -169,6 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 7,
   },
+  subjectTypeTabs: { paddingBottom: 14 },
   item: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',

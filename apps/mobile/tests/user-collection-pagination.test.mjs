@@ -34,11 +34,12 @@ test('public user collection page maps progress and next offset', () => {
   assert.equal(page.nextOffset, 21);
   assert.equal(page.total, 42);
   assert.deepEqual(page.items[0], {
+    collectionStatus: 'doing',
     coverUrl: 'https://lain.bgm.tv/frieren.jpg',
     id: 400602,
     progress: 8,
     rate: 9,
-    status: '在看',
+    subjectType: 2,
     title: '葬送的芙莉莲',
     totalEpisodes: 28,
     updatedAt: '2026-07-28T10:00:00+08:00',
@@ -54,6 +55,21 @@ test('public user collection page has no next offset at the end', () => {
   });
 
   assert.equal(page.nextOffset, undefined);
+});
+
+test('public user collection keeps its requested media type', () => {
+  const page = toPublicUserCollectionPage(
+    {
+      data: [collection],
+      limit: 20,
+      offset: 0,
+      total: 1,
+    },
+    1,
+  );
+
+  assert.equal(page.items[0].subjectType, 1);
+  assert.equal(page.items[0].collectionStatus, 'doing');
 });
 
 test('public user blog page maps its next offset', () => {

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -11,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
@@ -27,7 +30,14 @@ export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const userQuery = usePublicUser(username);
   const blogsQuery = usePublicUserBlogs(username);
-  const collectionsQuery = usePublicUserCollections(username);
+  const [collectionSubjectType, setCollectionSubjectType] = useState(2);
+  const collectionSubjectTypeLabel = getSubjectTypeLabel(
+    collectionSubjectType,
+  );
+  const collectionsQuery = usePublicUserCollections(
+    username,
+    collectionSubjectType,
+  );
   const friendsQuery = usePublicUserFriends(username);
   const timelineQuery = usePublicUserTimeline(username);
   const user = userQuery.data;
@@ -58,7 +68,7 @@ export default function PublicUserScreen() {
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={
             <SectionStatus
-              emptyText="该用户没有公开动画收藏。"
+              emptyText={`该用户没有公开${collectionSubjectTypeLabel}收藏。`}
               isError={collectionsQuery.isError}
               isPending={collectionsQuery.isPending}
               onRetry={() => void collectionsQuery.refetch()}
@@ -261,7 +271,9 @@ export default function PublicUserScreen() {
                 ))}
               </View>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>动画收藏</Text>
+                <Text style={styles.sectionTitle}>
+                  {collectionSubjectTypeLabel}收藏
+                </Text>
                 <View style={styles.sectionRight}>
                   <Text style={styles.sectionMeta}>
                     {sectionMeta(
@@ -277,7 +289,10 @@ export default function PublicUserScreen() {
                       onPress={() =>
                         router.push({
                           pathname: '/user/collections/[username]',
-                          params: { username: user.username },
+                          params: {
+                            type: String(collectionSubjectType),
+                            username: user.username,
+                          },
                         })
                       }
                       style={({ pressed }) => [
@@ -291,6 +306,11 @@ export default function PublicUserScreen() {
                   ) : null}
                 </View>
               </View>
+              <SubjectTypeTabs
+                contentContainerStyle={styles.collectionTypeTabs}
+                onChange={setCollectionSubjectType}
+                selectedType={collectionSubjectType}
+              />
             </>
           }
           renderItem={({ item }) => (
@@ -480,6 +500,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 17,
   },
   blogEmpty: { color: COLORS.muted, fontSize: 13, paddingVertical: 18 },
+  collectionTypeTabs: { paddingBottom: 4 },
   collectionCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 18,

@@ -24,7 +24,7 @@ export function usePublicUser(username: string) {
   });
 }
 
-export function usePublicUserCollections(username: string) {
+export function usePublicUserCollections(username: string, subjectType = 2) {
   return useInfiniteQuery<
     PublicUserCollectionPage,
     Error,
@@ -38,9 +38,10 @@ export function usePublicUserCollections(username: string) {
     queryFn: ({ pageParam }) =>
       bangumiUsersProvider.getPublicUserCollections(
         username.trim(),
+        subjectType,
         pageParam,
       ),
-    queryKey: queryKeys.publicUserCollections(username),
+    queryKey: queryKeys.publicUserCollections(username, subjectType),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

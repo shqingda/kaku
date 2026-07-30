@@ -106,7 +106,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '动画收藏',
+              title: '收藏',
             }}
           />
           <Stack.Screen
@@ -151,7 +151,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '动画排行榜',
+              title: '排行榜',
             }}
           />
           <Stack.Screen

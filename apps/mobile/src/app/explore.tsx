@@ -15,10 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import {
-  getSubjectTypeLabel,
-  SUBJECT_TYPES,
-} from '@/features/catalog/subject-types';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
@@ -111,6 +109,7 @@ export default function ExploreScreen() {
             onSubmit={submitSearch}
           />
           <SubjectTypeTabs
+            contentContainerStyle={styles.subjectTypeTabs}
             onChange={setSelectedSearchType}
             selectedType={selectedSearchType}
           />
@@ -243,49 +242,6 @@ function SearchField({
         value={draft}
       />
     </View>
-  );
-}
-
-function SubjectTypeTabs({
-  onChange,
-  selectedType,
-}: {
-  onChange: (subjectType: number) => void;
-  selectedType: number;
-}) {
-  return (
-    <ScrollView
-      contentContainerStyle={styles.subjectTypeTabs}
-      horizontal
-      keyboardShouldPersistTaps="handled"
-      showsHorizontalScrollIndicator={false}
-    >
-      {SUBJECT_TYPES.map((type) => {
-        const isSelected = type.id === selectedType;
-
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: isSelected }}
-            key={type.id}
-            onPress={() => onChange(type.id)}
-            style={[
-              styles.subjectTypeTab,
-              isSelected && styles.subjectTypeTabSelected,
-            ]}
-          >
-            <Text
-              style={[
-                styles.subjectTypeTabText,
-                isSelected && styles.subjectTypeTabTextSelected,
-              ]}
-            >
-              {type.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
   );
 }
 
@@ -605,20 +561,7 @@ const styles = StyleSheet.create({
     height: 50,
     marginLeft: 9,
   },
-  subjectTypeTabs: { gap: 8, paddingBottom: 2, paddingTop: 12 },
-  subjectTypeTab: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  subjectTypeTabSelected: { backgroundColor: COLORS.ink },
-  subjectTypeTabText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  subjectTypeTabTextSelected: { color: COLORS.surface },
+  subjectTypeTabs: { paddingBottom: 2, paddingTop: 12 },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',

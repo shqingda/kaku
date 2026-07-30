@@ -63,12 +63,13 @@ export async function getBangumiPublicUser(username: string) {
 
 export async function getBangumiUserCollections(
   username: string,
+  subjectType: number,
   offset: number,
 ) {
   const query = new URLSearchParams({
     limit: '20',
     offset: String(offset),
-    subject_type: '2',
+    subject_type: String(subjectType),
   });
   const json = await requestJson(
     `/v0/users/${encodeURIComponent(username)}/collections?${query}`,

@@ -4,7 +4,6 @@ import {
   FlatList,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -16,6 +15,7 @@ import {
   getSubjectTypeLabel,
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
@@ -87,37 +87,11 @@ export default function RankingsScreen() {
                 Bangumi 综合排名 · {total ? `${total} 个条目` : '读取中'}
               </Text>
             </View>
-            <ScrollView
+            <SubjectTypeTabs
               contentContainerStyle={styles.subjectTypeTabs}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-            >
-              {SUBJECT_TYPES.map((item) => {
-                const isSelected = item.id === subjectType;
-
-                return (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    key={item.id}
-                    onPress={() => setSubjectType(item.id)}
-                    style={[
-                      styles.subjectTypeTab,
-                      isSelected && styles.subjectTypeTabSelected,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.subjectTypeTabText,
-                        isSelected && styles.subjectTypeTabTextSelected,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+              onChange={setSubjectType}
+              selectedType={subjectType}
+            />
           </>
         }
         maxToRenderPerBatch={12}
@@ -212,20 +186,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 7,
   },
-  subjectTypeTabs: { gap: 8, paddingBottom: 14 },
-  subjectTypeTab: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  subjectTypeTabSelected: { backgroundColor: COLORS.ink },
-  subjectTypeTabText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  subjectTypeTabTextSelected: { color: COLORS.surface },
+  subjectTypeTabs: { paddingBottom: 14 },
   item: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',

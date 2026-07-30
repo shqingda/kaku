@@ -30,8 +30,8 @@ export const queryKeys = {
     ['people', 'bangumi', 'person', personId] as const,
   publicUser: (username: string) =>
     ['users', 'bangumi', username] as const,
-  publicUserCollections: (username: string) =>
-    ['users', 'bangumi', username, 'collections'] as const,
+  publicUserCollections: (username: string, subjectType: number) =>
+    ['users', 'bangumi', username, 'collections', subjectType] as const,
   publicUserBlogs: (username: string) =>
     ['users', 'bangumi', username, 'blogs'] as const,
   publicUserFriends: (username: string) =>

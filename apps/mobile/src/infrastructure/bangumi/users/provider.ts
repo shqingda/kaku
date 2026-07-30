@@ -31,9 +31,13 @@ export const bangumiUsersProvider: UsersProvider = {
       username: profile.username,
     };
   },
-  async getPublicUserCollections(username, offset) {
-    const collections = await getBangumiUserCollections(username, offset);
-    return toPublicUserCollectionPage(collections);
+  async getPublicUserCollections(username, subjectType, offset) {
+    const collections = await getBangumiUserCollections(
+      username,
+      subjectType,
+      offset,
+    );
+    return toPublicUserCollectionPage(collections, subjectType);
   },
   async getPublicUserBlogs(username, offset) {
     const blogs = await getBangumiUserBlogs(username, offset);

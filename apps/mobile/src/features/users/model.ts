@@ -1,9 +1,12 @@
+import type { CollectionStatus } from '@/features/watching/model';
+
 export type PublicUserCollection = {
+  collectionStatus?: CollectionStatus;
   coverUrl?: string;
   id: number;
   progress: number;
   rate?: number;
-  status: string;
+  subjectType: number;
   title: string;
   totalEpisodes: number;
   updatedAt: string;
@@ -65,6 +68,7 @@ export type UsersProvider = {
   getPublicUser: (username: string) => Promise<PublicUserProfile>;
   getPublicUserCollections: (
     username: string,
+    subjectType: number,
     offset: number,
   ) => Promise<PublicUserCollectionPage>;
   getPublicUserBlogs: (
