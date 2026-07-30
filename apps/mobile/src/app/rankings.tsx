@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
-import { router, Stack } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -11,12 +12,22 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import {
+  getSubjectTypeLabel,
+  SUBJECT_TYPES,
+} from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 
 export default function RankingsScreen() {
-  const rankingQuery = useBangumiRankedSubjects();
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const initialType = Number(type);
+  const [subjectType, setSubjectType] = useState(() =>
+    SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
+  );
+  const subjectTypeLabel = getSubjectTypeLabel(subjectType);
+  const rankingQuery = useBangumiRankedSubjects(subjectType);
   const subjects = useMemo(
     () => rankingQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [rankingQuery.data],
@@ -29,7 +40,7 @@ export default function RankingsScreen() {
         options={{
           headerBackButtonDisplayMode: 'minimal',
           headerShadowVisible: false,
-          title: '动画排行榜',
+          title: `${subjectTypeLabel}排行榜`,
         }}
       />
       <FlatList
@@ -51,7 +62,7 @@ export default function RankingsScreen() {
             />
           ) : (
             <RankingState
-              text="Bangumi 暂时没有返回可显示的动画。"
+              text={`Bangumi 暂时没有返回可显示的${subjectTypeLabel}。`}
               title="暂无排行数据"
             />
           )
@@ -69,12 +80,45 @@ export default function RankingsScreen() {
           ) : null
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.title}>动画排行榜</Text>
-            <Text style={styles.subtitle}>
-              Bangumi 综合排名 · {total ? `${total} 个条目` : '读取中'}
-            </Text>
-          </View>
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>{subjectTypeLabel}排行榜</Text>
+              <Text style={styles.subtitle}>
+                Bangumi 综合排名 · {total ? `${total} 个条目` : '读取中'}
+              </Text>
+            </View>
+            <ScrollView
+              contentContainerStyle={styles.subjectTypeTabs}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {SUBJECT_TYPES.map((item) => {
+                const isSelected = item.id === subjectType;
+
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    key={item.id}
+                    onPress={() => setSubjectType(item.id)}
+                    style={[
+                      styles.subjectTypeTab,
+                      isSelected && styles.subjectTypeTabSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.subjectTypeTabText,
+                        isSelected && styles.subjectTypeTabTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
         }
         maxToRenderPerBatch={12}
         onEndReached={() => {
@@ -168,6 +212,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 7,
   },
+  subjectTypeTabs: { gap: 8, paddingBottom: 14 },
+  subjectTypeTab: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  subjectTypeTabSelected: { backgroundColor: COLORS.ink },
+  subjectTypeTabText: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  subjectTypeTabTextSelected: { color: COLORS.surface },
   item: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',

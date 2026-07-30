@@ -34,12 +34,12 @@ function currentWeekdayId() {
 }
 
 export default function ExploreScreen() {
-  const calendarQuery = useBangumiCalendar();
-  const rankedQuery = useBangumiRankedSubjects();
   const [draft, setDraft] = useState('');
   const [keyword, setKeyword] = useState('');
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
+  const calendarQuery = useBangumiCalendar();
+  const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
   const searchSubjects = useMemo(
     () => searchQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -200,14 +200,15 @@ export default function ExploreScreen() {
                   renderItem={({ item }) => <CalendarCard item={item} />}
                   showsHorizontalScrollIndicator={false}
                 />
-                <RankingSection
-                  isError={rankedQuery.isError}
-                  isPending={rankedQuery.isPending}
-                  onRetry={() => void rankedQuery.refetch()}
-                  subjects={rankedQuery.data?.pages[0]?.items ?? []}
-                />
               </>
             )}
+            <RankingSection
+              isError={rankedQuery.isError}
+              isPending={rankedQuery.isPending}
+              onRetry={() => void rankedQuery.refetch()}
+              subjects={rankedQuery.data?.pages[0]?.items ?? []}
+              subjectType={selectedSearchType}
+            />
           </View>
         </ScrollView>
       )}
@@ -293,22 +294,31 @@ function RankingSection({
   isPending,
   onRetry,
   subjects,
+  subjectType,
 }: {
   isError: boolean;
   isPending: boolean;
   onRetry: () => void;
   subjects: DiscoverSubject[];
+  subjectType: number;
 }) {
+  const subjectTypeLabel = getSubjectTypeLabel(subjectType);
+
   return (
     <View>
       <View style={styles.sectionHeader}>
         <View>
-          <Text style={styles.sectionTitle}>动画排行榜</Text>
+          <Text style={styles.sectionTitle}>{subjectTypeLabel}排行榜</Text>
           <Text style={styles.sectionMeta}>Bangumi 综合排名</Text>
         </View>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/rankings')}
+          onPress={() =>
+            router.push({
+              pathname: '/rankings',
+              params: { type: String(subjectType) },
+            })
+          }
           style={({ pressed }) => [
             styles.sectionAction,
             pressed && styles.pressed,
@@ -319,7 +329,10 @@ function RankingSection({
         </Pressable>
       </View>
       {isPending ? (
-        <State title="正在读取排行榜" text="高评分动画加载中。" />
+        <State
+          title="正在读取排行榜"
+          text={`高评分${subjectTypeLabel}加载中。`}
+        />
       ) : isError ? (
         <State action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
       ) : (

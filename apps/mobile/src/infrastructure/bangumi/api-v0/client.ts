@@ -116,12 +116,15 @@ export async function searchBangumiSubjects(
   return bangumiSubjectSearchSchema.parse(json);
 }
 
-export async function getBangumiRankedSubjects(offset: number) {
+export async function getBangumiRankedSubjects(
+  subjectType: number,
+  offset: number,
+) {
   const query = new URLSearchParams({
     limit: String(SEARCH_PAGE_SIZE),
     offset: String(offset),
     sort: 'rank',
-    type: '2',
+    type: String(subjectType),
   });
   const json = await requestJson(`/v0/subjects?${query}`);
   return bangumiSubjectSearchSchema.parse(json);

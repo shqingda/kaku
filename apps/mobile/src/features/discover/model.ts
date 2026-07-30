@@ -21,7 +21,10 @@ export type DiscoverSubjectPage = {
 
 export type DiscoverProvider = {
   getCalendar: () => Promise<CalendarDay[]>;
-  getRankedSubjects: (offset: number) => Promise<DiscoverSubjectPage>;
+  getRankedSubjects: (
+    subjectType: number,
+    offset: number,
+  ) => Promise<DiscoverSubjectPage>;
   searchSubjects: (
     keyword: string,
     subjectType: number,

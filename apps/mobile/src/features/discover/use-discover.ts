@@ -18,7 +18,7 @@ export function useBangumiCalendar() {
   });
 }
 
-export function useBangumiRankedSubjects() {
+export function useBangumiRankedSubjects(subjectType = 2) {
   return useInfiniteQuery<
     DiscoverSubjectPage,
     Error,
@@ -29,8 +29,8 @@ export function useBangumiRankedSubjects() {
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      bangumiDiscoverProvider.getRankedSubjects(pageParam),
-    queryKey: queryKeys.rankedSubjects(),
+      bangumiDiscoverProvider.getRankedSubjects(subjectType, pageParam),
+    queryKey: queryKeys.rankedSubjects(subjectType),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
   });

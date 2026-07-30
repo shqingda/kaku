@@ -23,9 +23,9 @@ export const bangumiDiscoverProvider: DiscoverProvider = {
       subjects: day.items.map(toDiscoverSubject),
     }));
   },
-  async getRankedSubjects(offset) {
-    const result = await getBangumiRankedSubjects(offset);
-    return toDiscoverSubjectPage(result);
+  async getRankedSubjects(subjectType, offset) {
+    const result = await getBangumiRankedSubjects(subjectType, offset);
+    return toDiscoverSubjectPage(result, subjectType);
   },
   async searchSubjects(keyword, subjectType, offset) {
     const result = await searchBangumiSubjects(keyword, subjectType, offset);
