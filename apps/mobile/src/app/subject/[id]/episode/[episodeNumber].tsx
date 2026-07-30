@@ -73,10 +73,16 @@ export default function EpisodeScreen() {
   if (!isValidEpisode) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen options={{ title: '章节不存在' }} />
+        <Stack.Screen
+          options={{ title: isTrack ? '曲目不存在' : '章节不存在' }}
+        />
         <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>没有找到这一集</Text>
-          <Text style={styles.errorText}>集数可能已经变化，请返回番剧详情页。</Text>
+          <Text style={styles.errorTitle}>
+            没有找到这一{isTrack ? '曲' : '集'}
+          </Text>
+          <Text style={styles.errorText}>
+            {isTrack ? '曲目' : '集数'}可能已经变化，请返回条目详情页。
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -120,8 +126,12 @@ export default function EpisodeScreen() {
           ListEmptyComponent={
             commentsQuery.isPending || commentsQuery.isError ? null : (
               <View style={styles.emptyDiscussion}>
-                <Text style={styles.emptyTitle}>还没有人讨论这一集</Text>
-                <Text style={styles.emptyText}>Bangumi 暂无本集评论。</Text>
+                <Text style={styles.emptyTitle}>
+                  还没有人讨论这一{isTrack ? '曲' : '集'}
+                </Text>
+                <Text style={styles.emptyText}>
+                  Bangumi 暂无本{isTrack ? '曲' : '集'}评论。
+                </Text>
               </View>
             )
           }
@@ -173,7 +183,7 @@ export default function EpisodeScreen() {
                 </View>
                 <Text style={styles.description}>
                   {catalogEpisode?.description ||
-                    '本集简介暂时缺失，稍后可以重试 Bangumi 数据。'}
+                    `本${isTrack ? '曲' : '集'}简介暂时缺失，稍后可以重试 Bangumi 数据。`}
                 </Text>
               </View>
               <CatalogStatusBanner

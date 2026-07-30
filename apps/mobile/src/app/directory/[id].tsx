@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import {
   usePublicIndex,
@@ -30,7 +32,7 @@ export default function PublicIndexScreen() {
       <FlatList
         contentContainerStyle={styles.content}
         data={items}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         ListEmptyComponent={
           itemsQuery.isPending ? (
             <View style={styles.empty}>
@@ -52,7 +54,7 @@ export default function PublicIndexScreen() {
             </View>
           ) : (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>目录中暂无动画条目。</Text>
+              <Text style={styles.emptyText}>目录中暂无条目。</Text>
             </View>
           )
         }
@@ -105,7 +107,7 @@ export default function PublicIndexScreen() {
             ) : null}
             {index ? (
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>动画条目</Text>
+                <Text style={styles.sectionTitle}>收录条目</Text>
                 <Text style={styles.sectionMeta}>
                   {items.length} / {itemTotal}
                 </Text>
@@ -124,42 +126,56 @@ export default function PublicIndexScreen() {
         }}
         onEndReachedThreshold={0.45}
         renderItem={({ item }) => (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: '/subject/[id]',
-                params: { id: String(item.id) },
-              })
-            }
-            style={({ pressed }) => [
-              styles.subjectRow,
-              pressed && styles.pressed,
-            ]}
+          <Link
+            asChild
+            href={{
+              pathname: '/subject/[id]',
+              params: { id: String(item.id) },
+            }}
           >
-            <View style={styles.cover}>
-              <Text style={styles.coverFallback}>
-                {item.title.slice(0, 1)}
-              </Text>
-              {item.coverUrl ? (
-                <Image
-                  contentFit="cover"
-                  source={item.coverUrl}
-                  style={StyleSheet.absoluteFill}
-                  transition={120}
-                />
-              ) : null}
-            </View>
-            <View style={styles.subjectMain}>
-              <Text numberOfLines={2} style={styles.subjectTitle}>
-                {item.title}
-              </Text>
-              <Text numberOfLines={2} style={styles.subjectMeta}>
-                {item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}
-                {item.comment ? ` · ${item.comment}` : ''}
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
+            <Pressable
+              accessibilityHint="进入条目详情"
+              accessibilityLabel={`打开${item.title}`}
+              accessibilityRole="button"
+              style={styles.subjectRow}
+            >
+              <Link.AppleZoom>
+                <View style={styles.cover}>
+                  <Text style={styles.coverFallback}>
+                    {item.title.slice(0, 1)}
+                  </Text>
+                  {item.coverUrl ? (
+                    <Image
+                      contentFit="cover"
+                      source={item.coverUrl}
+                      style={StyleSheet.absoluteFill}
+                      transition={120}
+                    />
+                  ) : null}
+                </View>
+              </Link.AppleZoom>
+              <View style={styles.subjectMain}>
+                <Text numberOfLines={2} style={styles.subjectTitle}>
+                  {item.title}
+                </Text>
+                <Text numberOfLines={2} style={styles.subjectMeta}>
+                  {getSubjectTypeLabel(item.type)} ·{' '}
+                  {item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}
+                  {item.comment ? ` · ${item.comment}` : ''}
+                </Text>
+              </View>
+              <SymbolView
+                name={{
+                  android: 'chevron_right',
+                  ios: 'chevron.right',
+                  web: 'chevron_right',
+                }}
+                size={14}
+                tintColor={COLORS.subtle}
+                weight="semibold"
+              />
+            </Pressable>
+          </Link>
         )}
         showsVerticalScrollIndicator={false}
       />
@@ -239,7 +255,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 6,
   },
-  chevron: { color: COLORS.subtle, fontSize: 24, marginLeft: 8 },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
   emptyText: { color: COLORS.muted, fontSize: 14 },

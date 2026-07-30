@@ -13,6 +13,7 @@ export type PublicIndexItem = {
   id: number;
   score?: number;
   title: string;
+  type: number;
 };
 
 export type PublicIndexDetail = PublicIndexSummary & {

@@ -62,6 +62,7 @@ test('index item page maps subjects and exposes its next offset', () => {
             name: 'Sousou no Frieren',
             nameCN: '葬送的芙莉莲',
             rating: { score: 8.5 },
+            type: 2,
           },
         },
       ],
@@ -77,6 +78,7 @@ test('index item page maps subjects and exposes its next offset', () => {
     id: 400602,
     score: 8.5,
     title: '葬送的芙莉莲',
+    type: 2,
   });
 });
 

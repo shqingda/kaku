@@ -137,6 +137,7 @@ export const bangumiIndexRelatedSchema = z.object({
               score: z.number(),
             })
             .optional(),
+          type: z.number(),
         })
         .optional(),
     }),

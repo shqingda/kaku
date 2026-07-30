@@ -55,6 +55,7 @@ function toPublicIndexItem(
         id: subject.id,
         score: subject.rating?.score,
         title: subject.nameCN.trim() || subject.name,
+        type: subject.type,
       }
     : undefined;
 }

@@ -155,7 +155,6 @@ export async function getBangumiIndexRelated(
     cat: '0',
     limit: String(limit),
     offset: String(offset),
-    type: '2',
   });
   const json = await requestJson(
     `/p1/indexes/${indexId}/related?${query}`,
