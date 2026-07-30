@@ -34,10 +34,6 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function findInfoValue(subject: CatalogSubject | undefined, key: string) {
-  return subject?.info.find((item) => item.key === key)?.value;
-}
-
 export function SubjectOverview({
   showsEpisodes,
   subject,
@@ -66,7 +62,7 @@ export function SubjectOverview({
       releaseLabel = '出版';
       extraFact = {
         label: '页数',
-        value: findInfoValue(subject, '页数'),
+        value: subject?.details.pageCount,
       };
       break;
     case 2:
@@ -76,7 +72,7 @@ export function SubjectOverview({
         : undefined;
       break;
     case 3:
-      format = findInfoValue(subject, '版本特性') ?? format;
+      format = subject?.details.edition ?? format;
       formatLabel = '版本';
       extraFact =
         totalEpisodes > 0
@@ -84,11 +80,11 @@ export function SubjectOverview({
           : undefined;
       break;
     case 4:
-      format = findInfoValue(subject, '平台') ?? format;
+      format = subject?.details.platforms ?? format;
       formatLabel = '平台';
       extraFact = {
         label: '类型',
-        value: findInfoValue(subject, '游戏类型'),
+        value: subject?.details.gameGenre,
       };
       break;
     case 6:

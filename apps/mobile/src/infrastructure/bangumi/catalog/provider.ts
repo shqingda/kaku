@@ -32,6 +32,11 @@ function formatInfoboxValue(value: BangumiInfoboxValue) {
     .join(' / ');
 }
 
+function findInfoboxValue(subject: BangumiSubjectResponse, key: string) {
+  const item = subject.infobox?.find((entry) => entry.key === key);
+  return item ? formatInfoboxValue(item.value) : undefined;
+}
+
 function toCatalogEpisode(episode: BangumiEpisodeResponse): CatalogEpisode {
   return {
     airDate: episode.airdate || undefined,
@@ -60,6 +65,12 @@ function toCatalogSubject(
         }
       : undefined,
     coverUrl: subject.images?.large ?? subject.images?.common,
+    details: {
+      edition: findInfoboxValue(subject, '版本特性'),
+      gameGenre: findInfoboxValue(subject, '游戏类型'),
+      pageCount: findInfoboxValue(subject, '页数'),
+      platforms: findInfoboxValue(subject, '平台'),
+    },
     episodes: episodes.map(toCatalogEpisode).sort((a, b) => a.number - b.number),
     format: subject.platform || undefined,
     id: subject.id,

@@ -18,6 +18,12 @@ export type CatalogSubject = {
     wish: number;
   };
   coverUrl?: string;
+  details: {
+    edition?: string;
+    gameGenre?: string;
+    pageCount?: string;
+    platforms?: string;
+  };
   episodes: CatalogEpisode[];
   format?: string;
   id: number;
