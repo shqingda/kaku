@@ -127,7 +127,7 @@ export function CollectionControls({
                 web: 'edit',
               }}
               size={16}
-              tintColor={COLORS.subtle}
+              tintColor={COLORS.ink}
               weight="semibold"
             />
           </View>
@@ -236,16 +236,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headingCopy: { gap: 7 },
-  title: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  title: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
   statusValue: { color: COLORS.accent, fontSize: 20, fontWeight: '800' },
   emptyStatus: { color: COLORS.accent },
   editButton: {
     alignItems: 'center',
     backgroundColor: '#F7F6F2',
-    borderRadius: 15,
-    height: 30,
+    borderColor: COLORS.track,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 34,
     justifyContent: 'center',
-    width: 30,
+    width: 34,
   },
   details: {
     alignItems: 'center',
@@ -306,9 +308,9 @@ const styles = StyleSheet.create({
     height: 3,
   },
   divider: {
-    backgroundColor: '#E3E0D9',
-    height: 52,
-    width: 1,
+    backgroundColor: COLORS.track,
+    height: 34,
+    width: StyleSheet.hairlineWidth,
   },
   ratingDetail: {
     alignItems: 'flex-start',
