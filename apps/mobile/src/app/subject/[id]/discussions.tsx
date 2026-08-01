@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
@@ -29,7 +29,18 @@ export default function SubjectDiscussionsScreen() {
         <Stack.Screen options={{ title: '讨论版' }} />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>条目资料读取失败</Text>
-          <Text style={styles.errorText}>请检查网络后返回重试。</Text>
+          <Text style={styles.errorText}>请检查网络后重试。</Text>
+          <Pressable
+            accessibilityLabel="重新读取条目资料"
+            accessibilityRole="button"
+            onPress={() => void subjectQuery.refetch()}
+            style={({ pressed }) => [
+              styles.errorRetry,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.errorRetryText}>重试</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -121,4 +132,16 @@ const styles = StyleSheet.create({
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
   errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
   errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorRetry: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.accent,
+    borderRadius: 13,
+    justifyContent: 'center',
+    marginTop: 18,
+    minHeight: 44,
+    paddingHorizontal: 20,
+  },
+  errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
 });

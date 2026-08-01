@@ -149,7 +149,18 @@ export default function SubjectScreen() {
         <FloatingBackButton onPress={goBack} top={insets.top + 8} />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>条目读取失败</Text>
-          <Text style={styles.errorText}>请检查网络后返回重试。</Text>
+          <Text style={styles.errorText}>请检查网络后重试。</Text>
+          <Pressable
+            accessibilityLabel="重新读取条目"
+            accessibilityRole="button"
+            onPress={() => void catalogQuery.refetch()}
+            style={({ pressed }) => [
+              styles.errorRetry,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.errorRetryText}>重试</Text>
+          </Pressable>
         </View>
       </View>
     );
@@ -431,4 +442,15 @@ const styles = StyleSheet.create({
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
   errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
   errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorRetry: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.accent,
+    borderRadius: 13,
+    justifyContent: 'center',
+    marginTop: 18,
+    minHeight: 44,
+    paddingHorizontal: 20,
+  },
+  errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
 });
