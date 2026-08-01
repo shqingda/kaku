@@ -36,8 +36,14 @@ pnpm dev:mobile
 本地启动 API：
 
 ```bash
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+pnpm --filter @kaku/api db:migrate:local
 pnpm dev:api
 ```
+
+`apps/api/.dev.vars` 仅用于本地开发且不会提交。Bangumi OAuth 需要填写
+应用 ID、应用密钥和回调地址；`TOKEN_ENCRYPTION_KEY` 可使用
+`openssl rand -base64 32` 生成。
 
 Metro 启动后按 `i` 打开 iOS 模拟器。也可以直接构建原生开发客户端：
 
@@ -57,7 +63,11 @@ pnpm test
 ## 目录
 
 ```text
-apps/api/src/       Hono API 与 Cloudflare Worker 入口
+apps/api/
+├── drizzle/         D1 数据库迁移
+└── src/
+    ├── auth/        OAuth 路由、Bangumi Client、加密与存储接口
+    └── db/          Drizzle 数据表定义
 apps/mobile/src/
 ├── app/             Expo Router 页面与导航
 ├── constants/       设计常量
@@ -72,7 +82,7 @@ apps/mobile/src/
 
 ## 当前限制
 
-- 尚未实现登录和真实写入
+- 后端 OAuth 与会话交换已完成，尚未接入移动端登录界面
 - 观看进度暂未与 Bangumi 账号同步
 - Android 和 Web 尚未完成正式适配
-- 后端目前只有可运行的 Worker 骨架，尚未接入 OAuth 和数据库
+- 部署前仍需创建远程 D1、填写真实数据库 ID 和 Worker secrets

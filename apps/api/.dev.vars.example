@@ -1,0 +1,4 @@
+BANGUMI_CLIENT_ID=replace-with-app-id
+BANGUMI_CLIENT_SECRET=replace-with-app-secret
+BANGUMI_REDIRECT_URI=http://localhost:8787/auth/bangumi/callback
+TOKEN_ENCRYPTION_KEY=replace-with-32-byte-base64-key

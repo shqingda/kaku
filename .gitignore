@@ -9,5 +9,5 @@ coverage/
 .env
 apps/mobile/.env
 apps/api/data/
-apps/api/drizzle/
+apps/api/.dev.vars
 !.env.example

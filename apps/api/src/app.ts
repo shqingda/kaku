@@ -1,7 +1,13 @@
 import { Hono } from 'hono';
 
-export function createApp() {
-  const app = new Hono();
+import {
+  type AuthDependencies,
+  registerAuthRoutes,
+} from './auth/routes.ts';
+import type { Env } from './env.ts';
+
+export function createApp(dependencies: AuthDependencies = {}) {
+  const app = new Hono<{ Bindings: Env }>();
 
   app.get('/health', (context) =>
     context.json({
@@ -9,6 +15,20 @@ export function createApp() {
       status: 'ok',
     }),
   );
+
+  registerAuthRoutes(app, dependencies);
+
+  app.onError((error, context) => {
+    console.error(error);
+
+    return context.json(
+      {
+        error: 'internal_error',
+        message: '服务暂时不可用，请稍后重试。',
+      },
+      500,
+    );
+  });
 
   app.notFound((context) =>
     context.json(
