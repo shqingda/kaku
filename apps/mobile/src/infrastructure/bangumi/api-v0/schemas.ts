@@ -25,6 +25,19 @@ const bangumiEntityDetailSchema = z.object({
   birth_mon: z.number().nullable().optional(),
   birth_year: z.number().nullable().optional(),
   blood_type: z.number().nullable().optional(),
+  career: z
+    .array(
+      z.enum([
+        'producer',
+        'mangaka',
+        'artist',
+        'seiyu',
+        'writer',
+        'illustrator',
+        'actor',
+      ]),
+    )
+    .optional(),
   gender: z.string().nullable().optional(),
   id: z.number(),
   images: bangumiImagesSchema,
@@ -33,6 +46,12 @@ const bangumiEntityDetailSchema = z.object({
     .optional(),
   name: z.string(),
   summary: z.string(),
+  stat: z
+    .object({
+      collects: z.number(),
+      comments: z.number(),
+    })
+    .optional(),
   type: z.number(),
 });
 
@@ -47,6 +66,20 @@ export const bangumiEntitySubjectsSchema = z.array(
     name: z.string(),
     name_cn: z.string(),
     staff: z.string(),
+    type: z.number(),
+  }),
+);
+
+export const bangumiEntityRelationsSchema = z.array(
+  z.object({
+    id: z.number(),
+    images: bangumiImagesSchema,
+    name: z.string(),
+    staff: z.string(),
+    subject_id: z.number(),
+    subject_name: z.string(),
+    subject_name_cn: z.string(),
+    subject_type: z.number(),
     type: z.number(),
   }),
 );
@@ -247,6 +280,9 @@ export type BangumiEntityDetailResponse = z.infer<
 >;
 export type BangumiEntitySubjectsResponse = z.infer<
   typeof bangumiEntitySubjectsSchema
+>;
+export type BangumiEntityRelationsResponse = z.infer<
+  typeof bangumiEntityRelationsSchema
 >;
 export type BangumiPublicUserResponse = z.infer<
   typeof bangumiPublicUserSchema

@@ -1,6 +1,7 @@
 import {
   bangumiCharacterSchema,
   bangumiCalendarSchema,
+  bangumiEntityRelationsSchema,
   bangumiEntitySubjectsSchema,
   bangumiEpisodePageSchema,
   bangumiPersonSchema,
@@ -31,25 +32,29 @@ export async function getBangumiSubject(subjectId: number) {
 }
 
 export async function getBangumiCharacter(characterId: number) {
-  const [detailJson, subjectsJson] = await Promise.all([
+  const [detailJson, subjectsJson, peersJson] = await Promise.all([
     requestJson(`/v0/characters/${characterId}`),
     requestJson(`/v0/characters/${characterId}/subjects`),
+    requestJson(`/v0/characters/${characterId}/persons`),
   ]);
 
   return {
     detail: bangumiCharacterSchema.parse(detailJson),
+    peers: bangumiEntityRelationsSchema.parse(peersJson),
     subjects: bangumiEntitySubjectsSchema.parse(subjectsJson),
   };
 }
 
 export async function getBangumiPerson(personId: number) {
-  const [detailJson, subjectsJson] = await Promise.all([
+  const [detailJson, subjectsJson, peersJson] = await Promise.all([
     requestJson(`/v0/persons/${personId}`),
     requestJson(`/v0/persons/${personId}/subjects`),
+    requestJson(`/v0/persons/${personId}/characters`),
   ]);
 
   return {
     detail: bangumiPersonSchema.parse(detailJson),
+    peers: bangumiEntityRelationsSchema.parse(peersJson),
     subjects: bangumiEntitySubjectsSchema.parse(subjectsJson),
   };
 }

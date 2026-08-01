@@ -1,11 +1,15 @@
 import { Image } from 'expo-image';
-import { Link, Stack } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { Stack } from 'expo-router';
+import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 
+import {
+  buildEntityListItems,
+  EntityRelationRow,
+} from './entity-relation-list';
 import type { PublicEntityDetail } from './model';
 
 export function EntityDetailScreen({
@@ -21,6 +25,11 @@ export function EntityDetailScreen({
   kind: '人物' | '角色';
   onRetry: () => void;
 }) {
+  const items = useMemo(() => {
+    if (!data) return [];
+    return buildEntityListItems(data, kind);
+  }, [data, kind]);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: data?.name ?? `${kind}详情` }} />
@@ -35,15 +44,8 @@ export function EntityDetailScreen({
       ) : (
         <FlatList
           contentContainerStyle={styles.content}
-          data={data.relatedSubjects}
-          keyExtractor={(item, index) =>
-            `${item.id}-${item.relation}-${index}`
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>暂无相关作品。</Text>
-            </View>
-          }
+          data={items}
+          keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
               <View style={styles.hero}>
@@ -60,15 +62,26 @@ export function EntityDetailScreen({
                   ) : null}
                 </View>
                 <View style={styles.heroMain}>
-                  <Text style={styles.name}>{data.name}</Text>
-                  <Text style={styles.kind}>{kind}</Text>
+                  <Text selectable style={styles.name}>
+                    {data.name}
+                  </Text>
+                  <Text numberOfLines={2} style={styles.kind}>
+                    {(data.categoryLabels ?? [kind]).join(' · ')}
+                  </Text>
+                  <Text style={styles.stats}>
+                    {(data.collectionCount ?? 0).toLocaleString('zh-CN')} 人收藏
+                    {' · '}
+                    {(data.commentCount ?? 0).toLocaleString('zh-CN')} 条评论
+                  </Text>
                 </View>
               </View>
 
               {data.summary ? (
                 <View style={styles.panel}>
                   <Text style={styles.panelTitle}>简介</Text>
-                  <Text style={styles.summary}>{data.summary}</Text>
+                  <Text selectable style={styles.summary}>
+                    {data.summary}
+                  </Text>
                 </View>
               ) : null}
 
@@ -84,67 +97,17 @@ export function EntityDetailScreen({
                       ]}
                     >
                       <Text style={styles.metadataLabel}>{item.label}</Text>
-                      <Text style={styles.metadataValue}>{item.value}</Text>
+                      <Text selectable style={styles.metadataValue}>
+                        {item.value}
+                      </Text>
                     </View>
                   ))}
                 </View>
               ) : null}
-
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>相关作品</Text>
-                <Text style={styles.sectionMeta}>
-                  {data.relatedSubjects.length} 项
-                </Text>
-              </View>
             </>
           }
           renderItem={({ item }) => (
-            <Link
-              asChild
-              href={{
-                pathname: '/subject/[id]',
-                params: { id: String(item.id) },
-              }}
-            >
-              <Pressable
-                accessibilityHint="进入相关作品详情"
-                accessibilityLabel={`打开${item.title}`}
-                accessibilityRole="button"
-                style={styles.subjectRow}
-              >
-                <Link.AppleZoom>
-                  <View style={styles.cover}>
-                    <Text style={styles.coverFallback}>
-                      {item.title.slice(0, 1)}
-                    </Text>
-                    {item.coverUrl ? (
-                      <Image
-                        contentFit="cover"
-                        source={item.coverUrl}
-                        style={StyleSheet.absoluteFill}
-                        transition={120}
-                      />
-                    ) : null}
-                  </View>
-                </Link.AppleZoom>
-                <View style={styles.subjectMain}>
-                  <Text numberOfLines={2} style={styles.subjectTitle}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.relation}>{item.relation}</Text>
-                </View>
-                <SymbolView
-                  name={{
-                    android: 'chevron_right',
-                    ios: 'chevron.right',
-                    web: 'chevron_right',
-                  }}
-                  size={14}
-                  tintColor={COLORS.subtle}
-                  weight="semibold"
-                />
-              </Pressable>
-            </Link>
+            <EntityRelationRow item={item} kind={kind} />
           )}
           showsVerticalScrollIndicator={false}
         />
@@ -203,6 +166,7 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   kind: { color: COLORS.muted, fontSize: 13, marginTop: 8 },
+  stats: { color: COLORS.subtle, fontSize: 11, marginTop: 6 },
   panel: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,
@@ -231,43 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
   },
-  sectionHeader: {
-    alignItems: 'flex-end',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingTop: 18,
-  },
-  sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
-  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
-  subjectRow: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    flexDirection: 'row',
-    minHeight: 88,
-    padding: 10,
-  },
-  cover: {
-    alignItems: 'center',
-    backgroundColor: COLORS.track,
-    borderRadius: 11,
-    height: 68,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 48,
-  },
-  coverFallback: { color: COLORS.subtle, fontSize: 14, fontWeight: '700' },
-  subjectMain: { flex: 1, marginLeft: 13 },
-  subjectTitle: {
-    color: COLORS.ink,
-    fontSize: 15,
-    fontWeight: '700',
-    lineHeight: 21,
-  },
-  relation: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
   state: {
     alignItems: 'center',
     flex: 1,

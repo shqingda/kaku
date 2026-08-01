@@ -6,6 +6,7 @@ import {
   mapBangumiReviewDetail,
   mapBangumiReviews,
 } from '../src/infrastructure/bangumi/reviews/adapter.ts';
+import { mapBangumiEntityDetail } from '../src/infrastructure/bangumi/people/adapter.ts';
 import {
   bangumiDiscussionReplySchema,
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
@@ -237,6 +238,58 @@ test('Bangumi nested replies parse recursively', () => {
 
   assert.equal(parsed.replies?.length, 1);
   assert.equal(parsed.replies?.[0].content, '第二层回复');
+});
+
+test('Bangumi people adapter groups repeated roles by person or character', () => {
+  const detail = {
+    gender: 'male',
+    id: 1,
+    infobox: [
+      { key: '性别', value: '男' },
+      { key: '生日', value: '12月5日' },
+    ],
+    name: '测试角色',
+    stat: { collects: 12, comments: 3 },
+    summary: '',
+    type: 1,
+  };
+  const peers = [
+    {
+      id: 9,
+      name: '测试声优',
+      staff: '主角',
+      subject_id: 10,
+      subject_name: 'Work A',
+      subject_name_cn: '作品 A',
+      subject_type: 2,
+      type: 1,
+    },
+    {
+      id: 9,
+      name: '测试声优',
+      staff: '配角',
+      subject_id: 11,
+      subject_name: 'Work B',
+      subject_name_cn: '',
+      subject_type: 2,
+      type: 1,
+    },
+  ];
+  const mapped = mapBangumiEntityDetail(detail, [], peers, 'character');
+
+  assert.deepEqual(mapped.categoryLabels, ['角色']);
+  assert.equal(mapped.collectionCount, 12);
+  assert.equal(mapped.commentCount, 3);
+  assert.equal(mapped.relatedPeers.length, 1);
+  assert.equal(mapped.relatedPeers[0].name, '测试声优');
+  assert.deepEqual(mapped.metadata, [
+    { label: '性别', value: '男' },
+    { label: '生日', value: '12月5日' },
+  ]);
+  assert.deepEqual(mapped.relatedPeers[0].appearances, [
+    { relation: '主角', subjectId: 10, subjectTitle: '作品 A' },
+    { relation: '配角', subjectId: 11, subjectTitle: 'Work B' },
+  ]);
 });
 
 test('Bangumi comments and reviews expose the next offset', () => {
