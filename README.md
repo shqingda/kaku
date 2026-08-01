@@ -2,6 +2,9 @@
 
 一个使用 Expo、React Native 和 TypeScript 开发的跨平台条目进度客户端。
 
+后端从一个独立的 Hono + Cloudflare Worker 应用开始建设，用于承载
+不能暴露在客户端的 OAuth 密钥和后续同步逻辑。
+
 当前 MVP 以 Bangumi 公开数据为数据源，支持：
 
 - 在看条目与章节进度
@@ -30,6 +33,12 @@ pnpm install
 pnpm dev:mobile
 ```
 
+本地启动 API：
+
+```bash
+pnpm dev:api
+```
+
 Metro 启动后按 `i` 打开 iOS 模拟器。也可以直接构建原生开发客户端：
 
 ```bash
@@ -48,6 +57,7 @@ pnpm test
 ## 目录
 
 ```text
+apps/api/src/       Hono API 与 Cloudflare Worker 入口
 apps/mobile/src/
 ├── app/             Expo Router 页面与导航
 ├── constants/       设计常量
@@ -65,4 +75,4 @@ apps/mobile/src/
 - 尚未实现登录和真实写入
 - 观看进度暂未与 Bangumi 账号同步
 - Android 和 Web 尚未完成正式适配
-- 后端仍处于规划阶段
+- 后端目前只有可运行的 Worker 骨架，尚未接入 OAuth 和数据库

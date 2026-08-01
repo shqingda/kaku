@@ -52,6 +52,11 @@ minimumReleaseAgeExclude:
   - expo-dev-client@57.0.6 || 57.0.9
   - expo-dev-launcher@57.0.6 || 57.0.9
   - expo-dev-menu@57.0.6 || 57.0.9
+  - '@cloudflare/workers-types@5.20260801.1'
+  - hono@4.12.33
+  - miniflare@5.20260730.0-alpha
+  - wrangler@4.118.0
 
 allowBuilds:
   esbuild: true
+  workerd: true
