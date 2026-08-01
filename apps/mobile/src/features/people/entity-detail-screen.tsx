@@ -140,7 +140,12 @@ function State({
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
-  content: { gap: 10, padding: 20, paddingBottom: 44 },
+  content: {
+    alignItems: 'stretch',
+    gap: 10,
+    padding: 20,
+    paddingBottom: 44,
+  },
   hero: {
     alignItems: 'center',
     flexDirection: 'row',

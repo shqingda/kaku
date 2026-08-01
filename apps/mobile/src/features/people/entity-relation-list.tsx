@@ -111,10 +111,7 @@ export function EntityRelationRow({
           accessibilityLabel={`打开${item.peer.name}`}
           accessibilityRole="button"
           hitSlop={4}
-          style={({ pressed }) => [
-            styles.peerRow,
-            pressed && styles.pressed,
-          ]}
+          style={styles.peerRow}
         >
           <View style={styles.peerPortrait}>
             <Text style={styles.fallback}>{item.peer.name.slice(0, 1)}</Text>
@@ -167,10 +164,7 @@ export function EntityRelationRow({
         accessibilityLabel={`打开${item.subject.title}`}
         accessibilityRole="button"
         hitSlop={4}
-        style={({ pressed }) => [
-          styles.subjectRow,
-          pressed && styles.pressed,
-        ]}
+        style={styles.subjectRow}
       >
         <Link.AppleZoom>
           <View style={styles.cover}>
@@ -214,6 +208,7 @@ function Chevron() {
 
 const styles = StyleSheet.create({
   sectionHeader: {
+    alignSelf: 'stretch',
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -222,15 +217,17 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
   sectionMeta: { color: COLORS.subtle, fontSize: 12 },
-  empty: { alignItems: 'center', padding: 28 },
+  empty: { alignItems: 'center', alignSelf: 'stretch', padding: 28 },
   emptyText: { color: COLORS.muted, fontSize: 14 },
   peerRow: {
     alignItems: 'center',
+    alignSelf: 'stretch',
     backgroundColor: COLORS.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 92,
     padding: 10,
+    width: '100%',
   },
   peerPortrait: {
     alignItems: 'center',
@@ -239,9 +236,10 @@ const styles = StyleSheet.create({
     height: 72,
     justifyContent: 'center',
     overflow: 'hidden',
+    flexShrink: 0,
     width: 58,
   },
-  peerMain: { flex: 1, marginLeft: 13 },
+  peerMain: { flex: 1, marginLeft: 13, minWidth: 0 },
   peerName: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
   appearance: {
     color: COLORS.muted,
@@ -257,11 +255,13 @@ const styles = StyleSheet.create({
   },
   subjectRow: {
     alignItems: 'center',
+    alignSelf: 'stretch',
     backgroundColor: COLORS.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 88,
     padding: 10,
+    width: '100%',
   },
   cover: {
     alignItems: 'center',
@@ -270,10 +270,11 @@ const styles = StyleSheet.create({
     height: 68,
     justifyContent: 'center',
     overflow: 'hidden',
+    flexShrink: 0,
     width: 48,
   },
   fallback: { color: COLORS.subtle, fontSize: 14, fontWeight: '700' },
-  subjectMain: { flex: 1, marginLeft: 13 },
+  subjectMain: { flex: 1, marginLeft: 13, minWidth: 0 },
   subjectTitle: {
     color: COLORS.ink,
     fontSize: 15,
@@ -281,5 +282,4 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   relation: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
-  pressed: { opacity: 0.58 },
 });
