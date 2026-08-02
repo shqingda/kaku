@@ -10,6 +10,7 @@ import type {
   PublicUserFriendPage,
   PublicTimelinePage,
 } from './model';
+import type { CollectionStatus } from '@/features/watching/model';
 import { bangumiUsersProvider } from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
@@ -24,7 +25,11 @@ export function usePublicUser(username: string) {
   });
 }
 
-export function usePublicUserCollections(username: string, subjectType = 2) {
+export function usePublicUserCollections(
+  username: string,
+  subjectType = 2,
+  collectionStatus?: CollectionStatus,
+) {
   return useInfiniteQuery<
     PublicUserCollectionPage,
     Error,
@@ -40,8 +45,13 @@ export function usePublicUserCollections(username: string, subjectType = 2) {
         username.trim(),
         subjectType,
         pageParam,
+        collectionStatus,
       ),
-    queryKey: queryKeys.publicUserCollections(username, subjectType),
+    queryKey: queryKeys.publicUserCollections(
+      username,
+      subjectType,
+      collectionStatus,
+    ),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

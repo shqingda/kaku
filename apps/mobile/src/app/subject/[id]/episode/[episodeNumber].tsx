@@ -1,5 +1,6 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
+  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -10,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import { supportsWatchProgress } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
@@ -31,6 +33,7 @@ export default function EpisodeScreen() {
     id: string;
   }>();
   const { items, toggleEpisodeWatched } = useWatching();
+  const { session } = useAuth();
   const subjectId = Number(id);
   const episodeNumber = Number(episodeParam);
   const catalogQuery = useCatalogSubject(subjectId);
@@ -183,6 +186,21 @@ export default function EpisodeScreen() {
                       accessibilityRole="button"
                       hitSlop={8}
                       onPress={() => {
+                        if (!session) {
+                          Alert.alert(
+                            '登录后标记进度',
+                            '章节进度会保存到你的 Bangumi 账户。',
+                            [
+                              { style: 'cancel', text: '取消' },
+                              {
+                                onPress: () => router.push('/account'),
+                                text: '去登录',
+                              },
+                            ],
+                          );
+                          return;
+                        }
+
                         toggleEpisodeWatched(progressSubject, episodeNumber);
                         playEpisodeToggleHaptic(isWatched);
                       }}

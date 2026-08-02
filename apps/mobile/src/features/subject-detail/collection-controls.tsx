@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
+import { router } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import {
   getCollectionStatusLabel,
   supportsWatchProgress,
@@ -33,6 +35,7 @@ export function CollectionControls({
   onChangeWatchedCount: (watchedCount: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { session } = useAuth();
   const subjectType = item.type ?? 2;
   const supportsProgress =
     supportsWatchProgress(subjectType) && item.totalEpisodes > 0;
@@ -104,12 +107,28 @@ export function CollectionControls({
     );
   }
 
+  function openCollectionBox() {
+    if (session) {
+      setIsOpen(true);
+      return;
+    }
+
+    Alert.alert(
+      '登录后使用收藏盒',
+      '收藏状态、进度和评分会保存到你的 Bangumi 账户。',
+      [
+        { style: 'cancel', text: '取消' },
+        { onPress: () => router.push('/account'), text: '去登录' },
+      ],
+    );
+  }
+
   return (
     <>
       <Pressable
         accessibilityLabel="打开收藏盒"
         accessibilityRole="button"
-        onPress={() => setIsOpen(true)}
+        onPress={openCollectionBox}
         style={({ pressed }) => [
           styles.panel,
           pressed && styles.pressed,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 
+import { AuthProvider } from '@/features/auth/auth-provider';
 import { WatchingProvider } from '@/features/watching/watching-provider';
 import {
   bangumiRetryDelay,
@@ -25,9 +26,20 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WatchingProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+      <AuthProvider>
+        <WatchingProvider>
+          <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
+          <Stack.Screen
+            name="account"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '账户',
+            }}
+          />
+          <Stack.Screen name="auth/callback" />
           <Stack.Screen
             name="blog/[id]"
             options={{
@@ -260,8 +272,9 @@ export default function RootLayout() {
               title: '制作人员',
             }}
           />
-        </Stack>
-      </WatchingProvider>
+          </Stack>
+        </WatchingProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

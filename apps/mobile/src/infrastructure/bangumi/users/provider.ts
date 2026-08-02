@@ -1,4 +1,5 @@
 import type { UsersProvider } from '@/features/users/model';
+import type { CollectionStatus } from '@/features/watching/model';
 
 import {
   getBangumiPublicUser,
@@ -16,6 +17,14 @@ import {
   toPublicTimelinePage,
 } from './adapter';
 
+const COLLECTION_TYPE: Record<CollectionStatus, number> = {
+  completed: 2,
+  doing: 3,
+  dropped: 5,
+  onHold: 4,
+  wish: 1,
+};
+
 export const bangumiUsersProvider: UsersProvider = {
   async getPublicUser(username) {
     const profile = await getBangumiPublicUser(username);
@@ -31,11 +40,17 @@ export const bangumiUsersProvider: UsersProvider = {
       username: profile.username,
     };
   },
-  async getPublicUserCollections(username, subjectType, offset) {
+  async getPublicUserCollections(
+    username,
+    subjectType,
+    offset,
+    collectionStatus,
+  ) {
     const collections = await getBangumiUserCollections(
       username,
       subjectType,
       offset,
+      collectionStatus ? COLLECTION_TYPE[collectionStatus] : undefined,
     );
     return toPublicUserCollectionPage(collections, subjectType);
   },
