@@ -45,6 +45,13 @@ pnpm dev:api
 应用 ID、应用密钥和回调地址；`TOKEN_ENCRYPTION_KEY` 可使用
 `openssl rand -base64 32` 生成。
 
+远程 D1 迁移与 Worker 部署：
+
+```bash
+pnpm --filter @kaku/api db:migrate:remote
+pnpm --filter @kaku/api deploy:worker
+```
+
 Metro 启动后按 `i` 打开 iOS 模拟器。也可以直接构建原生开发客户端：
 
 ```bash

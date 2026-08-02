@@ -2,12 +2,16 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kaku-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-08-01",
+  "compatibility_date": "2026-08-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BANGUMI_REDIRECT_URI": "https://kaku-api.shqingda.workers.dev/auth/bangumi/callback"
+  },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "kaku",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "kaku-production",
+      "database_id": "89f314ad-9237-4c81-835e-458a4b654271",
       "migrations_dir": "drizzle"
     }
   ],
