@@ -71,6 +71,7 @@ export type UsersProvider = {
     subjectType: number,
     offset: number,
     collectionStatus?: CollectionStatus,
+    signal?: AbortSignal,
   ) => Promise<PublicUserCollectionPage>;
   getPublicUserBlogs: (
     username: string,

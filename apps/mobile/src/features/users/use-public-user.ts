@@ -40,12 +40,13 @@ export function usePublicUserCollections(
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserCollections(
         username.trim(),
         subjectType,
         pageParam,
         collectionStatus,
+        signal,
       ),
     queryKey: queryKeys.publicUserCollections(
       username,

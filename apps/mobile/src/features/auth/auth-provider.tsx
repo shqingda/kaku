@@ -72,8 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const completeSignIn = useCallback(async (callbackUrl: string) => {
     const code = getHandoffCode(callbackUrl);
 
-    if (handoffCodeRef.current === code && handoffPromiseRef.current) {
-      return handoffPromiseRef.current;
+    if (handoffCodeRef.current === code) {
+      // The auth session and the deep-link route may deliver the same callback.
+      // Reuse an in-flight exchange, or ignore it after the first one succeeds.
+      return handoffPromiseRef.current ?? Promise.resolve();
     }
 
     handoffCodeRef.current = code;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { AuthSession } from './model';
+
 const authUserSchema = z.object({
   avatarUrl: z.string().optional(),
   id: z.number().int().positive(),
@@ -25,4 +27,13 @@ export function getHandoffCode(callbackUrl: string) {
 
 export function isSessionActive(expiresAt: number, now = Date.now()) {
   return expiresAt > now;
+}
+
+export function parseStoredAuthSession(value: string): AuthSession | null {
+  try {
+    const parsed = authSessionSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }

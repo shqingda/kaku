@@ -45,12 +45,14 @@ export const bangumiUsersProvider: UsersProvider = {
     subjectType,
     offset,
     collectionStatus,
+    signal,
   ) {
     const collections = await getBangumiUserCollections(
       username,
       subjectType,
       offset,
       collectionStatus ? COLLECTION_TYPE[collectionStatus] : undefined,
+      signal,
     );
     return toPublicUserCollectionPage(collections, subjectType);
   },

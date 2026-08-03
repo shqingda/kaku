@@ -13,15 +13,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
+  getCollectionStatusLabel,
   getSubjectTypeLabel,
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
+import type { CollectionStatus } from '@/features/watching/model';
+
+const COLLECTION_STATUSES = new Set<CollectionStatus>([
+  'completed',
+  'doing',
+  'dropped',
+  'onHold',
+  'wish',
+]);
+
+function parseCollectionStatus(value?: string) {
+  return value && COLLECTION_STATUSES.has(value as CollectionStatus)
+    ? (value as CollectionStatus)
+    : undefined;
+}
 
 export default function PublicUserCollectionsScreen() {
-  const { type, username } = useLocalSearchParams<{
+  const { status, type, username } = useLocalSearchParams<{
+    status?: string;
     type?: string;
     username: string;
   }>();
@@ -30,7 +47,15 @@ export default function PublicUserCollectionsScreen() {
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
   );
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
-  const collectionsQuery = usePublicUserCollections(username, subjectType);
+  const collectionStatus = parseCollectionStatus(status);
+  const collectionStatusLabel = collectionStatus
+    ? getCollectionStatusLabel(subjectType, collectionStatus)
+    : undefined;
+  const collectionsQuery = usePublicUserCollections(
+    username,
+    subjectType,
+    collectionStatus,
+  );
   const collections = useMemo(
     () =>
       collectionsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -44,7 +69,9 @@ export default function PublicUserCollectionsScreen() {
         options={{
           headerBackButtonDisplayMode: 'minimal',
           headerShadowVisible: false,
-          title: `${subjectTypeLabel}收藏`,
+          title: collectionStatusLabel
+            ? `${subjectTypeLabel} · ${collectionStatusLabel}`
+            : `${subjectTypeLabel}收藏`,
         }}
       />
       <FlatList
@@ -88,7 +115,9 @@ export default function PublicUserCollectionsScreen() {
             <View style={styles.header}>
               <Text style={styles.title}>{subjectTypeLabel}收藏</Text>
               <Text style={styles.subtitle}>
-                @{username} · {total ? `${total} 个条目` : '读取中'}
+                @{username}
+                {collectionStatusLabel ? ` · ${collectionStatusLabel}` : ''} ·{' '}
+                {total ? `${total} 个条目` : '读取中'}
               </Text>
             </View>
             <SubjectTypeTabs

@@ -71,6 +71,7 @@ export async function getBangumiUserCollections(
   subjectType: number,
   offset: number,
   collectionType?: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: '20',
@@ -82,6 +83,7 @@ export async function getBangumiUserCollections(
   }
   const json = await requestJson(
     `/v0/users/${encodeURIComponent(username)}/collections?${query}`,
+    { signal },
   );
   return bangumiUserCollectionsSchema.parse(json);
 }

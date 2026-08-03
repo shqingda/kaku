@@ -78,7 +78,11 @@ export default function HomeScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/user/collections/[username]',
-                      params: { type: String(selectedType), username },
+                      params: {
+                        status: selectedStatus,
+                        type: String(selectedType),
+                        username,
+                      },
                     })
                   }
                   style={({ pressed }) => [
