@@ -5,10 +5,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -196,6 +198,19 @@ function HomeHeader({
 }: {
   session: ReturnType<typeof useAuth>['session'];
 }) {
+  const [searchDraft, setSearchDraft] = useState('');
+
+  function submitSearch() {
+    const keyword = searchDraft.trim();
+
+    if (!keyword) {
+      return;
+    }
+
+    Keyboard.dismiss();
+    router.push({ pathname: '/explore', params: { q: keyword } });
+  }
+
   return (
     <View style={styles.headerArea}>
       <View style={styles.header}>
@@ -229,15 +244,7 @@ function HomeHeader({
           )}
         </Pressable>
       </View>
-      <Pressable
-        accessibilityLabel="搜索条目、人物和话题"
-        accessibilityRole="search"
-        onPress={() => router.push('/explore')}
-        style={({ pressed }) => [
-          styles.searchBox,
-          pressed && styles.searchBoxPressed,
-        ]}
-      >
+      <View style={styles.searchBox}>
         <SymbolView
           name={{
             android: 'search',
@@ -248,8 +255,18 @@ function HomeHeader({
           tintColor={COLORS.muted}
           weight="medium"
         />
-        <Text style={styles.searchPlaceholder}>搜索条目、人物和话题</Text>
-      </Pressable>
+        <TextInput
+          accessibilityLabel="搜索条目"
+          clearButtonMode="while-editing"
+          onChangeText={setSearchDraft}
+          onSubmitEditing={submitSearch}
+          placeholder="搜索条目"
+          placeholderTextColor={COLORS.muted}
+          returnKeyType="search"
+          style={styles.searchInput}
+          value={searchDraft}
+        />
+      </View>
     </View>
   );
 }
@@ -574,8 +591,13 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingHorizontal: 16,
   },
-  searchBoxPressed: { backgroundColor: '#F0EFEB' },
-  searchPlaceholder: { color: COLORS.muted, fontSize: 15 },
+  searchInput: {
+    color: COLORS.ink,
+    flex: 1,
+    fontSize: 16,
+    height: 50,
+    paddingVertical: 0,
+  },
   collectionCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 28,

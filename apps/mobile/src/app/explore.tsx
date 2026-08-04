@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
@@ -32,8 +32,10 @@ function currentWeekdayId() {
 }
 
 export default function ExploreScreen() {
-  const [draft, setDraft] = useState('');
-  const [keyword, setKeyword] = useState('');
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const initialKeyword = typeof q === 'string' ? q.trim() : '';
+  const [draft, setDraft] = useState(initialKeyword);
+  const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
   const calendarQuery = useBangumiCalendar();
@@ -421,6 +423,7 @@ function SearchResults({
             onSubmit={onSubmit}
           />
           <SubjectTypeTabs
+            contentContainerStyle={styles.subjectTypeTabs}
             onChange={onChangeSubjectType}
             selectedType={subjectType}
           />
