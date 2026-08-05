@@ -2,8 +2,8 @@
 
 一个使用 Expo、React Native 和 TypeScript 开发的跨平台条目进度客户端。
 
-后端从一个独立的 Hono + Cloudflare Worker 应用开始建设，用于承载
-不能暴露在客户端的 OAuth 密钥和后续同步逻辑。
+后端是独立的 Hono + Cloudflare Worker 应用，用于保存不能暴露在
+客户端的 OAuth 密钥、管理设备会话，并代理需要登录的 Bangumi 写入。
 
 当前 MVP 以 Bangumi 公开数据为数据源，支持：
 
@@ -17,8 +17,12 @@
 - 用户公开主页、收藏、日志、好友与时间线
 - 条目相关目录、目录详情
 - 公开小组、小组话题与回复
+- Bangumi OAuth 真实登录
+- 收藏状态、章节进度与评分同步
+- 多设备会话查看、单设备退出与全部断开
 
-目前不需要登录。观看进度保存在设备本地，重新启动应用后仍会保留。
+公开资料无需登录；收藏、进度和评分需要连接 Bangumi，并直接以
+Bangumi 账户中的数据为准，不再维护一份独立的本地收藏。
 
 ## 环境
 
@@ -73,7 +77,8 @@ pnpm test
 apps/api/
 ├── drizzle/         D1 数据库迁移
 └── src/
-    ├── auth/        OAuth 路由、Bangumi Client、加密与存储接口
+    ├── auth/        OAuth、令牌加密、刷新与多设备会话
+    ├── collections/ 登录后的收藏读取与写入
     └── db/          Drizzle 数据表定义
 apps/mobile/src/
 ├── app/             Expo Router 页面与导航
@@ -82,6 +87,7 @@ apps/mobile/src/
 ├── infrastructure/  Bangumi API、Schema 与 Adapter
 ├── types/           跨模块共享类型
 └── lib/             通用工具
+apps/web/             产品官网、定价、政策与支持页面
 ```
 
 业务模型尽量保持数据源无关。Bangumi 相关字段解析和转换应留在
@@ -89,7 +95,7 @@ apps/mobile/src/
 
 ## 当前限制
 
-- 后端 OAuth 与会话交换已完成，尚未接入移动端登录界面
-- 观看进度暂未与 Bangumi 账号同步
-- Android 和 Web 尚未完成正式适配
-- 部署前仍需创建远程 D1、填写真实数据库 ID 和 Worker secrets
+- Bangumi 官方 API 尚未开放删除条目收藏，Kaku 会明确提示而不会伪造成功
+- 讨论与回复当前以公开阅读为主，登录写入能力仍需按官方接口逐项接入
+- iOS 与 Android 处于开发测试阶段，尚未发布正式商店版本
+- macOS 客户端尚未开始实现
