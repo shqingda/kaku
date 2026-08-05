@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Keyboard,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -52,12 +53,27 @@ export default function HomeScreen() {
     [collectionsQuery.data],
   );
   const total = collectionsQuery.data?.pages[0]?.total ?? 0;
+  const isRefreshing =
+    Boolean(session) &&
+    collectionsQuery.isRefetching &&
+    !collectionsQuery.isPending;
 
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={styles.content}
+        refreshControl={
+          session ? (
+            <RefreshControl
+              colors={[COLORS.accent]}
+              onRefresh={() => void collectionsQuery.refetch()}
+              progressBackgroundColor={COLORS.surface}
+              refreshing={isRefreshing}
+              tintColor={COLORS.accent}
+            />
+          ) : undefined
+        }
         showsVerticalScrollIndicator={false}
       >
         <HomeHeader session={session} />
