@@ -9,6 +9,8 @@
   "scripts": {
     "dev:api": "pnpm --filter @kaku/api dev",
     "dev:mobile": "pnpm --filter @kaku/mobile start",
+    "dev:web": "pnpm --filter @kaku/web dev",
+    "build:web": "pnpm --filter @kaku/web build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   }

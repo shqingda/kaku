@@ -1,0 +1,25 @@
+{
+  "name": "@kaku/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "deploy": "pnpm build && wrangler deploy",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.5",
+    "vite": "^8.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "~7.0.2",
+    "wrangler": "^4.118.0"
+  }
+}

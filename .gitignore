@@ -5,6 +5,7 @@ node_modules/
 .wrangler/
 dist/
 coverage/
+*.tsbuildinfo
 *.log
 .env
 apps/mobile/.env
