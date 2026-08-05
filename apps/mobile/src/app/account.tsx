@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,16 +14,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
+import {
+  useDeviceSessions,
+  useRevokeDeviceSession,
+} from '@/features/auth/use-device-sessions';
+
+function formatSessionTime(timestamp: number) {
+  return new Intl.DateTimeFormat('zh-CN', {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  }).format(new Date(timestamp));
+}
 
 export default function AccountScreen() {
   const {
     error,
+    disconnectBangumi,
     isLoading,
     isSigningIn,
     session,
     signIn,
     signOut,
   } = useAuth();
+  const sessionsQuery = useDeviceSessions();
+  const revokeSession = useRevokeDeviceSession();
 
   async function handleSignIn() {
     if (await signIn()) {
@@ -29,9 +47,27 @@ export default function AccountScreen() {
     }
   }
 
+  function confirmDisconnect() {
+    Alert.alert(
+      '断开 Bangumi？',
+      '将退出所有 Kaku 设备并删除 Kaku 保存的 Bangumi 凭证。Bangumi 没有开放 OAuth 撤销接口，授权令牌会在 Bangumi 侧到期。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => void disconnectBangumi(),
+          style: 'destructive',
+          text: '断开全部设备',
+        },
+      ],
+    );
+  }
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {isLoading ? (
           <View style={styles.centerState}>
             <ActivityIndicator color={COLORS.accent} />
@@ -65,6 +101,61 @@ export default function AccountScreen() {
                 <Text style={styles.connectedText}>已连接 Bangumi</Text>
               </View>
             </View>
+            <View style={styles.sessionsCard}>
+              <View style={styles.sessionsHeading}>
+                <Text style={styles.sessionsTitle}>登录设备</Text>
+                {sessionsQuery.isFetching ? (
+                  <ActivityIndicator color={COLORS.accent} size="small" />
+                ) : null}
+              </View>
+              {sessionsQuery.isError ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void sessionsQuery.refetch()}
+                  style={styles.sessionMessage}
+                >
+                  <Text style={styles.sessionError}>设备读取失败，点此重试</Text>
+                </Pressable>
+              ) : (
+                sessionsQuery.data?.map((deviceSession, index) => (
+                  <View
+                    key={deviceSession.sessionId}
+                    style={[
+                      styles.sessionRow,
+                      index > 0 && styles.sessionRowBorder,
+                    ]}
+                  >
+                    <View style={styles.sessionCopy}>
+                      <View style={styles.sessionNameRow}>
+                        <Text style={styles.sessionName}>
+                          {deviceSession.deviceName}
+                        </Text>
+                        {deviceSession.current ? (
+                          <Text style={styles.currentSession}>当前设备</Text>
+                        ) : null}
+                      </View>
+                      <Text style={styles.sessionMeta}>
+                        最近使用 {formatSessionTime(deviceSession.lastUsedAt)}
+                      </Text>
+                    </View>
+                    {!deviceSession.current ? (
+                      <Pressable
+                        accessibilityLabel={`退出${deviceSession.deviceName}`}
+                        accessibilityRole="button"
+                        disabled={revokeSession.isPending}
+                        hitSlop={8}
+                        onPress={() =>
+                          void revokeSession.mutateAsync(deviceSession.sessionId)
+                        }
+                        style={({ pressed }) => pressed && styles.pressed}
+                      >
+                        <Text style={styles.revokeSessionText}>退出</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))
+              )}
+            </View>
             <Pressable
               accessibilityRole="button"
               onPress={() => void signOut()}
@@ -74,6 +165,16 @@ export default function AccountScreen() {
               ]}
             >
               <Text style={styles.secondaryButtonText}>退出登录</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={confirmDisconnect}
+              style={({ pressed }) => [
+                styles.disconnectButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.disconnectButtonText}>断开 Bangumi</Text>
             </Pressable>
           </>
         ) : (
@@ -113,14 +214,14 @@ export default function AccountScreen() {
             </Text>
           </>
         )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: 24 },
+  content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   centerState: { alignItems: 'center', gap: 12 },
   stateText: { color: COLORS.muted, fontSize: 14 },
   intro: { alignItems: 'center', marginBottom: 32 },
@@ -226,5 +327,42 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   secondaryButtonText: { color: COLORS.accent, fontSize: 15, fontWeight: '700' },
+  disconnectButton: { alignItems: 'center', marginTop: 16, paddingVertical: 10 },
+  disconnectButtonText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  sessionsCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    marginTop: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  sessionsHeading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  sessionsTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  sessionMessage: { paddingTop: 14 },
+  sessionError: { color: COLORS.accent, fontSize: 13 },
+  sessionRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+  sessionRowBorder: {
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  sessionCopy: { flex: 1 },
+  sessionNameRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  sessionName: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  currentSession: {
+    color: COLORS.accent,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  sessionMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
+  revokeSessionText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

@@ -36,10 +36,14 @@ export const authHandoffs = sqliteTable('auth_handoffs', {
 });
 
 export const sessions = sqliteTable('sessions', {
+  sessionId: text('session_id').primaryKey(),
   createdAt: integer('created_at').notNull(),
+  deviceName: text('device_name').notNull(),
   expiresAt: integer('expires_at').notNull(),
   lastUsedAt: integer('last_used_at').notNull(),
-  tokenHash: text('token_hash').primaryKey(),
+  refreshExpiresAt: integer('refresh_expires_at').notNull(),
+  refreshTokenHash: text('refresh_token_hash').notNull().unique(),
+  tokenHash: text('token_hash').notNull().unique(),
   userId: integer('user_id')
     .notNull()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),

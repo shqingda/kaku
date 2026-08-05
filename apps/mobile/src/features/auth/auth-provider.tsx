@@ -8,14 +8,22 @@ import {
   useState,
 } from 'react';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import {
   exchangeHandoffCode,
+  fetchKaku,
   getAppCallbackUrl,
   getBangumiLoginUrl,
+  KakuApiError,
+  refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
 
-import { getHandoffCode, isSessionActive } from './auth-session';
+import {
+  canRefreshSession,
+  getHandoffCode,
+  isSessionActive,
+} from './auth-session';
 import { authStorage } from './auth-storage';
 import type { AuthSession } from './model';
 
@@ -28,6 +36,8 @@ type AuthContextValue = {
   completeSignIn: (callbackUrl: string) => Promise<void>;
   signIn: () => Promise<boolean>;
   signOut: () => Promise<void>;
+  disconnectBangumi: () => Promise<void>;
+  request: (path: string, init?: RequestInit) => Promise<Response>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -51,23 +61,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string>();
   const handoffPromiseRef = useRef<Promise<void> | null>(null);
   const handoffCodeRef = useRef<string | undefined>(undefined);
+  const refreshPromiseRef = useRef<Promise<AuthSession> | null>(null);
+  const sessionRef = useRef<AuthSession | null>(null);
+
+  const commitSession = useCallback(async (nextSession: AuthSession) => {
+    await authStorage.save(nextSession);
+    sessionRef.current = nextSession;
+    setSession(nextSession);
+    setError(undefined);
+    return nextSession;
+  }, []);
+
+  const clearSession = useCallback(async () => {
+    await authStorage.clear();
+    sessionRef.current = null;
+    setSession(null);
+  }, []);
+
+  const refreshSession = useCallback(
+    async (currentSession: AuthSession) => {
+      if (refreshPromiseRef.current) {
+        return refreshPromiseRef.current;
+      }
+
+      const task = refreshAuthSession(currentSession.refreshToken)
+        .then(commitSession)
+        .catch(async (caughtError) => {
+          if (caughtError instanceof KakuApiError && caughtError.status === 401) {
+            await clearSession();
+            setError('登录已失效，请重新登录。');
+          }
+
+          throw caughtError;
+        })
+        .finally(() => {
+          refreshPromiseRef.current = null;
+        });
+      refreshPromiseRef.current = task;
+      return task;
+    },
+    [clearSession, commitSession],
+  );
 
   useEffect(() => {
-    void authStorage
-      .load()
-      .then(async (storedSession) => {
+    async function restoreSession() {
+      try {
+        const storedSession = await authStorage.load();
+
         if (storedSession && isSessionActive(storedSession.expiresAt)) {
+          sessionRef.current = storedSession;
           setSession(storedSession);
           return;
         }
 
-        if (storedSession) {
-          await authStorage.clear();
+        if (
+          storedSession &&
+          canRefreshSession(storedSession.refreshExpiresAt)
+        ) {
+          try {
+            await refreshSession(storedSession);
+          } catch (caughtError) {
+            if (!(caughtError instanceof KakuApiError) || caughtError.status !== 401) {
+              setError('登录服务暂时不可用，稍后重试即可。');
+            }
+          }
+          return;
         }
-      })
-      .catch(() => setError('无法读取设备上的登录状态。'))
-      .finally(() => setIsLoading(false));
-  }, []);
+
+        if (storedSession) {
+          await clearSession();
+        }
+      } catch {
+        setError('无法读取设备上的登录状态。');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void restoreSession();
+  }, [clearSession, refreshSession]);
 
   const completeSignIn = useCallback(async (callbackUrl: string) => {
     const code = getHandoffCode(callbackUrl);
@@ -79,12 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     handoffCodeRef.current = code;
-    const task = exchangeHandoffCode(code)
-      .then(async (nextSession) => {
-        await authStorage.save(nextSession);
-        setSession(nextSession);
-        setError(undefined);
-      })
+    const deviceName = Platform.select({
+      android: 'Android 设备',
+      ios: 'iOS 设备',
+      default: 'Kaku 设备',
+    });
+    const task = exchangeHandoffCode(code, deviceName)
+      .then(commitSession)
+      .then(() => undefined)
       .catch((caughtError) => {
         handoffCodeRef.current = undefined;
         throw caughtError;
@@ -94,7 +168,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return task.finally(() => {
       handoffPromiseRef.current = null;
     });
-  }, []);
+  }, [commitSession]);
+
+  const request = useCallback(
+    async (path: string, init?: RequestInit) => {
+      let currentSession = sessionRef.current;
+
+      if (!currentSession) {
+        throw new Error('请先登录 Kaku。');
+      }
+
+      if (!isSessionActive(currentSession.expiresAt, Date.now() + 60_000)) {
+        currentSession = await refreshSession(currentSession);
+      }
+
+      let response = await fetchKaku(
+        path,
+        currentSession.sessionToken,
+        init,
+      );
+
+      if (response.status === 401) {
+        currentSession = await refreshSession(currentSession);
+        response = await fetchKaku(path, currentSession.sessionToken, init);
+      }
+
+      return response;
+    },
+    [refreshSession],
+  );
 
   const signIn = useCallback(async () => {
     if (isSigningIn) {
@@ -125,22 +227,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [completeSignIn, isSigningIn]);
 
   const signOut = useCallback(async () => {
-    await authStorage.clear();
-    setSession(null);
+    try {
+      if (sessionRef.current) {
+        const response = await request('/auth/session', { method: 'DELETE' });
+
+        if (!response.ok) {
+          throw new Error('server_sign_out_failed');
+        }
+      }
+    } catch {
+      setError('本机已退出，但服务端会话暂时无法注销。');
+    } finally {
+      await clearSession();
+    }
+  }, [clearSession, request]);
+
+  const disconnectBangumi = useCallback(async () => {
+    const response = await request('/auth/connection', { method: 'DELETE' });
+
+    if (!response.ok) {
+      throw new Error('无法断开 Bangumi，请稍后重试。');
+    }
+
+    await clearSession();
     setError(undefined);
-  }, []);
+  }, [clearSession, request]);
 
   return (
     <AuthContext.Provider
       value={{
         clearError: () => setError(undefined),
         completeSignIn,
+        disconnectBangumi,
         error,
         isLoading,
         isSigningIn,
         session,
         signIn,
         signOut,
+        request,
       }}
     >
       {children}

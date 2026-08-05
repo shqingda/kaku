@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { WatchingProvider } from '@/features/watching/watching-provider';
 import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
@@ -27,7 +26,6 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WatchingProvider>
           <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen
@@ -273,7 +271,6 @@ export default function RootLayout() {
             }}
           />
           </Stack>
-        </WatchingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

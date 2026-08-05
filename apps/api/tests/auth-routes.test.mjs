@@ -25,6 +25,26 @@ function createFakeStore() {
   return {
     state,
     store: {
+      async authenticateSession(tokenHash, currentTime) {
+        const session = state.session;
+        if (
+          !session ||
+          session.tokenHash !== tokenHash ||
+          session.expiresAt <= currentTime
+        ) {
+          return null;
+        }
+        return {
+          sessionId: session.sessionId,
+          user: {
+            avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+            id: session.userId,
+            nickname: 'Kaku User',
+            username: 'kaku-user',
+          },
+          userId: session.userId,
+        };
+      },
       async consumeHandoff(codeHash, currentTime) {
         if (
           !handoff ||
@@ -66,6 +86,74 @@ function createFakeStore() {
       },
       async createSession(input) {
         state.session = input;
+      },
+      async deleteAllSessions() {
+        state.session = undefined;
+      },
+      async deleteBangumiCredential() {
+        state.savedLogin = undefined;
+      },
+      async deleteSession(tokenHash) {
+        if (state.session?.tokenHash === tokenHash) {
+          state.session = undefined;
+        }
+      },
+      async deleteSessionById(_userId, sessionId) {
+        if (state.session?.sessionId !== sessionId) {
+          return false;
+        }
+        state.session = undefined;
+        return true;
+      },
+      async getBangumiCredential() {
+        return null;
+      },
+      async getSessionForRefresh(refreshTokenHash, currentTime) {
+        const session = state.session;
+        if (
+          !session ||
+          session.refreshTokenHash !== refreshTokenHash ||
+          session.refreshExpiresAt <= currentTime
+        ) {
+          return null;
+        }
+        return {
+          sessionId: session.sessionId,
+          user: {
+            avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+            id: session.userId,
+            nickname: 'Kaku User',
+            username: 'kaku-user',
+          },
+          userId: session.userId,
+        };
+      },
+      async listSessions() {
+        return state.session
+          ? [
+              {
+                createdAt: state.session.createdAt,
+                deviceName: state.session.deviceName,
+                expiresAt: state.session.refreshExpiresAt,
+                lastUsedAt: state.session.createdAt,
+                sessionId: state.session.sessionId,
+              },
+            ]
+          : [];
+      },
+      async rotateSession(input) {
+        if (
+          !state.session ||
+          state.session.sessionId !== input.sessionId ||
+          state.session.refreshTokenHash !== input.previousRefreshTokenHash
+        ) {
+          return false;
+        }
+        state.session = { ...state.session, ...input };
+        return true;
+      },
+      async saveBangumiCredential(input) {
+        state.savedLogin = input;
       },
       async saveBangumiLogin(input) {
         state.savedLogin = input;
@@ -144,6 +232,9 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
 
   assert.equal(sessionResponse.status, 200);
   assert.equal(session.user.username, 'kaku-user');
+  assert.equal(fake.state.session.deviceName, '未知设备');
+  assert.ok(session.refreshToken);
+  assert.ok(session.sessionId);
   assert.notEqual(fake.state.session.tokenHash, session.sessionToken);
   assert.equal(fake.state.session.tokenHash, await hashToken(session.sessionToken));
 
@@ -158,6 +249,131 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
   );
 
   assert.equal(replayResponse.status, 401);
+});
+
+test('refresh tokens rotate once and the new access token authenticates', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  const user = {
+    avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+    id: 42,
+    nickname: 'Kaku User',
+    username: 'kaku-user',
+  };
+  await fake.store.createSession({
+    createdAt: now,
+    deviceName: 'Android 设备',
+    expiresAt: now + 1,
+    refreshExpiresAt: now + 10_000,
+    refreshTokenHash: await hashToken('refresh-token-abcdefghijklmnopqrstuvwxyz'),
+    sessionId: 'session-1',
+    tokenHash: await hashToken('access-token-abcdefghijklmnopqrstuvwxyz'),
+    userId: user.id,
+  });
+
+  const refreshResponse = await app.request(
+    '/auth/session/refresh',
+    {
+      body: JSON.stringify({
+        refreshToken: 'refresh-token-abcdefghijklmnopqrstuvwxyz',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+    env,
+  );
+  const refreshed = await refreshResponse.json();
+
+  assert.equal(refreshResponse.status, 200);
+  assert.notEqual(refreshed.refreshToken, 'refresh-token-abcdefghijklmnopqrstuvwxyz');
+
+  const replayResponse = await app.request(
+    '/auth/session/refresh',
+    {
+      body: JSON.stringify({
+        refreshToken: 'refresh-token-abcdefghijklmnopqrstuvwxyz',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+    env,
+  );
+  assert.equal(replayResponse.status, 401);
+
+  const sessionsResponse = await app.request(
+    '/auth/sessions',
+    { headers: { Authorization: `Bearer ${refreshed.sessionToken}` } },
+    env,
+  );
+  const sessions = await sessionsResponse.json();
+  assert.equal(sessionsResponse.status, 200);
+  assert.equal(sessions.sessions[0].current, true);
+  assert.equal(sessions.sessions[0].deviceName, 'Android 设备');
+});
+
+test('sign out revokes the current server session', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  const accessToken = 'access-token-abcdefghijklmnopqrstuvwxyz';
+  await fake.store.createSession({
+    createdAt: now,
+    deviceName: 'iOS 设备',
+    expiresAt: now + 10_000,
+    refreshExpiresAt: now + 20_000,
+    refreshTokenHash: await hashToken('refresh-token-abcdefghijklmnopqrstuvwxyz'),
+    sessionId: 'session-2',
+    tokenHash: await hashToken(accessToken),
+    userId: 42,
+  });
+
+  const response = await app.request(
+    '/auth/session',
+    { headers: { Authorization: `Bearer ${accessToken}` }, method: 'DELETE' },
+    env,
+  );
+  assert.equal(response.status, 204);
+
+  const after = await app.request(
+    '/auth/sessions',
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+    env,
+  );
+  assert.equal(after.status, 401);
+});
+
+test('disconnecting Bangumi removes every Kaku credential', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  const accessToken = 'access-token-abcdefghijklmnopqrstuvwxyz';
+  await fake.store.createSession({
+    createdAt: now,
+    deviceName: 'Android 设备',
+    expiresAt: now + 10_000,
+    refreshExpiresAt: now + 20_000,
+    refreshTokenHash: await hashToken('refresh-token-abcdefghijklmnopqrstuvwxyz'),
+    sessionId: 'session-3',
+    tokenHash: await hashToken(accessToken),
+    userId: 42,
+  });
+  await fake.store.saveBangumiCredential({
+    accessToken: 'encrypted-access-token',
+    accessTokenExpiresAt: now + 10_000,
+    refreshToken: 'encrypted-refresh-token',
+    updatedAt: now,
+    userId: 42,
+  });
+
+  const response = await app.request(
+    '/auth/connection',
+    { headers: { Authorization: `Bearer ${accessToken}` }, method: 'DELETE' },
+    env,
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.bangumiTokenRevoked, false);
+  assert.equal(fake.state.session, undefined);
+  assert.equal(fake.state.savedLogin, undefined);
 });
 
 test('expired or already consumed OAuth state cannot reach Bangumi', async () => {

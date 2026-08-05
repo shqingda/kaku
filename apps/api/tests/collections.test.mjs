@@ -1,0 +1,92 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import {
+  getBangumiPersonalCollection,
+  saveBangumiPersonalCollection,
+} from '../src/collections/bangumi-client.ts';
+
+const accessToken = 'bangumi-access-token';
+
+function episodePage() {
+  return {
+    data: [
+      { episode: { ep: 1, id: 101, type: 0 }, type: 2 },
+      { episode: { ep: 2, id: 102, type: 0 }, type: 0 },
+      { episode: { ep: 3, id: 103, type: 0 }, type: 2 },
+      { episode: { ep: 1, id: 201, type: 1 }, type: 2 },
+    ],
+    total: 4,
+  };
+}
+
+test('Bangumi collection maps status, rating, and main-story progress', async () => {
+  const fetcher = async (input) => {
+    const url = String(input);
+
+    if (url.includes('/users/kaku-user/collections/42')) {
+      return Response.json({
+        rate: 9,
+        subject_id: 42,
+        subject_type: 2,
+        type: 3,
+      });
+    }
+
+    if (url.includes('/users/-/collections/42/episodes')) {
+      return Response.json(episodePage());
+    }
+
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  const collection = await getBangumiPersonalCollection({
+    accessToken,
+    fetcher,
+    subjectId: 42,
+    username: 'kaku-user',
+  });
+
+  assert.deepEqual(collection, {
+    collectionStatus: 'doing',
+    rating: 9,
+    subjectId: 42,
+    watchedEpisodeNumbers: [1, 3],
+  });
+});
+
+test('saving progress updates only changed Bangumi episode states', async () => {
+  const requests = [];
+  const fetcher = async (input, init = {}) => {
+    const url = String(input);
+    requests.push({ body: init.body, method: init.method ?? 'GET', url });
+
+    if (init.method === 'POST') {
+      return new Response(null, { status: 204 });
+    }
+
+    if (init.method === 'PATCH') {
+      return new Response(null, { status: 204 });
+    }
+
+    return Response.json(episodePage());
+  };
+
+  await saveBangumiPersonalCollection({
+    accessToken,
+    collectionStatus: 'doing',
+    fetcher,
+    rating: 8,
+    subjectId: 42,
+    watchedEpisodeNumbers: [1, 2],
+  });
+
+  assert.deepEqual(JSON.parse(requests[0].body), { rate: 8, type: 3 });
+  const patches = requests
+    .filter((request) => request.method === 'PATCH')
+    .map((request) => JSON.parse(request.body));
+  assert.deepEqual(patches, [
+    { episode_id: [102], type: 2 },
+    { episode_id: [103], type: 0 },
+  ]);
+});

@@ -5,6 +5,7 @@ import {
   registerAuthRoutes,
 } from './auth/routes.ts';
 import type { Env } from './env.ts';
+import { registerCollectionRoutes } from './collections/routes.ts';
 
 export function createApp(dependencies: AuthDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
@@ -17,6 +18,7 @@ export function createApp(dependencies: AuthDependencies = {}) {
   );
 
   registerAuthRoutes(app, dependencies);
+  registerCollectionRoutes(app, dependencies);
 
   app.onError((error, context) => {
     console.error(error);

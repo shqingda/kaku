@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
+import type { PersonalCollectionUpdate } from '@/features/collections/model';
 import {
   getCollectionStatusLabel,
   supportsWatchProgress,
@@ -15,7 +16,10 @@ import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
-import { canRateCollectionStatus } from '@/features/watching/progress';
+import {
+  canRateCollectionStatus,
+  resizeWatchedEpisodes,
+} from '@/features/watching/progress';
 import { playSelectionHaptic } from '@/lib/haptics';
 
 import {
@@ -25,16 +29,13 @@ import {
 
 export function CollectionControls({
   item,
-  onChangeRating,
-  onChangeStatus,
-  onChangeWatchedCount,
+  onSave,
 }: {
   item: WatchingItem;
-  onChangeRating: (rating?: number) => void;
-  onChangeStatus: (status?: CollectionStatus) => void;
-  onChangeWatchedCount: (watchedCount: number) => void;
+  onSave: (update: PersonalCollectionUpdate) => Promise<void>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { session } = useAuth();
   const subjectType = item.type ?? 2;
   const supportsProgress =
@@ -49,18 +50,37 @@ export function CollectionControls({
     String(displayedProgress).length + String(displayedTotal).length >
     5;
 
-  function applyDraft(draft: CollectionBoxDraft) {
-    onChangeStatus(draft.collectionStatus);
+  async function applyDraft(draft: CollectionBoxDraft) {
+    setIsSaving(true);
 
-    if (canRateCollectionStatus(draft.collectionStatus)) {
-      if (supportsProgress) {
-        onChangeWatchedCount(draft.watchedCount);
-      }
-      onChangeRating(draft.rating);
+    try {
+      const canSavePersonalData = canRateCollectionStatus(
+        draft.collectionStatus,
+      );
+      await onSave({
+        collectionStatus: draft.collectionStatus ?? null,
+        rating: canSavePersonalData ? draft.rating : undefined,
+        watchedEpisodeNumbers:
+          canSavePersonalData && supportsProgress
+            ? resizeWatchedEpisodes(
+                item.watchedEpisodeNumbers,
+                draft.watchedCount,
+                item.totalEpisodes,
+              )
+            : supportsProgress
+              ? []
+              : undefined,
+      });
+      setIsOpen(false);
+      playSelectionHaptic();
+    } catch (error) {
+      Alert.alert(
+        '收藏没有保存',
+        error instanceof Error ? error.message : '请稍后重试。',
+      );
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsOpen(false);
-    playSelectionHaptic();
   }
 
   function saveDraft(draft: CollectionBoxDraft) {
@@ -76,7 +96,7 @@ export function CollectionControls({
       draft.collectionStatus === undefined && status !== undefined;
 
     if (!clearsProgress && !clearsRating && !removesCollection) {
-      applyDraft(draft);
+      void applyDraft(draft);
       return;
     }
 
@@ -99,7 +119,7 @@ export function CollectionControls({
       [
         { style: 'cancel', text: '保留' },
         {
-          onPress: () => applyDraft(draft),
+          onPress: () => void applyDraft(draft),
           style: 'destructive',
           text: clearedRecords.length > 0 ? '清空并继续' : '取消收藏',
         },
@@ -230,6 +250,7 @@ export function CollectionControls({
       </Pressable>
 
       <CollectionBoxSheet
+        isSaving={isSaving}
         item={item}
         onClose={() => setIsOpen(false)}
         onRemove={() =>

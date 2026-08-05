@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -39,6 +40,7 @@ const STATUS_OPTIONS: CollectionStatus[] = [
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 
 export function CollectionBoxSheet({
+  isSaving,
   item,
   onClose,
   onRemove,
@@ -46,6 +48,7 @@ export function CollectionBoxSheet({
   supportsProgress,
   visible,
 }: {
+  isSaving: boolean;
   item: WatchingItem;
   onClose: () => void;
   onRemove: () => void;
@@ -319,6 +322,7 @@ export function CollectionBoxSheet({
               <Pressable
                 accessibilityLabel="取消收藏"
                 accessibilityRole="button"
+                disabled={isSaving}
                 onPress={onRemove}
                 style={({ pressed }) => [
                   styles.footerButton,
@@ -331,6 +335,7 @@ export function CollectionBoxSheet({
             ) : null}
             <Pressable
               accessibilityRole="button"
+              disabled={isSaving}
               onPress={save}
               style={({ pressed }) => [
                 styles.footerButton,
@@ -338,7 +343,11 @@ export function CollectionBoxSheet({
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.saveText}>保存</Text>
+              {isSaving ? (
+                <ActivityIndicator color={COLORS.surface} />
+              ) : (
+                <Text style={styles.saveText}>保存</Text>
+              )}
             </Pressable>
           </View>
         </View>

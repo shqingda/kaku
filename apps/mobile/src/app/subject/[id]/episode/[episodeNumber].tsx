@@ -15,12 +15,15 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import { supportsWatchProgress } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import {
+  usePersonalCollection,
+  useSavePersonalCollection,
+} from '@/features/collections/use-personal-collection';
 import { DiscussionReadOnlyNotice } from '@/features/discussions/discussion-read-only';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
-import { useWatching } from '@/features/watching/watching-provider';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 
 function formatAirDate(date?: string) {
@@ -32,18 +35,18 @@ export default function EpisodeScreen() {
     episodeNumber: string;
     id: string;
   }>();
-  const { items, toggleEpisodeWatched } = useWatching();
   const { session } = useAuth();
   const subjectId = Number(id);
   const episodeNumber = Number(episodeParam);
   const catalogQuery = useCatalogSubject(subjectId);
-  const subject = items.find((item) => item.id === subjectId);
+  const collectionQuery = usePersonalCollection(subjectId);
+  const saveCollection = useSavePersonalCollection(subjectId);
   const catalogSubject = catalogQuery.data;
-  const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
+  const personalCollection = collectionQuery.data;
+  const subjectType = catalogSubject?.type ?? 2;
   const isTrack = subjectType === 3;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
-  const totalEpisodes =
-    catalogSubject?.totalEpisodes ?? subject?.totalEpisodes ?? 0;
+  const totalEpisodes = catalogSubject?.totalEpisodes ?? 0;
   const isValidEpisode =
     Number.isInteger(episodeNumber) &&
     episodeNumber >= 1 &&
@@ -55,7 +58,7 @@ export default function EpisodeScreen() {
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
 
-  if (!subject && catalogQuery.isPending) {
+  if (catalogQuery.isPending) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <Stack.Screen
@@ -73,7 +76,7 @@ export default function EpisodeScreen() {
     );
   }
 
-  if (!subject && catalogQuery.isError) {
+  if (catalogQuery.isError) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <Stack.Screen
@@ -120,23 +123,53 @@ export default function EpisodeScreen() {
 
   const isWatched =
     tracksWatchProgress &&
-    (subject?.watchedEpisodeNumbers.includes(episodeNumber) ?? false);
-  const subjectTitle = catalogSubject?.title ?? subject?.title ?? '未知条目';
-  const airDate =
-    catalogEpisode?.airDate ?? subject?.episodeAirDates[episodeNumber - 1];
-  const progressSubject = subject ?? {
-    coverUrl: catalogSubject?.coverUrl ?? '',
-    episodeAirDates: (catalogSubject?.episodes ?? []).map(
-      (episode) => episode.airDate ?? '',
-    ),
-    id: subjectId,
-    summary: catalogSubject?.summary ?? '',
-    title: subjectTitle,
-    totalEpisodes,
-    type: subjectType,
-    watchedEpisodeNumbers: [],
-    year: catalogSubject?.year ?? 0,
-  };
+    (personalCollection?.watchedEpisodeNumbers.includes(episodeNumber) ??
+      false);
+  const subjectTitle = catalogSubject?.title ?? '未知条目';
+  const airDate = catalogEpisode?.airDate;
+
+  async function toggleRemoteProgress() {
+    if (!session) {
+      Alert.alert(
+        '登录后标记进度',
+        '章节进度会保存到你的 Bangumi 账户。',
+        [
+          { style: 'cancel', text: '取消' },
+          { onPress: () => router.push('/account'), text: '去登录' },
+        ],
+      );
+      return;
+    }
+
+    if (collectionQuery.isPending || collectionQuery.isError) {
+      Alert.alert('进度尚未就绪', '请先等待收藏盒同步完成，或重试同步。');
+      return;
+    }
+
+    const currentNumbers = personalCollection?.watchedEpisodeNumbers ?? [];
+    const watchedEpisodeNumbers = isWatched
+      ? currentNumbers.filter((number) => number !== episodeNumber)
+      : [...currentNumbers, episodeNumber].sort((left, right) => left - right);
+    const currentStatus = personalCollection?.collectionStatus;
+
+    try {
+      await saveCollection.mutateAsync({
+        collectionStatus:
+          !currentStatus || currentStatus === 'wish' ? 'doing' : currentStatus,
+        rating:
+          currentStatus && currentStatus !== 'wish'
+            ? personalCollection?.rating
+            : undefined,
+        watchedEpisodeNumbers,
+      });
+      playEpisodeToggleHaptic(isWatched);
+    } catch (error) {
+      Alert.alert(
+        '进度没有保存',
+        error instanceof Error ? error.message : '请稍后重试。',
+      );
+    }
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -185,25 +218,8 @@ export default function EpisodeScreen() {
                       }
                       accessibilityRole="button"
                       hitSlop={8}
-                      onPress={() => {
-                        if (!session) {
-                          Alert.alert(
-                            '登录后标记进度',
-                            '章节进度会保存到你的 Bangumi 账户。',
-                            [
-                              { style: 'cancel', text: '取消' },
-                              {
-                                onPress: () => router.push('/account'),
-                                text: '去登录',
-                              },
-                            ],
-                          );
-                          return;
-                        }
-
-                        toggleEpisodeWatched(progressSubject, episodeNumber);
-                        playEpisodeToggleHaptic(isWatched);
-                      }}
+                      disabled={saveCollection.isPending}
+                      onPress={() => void toggleRemoteProgress()}
                       style={({ pressed }) => [
                         styles.statusBadge,
                         isWatched && styles.watchedStatusBadge,

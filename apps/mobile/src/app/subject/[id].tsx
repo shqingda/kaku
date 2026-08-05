@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
   getSubjectDetailLabels,
@@ -18,6 +19,10 @@ import {
   usesEpisodeData,
 } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import {
+  usePersonalCollection,
+  useSavePersonalCollection,
+} from '@/features/collections/use-personal-collection';
 import {
   useSubjectComments,
   useSubjectReviews,
@@ -28,7 +33,6 @@ import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
-import { useWatching } from '@/features/watching/watching-provider';
 
 function DetailEntry({
   hint,
@@ -98,25 +102,20 @@ export default function SubjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const {
-    items,
-    setCollectionStatus,
-    setRating,
-    setWatchedEpisodeCount,
-  } = useWatching();
+  const { session } = useAuth();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const subjectId = Number(id);
-  const subject = items.find((item) => item.id === Number(id));
   const catalogQuery = useCatalogSubject(Number(id));
+  const collectionQuery = usePersonalCollection(subjectId);
+  const saveCollection = useSavePersonalCollection(subjectId);
   const commentsQuery = useSubjectComments(Number(id));
   const reviewsQuery = useSubjectReviews(Number(id));
   const catalogSubject = catalogQuery.data;
-  const watchedEpisodeNumbers = subject?.watchedEpisodeNumbers ?? [];
-  const totalEpisodes =
-    catalogSubject?.totalEpisodes ?? subject?.totalEpisodes ?? 0;
-  // Once the catalog response is available, its Bangumi subject type is the
-  // source of truth. The fallback only exists for older local anime records.
-  const subjectType = catalogSubject?.type ?? subject?.type ?? 2;
+  const personalCollection = collectionQuery.data;
+  const watchedEpisodeNumbers =
+    personalCollection?.watchedEpisodeNumbers ?? [];
+  const totalEpisodes = catalogSubject?.totalEpisodes ?? 0;
+  const subjectType = catalogSubject?.type ?? 2;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
   const detailLabels = getSubjectDetailLabels(subjectType);
@@ -129,7 +128,7 @@ export default function SubjectScreen() {
     }
   }
 
-  if (!subject && catalogQuery.isPending) {
+  if (catalogQuery.isPending) {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -142,7 +141,7 @@ export default function SubjectScreen() {
     );
   }
 
-  if (!subject && !catalogQuery.data) {
+  if (!catalogSubject) {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -170,22 +169,23 @@ export default function SubjectScreen() {
   const reviewsPage = reviewsQuery.data?.pages[0];
   const latestComments = commentsPage?.items.slice(0, 5) ?? [];
   const latestReviews = reviewsPage?.items.slice(0, 3) ?? [];
-  const title = catalogSubject?.title ?? subject?.title ?? '未知条目';
-  const coverUrl = catalogSubject?.coverUrl ?? subject?.coverUrl;
-  const summary = catalogSubject?.summary ?? subject?.summary ?? '暂无简介';
-  const year = catalogSubject?.year ?? subject?.year;
-  const progressSubject = subject ?? {
-    collectionStatus: null,
+  const title = catalogSubject.title;
+  const coverUrl = catalogSubject.coverUrl;
+  const summary = catalogSubject.summary || '暂无简介';
+  const year = catalogSubject.year;
+  const progressSubject = {
+    collectionStatus: personalCollection?.collectionStatus ?? null,
     coverUrl: coverUrl ?? '',
-    episodeAirDates: (catalogSubject?.episodes ?? []).map(
+    episodeAirDates: catalogSubject.episodes.map(
       (episode) => episode.airDate ?? '',
     ),
     id: subjectId,
+    rating: personalCollection?.rating,
     summary,
     title,
     totalEpisodes,
-    type: catalogSubject?.type ?? 2,
-    watchedEpisodeNumbers: [],
+    type: catalogSubject.type,
+    watchedEpisodeNumbers,
     year: year ?? 0,
   };
   function openEpisode(episodeNumber: number) {
@@ -215,16 +215,33 @@ export default function SubjectScreen() {
           onRetry={() => void catalogQuery.refetch()}
         />
 
-        <CollectionControls
-          item={progressSubject}
-          onChangeRating={(rating) => setRating(progressSubject, rating)}
-          onChangeStatus={(status) =>
-            setCollectionStatus(progressSubject, status)
-          }
-          onChangeWatchedCount={(watchedCount) =>
-            setWatchedEpisodeCount(progressSubject, watchedCount)
-          }
-        />
+        {session && collectionQuery.isPending ? (
+          <View style={styles.personalState}>
+            <Text style={styles.personalStateTitle}>正在读取收藏盒</Text>
+            <Text style={styles.personalStateText}>
+              正在同步 Bangumi 收藏、进度和评分。
+            </Text>
+          </View>
+        ) : session && collectionQuery.isError ? (
+          <View style={styles.personalState}>
+            <Text style={styles.personalStateTitle}>收藏盒同步失败</Text>
+            <Text style={styles.personalStateText}>
+              {collectionQuery.error.message}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void collectionQuery.refetch()}
+              style={styles.personalRetry}
+            >
+              <Text style={styles.personalRetryText}>重试</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <CollectionControls
+            item={progressSubject}
+            onSave={(update) => saveCollection.mutateAsync(update).then(() => undefined)}
+          />
+        )}
 
         <SubjectOverview
           subject={catalogSubject}
@@ -330,7 +347,7 @@ export default function SubjectScreen() {
         {hasEpisodeData && totalEpisodes > 0 ? (
           <EpisodeSection
             episodes={catalogSubject?.episodes ?? []}
-            fallbackAirDates={subject?.episodeAirDates ?? []}
+            fallbackAirDates={progressSubject.episodeAirDates}
             key={subjectId}
             kind={subjectType === 3 ? 'track' : 'episode'}
             onOpenEpisode={openEpisode}
@@ -403,6 +420,25 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   heroSpacing: { height: 20 },
+  personalState: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 22,
+    marginBottom: 14,
+    padding: 20,
+  },
+  personalStateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  personalStateText: {
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  personalRetry: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingVertical: 4,
+  },
+  personalRetryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   panel: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,

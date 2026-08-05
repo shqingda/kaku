@@ -11,6 +11,9 @@ const authUserSchema = z.object({
 
 export const authSessionSchema = z.object({
   expiresAt: z.number().int().positive(),
+  refreshExpiresAt: z.number().int().positive(),
+  refreshToken: z.string().min(20),
+  sessionId: z.string().min(1),
   sessionToken: z.string().min(20),
   user: authUserSchema,
 });
@@ -27,6 +30,10 @@ export function getHandoffCode(callbackUrl: string) {
 
 export function isSessionActive(expiresAt: number, now = Date.now()) {
   return expiresAt > now;
+}
+
+export function canRefreshSession(refreshExpiresAt: number, now = Date.now()) {
+  return refreshExpiresAt > now;
 }
 
 export function parseStoredAuthSession(value: string): AuthSession | null {

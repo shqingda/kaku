@@ -7,6 +7,18 @@ export type AuthUser = {
 
 export type AuthSession = {
   expiresAt: number;
+  refreshExpiresAt: number;
+  refreshToken: string;
+  sessionId: string;
   sessionToken: string;
   user: AuthUser;
+};
+
+export type DeviceSession = {
+  createdAt: number;
+  current: boolean;
+  deviceName: string;
+  expiresAt: number;
+  lastUsedAt: number;
+  sessionId: string;
 };
