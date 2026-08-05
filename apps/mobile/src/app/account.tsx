@@ -75,7 +75,20 @@ export default function AccountScreen() {
           </View>
         ) : session ? (
           <>
-            <View style={styles.profileCard}>
+            <Pressable
+              accessibilityLabel="查看我的 Bangumi 主页"
+              accessibilityRole="link"
+              onPress={() =>
+                router.push({
+                  pathname: '/user/[username]',
+                  params: { username: session.user.username },
+                })
+              }
+              style={({ pressed }) => [
+                styles.profileCard,
+                pressed && styles.pressed,
+              ]}
+            >
               <View style={styles.avatar}>
                 <SymbolView
                   name={{
@@ -100,7 +113,19 @@ export default function AccountScreen() {
                 <View style={styles.connectedDot} />
                 <Text style={styles.connectedText}>已连接 Bangumi</Text>
               </View>
-            </View>
+              <View style={styles.profileLink}>
+                <Text style={styles.profileLinkText}>查看公开主页</Text>
+                <SymbolView
+                  name={{
+                    android: 'chevron_right',
+                    ios: 'chevron.right',
+                    web: 'chevron_right',
+                  }}
+                  size={13}
+                  tintColor={COLORS.subtle}
+                />
+              </View>
+            </Pressable>
             <View style={styles.sessionsCard}>
               <View style={styles.sessionsHeading}>
                 <Text style={styles.sessionsTitle}>登录设备</Text>
@@ -318,6 +343,13 @@ const styles = StyleSheet.create({
     width: 8,
   },
   connectedText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  profileLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+    marginTop: 14,
+  },
+  profileLinkText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,

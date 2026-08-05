@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
@@ -28,6 +29,7 @@ import {
 
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
+  const { session } = useAuth();
   const userQuery = usePublicUser(username);
   const blogsQuery = usePublicUserBlogs(username);
   const [collectionSubjectType, setCollectionSubjectType] = useState(2);
@@ -49,6 +51,7 @@ export default function PublicUserScreen() {
   const collections = collectionsPage?.items ?? [];
   const friends = friendsPage?.items ?? [];
   const timeline = timelinePage?.items ?? [];
+  const isOwnProfile = session?.user.username === username;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -97,6 +100,18 @@ export default function PublicUserScreen() {
                     <Text numberOfLines={3} style={styles.sign}>
                       {user.sign}
                     </Text>
+                  ) : null}
+                  {isOwnProfile ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => router.push('/account')}
+                      style={({ pressed }) => [
+                        styles.accountLink,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.accountLinkText}>账户与设备</Text>
+                    </Pressable>
                   ) : null}
                 </View>
               </View>
@@ -437,6 +452,17 @@ const styles = StyleSheet.create({
   },
   username: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sign: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
+  accountLink: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    justifyContent: 'center',
+    marginTop: 12,
+    minHeight: 40,
+    paddingHorizontal: 14,
+  },
+  accountLinkText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',

@@ -1,62 +1,44 @@
-import { type ComponentProps, useMemo, useState } from 'react';
-import { Image } from 'expo-image';
+import type { ComponentProps } from 'react';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
-  Keyboard,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
-import {
-  getCollectionStatusLabel,
-  SUBJECT_TYPES,
-  supportsWatchProgress,
-} from '@/features/catalog/subject-types';
-import type { PublicUserCollection } from '@/features/users/model';
+import { HomeHeader } from '@/features/home/home-header';
+import { HomeMediaSection } from '@/features/home/home-media-section';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
-import type { CollectionStatus } from '@/features/watching/model';
-
-const COLLECTION_STATUSES: CollectionStatus[] = [
-  'doing',
-  'wish',
-  'completed',
-  'onHold',
-  'dropped',
-];
 
 export default function HomeScreen() {
   const { isLoading: isAuthLoading, session } = useAuth();
-  const [selectedType, setSelectedType] = useState(2);
-  const [selectedStatus, setSelectedStatus] =
-    useState<CollectionStatus>('doing');
   const username = session?.user.username ?? '';
-  const collectionsQuery = usePublicUserCollections(
-    username,
-    selectedType,
-    selectedStatus,
-  );
-  const collections = useMemo(
-    () =>
-      collectionsQuery.data?.pages.flatMap((page) => page.items).slice(0, 5) ??
-      [],
-    [collectionsQuery.data],
-  );
-  const total = collectionsQuery.data?.pages[0]?.total ?? 0;
+  const animeQuery = usePublicUserCollections(username, 2, 'doing');
+  const bookQuery = usePublicUserCollections(username, 1, 'doing');
+  const realQuery = usePublicUserCollections(username, 6, 'doing');
   const isRefreshing =
     Boolean(session) &&
-    collectionsQuery.isRefetching &&
-    !collectionsQuery.isPending;
+    [animeQuery, bookQuery, realQuery].some(
+      (query) => query.isRefetching && !query.isPending,
+    );
+
+  function refreshHome() {
+    void Promise.all([
+      animeQuery.refetch(),
+      bookQuery.refetch(),
+      realQuery.refetch(),
+    ]);
+  }
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -67,7 +49,7 @@ export default function HomeScreen() {
           session ? (
             <RefreshControl
               colors={[COLORS.accent]}
-              onRefresh={() => void collectionsQuery.refetch()}
+              onRefresh={refreshHome}
               progressBackgroundColor={COLORS.surface}
               refreshing={isRefreshing}
               tintColor={COLORS.accent}
@@ -82,123 +64,37 @@ export default function HomeScreen() {
           <HomeState message="正在读取账户信息" />
         ) : session ? (
           <>
-            <View style={styles.collectionCard}>
-              <View style={styles.sectionHeading}>
-                <View>
-                  <Text style={styles.sectionTitle}>收藏</Text>
-                  <Text style={styles.sectionMeta}>
-                    {total > 0 ? `${total} 个条目` : '按原版收藏状态整理'}
-                  </Text>
-                </View>
-                <Pressable
-                  accessibilityLabel="查看全部收藏"
-                  accessibilityRole="button"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/user/collections/[username]',
-                      params: {
-                        status: selectedStatus,
-                        type: String(selectedType),
-                        username,
-                      },
-                    })
-                  }
-                  style={({ pressed }) => [
-                    styles.moreButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.moreText}>查看全部</Text>
-                  <SymbolView
-                    name={{
-                      android: 'chevron_right',
-                      ios: 'chevron.right',
-                      web: 'chevron_right',
-                    }}
-                    size={12}
-                    tintColor={COLORS.muted}
-                    weight="semibold"
-                  />
-                </Pressable>
-              </View>
-
-              <ScrollView
-                contentContainerStyle={styles.mediaTabs}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              >
-                {SUBJECT_TYPES.map((type) => {
-                  const isSelected = type.id === selectedType;
-
-                  return (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
-                      key={type.id}
-                      onPress={() => setSelectedType(type.id)}
-                      style={[
-                        styles.mediaTab,
-                        isSelected && styles.selectedMediaTab,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.mediaTabText,
-                          isSelected && styles.selectedMediaTabText,
-                        ]}
-                      >
-                        {type.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-
-              <ScrollView
-                contentContainerStyle={styles.statusTabs}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              >
-                {COLLECTION_STATUSES.map((status) => {
-                  const isSelected = status === selectedStatus;
-
-                  return (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
-                      key={status}
-                      onPress={() => setSelectedStatus(status)}
-                      style={styles.statusTab}
-                    >
-                      <Text
-                        style={[
-                          styles.statusTabText,
-                          isSelected && styles.selectedStatusTabText,
-                        ]}
-                      >
-                        {getCollectionStatusLabel(selectedType, status)}
-                      </Text>
-                      <View
-                        style={[
-                          styles.statusIndicator,
-                          isSelected && styles.selectedStatusIndicator,
-                        ]}
-                      />
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-
-              <CollectionContent
-                collections={collections}
-                isError={collectionsQuery.isError}
-                isPending={collectionsQuery.isPending}
-                onRetry={() => void collectionsQuery.refetch()}
-                selectedStatus={selectedStatus}
-                selectedType={selectedType}
-              />
-            </View>
-
+            <HomeMediaSection
+              error={animeQuery.isError}
+              items={animeQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
+              loading={animeQuery.isPending}
+              onRetry={() => void animeQuery.refetch()}
+              subjectType={2}
+              title="在看的动画"
+              total={animeQuery.data?.pages[0]?.total ?? 0}
+              username={username}
+            />
+            <HomeMediaSection
+              error={bookQuery.isError}
+              items={bookQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
+              loading={bookQuery.isPending}
+              onRetry={() => void bookQuery.refetch()}
+              subjectType={1}
+              title="在读的书籍"
+              total={bookQuery.data?.pages[0]?.total ?? 0}
+              username={username}
+            />
+            <HomeMediaSection
+              error={realQuery.isError}
+              items={realQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
+              loading={realQuery.isPending}
+              onRetry={() => void realQuery.refetch()}
+              subjectType={6}
+              title="在看的三次元"
+              total={realQuery.data?.pages[0]?.total ?? 0}
+              username={username}
+            />
+            <TimelineBoundary />
             <QuickActions />
           </>
         ) : (
@@ -209,79 +105,53 @@ export default function HomeScreen() {
   );
 }
 
-function HomeHeader({
-  session,
-}: {
-  session: ReturnType<typeof useAuth>['session'];
-}) {
-  const [searchDraft, setSearchDraft] = useState('');
-
-  function submitSearch() {
-    const keyword = searchDraft.trim();
-
-    if (!keyword) {
-      return;
-    }
-
-    Keyboard.dismiss();
-    router.push({ pathname: '/explore', params: { q: keyword } });
-  }
-
+function TimelineBoundary() {
   return (
-    <View style={styles.headerArea}>
-      <View style={styles.header}>
-        <Text style={styles.brand}>Kaku</Text>
-        <Pressable
-          accessibilityLabel={session ? '查看账户' : '登录 Bangumi'}
-          accessibilityRole="button"
-          onPress={() => router.push('/account')}
-          style={({ pressed }) => [
-            styles.headerButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          {session?.user.avatarUrl ? (
-            <Image
-              contentFit="cover"
-              source={session.user.avatarUrl}
-              style={styles.accountAvatar}
-            />
-          ) : (
-            <SymbolView
-              name={{
-                android: 'account_circle',
-                ios: 'person.crop.circle',
-                web: 'account_circle',
-              }}
-              size={25}
-              tintColor={COLORS.ink}
-              weight="semibold"
-            />
-          )}
-        </Pressable>
+    <View style={styles.timelineSection}>
+      <View style={styles.timelineHeading}>
+        <Text style={styles.quickTitle}>好友动态</Text>
       </View>
-      <View style={styles.searchBox}>
+      <View style={styles.timelineCard}>
         <SymbolView
           name={{
-            android: 'search',
-            ios: 'magnifyingglass',
-            web: 'search',
+            android: 'dynamic_feed',
+            ios: 'person.2',
+            web: 'dynamic_feed',
           }}
-          size={20}
-          tintColor={COLORS.muted}
+          size={22}
+          tintColor={COLORS.accent}
           weight="medium"
         />
-        <TextInput
-          accessibilityLabel="搜索条目"
-          clearButtonMode="while-editing"
-          onChangeText={setSearchDraft}
-          onSubmitEditing={submitSearch}
-          placeholder="搜索条目"
-          placeholderTextColor={COLORS.muted}
-          returnKeyType="search"
-          style={styles.searchInput}
-          value={searchDraft}
-        />
+        <View style={styles.timelineCopy}>
+          <Text style={styles.timelineTitle}>查看好友动态</Text>
+          <Text style={styles.timelineText}>
+            好友动态与发布暂时通过 Bangumi 原版完成。
+          </Text>
+          <View style={styles.timelineActions}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL('https://bgm.tv/timeline')}
+              style={({ pressed }) => [
+                styles.timelineAction,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.timelineActionText}>查看动态</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() =>
+                void Linking.openURL('https://bgm.tv/timeline?type=say')
+              }
+              style={({ pressed }) => [
+                styles.timelineAction,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.timelineActionText}>发布</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -302,9 +172,9 @@ function SignedOutHome() {
             tintColor={COLORS.accent}
           />
         </View>
-        <Text style={styles.signedOutTitle}>从收藏开始</Text>
+        <Text style={styles.signedOutTitle}>从记录开始</Text>
         <Text style={styles.signedOutText}>
-          登录 Bangumi 后管理动画、书籍、音乐、游戏和三次元收藏。未登录时不会在本机创建另一份记录。
+          登录 Bangumi 后同步在看的动画、在读的书籍和三次元进度。未登录时不会在本机创建另一份记录。
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -319,137 +189,6 @@ function SignedOutHome() {
       </View>
       <QuickActions />
     </>
-  );
-}
-
-function CollectionContent({
-  collections,
-  isError,
-  isPending,
-  onRetry,
-  selectedStatus,
-  selectedType,
-}: {
-  collections: PublicUserCollection[];
-  isError: boolean;
-  isPending: boolean;
-  onRetry: () => void;
-  selectedStatus: CollectionStatus;
-  selectedType: number;
-}) {
-  if (isPending) {
-    return <HomeState compact message="正在读取 Bangumi 收藏" />;
-  }
-
-  if (isError) {
-    return (
-      <HomeState
-        action={onRetry}
-        compact
-        message="收藏暂时没有加载出来"
-      />
-    );
-  }
-
-  if (collections.length === 0) {
-    return (
-      <View style={styles.emptyCollection}>
-        <Text style={styles.emptyTitle}>
-          还没有{getCollectionStatusLabel(selectedType, selectedStatus)}的条目
-        </Text>
-        <Text style={styles.emptyText}>去发现感兴趣的内容并加入收藏。</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/explore')}
-          style={({ pressed }) => [
-            styles.inlineAction,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.inlineActionText}>去发现</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.collectionList}>
-      {collections.map((item, index) => (
-        <CollectionRow
-          hasDivider={index > 0}
-          item={item}
-          key={item.id}
-        />
-      ))}
-    </View>
-  );
-}
-
-function CollectionRow({
-  hasDivider,
-  item,
-}: {
-  hasDivider: boolean;
-  item: PublicUserCollection;
-}) {
-  const progress =
-    supportsWatchProgress(item.subjectType) && item.totalEpisodes > 0
-      ? `${item.progress}/${item.totalEpisodes} 集`
-      : undefined;
-  const meta = [progress, item.rate ? `${item.rate} 分` : undefined]
-    .filter(Boolean)
-    .join(' · ');
-
-  return (
-    <Pressable
-      accessibilityLabel={`打开${item.title}`}
-      accessibilityRole="button"
-      onPress={() =>
-        router.push({
-          pathname: '/subject/[id]',
-          params: { id: String(item.id) },
-        })
-      }
-      style={({ pressed }) => [
-        styles.collectionRow,
-        hasDivider && styles.collectionDivider,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.cover}>
-        <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
-        {item.coverUrl ? (
-          <Image
-            contentFit="cover"
-            source={item.coverUrl}
-            style={StyleSheet.absoluteFill}
-            transition={120}
-          />
-        ) : null}
-      </View>
-      <View style={styles.collectionCopy}>
-        <Text numberOfLines={2} style={styles.collectionTitle}>
-          {item.title}
-        </Text>
-        <Text style={styles.collectionMeta}>
-          {meta ||
-            getCollectionStatusLabel(
-              item.subjectType,
-              item.collectionStatus ?? 'doing',
-            )}
-        </Text>
-      </View>
-      <SymbolView
-        name={{
-          android: 'chevron_right',
-          ios: 'chevron.right',
-          web: 'chevron_right',
-        }}
-        size={15}
-        tintColor={COLORS.subtle}
-        weight="semibold"
-      />
-    </Pressable>
   );
 }
 
@@ -515,59 +254,39 @@ function QuickActionRow({
         pressed && styles.pressed,
       ]}
     >
-        <View style={styles.quickIcon}>
-          <SymbolView
-            name={icon}
-            size={19}
-            tintColor={COLORS.accent}
-            weight="medium"
-          />
-        </View>
-        <View style={styles.quickCopy}>
-          <Text style={styles.quickLabel}>{label}</Text>
-          <Text numberOfLines={1} style={styles.quickMeta}>
-            {meta}
-          </Text>
-        </View>
+      <View style={styles.quickIcon}>
         <SymbolView
-          name={{
-            android: 'chevron_right',
-            ios: 'chevron.right',
-            web: 'chevron_right',
-          }}
-          size={14}
-          tintColor={COLORS.subtle}
-          weight="semibold"
+          name={icon}
+          size={19}
+          tintColor={COLORS.accent}
+          weight="medium"
         />
+      </View>
+      <View style={styles.quickCopy}>
+        <Text style={styles.quickLabel}>{label}</Text>
+        <Text numberOfLines={1} style={styles.quickMeta}>
+          {meta}
+        </Text>
+      </View>
+      <SymbolView
+        name={{
+          android: 'chevron_right',
+          ios: 'chevron.right',
+          web: 'chevron_right',
+        }}
+        size={14}
+        tintColor={COLORS.subtle}
+        weight="semibold"
+      />
     </Pressable>
   );
 }
 
-function HomeState({
-  action,
-  compact = false,
-  message,
-}: {
-  action?: () => void;
-  compact?: boolean;
-  message: string;
-}) {
+function HomeState({ message }: { message: string }) {
   return (
-    <View style={[styles.state, compact && styles.compactState]}>
-      {!action ? <ActivityIndicator color={COLORS.accent} /> : null}
+    <View style={styles.state}>
+      <ActivityIndicator color={COLORS.accent} />
       <Text style={styles.stateText}>{message}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retryButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -575,125 +294,39 @@ function HomeState({
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
-  headerArea: { paddingBottom: 22, paddingTop: 10 },
-  header: {
+  timelineSection: { marginTop: 34 },
+  timelineHeading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 52,
+    paddingHorizontal: 4,
   },
-  brand: {
-    color: COLORS.ink,
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: -0.9,
-  },
-  headerButton: {
-    alignItems: 'center',
+  timelineCard: {
+    alignItems: 'flex-start',
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-  accountAvatar: { borderRadius: 17, height: 34, width: 34 },
-  searchBox: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 15,
+    borderRadius: 22,
     flexDirection: 'row',
-    gap: 10,
-    height: 50,
+    gap: 13,
     marginTop: 14,
-    paddingHorizontal: 16,
+    padding: 18,
   },
-  searchInput: {
-    color: COLORS.ink,
-    flex: 1,
-    fontSize: 16,
-    height: 50,
-    paddingVertical: 0,
+  timelineCopy: { flex: 1 },
+  timelineTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
+  timelineText: {
+    color: COLORS.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 5,
   },
-  collectionCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 28,
-    overflow: 'hidden',
-    paddingTop: 22,
-  },
-  sectionHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    color: COLORS.ink,
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.4,
-  },
-  sectionMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
-  moreButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 5,
-    minHeight: 44,
-    paddingLeft: 12,
-  },
-  moreText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  mediaTabs: { gap: 7, paddingHorizontal: 20, paddingTop: 20 },
-  mediaTab: {
-    backgroundColor: COLORS.background,
+  timelineActions: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  timelineAction: {
+    backgroundColor: COLORS.accentSoft,
     borderRadius: 12,
     minHeight: 38,
+    justifyContent: 'center',
     paddingHorizontal: 14,
-    justifyContent: 'center',
   },
-  selectedMediaTab: { backgroundColor: COLORS.ink },
-  mediaTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  selectedMediaTabText: { color: COLORS.surface },
-  statusTabs: {
-    borderBottomColor: COLORS.track,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 22,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-  },
-  statusTab: { minHeight: 40, justifyContent: 'space-between' },
-  statusTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  selectedStatusTabText: { color: COLORS.ink, fontWeight: '800' },
-  statusIndicator: { borderRadius: 1, height: 2, marginTop: 10 },
-  selectedStatusIndicator: { backgroundColor: COLORS.accent },
-  collectionList: { paddingHorizontal: 20 },
-  collectionRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    minHeight: 94,
-    paddingVertical: 11,
-    width: '100%',
-  },
-  collectionDivider: {
-    borderTopColor: COLORS.track,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  cover: {
-    alignItems: 'center',
-    backgroundColor: COLORS.track,
-    borderRadius: 10,
-    height: 72,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 51,
-  },
-  coverFallback: { color: COLORS.subtle, fontSize: 14, fontWeight: '700' },
-  collectionCopy: { flex: 1, marginLeft: 13, minWidth: 0 },
-  collectionTitle: {
-    color: COLORS.ink,
-    fontSize: 15,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  collectionMeta: { color: COLORS.muted, fontSize: 12, marginTop: 6 },
+  timelineActionText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   signedOutCard: {
     alignItems: 'flex-start',
     backgroundColor: COLORS.surface,
@@ -731,18 +364,17 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   loginButtonText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
-  quickSection: { marginTop: 28 },
+  quickSection: { marginTop: 34 },
   quickTitle: {
     color: COLORS.ink,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.35,
-    marginBottom: 14,
-    paddingHorizontal: 4,
   },
   quickCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 24,
+    marginTop: 14,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
@@ -765,11 +397,7 @@ const styles = StyleSheet.create({
     width: 38,
   },
   quickCopy: { flex: 1, marginLeft: 13, minWidth: 0 },
-  quickLabel: {
-    color: COLORS.ink,
-    fontSize: 14,
-    fontWeight: '800',
-  },
+  quickLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
   quickMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
   state: {
     alignItems: 'center',
@@ -780,32 +408,6 @@ const styles = StyleSheet.create({
     minHeight: 180,
     padding: 24,
   },
-  compactState: { borderRadius: 0, minHeight: 142 },
   stateText: { color: COLORS.muted, fontSize: 14, textAlign: 'center' },
-  retryButton: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 12,
-    marginTop: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
-  emptyCollection: { alignItems: 'center', padding: 28 },
-  emptyTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '700' },
-  emptyText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  inlineAction: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 12,
-    marginTop: 15,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  inlineActionText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });
