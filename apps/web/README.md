@@ -24,4 +24,4 @@ pnpm --filter @kaku/web run deploy
 
 公开地址：<https://kaku-web.shqingda.workers.dev>
 
-PayPal 审核可提交官网首页；产品介绍、价格、隐私政策、服务条款、支持信息和 PayPal 付款入口均可由首页导航访问。定价页明确标注当前商品为一次性早期支持方案，Kaku Pro 仍在开发中。
+产品介绍、价格、隐私政策、服务条款和支持信息均可由首页导航访问。定价页明确标注当前商品为早期支持方案、付费入口暂未开放，Kaku Pro 仍在开发中。
