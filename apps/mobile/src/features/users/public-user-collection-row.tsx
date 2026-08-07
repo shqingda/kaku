@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -13,10 +14,12 @@ export function PublicUserCollectionRow({
   hasDivider,
   item,
   onPress,
+  trailing,
 }: {
   hasDivider?: boolean;
   item: PublicUserCollection;
   onPress: () => void;
+  trailing?: ReactNode;
 }) {
   const progress =
     supportsWatchProgress(item.subjectType) && item.progress > 0
@@ -64,7 +67,7 @@ export function PublicUserCollectionRow({
           {meta}
         </Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      {trailing ?? <Text style={styles.chevron}>›</Text>}
     </Pressable>
   );
 }

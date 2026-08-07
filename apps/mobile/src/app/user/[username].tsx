@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Pressable,
@@ -55,7 +56,35 @@ export default function PublicUserScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: user?.nickname ?? '用户主页' }} />
+      <Stack.Screen
+        options={{
+          headerRight: isOwnProfile
+            ? () => (
+                <Pressable
+                  accessibilityLabel="打开账户与设备"
+                  accessibilityRole="button"
+                  onPress={() => router.push('/account')}
+                  style={({ pressed }) => [
+                    styles.navigationAction,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <SymbolView
+                    name={{
+                      android: 'settings',
+                      ios: 'gearshape.fill',
+                      web: 'settings',
+                    }}
+                    size={22}
+                    tintColor={COLORS.ink}
+                    weight="semibold"
+                  />
+                </Pressable>
+              )
+            : undefined,
+          title: user?.nickname ?? '用户主页',
+        }}
+      />
       {userQuery.isPending ? (
         <State text="正在读取公开资料。" title="加载中" />
       ) : userQuery.isError || !user ? (
@@ -100,18 +129,6 @@ export default function PublicUserScreen() {
                     <Text numberOfLines={3} style={styles.sign}>
                       {user.sign}
                     </Text>
-                  ) : null}
-                  {isOwnProfile ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => router.push('/account')}
-                      style={({ pressed }) => [
-                        styles.accountLink,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.accountLinkText}>账户与设备</Text>
-                    </Pressable>
                   ) : null}
                 </View>
               </View>
@@ -426,7 +443,7 @@ function State({
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
-  content: { gap: 10, padding: 20, paddingBottom: 44 },
+  content: { gap: 14, padding: 20, paddingBottom: 52 },
   profile: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -452,24 +469,20 @@ const styles = StyleSheet.create({
   },
   username: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sign: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
-  accountLink: {
+  navigationAction: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
     justifyContent: 'center',
-    marginTop: 12,
-    minHeight: 40,
-    paddingHorizontal: 14,
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 4,
   },
-  accountLinkText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 4,
+    paddingBottom: 10,
     paddingHorizontal: 4,
-    paddingTop: 12,
+    paddingTop: 24,
   },
   sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
   sectionMeta: { color: COLORS.subtle, fontSize: 12 },
@@ -490,18 +503,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginLeft: 2,
   },
-  friendList: { gap: 10, paddingBottom: 5 },
+  friendList: { gap: 14, paddingBottom: 8 },
   timelineList: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 17,
+    paddingHorizontal: 18,
   },
   inlineEmpty: {
     color: COLORS.muted,
     fontSize: 13,
     paddingHorizontal: 4,
-    paddingVertical: 14,
+    paddingVertical: 18,
   },
   inlineStatus: {
     alignItems: 'center',
@@ -520,16 +533,17 @@ const styles = StyleSheet.create({
   },
   blogList: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    marginBottom: 6,
+    borderRadius: 22,
+    marginBottom: 10,
     overflow: 'hidden',
-    paddingHorizontal: 17,
+    paddingHorizontal: 18,
   },
   blogEmpty: { color: COLORS.muted, fontSize: 13, paddingVertical: 18 },
-  collectionTypeTabs: { paddingBottom: 4 },
+  collectionTypeTabs: { paddingBottom: 10 },
   collectionCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
+    borderRadius: 22,
+    marginBottom: 2,
     overflow: 'hidden',
     paddingHorizontal: 10,
   },

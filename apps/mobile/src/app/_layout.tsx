@@ -29,6 +29,15 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen
+            name="timeline"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '好友动态',
+            }}
+          />
+          <Stack.Screen
             name="account"
             options={{
               headerBackButtonDisplayMode: 'minimal',

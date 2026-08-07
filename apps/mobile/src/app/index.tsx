@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
@@ -18,9 +18,12 @@ import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
+import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
+import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
 
 export default function HomeScreen() {
+  const [selectedTrackingType, setSelectedTrackingType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
   const animeQuery = usePublicUserCollections(username, 2, 'doing');
@@ -31,6 +34,24 @@ export default function HomeScreen() {
     [animeQuery, bookQuery, realQuery].some(
       (query) => query.isRefetching && !query.isPending,
     );
+  const trackingQueries = {
+    1: bookQuery,
+    2: animeQuery,
+    6: realQuery,
+  } as const;
+  const selectedQuery = trackingQueries[selectedTrackingType as 1 | 2 | 6];
+  const trackingTitle =
+    selectedTrackingType === 1
+      ? '在读的书籍'
+      : selectedTrackingType === 6
+        ? '在看的三次元'
+        : '在看的动画';
+  const showsTrackingSection = [animeQuery, bookQuery, realQuery].some(
+    (query) =>
+      query.isPending ||
+      query.isError ||
+      (query.data?.pages[0]?.total ?? 0) > 0,
+  );
 
   function refreshHome() {
     void Promise.all([
@@ -64,36 +85,19 @@ export default function HomeScreen() {
           <HomeState message="正在读取账户信息" />
         ) : session ? (
           <>
-            <HomeMediaSection
-              error={animeQuery.isError}
-              items={animeQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
-              loading={animeQuery.isPending}
-              onRetry={() => void animeQuery.refetch()}
-              subjectType={2}
-              title="在看的动画"
-              total={animeQuery.data?.pages[0]?.total ?? 0}
-              username={username}
-            />
-            <HomeMediaSection
-              error={bookQuery.isError}
-              items={bookQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
-              loading={bookQuery.isPending}
-              onRetry={() => void bookQuery.refetch()}
-              subjectType={1}
-              title="在读的书籍"
-              total={bookQuery.data?.pages[0]?.total ?? 0}
-              username={username}
-            />
-            <HomeMediaSection
-              error={realQuery.isError}
-              items={realQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
-              loading={realQuery.isPending}
-              onRetry={() => void realQuery.refetch()}
-              subjectType={6}
-              title="在看的三次元"
-              total={realQuery.data?.pages[0]?.total ?? 0}
-              username={username}
-            />
+            {showsTrackingSection ? (
+              <HomeMediaSection
+                error={selectedQuery.isError}
+                items={selectedQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
+                loading={selectedQuery.isPending}
+                onRetry={() => void selectedQuery.refetch()}
+                onSubjectTypeChange={setSelectedTrackingType}
+                subjectType={selectedTrackingType}
+                title={trackingTitle}
+                total={selectedQuery.data?.pages[0]?.total ?? 0}
+                username={username}
+              />
+            ) : null}
             <TimelineBoundary />
             <QuickActions />
           </>
@@ -106,52 +110,64 @@ export default function HomeScreen() {
 }
 
 function TimelineBoundary() {
+  const timelineQuery = useFriendTimeline();
+  const items = timelineQuery.data?.slice(0, 4) ?? [];
+
   return (
     <View style={styles.timelineSection}>
       <View style={styles.timelineHeading}>
         <Text style={styles.quickTitle}>好友动态</Text>
+        <View style={styles.timelineHeaderActions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/timeline')}
+            style={({ pressed }) => [
+              styles.timelineHeaderAction,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.timelineHeaderActionText}>全部</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() =>
+              void Linking.openURL('https://bgm.tv/timeline?type=say')
+            }
+            style={({ pressed }) => [
+              styles.timelineHeaderAction,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.timelineHeaderActionText}>发布</Text>
+          </Pressable>
+        </View>
       </View>
       <View style={styles.timelineCard}>
-        <SymbolView
-          name={{
-            android: 'dynamic_feed',
-            ios: 'person.2',
-            web: 'dynamic_feed',
-          }}
-          size={22}
-          tintColor={COLORS.accent}
-          weight="medium"
-        />
-        <View style={styles.timelineCopy}>
-          <Text style={styles.timelineTitle}>查看好友动态</Text>
-          <Text style={styles.timelineText}>
-            好友动态与发布暂时通过 Bangumi 原版完成。
-          </Text>
-          <View style={styles.timelineActions}>
-            <Pressable
-              accessibilityRole="link"
-              onPress={() => void Linking.openURL('https://bgm.tv/timeline')}
-              style={({ pressed }) => [
-                styles.timelineAction,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.timelineActionText}>查看动态</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="link"
-              onPress={() =>
-                void Linking.openURL('https://bgm.tv/timeline?type=say')
-              }
-              style={({ pressed }) => [
-                styles.timelineAction,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.timelineActionText}>发布</Text>
-            </Pressable>
+        {timelineQuery.isPending ? (
+          <View style={styles.timelineInlineState}>
+            <ActivityIndicator color={COLORS.accent} size="small" />
+            <Text style={styles.timelineEmptyText}>正在读取好友动态</Text>
           </View>
-        </View>
+        ) : timelineQuery.isError ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void timelineQuery.refetch()}
+            style={({ pressed }) => [
+              styles.timelineInlineState,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.timelineErrorText}>暂时没有加载出来，点此重试</Text>
+          </Pressable>
+        ) : items.length === 0 ? (
+          <View style={styles.timelineInlineState}>
+            <Text style={styles.timelineEmptyText}>还没有好友动态</Text>
+          </View>
+        ) : (
+          items.map((item, index) => (
+            <FriendTimelineRow hasDivider={index > 0} item={item} key={item.id} />
+          ))
+        )}
       </View>
     </View>
   );
@@ -302,31 +318,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   timelineCard: {
-    alignItems: 'flex-start',
     backgroundColor: COLORS.surface,
     borderRadius: 22,
-    flexDirection: 'row',
-    gap: 13,
     marginTop: 14,
-    padding: 18,
+    overflow: 'hidden',
+    paddingHorizontal: 18,
   },
-  timelineCopy: { flex: 1 },
-  timelineTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  timelineText: {
-    color: COLORS.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 5,
-  },
-  timelineActions: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  timelineAction: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 12,
-    minHeight: 38,
+  timelineHeaderActions: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  timelineHeaderAction: {
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    minHeight: 44,
+    paddingHorizontal: 8,
   },
-  timelineActionText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  timelineHeaderActionText: {
+    color: COLORS.accent,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timelineInlineState: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 9,
+    justifyContent: 'center',
+    minHeight: 88,
+    paddingHorizontal: 16,
+  },
+  timelineEmptyText: { color: COLORS.muted, fontSize: 13 },
+  timelineErrorText: { color: COLORS.accent, fontSize: 13, fontWeight: '600' },
   signedOutCard: {
     alignItems: 'flex-start',
     backgroundColor: COLORS.surface,

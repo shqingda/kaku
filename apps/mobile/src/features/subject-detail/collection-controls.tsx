@@ -30,9 +30,11 @@ import {
 export function CollectionControls({
   item,
   onSave,
+  variant = 'panel',
 }: {
   item: WatchingItem;
   onSave: (update: PersonalCollectionUpdate) => Promise<void>;
+  variant?: 'panel' | 'compact';
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -145,7 +147,29 @@ export function CollectionControls({
 
   return (
     <>
-      <Pressable
+      {variant === 'compact' ? (
+        <Pressable
+          accessibilityLabel={`编辑${item.title}的收藏和进度`}
+          accessibilityRole="button"
+          hitSlop={4}
+          onPress={(event) => {
+            event.stopPropagation();
+            openCollectionBox();
+          }}
+          style={({ pressed }) => [
+            styles.compactButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <SymbolView
+            name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
+            size={16}
+            tintColor={COLORS.accent}
+            weight="semibold"
+          />
+        </Pressable>
+      ) : (
+        <Pressable
         accessibilityLabel="打开收藏盒"
         accessibilityRole="button"
         onPress={openCollectionBox}
@@ -153,7 +177,7 @@ export function CollectionControls({
           styles.panel,
           pressed && styles.pressed,
         ]}
-      >
+        >
         <View style={styles.heading}>
           <View style={styles.headingCopy}>
             <Text style={styles.title}>收藏盒</Text>
@@ -247,7 +271,8 @@ export function CollectionControls({
             </View>
           </View>
         ) : null}
-      </Pressable>
+        </Pressable>
+      )}
 
       <CollectionBoxSheet
         isSaving={isSaving}
@@ -274,6 +299,15 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
+  },
+  compactButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 12,
+    height: 40,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 40,
   },
   heading: {
     alignItems: 'flex-start',

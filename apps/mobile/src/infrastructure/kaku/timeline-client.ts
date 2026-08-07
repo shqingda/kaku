@@ -1,0 +1,31 @@
+import { z } from 'zod';
+
+import type { FriendTimelineItem } from '@/features/timeline/model';
+import { readErrorMessage } from './auth-client';
+
+const timelineItemSchema = z.object({
+  createdAt: z.number().int(),
+  id: z.number().int().positive(),
+  replies: z.number().int().nonnegative(),
+  subjectId: z.number().int().positive().optional(),
+  text: z.string(),
+  user: z.object({
+    avatarUrl: z.string().url().optional(),
+    nickname: z.string(),
+    username: z.string(),
+  }),
+});
+
+const responseSchema = z.object({ items: z.array(timelineItemSchema) });
+
+export async function getFriendTimeline(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+): Promise<FriendTimelineItem[]> {
+  const response = await request('/me/timeline');
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return responseSchema.parse(await response.json()).items;
+}

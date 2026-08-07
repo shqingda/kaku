@@ -9,10 +9,12 @@ export function SubjectTypeTabs({
   contentContainerStyle,
   onChange,
   selectedType,
+  types = SUBJECT_TYPES,
 }: {
   contentContainerStyle?: StyleProp<ViewStyle>;
   onChange: (subjectType: number) => void;
   selectedType: number;
+  types?: ReadonlyArray<{ id: number; label: string }>;
 }) {
   return (
     <ScrollView
@@ -21,7 +23,7 @@ export function SubjectTypeTabs({
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
     >
-      {SUBJECT_TYPES.map((type) => {
+      {types.map((type) => {
         const isSelected = type.id === selectedType;
 
         return (

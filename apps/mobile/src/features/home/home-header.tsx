@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -13,6 +12,8 @@ import {
 
 import { COLORS } from '@/constants/design';
 import type { AuthSession } from '@/features/auth/model';
+
+import { ProfileMenu } from './profile-menu';
 
 export function HomeHeader({ session }: { session: AuthSession | null }) {
   const [searchDraft, setSearchDraft] = useState('');
@@ -28,39 +29,23 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
     router.push({ pathname: '/explore', params: { q: keyword } });
   }
 
-  function openProfile() {
-    if (!session) {
-      router.push('/account');
-      return;
-    }
-
-    router.push({
-      pathname: '/user/[username]',
-      params: { username: session.user.username },
-    });
-  }
-
   return (
     <View style={styles.area}>
       <View style={styles.header}>
         <Text style={styles.brand}>Kaku</Text>
-        <Pressable
-          accessibilityLabel={session ? '查看我的公开主页' : '登录 Bangumi'}
-          accessibilityRole="button"
-          hitSlop={6}
-          onPress={openProfile}
-          style={({ pressed }) => [
-            styles.avatarButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          {session?.user.avatarUrl ? (
-            <Image
-              contentFit="cover"
-              source={session.user.avatarUrl}
-              style={styles.avatar}
-            />
-          ) : (
+        {session ? (
+          <ProfileMenu session={session} />
+        ) : (
+          <Pressable
+            accessibilityLabel="登录 Bangumi"
+            accessibilityRole="button"
+            hitSlop={6}
+            onPress={() => router.push('/account')}
+            style={({ pressed }) => [
+              styles.avatarButton,
+              pressed && styles.pressed,
+            ]}
+          >
             <SymbolView
               name={{
                 android: 'account_circle',
@@ -71,8 +56,8 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
               tintColor={COLORS.ink}
               weight="semibold"
             />
-          )}
-        </Pressable>
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.tools}>
@@ -105,7 +90,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
 }
 
 const styles = StyleSheet.create({
-  area: { paddingBottom: 24, paddingTop: 10 },
+  area: { paddingBottom: 8, paddingTop: 10 },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -124,7 +109,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
-  avatar: { borderRadius: 18, height: 36, width: 36 },
   tools: { marginTop: 14 },
   searchBox: {
     alignItems: 'center',

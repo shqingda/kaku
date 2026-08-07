@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
   getCollectionStatusLabel,
@@ -18,8 +19,12 @@ import {
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useSavePersonalCollection } from '@/features/collections/use-personal-collection';
+import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
+import type { PublicUserCollection } from '@/features/users/model';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
+import type { WatchingItem } from '@/features/watching/model';
 import type { CollectionStatus } from '@/features/watching/model';
 
 const COLLECTION_STATUSES = new Set<CollectionStatus>([
@@ -29,6 +34,12 @@ const COLLECTION_STATUSES = new Set<CollectionStatus>([
   'onHold',
   'wish',
 ]);
+
+const TRACKING_TYPES = [
+  { id: 2, label: '动画' },
+  { id: 1, label: '书籍' },
+  { id: 6, label: '三次元' },
+] as const;
 
 function parseCollectionStatus(value?: string) {
   return value && COLLECTION_STATUSES.has(value as CollectionStatus)
@@ -42,6 +53,7 @@ export default function PublicUserCollectionsScreen() {
     type?: string;
     username: string;
   }>();
+  const { session } = useAuth();
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
@@ -62,6 +74,8 @@ export default function PublicUserCollectionsScreen() {
     [collectionsQuery.data],
   );
   const total = collectionsQuery.data?.pages[0]?.total ?? 0;
+  const isTrackingPage = collectionStatus === 'doing';
+  const canEdit = isTrackingPage && session?.user.username === username;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -70,7 +84,7 @@ export default function PublicUserCollectionsScreen() {
           headerBackButtonDisplayMode: 'minimal',
           headerShadowVisible: false,
           title: collectionStatusLabel
-            ? `${subjectTypeLabel} · ${collectionStatusLabel}`
+            ? `${collectionStatusLabel}的${subjectTypeLabel}`
             : `${subjectTypeLabel}收藏`,
         }}
       />
@@ -113,7 +127,11 @@ export default function PublicUserCollectionsScreen() {
         ListHeaderComponent={
           <>
             <View style={styles.header}>
-              <Text style={styles.title}>{subjectTypeLabel}收藏</Text>
+              <Text style={styles.title}>
+                {collectionStatusLabel
+                  ? `${collectionStatusLabel}的${subjectTypeLabel}`
+                  : `${subjectTypeLabel}收藏`}
+              </Text>
               <Text style={styles.subtitle}>
                 @{username}
                 {collectionStatusLabel ? ` · ${collectionStatusLabel}` : ''} ·{' '}
@@ -124,6 +142,7 @@ export default function PublicUserCollectionsScreen() {
               contentContainerStyle={styles.subjectTypeTabs}
               onChange={setSubjectType}
               selectedType={subjectType}
+              types={isTrackingPage ? TRACKING_TYPES : undefined}
             />
           </>
         }
@@ -156,6 +175,9 @@ export default function PublicUserCollectionsScreen() {
                   params: { id: String(item.id) },
                 })
               }
+              trailing={
+                canEdit ? <CollectionRowEditor item={item} /> : undefined
+              }
             />
           </View>
         )}
@@ -164,6 +186,36 @@ export default function PublicUserCollectionsScreen() {
         windowSize={7}
       />
     </SafeAreaView>
+  );
+}
+
+function CollectionRowEditor({ item }: { item: PublicUserCollection }) {
+  const saveCollection = useSavePersonalCollection(item.id);
+  const watchingItem: WatchingItem = {
+    collectionStatus: item.collectionStatus,
+    coverUrl: item.coverUrl ?? '',
+    episodeAirDates: [],
+    id: item.id,
+    rating: item.rate,
+    summary: '',
+    title: item.title,
+    totalEpisodes: item.totalEpisodes,
+    type: item.subjectType,
+    watchedEpisodeNumbers: Array.from(
+      { length: item.progress },
+      (_, index) => index + 1,
+    ),
+    year: 0,
+  };
+
+  return (
+    <CollectionControls
+      item={watchingItem}
+      onSave={(update) =>
+        saveCollection.mutateAsync(update).then(() => undefined)
+      }
+      variant="compact"
+    />
   );
 }
 

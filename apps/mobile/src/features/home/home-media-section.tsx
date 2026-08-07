@@ -11,14 +11,22 @@ import {
 } from 'react-native';
 
 import { COLORS } from '@/constants/design';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
 import type { PublicUserCollection } from '@/features/users/model';
+
+const HOME_TRACKING_TYPES = [
+  { id: 2, label: '动画' },
+  { id: 1, label: '书籍' },
+  { id: 6, label: '三次元' },
+] as const;
 
 export function HomeMediaSection({
   error,
   items,
   loading,
   onRetry,
+  onSubjectTypeChange,
   subjectType,
   title,
   total,
@@ -28,6 +36,7 @@ export function HomeMediaSection({
   items: PublicUserCollection[];
   loading: boolean;
   onRetry: () => void;
+  onSubjectTypeChange: (subjectType: number) => void;
   subjectType: number;
   title: string;
   total: number;
@@ -42,10 +51,6 @@ export function HomeMediaSection({
         username,
       },
     });
-  }
-
-  if (!loading && !error && items.length === 0) {
-    return null;
   }
 
   return (
@@ -80,6 +85,13 @@ export function HomeMediaSection({
         ) : null}
       </View>
 
+      <SubjectTypeTabs
+        contentContainerStyle={styles.typeTabs}
+        onChange={onSubjectTypeChange}
+        selectedType={subjectType}
+        types={HOME_TRACKING_TYPES}
+      />
+
       {loading ? (
         <View style={styles.state}>
           <ActivityIndicator color={COLORS.accent} size="small" />
@@ -93,6 +105,10 @@ export function HomeMediaSection({
         >
           <Text style={styles.errorText}>暂时没有加载出来，点此重试</Text>
         </Pressable>
+      ) : items.length === 0 ? (
+        <View style={styles.state}>
+          <Text style={styles.stateText}>这里还没有条目</Text>
+        </View>
       ) : (
         <ScrollView
           contentContainerStyle={styles.list}
@@ -148,7 +164,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
 }
 
 const styles = StyleSheet.create({
-  section: { marginTop: 28 },
+  section: { marginTop: 12 },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -166,6 +182,7 @@ const styles = StyleSheet.create({
   count: { color: COLORS.subtle, fontSize: 12, fontWeight: '700' },
   more: { alignItems: 'center', flexDirection: 'row', gap: 3, minHeight: 44 },
   moreText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  typeTabs: { paddingBottom: 2, paddingTop: 4 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
   card: { width: 104 },
   cover: {
