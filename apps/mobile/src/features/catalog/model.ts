@@ -48,5 +48,8 @@ export type CatalogSubject = {
 };
 
 export type CatalogProvider = {
-  getSubject: (subjectId: number) => Promise<CatalogSubject>;
+  getSubject: (
+    subjectId: number,
+    signal?: AbortSignal,
+  ) => Promise<CatalogSubject>;
 };

@@ -11,7 +11,7 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useBangumiCalendar() {
   return useQuery({
-    queryFn: () => bangumiDiscoverProvider.getCalendar(),
+    queryFn: ({ signal }) => bangumiDiscoverProvider.getCalendar(signal),
     queryKey: queryKeys.calendar(),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
@@ -28,8 +28,12 @@ export function useBangumiRankedSubjects(subjectType = 2) {
   >({
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      bangumiDiscoverProvider.getRankedSubjects(subjectType, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      bangumiDiscoverProvider.getRankedSubjects(
+        subjectType,
+        pageParam,
+        signal,
+      ),
     queryKey: queryKeys.rankedSubjects(subjectType),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
@@ -47,11 +51,12 @@ export function useBangumiSearch(keyword: string, subjectType: number) {
     enabled: keyword.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiDiscoverProvider.searchSubjects(
         keyword.trim(),
         subjectType,
         pageParam,
+        signal,
       ),
     queryKey: queryKeys.subjectSearch(keyword, subjectType),
     retry: shouldRetryBangumiQuery,

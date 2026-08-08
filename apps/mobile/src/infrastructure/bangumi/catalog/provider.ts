@@ -107,10 +107,10 @@ function toCatalogSubject(
 }
 
 export const bangumiCatalogProvider: CatalogProvider = {
-  async getSubject(subjectId) {
-    const subject = await getBangumiSubject(subjectId);
+  async getSubject(subjectId, signal) {
+    const subject = await getBangumiSubject(subjectId, signal);
     const episodes = usesEpisodeData(subject.type)
-      ? await getBangumiEpisodes(subjectId)
+      ? await getBangumiEpisodes(subjectId, signal)
       : [];
 
     return toCatalogSubject(subject, episodes);

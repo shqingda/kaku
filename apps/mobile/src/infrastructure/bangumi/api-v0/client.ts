@@ -26,8 +26,11 @@ const requestJson = createBangumiRequester({
   timeoutMessage: 'Bangumi API 请求超时',
 });
 
-export async function getBangumiSubject(subjectId: number) {
-  const json = await requestJson(`/v0/subjects/${subjectId}`);
+export async function getBangumiSubject(
+  subjectId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/v0/subjects/${subjectId}`, { signal });
   return bangumiSubjectSchema.parse(json);
 }
 
@@ -113,8 +116,8 @@ export async function getBangumiSubjectRelations(
   return bangumiSubjectRelationsSchema.parse(json);
 }
 
-export async function getBangumiCalendar() {
-  const json = await requestJson('/calendar');
+export async function getBangumiCalendar(signal?: AbortSignal) {
+  const json = await requestJson('/calendar', { signal });
   return bangumiCalendarSchema.parse(json);
 }
 
@@ -122,6 +125,7 @@ export async function searchBangumiSubjects(
   keyword: string,
   subjectType: number,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: String(SEARCH_PAGE_SIZE),
@@ -134,6 +138,7 @@ export async function searchBangumiSubjects(
       sort: 'match',
     }),
     method: 'POST',
+    signal,
   });
   return bangumiSubjectSearchSchema.parse(json);
 }
@@ -141,6 +146,7 @@ export async function searchBangumiSubjects(
 export async function getBangumiRankedSubjects(
   subjectType: number,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: String(SEARCH_PAGE_SIZE),
@@ -148,25 +154,30 @@ export async function getBangumiRankedSubjects(
     sort: 'rank',
     type: String(subjectType),
   });
-  const json = await requestJson(`/v0/subjects?${query}`);
+  const json = await requestJson(`/v0/subjects?${query}`, { signal });
   return bangumiSubjectSearchSchema.parse(json);
 }
 
-async function getEpisodePage(subjectId: number, offset: number) {
+async function getEpisodePage(
+  subjectId: number,
+  offset: number,
+  signal?: AbortSignal,
+) {
   const query = new URLSearchParams({
     limit: String(PAGE_SIZE),
     offset: String(offset),
     subject_id: String(subjectId),
     type: '0',
   });
-  const json = await requestJson(`/v0/episodes?${query}`);
+  const json = await requestJson(`/v0/episodes?${query}`, { signal });
   return bangumiEpisodePageSchema.parse(json);
 }
 
 export async function getBangumiEpisodes(
   subjectId: number,
+  signal?: AbortSignal,
 ): Promise<BangumiEpisodeResponse[]> {
-  const firstPage = await getEpisodePage(subjectId, 0);
+  const firstPage = await getEpisodePage(subjectId, 0, signal);
 
   if (firstPage.total <= firstPage.data.length) {
     return firstPage.data;
@@ -177,7 +188,9 @@ export async function getBangumiEpisodes(
     (_, index) => (index + 1) * PAGE_SIZE,
   );
   const remainingPages = await Promise.all(
-    remainingOffsets.map((offset) => getEpisodePage(subjectId, offset)),
+    remainingOffsets.map((offset) =>
+      getEpisodePage(subjectId, offset, signal),
+    ),
   );
 
   return [

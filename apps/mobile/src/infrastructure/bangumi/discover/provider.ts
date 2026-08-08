@@ -14,8 +14,8 @@ import {
 } from '../api-v0/client';
 
 export const bangumiDiscoverProvider: DiscoverProvider = {
-  async getCalendar(): Promise<CalendarDay[]> {
-    const days = await getBangumiCalendar();
+  async getCalendar(signal): Promise<CalendarDay[]> {
+    const days = await getBangumiCalendar(signal);
 
     return days.map((day) => ({
       id: day.weekday.id,
@@ -23,12 +23,21 @@ export const bangumiDiscoverProvider: DiscoverProvider = {
       subjects: day.items.map(toDiscoverSubject),
     }));
   },
-  async getRankedSubjects(subjectType, offset) {
-    const result = await getBangumiRankedSubjects(subjectType, offset);
+  async getRankedSubjects(subjectType, offset, signal) {
+    const result = await getBangumiRankedSubjects(
+      subjectType,
+      offset,
+      signal,
+    );
     return toDiscoverSubjectPage(result, subjectType);
   },
-  async searchSubjects(keyword, subjectType, offset) {
-    const result = await searchBangumiSubjects(keyword, subjectType, offset);
+  async searchSubjects(keyword, subjectType, offset, signal) {
+    const result = await searchBangumiSubjects(
+      keyword,
+      subjectType,
+      offset,
+      signal,
+    );
     return toDiscoverSubjectPage(result, subjectType);
   },
 };

@@ -20,14 +20,16 @@ export type DiscoverSubjectPage = {
 };
 
 export type DiscoverProvider = {
-  getCalendar: () => Promise<CalendarDay[]>;
+  getCalendar: (signal?: AbortSignal) => Promise<CalendarDay[]>;
   getRankedSubjects: (
     subjectType: number,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<DiscoverSubjectPage>;
   searchSubjects: (
     keyword: string,
     subjectType: number,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<DiscoverSubjectPage>;
 };

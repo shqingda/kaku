@@ -9,7 +9,8 @@ const CATALOG_QUERY_VERSION = 4;
 export function useCatalogSubject(subjectId: number) {
   return useQuery({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () => bangumiCatalogProvider.getSubject(subjectId),
+    queryFn: ({ signal }) =>
+      bangumiCatalogProvider.getSubject(subjectId, signal),
     queryKey: queryKeys.catalogSubject(subjectId, CATALOG_QUERY_VERSION),
     retry: shouldRetryBangumiQuery,
     staleTime: 5 * 60 * 1000,
