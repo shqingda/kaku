@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
-  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -19,6 +18,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
+import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
 
@@ -110,6 +110,7 @@ export default function HomeScreen() {
 }
 
 function TimelineBoundary() {
+  const [composerVisible, setComposerVisible] = useState(false);
   const timelineQuery = useFriendTimeline();
   const items = timelineQuery.data?.slice(0, 4) ?? [];
 
@@ -129,10 +130,8 @@ function TimelineBoundary() {
             <Text style={styles.timelineHeaderActionText}>全部</Text>
           </Pressable>
           <Pressable
-            accessibilityRole="link"
-            onPress={() =>
-              void Linking.openURL('https://bgm.tv/timeline?type=say')
-            }
+            accessibilityRole="button"
+            onPress={() => setComposerVisible(true)}
             style={({ pressed }) => [
               styles.timelineHeaderAction,
               pressed && styles.pressed,
@@ -169,6 +168,10 @@ function TimelineBoundary() {
           ))
         )}
       </View>
+      <TimelineComposer
+        onClose={() => setComposerVisible(false)}
+        visible={composerVisible}
+      />
     </View>
   );
 }

@@ -17,6 +17,7 @@ const timelineItemSchema = z.object({
 });
 
 const responseSchema = z.object({ items: z.array(timelineItemSchema) });
+const createdTimelineSchema = z.object({ id: z.number().int().positive() });
 
 export async function getFriendTimeline(
   request: (path: string, init?: RequestInit) => Promise<Response>,
@@ -28,4 +29,22 @@ export async function getFriendTimeline(
   }
 
   return responseSchema.parse(await response.json()).items;
+}
+
+export async function createTimelineSay(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  content: string,
+  turnstileToken: string,
+): Promise<{ id: number }> {
+  const response = await request('/me/timeline', {
+    body: JSON.stringify({ content, turnstileToken }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return createdTimelineSchema.parse(await response.json());
 }

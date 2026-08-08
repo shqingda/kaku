@@ -38,21 +38,26 @@ const timelineSchema = z.object({
     wiki: z.object({ subject: subjectSchema.optional() }).optional(),
   }),
   replies: z.number().int().nonnegative(),
-  user: z.object({
-    avatar: z.object({ small: z.string().url().optional() }),
-    nickname: z.string(),
-    username: z.string(),
-  }),
+  user: z
+    .object({
+      avatar: z.object({ small: z.string().optional() }),
+      nickname: z.string(),
+      username: z.string(),
+    })
+    .optional(),
 });
 
 const timelineListSchema = z.array(timelineSchema);
+const createdTimelineSchema = z.object({ id: z.number().int().positive() });
 
 export class BangumiTimelineError extends Error {
+  code?: string;
   status: number;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = 'BangumiTimelineError';
+    this.code = code;
     this.status = status;
   }
 }
@@ -125,24 +130,80 @@ export async function getBangumiFriendTimeline({
     );
   }
 
-  return timelineListSchema.parse(await response.json()).map((item) => {
+  return timelineListSchema.parse(await response.json()).flatMap((item) => {
+    // Bangumi's private API marks `user` as optional. A deleted account should
+    // hide only its event instead of making the entire timeline unavailable.
+    if (!item.user) {
+      return [];
+    }
+
     const subject =
       item.memo.subject?.[0]?.subject ??
       item.memo.progress?.batch?.subject ??
       item.memo.progress?.single?.subject ??
       item.memo.wiki?.subject;
 
-    return {
-      createdAt: item.createdAt,
-      id: item.id,
-      replies: item.replies,
-      subjectId: subject?.id,
-      text: describeTimeline(item),
-      user: {
-        avatarUrl: item.user.avatar.small,
-        nickname: item.user.nickname,
-        username: item.user.username,
+    return [
+      {
+        createdAt: item.createdAt,
+        id: item.id,
+        replies: item.replies,
+        subjectId: subject?.id,
+        text: describeTimeline(item),
+        user: {
+          avatarUrl: item.user.avatar.small || undefined,
+          nickname: item.user.nickname,
+          username: item.user.username,
+        },
       },
-    };
+    ];
   });
+}
+
+export async function createBangumiTimelineSay({
+  accessToken,
+  content,
+  fetcher = fetch,
+  turnstileToken,
+}: {
+  accessToken: string;
+  content: string;
+  fetcher?: typeof fetch;
+  turnstileToken: string;
+}): Promise<{ id: number }> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}/timeline`, {
+    body: JSON.stringify({ content, turnstileToken }),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
+    },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const code =
+      body &&
+      typeof body === 'object' &&
+      'code' in body &&
+      typeof body.code === 'string'
+        ? body.code
+        : undefined;
+
+    throw new BangumiTimelineError(
+      response.status,
+      code === 'CAPTCHA_ERROR'
+        ? '安全验证已过期，请重新验证后再试。'
+        : response.status === 429
+          ? '发布得太频繁了，请稍后再试。'
+          : response.status >= 500
+            ? 'Bangumi 动态服务暂时不可用。'
+            : '动态没有发布成功，请重新验证后再试。',
+      code,
+    );
+  }
+
+  return createdTimelineSchema.parse(await response.json());
 }

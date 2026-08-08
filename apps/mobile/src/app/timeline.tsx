@@ -1,13 +1,16 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FlatList } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
+import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 
 export default function FriendTimelineScreen() {
+  const [composerVisible, setComposerVisible] = useState(false);
   const timelineQuery = useFriendTimeline();
   const items = timelineQuery.data ?? [];
 
@@ -17,10 +20,8 @@ export default function FriendTimelineScreen() {
         options={{
           headerRight: () => (
             <Pressable
-              accessibilityRole="link"
-              onPress={() =>
-                void Linking.openURL('https://bgm.tv/timeline?type=say')
-              }
+              accessibilityRole="button"
+              onPress={() => setComposerVisible(true)}
               style={({ pressed }) => [
                 styles.publishButton,
                 pressed && styles.pressed,
@@ -49,6 +50,10 @@ export default function FriendTimelineScreen() {
           <FriendTimelineRow hasDivider={index > 0} item={item} />
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <TimelineComposer
+        onClose={() => setComposerVisible(false)}
+        visible={composerVisible}
       />
     </SafeAreaView>
   );
