@@ -3,6 +3,8 @@ export const queryKeys = {
     ['collections', 'kaku', userId ?? 'signed-out', subjectId] as const,
   friendTimeline: (userId: number | undefined) =>
     ['timeline', 'kaku', userId ?? 'signed-out', 'friends'] as const,
+  notifications: (userId: number | undefined) =>
+    ['notifications', 'kaku', userId ?? 'signed-out'] as const,
   catalogSubject: (subjectId: number, version: number) =>
     ['catalog-subject', 'bangumi', version, subjectId] as const,
   calendar: () => ['calendar', 'bangumi'] as const,

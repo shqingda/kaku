@@ -46,6 +46,15 @@ export default function RootLayout() {
               title: '账户',
             }}
           />
+          <Stack.Screen
+            name="notifications"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '通知',
+            }}
+          />
           <Stack.Screen name="auth/callback" />
           <Stack.Screen
             name="blog/[id]"

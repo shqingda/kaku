@@ -126,6 +126,40 @@ export default function AccountScreen() {
                 />
               </View>
             </Pressable>
+            <Pressable
+              accessibilityLabel="查看通知"
+              accessibilityRole="button"
+              onPress={() => router.push('/notifications')}
+              style={({ pressed }) => [
+                styles.menuCard,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.menuIcon}>
+                <SymbolView
+                  name={{
+                    android: 'notifications',
+                    ios: 'bell.fill',
+                    web: 'notifications',
+                  }}
+                  size={18}
+                  tintColor={COLORS.accent}
+                />
+              </View>
+              <View style={styles.menuCopy}>
+                <Text style={styles.menuTitle}>通知</Text>
+                <Text style={styles.menuDescription}>回复、好友与修订消息</Text>
+              </View>
+              <SymbolView
+                name={{
+                  android: 'chevron_right',
+                  ios: 'chevron.right',
+                  web: 'chevron_right',
+                }}
+                size={14}
+                tintColor={COLORS.subtle}
+              />
+            </Pressable>
             <View style={styles.sessionsCard}>
               <View style={styles.sessionsHeading}>
                 <Text style={styles.sessionsTitle}>登录设备</Text>
@@ -350,6 +384,26 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   profileLinkText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
+  menuCard: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    flexDirection: 'row',
+    marginTop: 14,
+    minHeight: 72,
+    paddingHorizontal: 18,
+  },
+  menuIcon: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 13,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  menuCopy: { flex: 1, marginLeft: 13 },
+  menuTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  menuDescription: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,
