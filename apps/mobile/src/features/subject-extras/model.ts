@@ -20,6 +20,12 @@ export type RelatedSubject = {
 };
 
 export type SubjectExtrasProvider = {
-  getCharacters: (subjectId: number) => Promise<SubjectCharacter[]>;
-  getRelations: (subjectId: number) => Promise<RelatedSubject[]>;
+  getCharacters: (
+    subjectId: number,
+    signal?: AbortSignal,
+  ) => Promise<SubjectCharacter[]>;
+  getRelations: (
+    subjectId: number,
+    signal?: AbortSignal,
+  ) => Promise<RelatedSubject[]>;
 };

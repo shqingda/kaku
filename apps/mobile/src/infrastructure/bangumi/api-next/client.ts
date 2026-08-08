@@ -23,9 +23,9 @@ import { createBangumiRequester } from '../transport/http-client';
 
 const requestJson = createBangumiRequester({
   baseUrl: 'https://next.bgm.tv',
-  failedMessage: (status) => `Bangumi 讨论请求失败（${status}）`,
-  networkMessage: '暂时无法连接 Bangumi 讨论服务',
-  timeoutMessage: 'Bangumi 讨论请求超时',
+  failedMessage: (status) => `Bangumi 数据请求失败（${status}）`,
+  networkMessage: '暂时无法连接 Bangumi 数据服务',
+  timeoutMessage: 'Bangumi 数据请求超时',
 });
 
 const CHARACTER_PAGE_SIZE = 100;
@@ -33,17 +33,24 @@ const CHARACTER_PAGE_SIZE = 100;
 async function getBangumiSubjectCharacterNamePage(
   subjectId: number,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const json = await requestJson(
     `/p1/subjects/${subjectId}/characters?limit=${CHARACTER_PAGE_SIZE}&offset=${offset}`,
+    { signal },
   );
   return bangumiSubjectCharacterNamesSchema.parse(json);
 }
 
 export async function getBangumiSubjectCharacterNames(
   subjectId: number,
+  signal?: AbortSignal,
 ): Promise<BangumiSubjectCharacterName[]> {
-  const firstPage = await getBangumiSubjectCharacterNamePage(subjectId, 0);
+  const firstPage = await getBangumiSubjectCharacterNamePage(
+    subjectId,
+    0,
+    signal,
+  );
   const remainingOffsets = Array.from(
     {
       length: Math.max(
@@ -55,7 +62,7 @@ export async function getBangumiSubjectCharacterNames(
   );
   const remainingPages = await Promise.all(
     remainingOffsets.map((offset) =>
-      getBangumiSubjectCharacterNamePage(subjectId, offset),
+      getBangumiSubjectCharacterNamePage(subjectId, offset, signal),
     ),
   );
 

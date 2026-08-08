@@ -93,13 +93,23 @@ export async function getBangumiSubjectStaff(subjectId: number) {
   return bangumiSubjectStaffSchema.parse(json);
 }
 
-export async function getBangumiSubjectCharacters(subjectId: number) {
-  const json = await requestJson(`/v0/subjects/${subjectId}/characters`);
+export async function getBangumiSubjectCharacters(
+  subjectId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/v0/subjects/${subjectId}/characters`, {
+    signal,
+  });
   return bangumiSubjectCharactersSchema.parse(json);
 }
 
-export async function getBangumiSubjectRelations(subjectId: number) {
-  const json = await requestJson(`/v0/subjects/${subjectId}/subjects`);
+export async function getBangumiSubjectRelations(
+  subjectId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/v0/subjects/${subjectId}/subjects`, {
+    signal,
+  });
   return bangumiSubjectRelationsSchema.parse(json);
 }
 

@@ -7,7 +7,8 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 export function useSubjectCharacters(subjectId: number) {
   return useQuery({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () => bangumiSubjectExtrasProvider.getCharacters(subjectId),
+    queryFn: ({ signal }) =>
+      bangumiSubjectExtrasProvider.getCharacters(subjectId, signal),
     queryKey: queryKeys.subjectCharacters(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
@@ -17,7 +18,8 @@ export function useSubjectCharacters(subjectId: number) {
 export function useSubjectRelations(subjectId: number) {
   return useQuery({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () => bangumiSubjectExtrasProvider.getRelations(subjectId),
+    queryFn: ({ signal }) =>
+      bangumiSubjectExtrasProvider.getRelations(subjectId, signal),
     queryKey: queryKeys.subjectRelations(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,

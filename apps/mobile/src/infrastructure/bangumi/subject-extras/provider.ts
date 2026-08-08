@@ -29,15 +29,15 @@ function toRelatedSubject(
 }
 
 export const bangumiSubjectExtrasProvider: SubjectExtrasProvider = {
-  async getCharacters(subjectId) {
+  async getCharacters(subjectId, signal) {
     const [characters, localizedCharacters] = await Promise.all([
-      getBangumiSubjectCharacters(subjectId),
-      getBangumiSubjectCharacterNames(subjectId),
+      getBangumiSubjectCharacters(subjectId, signal),
+      getBangumiSubjectCharacterNames(subjectId, signal),
     ]);
     return mapBangumiSubjectCharacters(characters, localizedCharacters);
   },
-  async getRelations(subjectId) {
-    const relations = await getBangumiSubjectRelations(subjectId);
+  async getRelations(subjectId, signal) {
+    const relations = await getBangumiSubjectRelations(subjectId, signal);
     return relations.map(toRelatedSubject);
   },
 };
