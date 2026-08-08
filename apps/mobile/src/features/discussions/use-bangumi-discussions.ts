@@ -21,11 +21,12 @@ export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiDiscussionsProvider.getSubjectTopics(
         subjectId,
         limit,
         pageParam,
+        signal,
       ),
     queryKey: queryKeys.subjectTopics(subjectId, limit),
     retry: shouldRetryBangumiQuery,
@@ -36,7 +37,8 @@ export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
 export function useBangumiSubjectTopic(topicId: number) {
   return useQuery({
     enabled: Number.isInteger(topicId) && topicId > 0,
-    queryFn: () => bangumiDiscussionsProvider.getSubjectTopic(topicId),
+    queryFn: ({ signal }) =>
+      bangumiDiscussionsProvider.getSubjectTopic(topicId, signal),
     queryKey: queryKeys.subjectTopic(topicId),
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
@@ -46,8 +48,8 @@ export function useBangumiSubjectTopic(topicId: number) {
 export function useBangumiEpisodeComments(episodeId?: number) {
   return useQuery({
     enabled: Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
-    queryFn: () =>
-      bangumiDiscussionsProvider.getEpisodeComments(episodeId!),
+    queryFn: ({ signal }) =>
+      bangumiDiscussionsProvider.getEpisodeComments(episodeId!, signal),
     queryKey: queryKeys.episodeComments(episodeId),
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,

@@ -25,8 +25,8 @@ export function useSubjectComments(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      bangumiReviewsProvider.getComments(subjectId, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      bangumiReviewsProvider.getComments(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectComments(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -44,8 +44,8 @@ export function useSubjectReviews(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      bangumiReviewsProvider.getReviews(subjectId, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      bangumiReviewsProvider.getReviews(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectReviews(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -55,7 +55,8 @@ export function useSubjectReviews(subjectId: number) {
 export function useSubjectReview(reviewId: number) {
   return useQuery<SubjectReviewDetail>({
     enabled: Number.isInteger(reviewId) && reviewId > 0,
-    queryFn: () => bangumiReviewsProvider.getReview(reviewId),
+    queryFn: ({ signal }) =>
+      bangumiReviewsProvider.getReview(reviewId, signal),
     queryKey: queryKeys.subjectReview(reviewId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,

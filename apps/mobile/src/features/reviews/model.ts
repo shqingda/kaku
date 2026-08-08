@@ -40,10 +40,15 @@ export type ReviewsProvider = {
   getComments: (
     subjectId: number,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<SubjectCommentPage>;
-  getReview: (reviewId: number) => Promise<SubjectReviewDetail>;
+  getReview: (
+    reviewId: number,
+    signal?: AbortSignal,
+  ) => Promise<SubjectReviewDetail>;
   getReviews: (
     subjectId: number,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<SubjectReviewPage>;
 };

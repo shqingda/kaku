@@ -34,11 +34,18 @@ export type DiscussionTopicPage = {
 };
 
 export type DiscussionsProvider = {
-  getEpisodeComments: (episodeId: number) => Promise<DiscussionReply[]>;
-  getSubjectTopic: (topicId: number) => Promise<DiscussionTopic | null>;
+  getEpisodeComments: (
+    episodeId: number,
+    signal?: AbortSignal,
+  ) => Promise<DiscussionReply[]>;
+  getSubjectTopic: (
+    topicId: number,
+    signal?: AbortSignal,
+  ) => Promise<DiscussionTopic | null>;
   getSubjectTopics: (
     subjectId: number,
     limit: number,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<DiscussionTopicPage>;
 };

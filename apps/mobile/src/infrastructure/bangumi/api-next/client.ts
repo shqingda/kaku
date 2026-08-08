@@ -71,31 +71,46 @@ export async function getBangumiSubjectTopics(
   subjectId: number,
   limit = 20,
   offset = 0,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: String(limit),
     offset: String(offset),
   });
-  const json = await requestJson(`/p1/subjects/${subjectId}/topics?${query}`);
+  const json = await requestJson(`/p1/subjects/${subjectId}/topics?${query}`, {
+    signal,
+  });
   return bangumiSubjectTopicPageSchema.parse(json);
 }
 
-export async function getBangumiSubjectTopic(topicId: number) {
-  const json = await requestJson(`/p1/subjects/-/topics/${topicId}`);
+export async function getBangumiSubjectTopic(
+  topicId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/p1/subjects/-/topics/${topicId}`, {
+    signal,
+  });
   return bangumiSubjectTopicSchema.parse(json);
 }
 
-export async function getBangumiEpisodeComments(episodeId: number) {
-  const json = await requestJson(`/p1/episodes/${episodeId}/comments`);
+export async function getBangumiEpisodeComments(
+  episodeId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/p1/episodes/${episodeId}/comments`, {
+    signal,
+  });
   return bangumiEpisodeCommentsSchema.parse(json);
 }
 
 export async function getBangumiSubjectComments(
   subjectId: number,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const json = await requestJson(
     `/p1/subjects/${subjectId}/comments?limit=30&offset=${offset}`,
+    { signal },
   );
   return bangumiSubjectCommentsSchema.parse(json);
 }
@@ -103,17 +118,22 @@ export async function getBangumiSubjectComments(
 export async function getBangumiSubjectReviews(
   subjectId: number,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const json = await requestJson(
     `/p1/subjects/${subjectId}/reviews?limit=20&offset=${offset}`,
+    { signal },
   );
   return bangumiSubjectReviewsSchema.parse(json);
 }
 
-export async function getBangumiReview(reviewId: number) {
+export async function getBangumiReview(
+  reviewId: number,
+  signal?: AbortSignal,
+) {
   const [blogJson, commentsJson] = await Promise.all([
-    requestJson(`/p1/blogs/${reviewId}`),
-    requestJson(`/p1/blogs/${reviewId}/comments`),
+    requestJson(`/p1/blogs/${reviewId}`, { signal }),
+    requestJson(`/p1/blogs/${reviewId}/comments`, { signal }),
   ]);
 
   return {

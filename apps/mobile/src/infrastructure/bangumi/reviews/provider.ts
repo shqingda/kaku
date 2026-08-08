@@ -16,20 +16,20 @@ import {
 } from './adapter';
 
 export const bangumiReviewsProvider: ReviewsProvider = {
-  async getComments(subjectId, offset) {
+  async getComments(subjectId, offset, signal) {
     return mapBangumiComments(
-      await getBangumiSubjectComments(subjectId, offset),
+      await getBangumiSubjectComments(subjectId, offset, signal),
       offset,
     );
   },
-  async getReviews(subjectId, offset) {
+  async getReviews(subjectId, offset, signal) {
     return mapBangumiReviews(
-      await getBangumiSubjectReviews(subjectId, offset),
+      await getBangumiSubjectReviews(subjectId, offset, signal),
       offset,
     );
   },
-  async getReview(reviewId) {
-    const { blog, comments } = await getBangumiReview(reviewId);
+  async getReview(reviewId, signal) {
+    const { blog, comments } = await getBangumiReview(reviewId, signal);
     return mapBangumiReviewDetail(
       blog,
       cleanBangumiContent(blog.content),
