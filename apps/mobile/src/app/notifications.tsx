@@ -1,16 +1,48 @@
+import { Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { NotificationRow } from '@/features/notifications/notification-row';
-import { useNotifications } from '@/features/notifications/use-notifications';
+import {
+  useMarkNotificationsRead,
+  useNotifications,
+} from '@/features/notifications/use-notifications';
 
 export default function NotificationsScreen() {
   const notificationsQuery = useNotifications();
+  const markRead = useMarkNotificationsRead();
   const notifications = notificationsQuery.data?.items ?? [];
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <Stack.Screen
+        options={{
+          headerRight: () =>
+            notificationsQuery.data?.unreadCount ? (
+              <Pressable
+                accessibilityLabel="全部标记为已读"
+                accessibilityRole="button"
+                disabled={markRead.isPending}
+                hitSlop={8}
+                onPress={() => markRead.mutate(undefined)}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <SymbolView
+                  name={{
+                    android: 'done_all',
+                    ios: 'checkmark.circle',
+                    web: 'done_all',
+                  }}
+                  size={21}
+                  tintColor={COLORS.ink}
+                />
+              </Pressable>
+            ) : null,
+          title: '通知',
+        }}
+      />
       <FlatList
         contentContainerStyle={styles.content}
         data={notifications}
@@ -26,7 +58,11 @@ export default function NotificationsScreen() {
         refreshing={notificationsQuery.isRefetching}
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
-          <NotificationRow hasDivider={index > 0} item={item} />
+          <NotificationRow
+            hasDivider={index > 0}
+            item={item}
+            onRead={(id) => markRead.mutate([id])}
+          />
         )}
         showsVerticalScrollIndicator={false}
       />

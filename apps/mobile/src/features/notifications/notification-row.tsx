@@ -34,16 +34,20 @@ function openTarget(target: NotificationTarget | undefined) {
 export function NotificationRow({
   hasDivider,
   item,
+  onRead,
 }: {
   hasDivider: boolean;
   item: UserNotification;
+  onRead: (id: number) => void;
 }) {
   return (
     <Pressable
       accessibilityLabel={`${item.sender.nickname}${item.action}：${item.title}`}
-      accessibilityRole={item.target ? 'button' : undefined}
-      disabled={!item.target}
-      onPress={() => openTarget(item.target)}
+      accessibilityRole="button"
+      onPress={() => {
+        if (item.unread) onRead(item.id);
+        openTarget(item.target);
+      }}
       style={({ pressed }) => [
         styles.row,
         hasDivider && styles.divider,

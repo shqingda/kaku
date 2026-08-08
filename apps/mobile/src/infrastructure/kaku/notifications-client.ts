@@ -40,3 +40,18 @@ export async function getNotifications(
 
   return responseSchema.parse(await response.json());
 }
+
+export async function markNotificationsRead(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  ids?: number[],
+): Promise<void> {
+  const response = await request('/me/notifications/read', {
+    body: JSON.stringify(ids?.length ? { ids } : {}),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}

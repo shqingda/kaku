@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getBangumiNotifications } from '../src/notifications/bangumi-client.ts';
+import {
+  getBangumiNotifications,
+  markBangumiNotificationsRead,
+} from '../src/notifications/bangumi-client.ts';
 
 test('Bangumi notifications map private API types into Kaku models', async () => {
   const fetcher = async (input, init) => {
@@ -89,4 +92,32 @@ test('friend notifications link to the sender profile', async () => {
   assert.equal(result.items[0]?.sender.avatarUrl, undefined);
   assert.equal(result.items[0]?.title, '');
   assert.equal(result.unreadCount, 0);
+});
+
+test('marking notifications read forwards selected ids without exposing OAuth', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/clear-notify');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.equal(init.method, 'POST');
+    assert.deepEqual(JSON.parse(init.body), { id: [42, 43] });
+    return Response.json({});
+  };
+
+  await markBangumiNotificationsRead({
+    accessToken: 'access-token',
+    fetcher,
+    ids: [42, 43],
+  });
+});
+
+test('marking all notifications read sends an empty object', async () => {
+  const fetcher = async (_input, init) => {
+    assert.deepEqual(JSON.parse(init.body), {});
+    return Response.json({});
+  };
+
+  await markBangumiNotificationsRead({
+    accessToken: 'access-token',
+    fetcher,
+  });
 });

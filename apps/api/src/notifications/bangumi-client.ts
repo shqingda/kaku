@@ -150,3 +150,33 @@ export async function getBangumiNotifications({
     unreadCount: items.filter((item) => item.unread).length,
   };
 }
+
+export async function markBangumiNotificationsRead({
+  accessToken,
+  fetcher = fetch,
+  ids,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  ids?: number[];
+}): Promise<void> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}/clear-notify`, {
+    body: JSON.stringify(ids?.length ? { id: ids } : {}),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
+    },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new BangumiNotificationError(
+      response.status,
+      response.status >= 500
+        ? 'Bangumi 通知服务暂时不可用。'
+        : '通知暂时无法标记为已读。',
+    );
+  }
+}

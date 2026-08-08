@@ -78,3 +78,21 @@ test('notifications are registered as an authenticated route', async () => {
     message: '请先登录 Kaku。',
   });
 });
+
+test('marking notifications read is an authenticated route', async () => {
+  const response = await createApp({ createStore: () => ({}) }).request(
+    '/me/notifications/read',
+    {
+      body: JSON.stringify({ ids: [42] }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+    { DB: {} },
+  );
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), {
+    error: 'unauthorized',
+    message: '请先登录 Kaku。',
+  });
+});
