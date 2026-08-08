@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 import { createTimelineSay } from '@/infrastructure/kaku/timeline-client';
 import { queryKeys } from '@/lib/query-keys';
-import { requestBangumiTurnstileToken } from './timeline-turnstile';
 
 export function useCreateTimelineSay() {
   const { request, session } = useAuth();

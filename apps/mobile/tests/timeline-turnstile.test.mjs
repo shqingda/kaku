@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getTurnstileTokenFromCallback } from '../src/features/timeline/turnstile-callback.ts';
+import { getTurnstileTokenFromCallback } from '../src/features/auth/turnstile-callback.ts';
 
 test('Bangumi Turnstile callback accepts only the Kaku callback URL', () => {
   assert.equal(

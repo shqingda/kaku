@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Platform,
@@ -10,21 +12,37 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import {
-  DiscussionReadOnlyNotice,
-  EmptyDiscussionReplies,
-} from '@/features/discussions/discussion-read-only';
+import { useAuth } from '@/features/auth/auth-provider';
+import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
+import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 
 export default function TopicScreen() {
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
-  const topicQuery = useBangumiSubjectTopic(Number(topicId));
+  const numericTopicId = Number(topicId);
+  const { isSigningIn, session, signIn } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const topicQuery = useBangumiSubjectTopic(numericTopicId);
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+
+  async function openComposer(reply?: DiscussionReply) {
+    if (!session) {
+      const signedIn = await signIn();
+      if (!signedIn) {
+        return;
+      }
+    }
+
+    setReplyingTo(reply);
+    setComposerVisible(true);
+  }
 
   if (!topic && !topicQuery.isPending && !topicQuery.isError) {
     return (
@@ -52,7 +70,6 @@ export default function TopicScreen() {
           ListEmptyComponent={
             topic && !topicQuery.isError ? <EmptyDiscussionReplies /> : null
           }
-          ListFooterComponent={topic ? <DiscussionReadOnlyNotice /> : null}
           ListHeaderComponent={
             <>
               <DiscussionStatus
@@ -94,6 +111,7 @@ export default function TopicScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
+              onReply={session ? openComposer : undefined}
               reply={item}
             />
           )}
@@ -101,7 +119,44 @@ export default function TopicScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
+        {topic ? (
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={COLORS.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? '参与讨论…'
+                    : '登录后参与讨论'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
+      <DiscussionReplyComposer
+        onClose={() => setComposerVisible(false)}
+        replyingTo={replyingTo}
+        topicId={numericTopicId}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -109,7 +164,7 @@ export default function TopicScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   contentView: { flex: 1 },
-  listContent: { padding: 20, paddingBottom: 28 },
+  listContent: { padding: 20, paddingBottom: 20 },
   topicHeader: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,
@@ -129,4 +184,23 @@ const styles = StyleSheet.create({
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
   errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
   errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  replyBar: {
+    backgroundColor: COLORS.background,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 48,
+    paddingHorizontal: 17,
+  },
+  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  pressed: { opacity: 0.62 },
 });

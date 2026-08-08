@@ -13,8 +13,6 @@ export async function requestBangumiTurnstileToken() {
   challengeUrl.searchParams.set('redirect_uri', callbackUrl);
   challengeUrl.searchParams.set('theme', 'light');
 
-  // Avoid opening a browser that can only show Bangumi's raw whitelist error.
-  // Once Kaku's callback is registered this lightweight request returns HTML.
   const availability = await fetch(challengeUrl, {
     headers: { Accept: 'text/html' },
     signal: AbortSignal.timeout(12_000),
@@ -30,7 +28,7 @@ export async function requestBangumiTurnstileToken() {
   );
 
   if (result.type !== 'success') {
-    throw new Error('安全验证未完成，动态没有发送。');
+    throw new Error('安全验证未完成，内容没有发送。');
   }
 
   return getTurnstileTokenFromCallback(result.url);

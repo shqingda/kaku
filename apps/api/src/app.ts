@@ -6,6 +6,7 @@ import {
 } from './auth/routes.ts';
 import type { Env } from './env.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
+import { registerDiscussionRoutes } from './discussions/routes.ts';
 import {
   type RankingDependencies,
   registerRankingRoutes,
@@ -26,6 +27,7 @@ export function createApp(dependencies: AppDependencies = {}) {
 
   registerAuthRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
+  registerDiscussionRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
 
