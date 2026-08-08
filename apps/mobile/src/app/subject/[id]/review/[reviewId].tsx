@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Platform,
@@ -10,11 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import {
-  DiscussionReadOnlyNotice,
-  EmptyDiscussionReplies,
-} from '@/features/discussions/discussion-read-only';
+import { useAuth } from '@/features/auth/auth-provider';
+import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
+import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
@@ -25,16 +27,33 @@ export default function SubjectReviewScreen() {
     id?: string;
     reviewId?: string;
   }>();
-  const reviewQuery = useSubjectReview(Number(reviewId ?? id));
+  const numericReviewId = Number(reviewId ?? id);
+  const { isSigningIn, session, signIn } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const reviewQuery = useSubjectReview(numericReviewId);
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+
+  async function openComposer(reply?: DiscussionReply) {
+    if (!session) {
+      const signedIn = await signIn();
+      if (!signedIn) {
+        return;
+      }
+    }
+
+    setReplyingTo(reply);
+    setComposerVisible(true);
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '评论' }} />
       <View style={styles.contentView}>
         <FlatList
+          style={styles.list}
           contentContainerStyle={styles.listContent}
           data={replies}
           initialNumToRender={8}
@@ -42,7 +61,6 @@ export default function SubjectReviewScreen() {
           ListEmptyComponent={
             review && replies.length === 0 ? <EmptyDiscussionReplies /> : null
           }
-          ListFooterComponent={review ? <DiscussionReadOnlyNotice /> : null}
           ListHeaderComponent={
             <>
               <DiscussionStatus
@@ -95,6 +113,7 @@ export default function SubjectReviewScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
+              onReply={session ? openComposer : undefined}
               reply={item}
             />
           )}
@@ -102,7 +121,44 @@ export default function SubjectReviewScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
+        {review ? (
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? '回复评论' : '登录后回复评论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={COLORS.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? '回复这篇评论…'
+                    : '登录后回复评论'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
+      <DiscussionReplyComposer
+        onClose={() => setComposerVisible(false)}
+        replyingTo={replyingTo}
+        target={{ id: numericReviewId, kind: 'review' }}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -110,6 +166,7 @@ export default function SubjectReviewScreen() {
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
   contentView: { flex: 1 },
+  list: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   reviewHeader: {
     backgroundColor: COLORS.surface,
@@ -142,4 +199,23 @@ const styles = StyleSheet.create({
     marginTop: 22,
     paddingTop: 16,
   },
+  replyBar: {
+    backgroundColor: COLORS.background,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 48,
+    paddingHorizontal: 17,
+  },
+  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  pressed: { opacity: 0.62 },
 });

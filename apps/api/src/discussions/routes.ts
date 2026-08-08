@@ -17,6 +17,7 @@ import {
   BangumiDiscussionError,
   createBangumiEpisodeComment,
   createBangumiGroupTopicReply,
+  createBangumiReviewReply,
   createBangumiSubjectTopicReply,
 } from './bangumi-client.ts';
 
@@ -152,6 +153,14 @@ export function registerDiscussionRoutes(
       getPositiveId(context.req.param('episodeId')),
       ({ targetId, ...input }) =>
         createBangumiEpisodeComment({ ...input, episodeId: targetId }),
+    ),
+  );
+  app.post('/me/reviews/:reviewId/replies', (context) =>
+    createReply(
+      context,
+      getPositiveId(context.req.param('reviewId')),
+      ({ targetId, ...input }) =>
+        createBangumiReviewReply({ ...input, reviewId: targetId }),
     ),
   );
 }

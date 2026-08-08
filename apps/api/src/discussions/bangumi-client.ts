@@ -59,7 +59,7 @@ async function createBangumiTopicReply({
         : response.status === 429
           ? '回复得太频繁了，请稍后再试。'
           : response.status === 404
-            ? '这个话题已不存在或当前账号无法访问。'
+            ? '这条讨论已不存在或当前账号无法访问。'
             : response.status >= 500
               ? 'Bangumi 讨论服务暂时不可用。'
               : '回复没有发送成功，请稍后重试。',
@@ -103,5 +103,17 @@ export function createBangumiEpisodeComment({
   return createBangumiTopicReply({
     ...input,
     path: `/episodes/${episodeId}/comments`,
+  });
+}
+
+export function createBangumiReviewReply({
+  reviewId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  reviewId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/blogs/${reviewId}/comments`,
   });
 }

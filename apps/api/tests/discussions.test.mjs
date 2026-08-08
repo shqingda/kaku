@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   createBangumiEpisodeComment,
   createBangumiGroupTopicReply,
+  createBangumiReviewReply,
   createBangumiSubjectTopicReply,
 } from '../src/discussions/bangumi-client.ts';
 
@@ -60,6 +61,33 @@ test('creating an episode comment uses the episode P1 endpoint', async () => {
   });
 
   assert.deepEqual(reply, { id: 10003 });
+});
+
+test('creating a review reply uses the blog comments P1 endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/blogs/378109/comments',
+    );
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), {
+      content: '这篇评论把问题讲清楚了。',
+      replyTo: 789,
+      turnstileToken: 'turnstile-token',
+    });
+    return Response.json({ id: 10004 });
+  };
+
+  const reply = await createBangumiReviewReply({
+    accessToken: 'access-token',
+    content: '这篇评论把问题讲清楚了。',
+    fetcher,
+    replyTo: 789,
+    reviewId: 378109,
+    turnstileToken: 'turnstile-token',
+  });
+
+  assert.deepEqual(reply, { id: 10004 });
 });
 
 test('creating a group topic reply uses the group P1 endpoint', async () => {

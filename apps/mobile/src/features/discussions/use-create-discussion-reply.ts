@@ -5,6 +5,7 @@ import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile'
 import {
   createEpisodeComment,
   createGroupTopicReply,
+  createReviewReply,
   createSubjectTopicReply,
 } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
@@ -16,7 +17,7 @@ export type CreateDiscussionReplyInput = {
 
 export type DiscussionReplyTarget = {
   id: number;
-  kind: 'episode' | 'group-topic' | 'subject-topic';
+  kind: 'episode' | 'group-topic' | 'review' | 'subject-topic';
 };
 
 export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
@@ -31,6 +32,15 @@ export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
           content,
           episodeId: target.id,
           replyTo,
+          turnstileToken,
+        });
+      }
+
+      if (target.kind === 'review') {
+        return createReviewReply(request, {
+          content,
+          replyTo,
+          reviewId: target.id,
           turnstileToken,
         });
       }
@@ -52,9 +62,11 @@ export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
         queryKey:
           target.kind === 'episode'
             ? queryKeys.episodeComments(target.id)
-            : target.kind === 'group-topic'
-              ? queryKeys.groupTopic(target.id)
-              : queryKeys.subjectTopic(target.id),
+            : target.kind === 'review'
+              ? queryKeys.subjectReview(target.id)
+              : target.kind === 'group-topic'
+                ? queryKeys.groupTopic(target.id)
+                : queryKeys.subjectTopic(target.id),
       });
     },
   });

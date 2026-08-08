@@ -76,3 +76,10 @@ export async function createEpisodeComment(
 ) {
   return createReply(request, `/me/episodes/${input.episodeId}/comments`, input);
 }
+
+export async function createReviewReply(
+  request: AuthenticatedRequest,
+  input: CreateReplyInput & { reviewId: number },
+) {
+  return createReply(request, `/me/reviews/${input.reviewId}/replies`, input);
+}
