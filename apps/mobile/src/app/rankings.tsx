@@ -46,7 +46,7 @@ export default function RankingsScreen() {
       <FlatList
         contentContainerStyle={styles.content}
         data={subjects}
-        initialNumToRender={12}
+        initialNumToRender={Platform.OS === 'android' ? 6 : 12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           rankingQuery.isPending ? (
@@ -94,7 +94,7 @@ export default function RankingsScreen() {
             />
           </>
         }
-        maxToRenderPerBatch={12}
+        maxToRenderPerBatch={Platform.OS === 'android' ? 6 : 12}
         onEndReached={() => {
           if (
             rankingQuery.hasNextPage &&
@@ -128,8 +128,8 @@ export default function RankingsScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
-        updateCellsBatchingPeriod={40}
-        windowSize={7}
+        updateCellsBatchingPeriod={Platform.OS === 'android' ? 60 : 40}
+        windowSize={Platform.OS === 'android' ? 5 : 7}
       />
     </SafeAreaView>
   );

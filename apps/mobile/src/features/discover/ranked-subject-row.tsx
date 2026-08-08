@@ -1,5 +1,11 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
@@ -42,7 +48,7 @@ export function RankedSubjectRow({
             contentFit="cover"
             source={item.coverUrl}
             style={StyleSheet.absoluteFill}
-            transition={120}
+            transition={Platform.OS === 'ios' ? 120 : 0}
           />
         ) : null}
       </View>

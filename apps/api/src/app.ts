@@ -6,9 +6,15 @@ import {
 } from './auth/routes.ts';
 import type { Env } from './env.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
+import {
+  type RankingDependencies,
+  registerRankingRoutes,
+} from './rankings/routes.ts';
 import { registerTimelineRoutes } from './timeline/routes.ts';
 
-export function createApp(dependencies: AuthDependencies = {}) {
+type AppDependencies = AuthDependencies & RankingDependencies;
+
+export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
 
   app.get('/health', (context) =>
@@ -20,6 +26,7 @@ export function createApp(dependencies: AuthDependencies = {}) {
 
   registerAuthRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
+  registerRankingRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
 
   app.onError((error, context) => {

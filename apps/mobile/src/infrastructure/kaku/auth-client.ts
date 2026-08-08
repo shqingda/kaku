@@ -86,6 +86,13 @@ export function fetchKaku(
   });
 }
 
+export function fetchPublicKaku(path: string, init: RequestInit = {}) {
+  return fetch(`${KAKU_API_URL}${path}`, {
+    ...init,
+    signal: init.signal ?? AbortSignal.timeout(12_000),
+  });
+}
+
 const deviceSessionsSchema = z.object({
   sessions: z.array(
     z.object({
