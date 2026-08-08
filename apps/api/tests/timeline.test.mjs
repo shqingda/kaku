@@ -35,20 +35,69 @@ test('Bangumi friend timeline maps private API data into Kaku models', async () 
     fetcher,
   });
 
-  assert.deepEqual(items, [
-    {
-      createdAt: 1_785_940_000,
-      id: 42,
-      replies: 2,
-      subjectId: undefined,
-      text: '今天也要看动画。',
-      user: {
-        avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
-        nickname: 'Kaku 用户',
-        username: 'kaku-user',
+  assert.deepEqual(items, {
+    items: [
+      {
+        createdAt: 1_785_940_000,
+        id: 42,
+        replies: 2,
+        subjectId: undefined,
+        text: '今天也要看动画。',
+        user: {
+          avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+          nickname: 'Kaku 用户',
+          username: 'kaku-user',
+        },
       },
-    },
-  ]);
+    ],
+    nextUntil: undefined,
+  });
+});
+
+test('Bangumi friend timeline uses the last raw id as its next cursor', async () => {
+  const fetcher = async (input) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/timeline?mode=friends&limit=2&until=42',
+    );
+
+    return Response.json([
+      {
+        cat: 5,
+        createdAt: 1_785_940_000,
+        id: 41,
+        memo: { status: { tsukkomi: '第一页。' } },
+        replies: 0,
+        user: {
+          avatar: {},
+          nickname: '用户一',
+          username: 'user-one',
+        },
+      },
+      {
+        cat: 5,
+        createdAt: 1_785_930_000,
+        id: 40,
+        memo: { status: { tsukkomi: '下一页从这里继续。' } },
+        replies: 0,
+        user: {
+          avatar: {},
+          nickname: '用户二',
+          username: 'user-two',
+        },
+      },
+    ]);
+  };
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+    limit: 2,
+    until: 42,
+  });
+
+  assert.equal(page.items.length, 2);
+  assert.equal(page.nextUntil, 40);
 });
 
 test('Bangumi friend timeline skips an event whose user is unavailable', async () => {
@@ -72,7 +121,7 @@ test('Bangumi friend timeline skips an event whose user is unavailable', async (
     fetcher,
   });
 
-  assert.deepEqual(items, []);
+  assert.deepEqual(items, { items: [], nextUntil: undefined });
 });
 
 test('publishing a timeline say keeps OAuth and Turnstile credentials server-side', async () => {

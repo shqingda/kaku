@@ -10,3 +10,8 @@ export type FriendTimelineItem = {
     username: string;
   };
 };
+
+export type FriendTimelinePage = {
+  items: FriendTimelineItem[];
+  nextUntil?: number;
+};

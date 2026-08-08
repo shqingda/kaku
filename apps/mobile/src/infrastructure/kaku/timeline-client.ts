@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import type { FriendTimelineItem } from '@/features/timeline/model';
+import type { FriendTimelinePage } from '@/features/timeline/model';
 import { readErrorMessage } from './auth-client';
+import { getFriendTimelinePath } from './timeline-pagination';
 
 const timelineItemSchema = z.object({
   createdAt: z.number().int(),
@@ -16,19 +17,23 @@ const timelineItemSchema = z.object({
   }),
 });
 
-const responseSchema = z.object({ items: z.array(timelineItemSchema) });
+const responseSchema = z.object({
+  items: z.array(timelineItemSchema),
+  nextUntil: z.number().int().positive().optional(),
+});
 const createdTimelineSchema = z.object({ id: z.number().int().positive() });
 
 export async function getFriendTimeline(
   request: (path: string, init?: RequestInit) => Promise<Response>,
-): Promise<FriendTimelineItem[]> {
-  const response = await request('/me/timeline');
+  until?: number,
+): Promise<FriendTimelinePage> {
+  const response = await request(getFriendTimelinePath(until));
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
 
-  return responseSchema.parse(await response.json()).items;
+  return responseSchema.parse(await response.json());
 }
 
 export async function createTimelineSay(

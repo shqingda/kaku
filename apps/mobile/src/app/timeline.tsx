@@ -1,10 +1,17 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { FlatList } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
@@ -12,7 +19,10 @@ import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 export default function FriendTimelineScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const timelineQuery = useFriendTimeline();
-  const items = timelineQuery.data ?? [];
+  const items = useMemo(
+    () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [timelineQuery.data],
+  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -44,8 +54,32 @@ export default function FriendTimelineScreen() {
             onRetry={() => void timelineQuery.refetch()}
           />
         }
+        ListFooterComponent={
+          items.length > 0 ? (
+            <PagedListFooter
+              hasNextPage={Boolean(timelineQuery.hasNextPage)}
+              isError={timelineQuery.isFetchNextPageError}
+              isFetching={timelineQuery.isFetchingNextPage}
+              loadedCount={items.length}
+              onRetry={() => void timelineQuery.fetchNextPage()}
+            />
+          ) : null
+        }
+        onEndReached={() => {
+          if (
+            timelineQuery.hasNextPage &&
+            !timelineQuery.isFetchingNextPage &&
+            !timelineQuery.isFetchNextPageError
+          ) {
+            void timelineQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
         onRefresh={() => void timelineQuery.refetch()}
-        refreshing={timelineQuery.isRefetching}
+        refreshing={
+          timelineQuery.isRefetching && !timelineQuery.isFetchingNextPage
+        }
+        removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <FriendTimelineRow hasDivider={index > 0} item={item} />
         )}

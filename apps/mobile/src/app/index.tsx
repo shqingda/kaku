@@ -112,7 +112,7 @@ export default function HomeScreen() {
 function TimelineBoundary() {
   const [composerVisible, setComposerVisible] = useState(false);
   const timelineQuery = useFriendTimeline();
-  const items = timelineQuery.data?.slice(0, 4) ?? [];
+  const items = timelineQuery.data?.pages[0]?.items.slice(0, 4) ?? [];
 
   return (
     <View style={styles.timelineSection}>

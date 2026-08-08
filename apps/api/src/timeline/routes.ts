@@ -38,6 +38,22 @@ export function registerTimelineRoutes(
       return authentication;
     }
 
+    const untilValue = context.req.query('until');
+    const until = untilValue === undefined ? undefined : Number(untilValue);
+
+    if (
+      until !== undefined &&
+      (!Number.isSafeInteger(until) || until <= 0)
+    ) {
+      return context.json(
+        {
+          error: 'invalid_timeline_cursor',
+          message: '好友动态分页位置无效。',
+        },
+        400,
+      );
+    }
+
     try {
       const accessToken = await getValidBangumiAccessToken({
         env: context.env,
@@ -46,9 +62,13 @@ export function registerTimelineRoutes(
         store,
         userId: authentication.userId,
       });
-      const items = await getBangumiFriendTimeline({ accessToken, fetcher });
+      const page = await getBangumiFriendTimeline({
+        accessToken,
+        fetcher,
+        until,
+      });
 
-      return context.json({ items });
+      return context.json(page);
     } catch (error) {
       if (error instanceof BangumiReauthorizationRequiredError) {
         return context.json(

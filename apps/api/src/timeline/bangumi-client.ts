@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { FriendTimelineItem } from './model.ts';
+import type { FriendTimelineItem, FriendTimelinePage } from './model.ts';
 
 const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 
@@ -105,21 +105,27 @@ export async function getBangumiFriendTimeline({
   accessToken,
   fetcher = fetch,
   limit = 20,
+  until,
 }: {
   accessToken: string;
   fetcher?: typeof fetch;
   limit?: number;
-}): Promise<FriendTimelineItem[]> {
-  const response = await fetcher(
-    `${BANGUMI_PRIVATE_API_URL}/timeline?mode=friends&limit=${limit}`,
-    {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
-      },
+  until?: number;
+}): Promise<FriendTimelinePage> {
+  const url = new URL(`${BANGUMI_PRIVATE_API_URL}/timeline`);
+  url.searchParams.set('mode', 'friends');
+  url.searchParams.set('limit', String(limit));
+  if (until !== undefined) {
+    url.searchParams.set('until', String(until));
+  }
+
+  const response = await fetcher(url, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
     },
-  );
+  });
 
   if (!response.ok) {
     throw new BangumiTimelineError(
@@ -130,7 +136,8 @@ export async function getBangumiFriendTimeline({
     );
   }
 
-  return timelineListSchema.parse(await response.json()).flatMap((item) => {
+  const rawItems = timelineListSchema.parse(await response.json());
+  const items: FriendTimelineItem[] = rawItems.flatMap((item) => {
     // Bangumi's private API marks `user` as optional. A deleted account should
     // hide only its event instead of making the entire timeline unavailable.
     if (!item.user) {
@@ -158,6 +165,12 @@ export async function getBangumiFriendTimeline({
       },
     ];
   });
+
+  return {
+    items,
+    nextUntil:
+      rawItems.length === limit ? rawItems.at(-1)?.id : undefined,
+  };
 }
 
 export async function createBangumiTimelineSay({
