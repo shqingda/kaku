@@ -75,6 +75,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="channel/[type]"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '频道',
+            }}
+          />
+          <Stack.Screen
             name="group/[name]"
             options={{
               headerBackButtonDisplayMode: 'minimal',

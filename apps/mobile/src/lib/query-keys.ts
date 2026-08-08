@@ -8,6 +8,8 @@ export const queryKeys = {
   catalogSubject: (subjectId: number, version: number) =>
     ['catalog-subject', 'bangumi', version, subjectId] as const,
   calendar: () => ['calendar', 'bangumi'] as const,
+  channel: (subjectType: number) =>
+    ['channel', 'kaku', subjectType] as const,
   rankedSubjects: (subjectType: number) =>
     ['ranked-subjects', 'bangumi', subjectType] as const,
   subjectSearch: (keyword: string, subjectType: number) =>

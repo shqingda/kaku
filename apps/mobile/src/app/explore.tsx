@@ -16,7 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
-import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
+import {
+  getSubjectTypeLabel,
+  getSubjectTypeSlug,
+} from '@/features/catalog/subject-types';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
@@ -116,6 +119,35 @@ export default function ExploreScreen() {
             selectedType={selectedSearchType}
           />
           <View>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/channel/[type]',
+                  params: { type: getSubjectTypeSlug(selectedSearchType) },
+                })
+              }
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
+                    size={18}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>
+                    {getSubjectTypeLabel(selectedSearchType)}频道
+                  </Text>
+                  <Text style={styles.communityMeta}>近期热门与高分精选</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             <Pressable
               onPress={() => router.push('/community')}
               style={({ pressed }) => [

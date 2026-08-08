@@ -8,6 +8,28 @@ export const SUBJECT_TYPES = [
   { id: 6, label: '三次元' },
 ] as const;
 
+const SUBJECT_TYPE_SLUGS = {
+  anime: 2,
+  book: 1,
+  game: 4,
+  music: 3,
+  real: 6,
+} as const;
+
+export type SubjectTypeSlug = keyof typeof SUBJECT_TYPE_SLUGS;
+
+export function getSubjectTypeFromSlug(slug?: string) {
+  return SUBJECT_TYPE_SLUGS[slug as SubjectTypeSlug] ?? 2;
+}
+
+export function getSubjectTypeSlug(subjectType: number): SubjectTypeSlug {
+  return (
+    Object.entries(SUBJECT_TYPE_SLUGS).find(
+      ([, type]) => type === subjectType,
+    )?.[0] as SubjectTypeSlug | undefined
+  ) ?? 'anime';
+}
+
 const STATUS_LABELS: Record<
   number,
   Record<CollectionStatus, string>
