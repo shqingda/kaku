@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -124,8 +125,12 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     flex: 1,
     fontSize: 16,
-    height: 50,
+    height: 24,
+    includeFontPadding: false,
+    lineHeight: 22,
     paddingVertical: 0,
+    textAlignVertical: 'center',
+    transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }],
   },
   pressed: { opacity: 0.62 },
 });

@@ -7,6 +7,7 @@ import {
   mapBangumiReviews,
 } from '../src/infrastructure/bangumi/reviews/adapter.ts';
 import { mapBangumiEntityDetail } from '../src/infrastructure/bangumi/people/adapter.ts';
+import { mapBangumiSubjectCharacters } from '../src/infrastructure/bangumi/subject-extras/adapter.ts';
 import {
   bangumiDiscussionReplySchema,
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
@@ -290,6 +291,33 @@ test('Bangumi people adapter groups repeated roles by person or character', () =
     { relation: '主角', subjectId: 10, subjectTitle: '作品 A' },
     { relation: '配角', subjectId: 11, subjectTitle: 'Work B' },
   ]);
+});
+
+test('Bangumi subject characters prefer localized Chinese names', () => {
+  const characters = [
+    {
+      actors: [],
+      id: 1,
+      name: '長い日本語のキャラクター名',
+      relation: '主角',
+      summary: '',
+    },
+    {
+      actors: [],
+      id: 2,
+      name: 'フォールバック名',
+      relation: '配角',
+      summary: '',
+    },
+  ];
+
+  const mapped = mapBangumiSubjectCharacters(characters, [
+    { id: 1, nameCN: '简体中文角色名' },
+    { id: 2, nameCN: '   ' },
+  ]);
+
+  assert.equal(mapped[0].name, '简体中文角色名');
+  assert.equal(mapped[1].name, 'フォールバック名');
 });
 
 test('Bangumi comments and reviews expose the next offset', () => {

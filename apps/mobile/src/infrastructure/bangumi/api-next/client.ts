@@ -10,6 +10,7 @@ import {
   bangumiGroupTopicPageSchema,
   bangumiGroupTopicSchema,
   bangumiSubjectCommentsSchema,
+  bangumiSubjectCharacterNamesSchema,
   bangumiSubjectReviewsSchema,
   bangumiSubjectTopicPageSchema,
   bangumiSubjectTopicSchema,
@@ -17,6 +18,7 @@ import {
   bangumiUserFriendsSchema,
   bangumiUserTimelineSchema,
 } from './schemas';
+import type { BangumiSubjectCharacterName } from './schemas';
 import { createBangumiRequester } from '../transport/http-client';
 
 const requestJson = createBangumiRequester({
@@ -25,6 +27,42 @@ const requestJson = createBangumiRequester({
   networkMessage: '暂时无法连接 Bangumi 讨论服务',
   timeoutMessage: 'Bangumi 讨论请求超时',
 });
+
+const CHARACTER_PAGE_SIZE = 100;
+
+async function getBangumiSubjectCharacterNamePage(
+  subjectId: number,
+  offset: number,
+) {
+  const json = await requestJson(
+    `/p1/subjects/${subjectId}/characters?limit=${CHARACTER_PAGE_SIZE}&offset=${offset}`,
+  );
+  return bangumiSubjectCharacterNamesSchema.parse(json);
+}
+
+export async function getBangumiSubjectCharacterNames(
+  subjectId: number,
+): Promise<BangumiSubjectCharacterName[]> {
+  const firstPage = await getBangumiSubjectCharacterNamePage(subjectId, 0);
+  const remainingOffsets = Array.from(
+    {
+      length: Math.max(
+        0,
+        Math.ceil(firstPage.total / CHARACTER_PAGE_SIZE) - 1,
+      ),
+    },
+    (_, index) => (index + 1) * CHARACTER_PAGE_SIZE,
+  );
+  const remainingPages = await Promise.all(
+    remainingOffsets.map((offset) =>
+      getBangumiSubjectCharacterNamePage(subjectId, offset),
+    ),
+  );
+
+  return [firstPage, ...remainingPages].flatMap((page) =>
+    page.data.map((item) => item.character),
+  );
+}
 
 export async function getBangumiSubjectTopics(
   subjectId: number,

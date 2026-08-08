@@ -158,7 +158,16 @@ export default function PublicUserScreen() {
                       ]}
                     >
                       <Text style={styles.sectionActionText}>查看全部</Text>
-                      <Text style={styles.sectionActionChevron}>›</Text>
+                      <SymbolView
+                        name={{
+                          android: 'chevron_right',
+                          ios: 'chevron.right',
+                          web: 'chevron_right',
+                        }}
+                        size={11}
+                        tintColor={COLORS.accent}
+                        weight="semibold"
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -216,7 +225,16 @@ export default function PublicUserScreen() {
                       ]}
                     >
                       <Text style={styles.sectionActionText}>查看全部</Text>
-                      <Text style={styles.sectionActionChevron}>›</Text>
+                      <SymbolView
+                        name={{
+                          android: 'chevron_right',
+                          ios: 'chevron.right',
+                          web: 'chevron_right',
+                        }}
+                        size={11}
+                        tintColor={COLORS.accent}
+                        weight="semibold"
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -274,7 +292,16 @@ export default function PublicUserScreen() {
                       ]}
                     >
                       <Text style={styles.sectionActionText}>查看全部</Text>
-                      <Text style={styles.sectionActionChevron}>›</Text>
+                      <SymbolView
+                        name={{
+                          android: 'chevron_right',
+                          ios: 'chevron.right',
+                          web: 'chevron_right',
+                        }}
+                        size={11}
+                        tintColor={COLORS.accent}
+                        weight="semibold"
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -333,7 +360,16 @@ export default function PublicUserScreen() {
                       ]}
                     >
                       <Text style={styles.sectionActionText}>查看全部</Text>
-                      <Text style={styles.sectionActionChevron}>›</Text>
+                      <SymbolView
+                        name={{
+                          android: 'chevron_right',
+                          ios: 'chevron.right',
+                          web: 'chevron_right',
+                        }}
+                        size={11}
+                        tintColor={COLORS.accent}
+                        weight="semibold"
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -490,6 +526,7 @@ const styles = StyleSheet.create({
   sectionAction: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 4,
     marginLeft: 10,
     paddingVertical: 4,
   },
@@ -497,11 +534,9 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: 12,
     fontWeight: '700',
-  },
-  sectionActionChevron: {
-    color: COLORS.accent,
-    fontSize: 18,
-    marginLeft: 2,
+    includeFontPadding: false,
+    lineHeight: 16,
+    textAlignVertical: 'center',
   },
   friendList: { gap: 14, paddingBottom: 8 },
   timelineList: {

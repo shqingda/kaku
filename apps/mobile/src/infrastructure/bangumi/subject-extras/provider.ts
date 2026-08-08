@@ -1,6 +1,5 @@
 import type {
   RelatedSubject,
-  SubjectCharacter,
   SubjectExtrasProvider,
 } from '@/features/subject-extras/model';
 
@@ -8,27 +7,11 @@ import {
   getBangumiSubjectCharacters,
   getBangumiSubjectRelations,
 } from '../api-v0/client';
+import { getBangumiSubjectCharacterNames } from '../api-next/client';
 import type {
-  BangumiSubjectCharactersResponse,
   BangumiSubjectRelationsResponse,
 } from '../api-v0/schemas';
-
-function toCharacter(
-  character: BangumiSubjectCharactersResponse[number],
-): SubjectCharacter {
-  return {
-    actors: character.actors.map((actor) => ({
-      id: actor.id,
-      imageUrl: actor.images?.medium ?? actor.images?.small,
-      name: actor.name,
-    })),
-    id: character.id,
-    imageUrl: character.images?.medium ?? character.images?.small,
-    name: character.name,
-    role: character.relation,
-    summary: character.summary,
-  };
-}
+import { mapBangumiSubjectCharacters } from './adapter';
 
 function toRelatedSubject(
   subject: BangumiSubjectRelationsResponse[number],
@@ -47,8 +30,11 @@ function toRelatedSubject(
 
 export const bangumiSubjectExtrasProvider: SubjectExtrasProvider = {
   async getCharacters(subjectId) {
-    const characters = await getBangumiSubjectCharacters(subjectId);
-    return characters.map(toCharacter);
+    const [characters, localizedCharacters] = await Promise.all([
+      getBangumiSubjectCharacters(subjectId),
+      getBangumiSubjectCharacterNames(subjectId),
+    ]);
+    return mapBangumiSubjectCharacters(characters, localizedCharacters);
   },
   async getRelations(subjectId) {
     const relations = await getBangumiSubjectRelations(subjectId);

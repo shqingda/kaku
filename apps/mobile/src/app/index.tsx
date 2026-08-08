@@ -118,28 +118,30 @@ function TimelineBoundary() {
     <View style={styles.timelineSection}>
       <View style={styles.timelineHeading}>
         <Text style={styles.quickTitle}>好友动态</Text>
-        <View style={styles.timelineHeaderActions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/timeline')}
-            style={({ pressed }) => [
-              styles.timelineHeaderAction,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.timelineHeaderActionText}>全部</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setComposerVisible(true)}
-            style={({ pressed }) => [
-              styles.timelineHeaderAction,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.timelineHeaderActionText}>发布</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          accessibilityLabel="发布动态"
+          accessibilityRole="button"
+          hitSlop={4}
+          onPress={() => setComposerVisible(true)}
+          style={({ pressed }) => [
+            styles.timelinePublishButton,
+            pressed && styles.timelinePublishButtonPressed,
+          ]}
+        >
+          <View style={styles.timelinePublishIcon}>
+            <SymbolView
+              name={{
+                android: 'edit',
+                ios: 'square.and.pencil',
+                web: 'edit',
+              }}
+              size={16}
+              tintColor={COLORS.ink}
+              weight="semibold"
+            />
+          </View>
+          <Text style={styles.timelinePublishText}>发布</Text>
+        </Pressable>
       </View>
       <View style={styles.timelineCard}>
         {timelineQuery.isPending ? (
@@ -163,9 +165,36 @@ function TimelineBoundary() {
             <Text style={styles.timelineEmptyText}>还没有好友动态</Text>
           </View>
         ) : (
-          items.map((item, index) => (
-            <FriendTimelineRow hasDivider={index > 0} item={item} key={item.id} />
-          ))
+          <>
+            {items.map((item, index) => (
+              <FriendTimelineRow
+                hasDivider={index > 0}
+                item={item}
+                key={item.id}
+              />
+            ))}
+            <Pressable
+              accessibilityLabel="查看全部好友动态"
+              accessibilityRole="button"
+              onPress={() => router.push('/timeline')}
+              style={({ pressed }) => [
+                styles.timelineAllButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.timelineAllText}>查看全部动态</Text>
+              <SymbolView
+                name={{
+                  android: 'chevron_right',
+                  ios: 'chevron.right',
+                  web: 'chevron_right',
+                }}
+                size={12}
+                tintColor={COLORS.accent}
+                weight="semibold"
+              />
+            </Pressable>
+          </>
         )}
       </View>
       <TimelineComposer
@@ -327,18 +356,42 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
-  timelineHeaderActions: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  timelineHeaderAction: {
+  timelinePublishButton: {
     alignItems: 'center',
+    backgroundColor: '#EFEEEA',
+    borderCurve: 'continuous',
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 5,
+    height: 34,
     justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
-  timelineHeaderActionText: {
-    color: COLORS.accent,
-    fontSize: 13,
+  timelinePublishButtonPressed: { backgroundColor: '#E4E2DC' },
+  timelinePublishIcon: {
+    alignItems: 'center',
+    height: 18,
+    justifyContent: 'center',
+    width: 18,
+  },
+  timelinePublishText: {
+    color: COLORS.ink,
+    fontSize: 14,
     fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 18,
+    textAlignVertical: 'center',
   },
+  timelineAllButton: {
+    alignItems: 'center',
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 50,
+    paddingHorizontal: 2,
+  },
+  timelineAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   timelineInlineState: {
     alignItems: 'center',
     flexDirection: 'row',

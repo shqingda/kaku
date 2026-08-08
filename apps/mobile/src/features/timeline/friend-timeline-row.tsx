@@ -63,7 +63,17 @@ export function FriendTimelineRow({
           </Text>
           <Text style={styles.time}>{formatActivityTime(item.createdAt)}</Text>
         </View>
-        <Text style={styles.text}>{item.text}</Text>
+        <Text style={styles.text}>
+          {item.subjectTitle ? (
+            <>
+              {item.leadingText}
+              <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
+              {item.trailingText}
+            </>
+          ) : (
+            item.text
+          )}
+        </Text>
         {item.replies > 0 ? (
           <Text style={styles.replies}>{item.replies} 回复</Text>
         ) : null}
@@ -97,6 +107,7 @@ const styles = StyleSheet.create({
   nickname: { color: COLORS.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
   time: { color: COLORS.subtle, fontSize: 10 },
   text: { color: COLORS.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
+  subjectTitle: { color: COLORS.accentRich, fontWeight: '700' },
   replies: { color: COLORS.muted, fontSize: 11, marginTop: 7 },
   pressed: { opacity: 0.62 },
 });

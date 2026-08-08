@@ -25,7 +25,7 @@ export const queryKeys = {
   subjectStaff: (subjectId: number) =>
     ['subject-staff', 'bangumi', subjectId] as const,
   subjectCharacters: (subjectId: number) =>
-    ['subject-characters', 'bangumi', subjectId] as const,
+    ['subject-characters', 'bangumi', 'localized-v2', subjectId] as const,
   subjectRelations: (subjectId: number) =>
     ['subject-relations', 'bangumi', subjectId] as const,
   character: (characterId: number) =>

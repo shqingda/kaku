@@ -7,9 +7,12 @@ import { getFriendTimelinePath } from './timeline-pagination';
 const timelineItemSchema = z.object({
   createdAt: z.number().int(),
   id: z.number().int().positive(),
+  leadingText: z.string().optional(),
   replies: z.number().int().nonnegative(),
   subjectId: z.number().int().positive().optional(),
+  subjectTitle: z.string().optional(),
   text: z.string(),
+  trailingText: z.string().optional(),
   user: z.object({
     avatarUrl: z.string().url().optional(),
     nickname: z.string(),

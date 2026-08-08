@@ -110,6 +110,24 @@ export const bangumiIndexPageSchema = z.object({
   total: z.number(),
 });
 
+const bangumiSubjectCharacterNameSchema = z.object({
+  id: z.number(),
+  nameCN: z.string(),
+});
+
+export const bangumiSubjectCharacterNamesSchema = z.object({
+  data: z.array(
+    z.object({
+      character: bangumiSubjectCharacterNameSchema,
+    }),
+  ),
+  total: z.number(),
+});
+
+export type BangumiSubjectCharacterName = z.infer<
+  typeof bangumiSubjectCharacterNameSchema
+>;
+
 export const bangumiIndexSchema = bangumiSlimIndexSchema.extend({
   collects: z.number(),
   desc: z.string(),

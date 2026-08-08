@@ -35,12 +35,12 @@ export function TimelineComposer({
   useEffect(() => {
     if (!visible) {
       createTimeline.reset();
-      return;
     }
-
-    const timer = setTimeout(() => inputRef.current?.focus(), 220);
-    return () => clearTimeout(timer);
   }, [visible]);
+
+  function focusInput() {
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
 
   function close() {
     if (createTimeline.isPending) {
@@ -70,12 +70,13 @@ export function TimelineComposer({
   return (
     <Modal
       animationType="fade"
+      onShow={focusInput}
       onRequestClose={close}
       transparent
       visible={visible}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.backdrop}
       >
         <Pressable
@@ -138,6 +139,7 @@ export function TimelineComposer({
             placeholderTextColor={COLORS.subtle}
             ref={inputRef}
             scrollEnabled
+            showSoftInputOnFocus
             style={styles.input}
             textAlignVertical="top"
             value={content}

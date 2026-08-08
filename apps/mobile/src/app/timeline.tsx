@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
@@ -30,14 +31,25 @@ export default function FriendTimelineScreen() {
         options={{
           headerRight: () => (
             <Pressable
+              accessibilityLabel="发布动态"
               accessibilityRole="button"
+              hitSlop={6}
               onPress={() => setComposerVisible(true)}
               style={({ pressed }) => [
                 styles.publishButton,
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.publishText}>发布</Text>
+              <SymbolView
+                name={{
+                  android: 'edit',
+                  ios: 'square.and.pencil',
+                  web: 'edit',
+                }}
+                size={22}
+                tintColor={COLORS.ink}
+                weight="medium"
+              />
             </Pressable>
           ),
           title: '好友动态',
@@ -130,11 +142,11 @@ const styles = StyleSheet.create({
   },
   publishButton: {
     alignItems: 'center',
+    borderRadius: 22,
+    height: 44,
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
+    width: 44,
   },
-  publishText: { color: COLORS.accent, fontSize: 16, fontWeight: '600' },
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 42 },
   stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
   stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },

@@ -82,7 +82,11 @@ export default function SubjectCharactersScreen() {
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text numberOfLines={1} style={styles.name}>
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={styles.name}
+                      >
                         {item.name}
                       </Text>
                     </Pressable>
@@ -178,13 +182,14 @@ const styles = StyleSheet.create({
     width: 92,
   },
   fallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
-  main: { flex: 1, justifyContent: 'center', marginLeft: 14 },
+  main: { flex: 1, justifyContent: 'center', marginLeft: 14, width: 0 },
   nameLine: { alignItems: 'center', flexDirection: 'row' },
-  nameButton: { flex: 1 },
+  nameButton: { flex: 1, minWidth: 0, overflow: 'hidden' },
   name: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
   roleBadge: {
     backgroundColor: COLORS.accentSoft,
     borderRadius: 9,
+    flexShrink: 0,
     marginLeft: 8,
     paddingHorizontal: 7,
     paddingVertical: 4,

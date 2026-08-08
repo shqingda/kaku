@@ -151,7 +151,7 @@ export function CollectionControls({
         <Pressable
           accessibilityLabel={`编辑${item.title}的收藏和进度`}
           accessibilityRole="button"
-          hitSlop={4}
+          hitSlop={5}
           onPress={(event) => {
             event.stopPropagation();
             openCollectionBox();
@@ -164,7 +164,7 @@ export function CollectionControls({
           <SymbolView
             name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
             size={16}
-            tintColor={COLORS.accent}
+            tintColor={COLORS.ink}
             weight="semibold"
           />
         </Pressable>
@@ -302,12 +302,14 @@ const styles = StyleSheet.create({
   },
   compactButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 12,
-    height: 40,
+    backgroundColor: '#F7F6F2',
+    borderColor: COLORS.track,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 34,
     justifyContent: 'center',
     marginLeft: 10,
-    width: 40,
+    width: 34,
   },
   heading: {
     alignItems: 'flex-start',

@@ -54,6 +54,106 @@ test('Bangumi friend timeline maps private API data into Kaku models', async () 
   });
 });
 
+test('Bangumi collection timeline keeps its exact action and subject title', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: false,
+        cat: 3,
+        createdAt: 1_785_940_000,
+        id: 44,
+        memo: {
+          subject: [
+            {
+              comment: '',
+              subject: {
+                id: 400602,
+                name: '葬送のフリーレン',
+                nameCN: '葬送的芙莉莲',
+                type: 2,
+              },
+            },
+          ],
+        },
+        replies: 0,
+        type: 6,
+        user: {
+          avatar: {},
+          nickname: '好友 A',
+          username: 'friend-a',
+        },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.deepEqual(page.items[0], {
+    createdAt: 1_785_940_000,
+    id: 44,
+    leadingText: '看过 ',
+    replies: 0,
+    subjectId: 400602,
+    subjectTitle: '葬送的芙莉莲',
+    text: '看过 《葬送的芙莉莲》',
+    trailingText: '',
+    user: {
+      avatarUrl: undefined,
+      nickname: '好友 A',
+      username: 'friend-a',
+    },
+  });
+});
+
+test('Bangumi batch progress timeline exposes completed episode counts', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: true,
+        cat: 4,
+        createdAt: 1_785_940_000,
+        id: 45,
+        memo: {
+          progress: {
+            batch: {
+              epsTotal: '12',
+              epsUpdate: 5,
+              subject: {
+                id: 495291,
+                name: '機動戦士Gundam GQuuuuuuX',
+                nameCN: '机动战士高达 GQuuuuuuX',
+                type: 2,
+              },
+              volsTotal: '0',
+            },
+          },
+        },
+        replies: 0,
+        type: 0,
+        user: {
+          avatar: {},
+          nickname: '好友 A',
+          username: 'friend-a',
+        },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.equal(page.items[0]?.leadingText, '完成了 ');
+  assert.equal(page.items[0]?.subjectTitle, '机动战士高达 GQuuuuuuX');
+  assert.equal(page.items[0]?.trailingText, ' 5 of 12 话');
+  assert.equal(
+    page.items[0]?.text,
+    '完成了 《机动战士高达 GQuuuuuuX》 5 of 12 话',
+  );
+});
+
 test('Bangumi friend timeline uses the last raw id as its next cursor', async () => {
   const fetcher = async (input) => {
     assert.equal(

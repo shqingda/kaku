@@ -8,9 +8,11 @@ const subjectSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
   nameCN: z.string().optional(),
+  type: z.number().int().default(0),
 });
 
 const timelineSchema = z.object({
+  batch: z.boolean().default(false),
   cat: z.number().int(),
   createdAt: z.number().int(),
   id: z.number().int().positive(),
@@ -19,8 +21,21 @@ const timelineSchema = z.object({
     index: z.object({ title: z.string() }).optional(),
     progress: z
       .object({
-        batch: z.object({ subject: subjectSchema }).optional(),
-        single: z.object({ subject: subjectSchema }).optional(),
+        batch: z
+          .object({
+            epsTotal: z.string(),
+            epsUpdate: z.number().int().optional(),
+            subject: subjectSchema,
+            volsTotal: z.string(),
+            volsUpdate: z.number().int().optional(),
+          })
+          .optional(),
+        single: z
+          .object({
+            episode: z.object({ sort: z.number() }),
+            subject: subjectSchema,
+          })
+          .optional(),
       })
       .optional(),
     status: z
@@ -38,6 +53,7 @@ const timelineSchema = z.object({
     wiki: z.object({ subject: subjectSchema.optional() }).optional(),
   }),
   replies: z.number().int().nonnegative(),
+  type: z.number().int().default(0),
   user: z
     .object({
       avatar: z.object({ small: z.string().optional() }),
@@ -66,38 +82,109 @@ function subjectTitle(subject: z.infer<typeof subjectSchema>) {
   return subject.nameCN?.trim() || subject.name;
 }
 
+const collectionVerbs: Record<number, string> = {
+  1: '想读',
+  2: '想看',
+  3: '想听',
+  4: '想玩',
+  5: '读过',
+  6: '看过',
+  7: '听过',
+  8: '玩过',
+  9: '在读',
+  10: '在看',
+  11: '在听',
+  12: '在玩',
+  13: '搁置了',
+  14: '抛弃了',
+};
+
+type TimelineDescription = {
+  leadingText?: string;
+  subjectTitle?: string;
+  text: string;
+  trailingText?: string;
+};
+
+function subjectDescription({
+  leadingText,
+  subject,
+  trailingText = '',
+}: {
+  leadingText: string;
+  subject: z.infer<typeof subjectSchema>;
+  trailingText?: string;
+}): TimelineDescription {
+  const title = subjectTitle(subject);
+  return {
+    leadingText,
+    subjectTitle: title,
+    text: `${leadingText}《${title}》${trailingText}`,
+    trailingText,
+  };
+}
+
 function describeTimeline(item: z.infer<typeof timelineSchema>) {
   const firstSubject = item.memo.subject?.[0];
-  const progressSubject =
-    item.memo.progress?.batch?.subject ?? item.memo.progress?.single?.subject;
+  const progressBatch = item.memo.progress?.batch;
+  const progressSingle = item.memo.progress?.single;
 
   switch (item.cat) {
     case 2:
       return item.memo.wiki?.subject
-        ? `编辑了条目《${subjectTitle(item.memo.wiki.subject)}》`
-        : '参与了条目编辑';
+        ? subjectDescription({
+            leadingText: '编辑了条目 ',
+            subject: item.memo.wiki.subject,
+          })
+        : { text: '参与了条目编辑' };
     case 3:
-      return firstSubject
-        ? `收藏了《${subjectTitle(firstSubject.subject)}》${firstSubject.comment ? `：${firstSubject.comment}` : ''}`
-        : '更新了收藏';
-    case 4:
-      return progressSubject
-        ? `更新了《${subjectTitle(progressSubject)}》的进度`
-        : '更新了观看进度';
+      if (!firstSubject) {
+        return { text: '更新了收藏' };
+      }
+      return subjectDescription({
+        leadingText: `${item.batch ? '收藏了' : (collectionVerbs[item.type] ?? '收藏了')} `,
+        subject: firstSubject.subject,
+        trailingText: firstSubject.comment ? `：${firstSubject.comment}` : '',
+      });
+    case 4: {
+      if (progressBatch) {
+        const progress =
+          progressBatch.epsUpdate !== undefined
+            ? `${progressBatch.epsUpdate} of ${progressBatch.epsTotal} 话`
+            : progressBatch.volsUpdate !== undefined
+              ? `${progressBatch.volsUpdate} of ${progressBatch.volsTotal} 卷`
+              : '';
+        return subjectDescription({
+          leadingText: '完成了 ',
+          subject: progressBatch.subject,
+          trailingText: progress ? ` ${progress}` : '',
+        });
+      }
+      if (progressSingle) {
+        const verb = item.type === 1 ? '想看' : item.type === 2 ? '看过' : '抛弃了';
+        return subjectDescription({
+          leadingText: `${verb} `,
+          subject: progressSingle.subject,
+          trailingText: ` 第 ${progressSingle.episode.sort} 话`,
+        });
+      }
+      return { text: '更新了观看进度' };
+    }
     case 5:
-      return (
-        item.memo.status?.tsukkomi ??
-        item.memo.status?.sign ??
-        (item.memo.status?.nickname
-          ? `将昵称改为 ${item.memo.status.nickname.after}`
-          : '更新了状态')
-      );
+      return {
+        text:
+          item.memo.status?.tsukkomi ??
+          item.memo.status?.sign ??
+          (item.memo.status?.nickname
+            ? `将昵称改为 ${item.memo.status.nickname.after}`
+            : '更新了状态'),
+      };
     case 6:
-      return item.memo.blog ? `发表了日志《${item.memo.blog.title}》` : '发表了日志';
+      return { text: item.memo.blog ? `发表了日志《${item.memo.blog.title}》` : '发表了日志' };
     case 7:
-      return item.memo.index ? `更新了目录《${item.memo.index.title}》` : '更新了目录';
+      return { text: item.memo.index ? `更新了目录《${item.memo.index.title}》` : '更新了目录' };
     default:
-      return '更新了一条动态';
+      return { text: '更新了一条动态' };
   }
 }
 
@@ -149,14 +236,15 @@ export async function getBangumiFriendTimeline({
       item.memo.progress?.batch?.subject ??
       item.memo.progress?.single?.subject ??
       item.memo.wiki?.subject;
+    const description = describeTimeline(item);
 
     return [
       {
         createdAt: item.createdAt,
+        ...description,
         id: item.id,
         replies: item.replies,
         subjectId: subject?.id,
-        text: describeTimeline(item),
         user: {
           avatarUrl: item.user.avatar.small || undefined,
           nickname: item.user.nickname,

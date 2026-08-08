@@ -1,5 +1,6 @@
 export const COLORS = {
   accent: '#C96878',
+  accentRich: '#C16273',
   accentSoft: '#F6E7EA',
   background: '#F5F4F0',
   ink: '#1D1D1F',
