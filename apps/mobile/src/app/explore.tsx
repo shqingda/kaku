@@ -193,7 +193,16 @@ export default function ExploreScreen() {
                     ]}
                   >
                     <Text style={styles.sectionActionText}>查看全部</Text>
-                    <Text style={styles.sectionActionChevron}>›</Text>
+                    <SymbolView
+                      name={{
+                        android: 'chevron_right',
+                        ios: 'chevron.right',
+                        web: 'chevron_right',
+                      }}
+                      size={12}
+                      tintColor={COLORS.accent}
+                      weight="semibold"
+                    />
                   </Pressable>
                 </View>
                 {calendarQuery.isPending ? (
@@ -321,7 +330,16 @@ function RankingSection({
           ]}
         >
           <Text style={styles.sectionActionText}>查看全部</Text>
-          <Text style={styles.sectionActionChevron}>›</Text>
+          <SymbolView
+            name={{
+              android: 'chevron_right',
+              ios: 'chevron.right',
+              web: 'chevron_right',
+            }}
+            size={12}
+            tintColor={COLORS.accent}
+            weight="semibold"
+          />
         </Pressable>
       </View>
       {isPending ? (
@@ -608,19 +626,14 @@ const styles = StyleSheet.create({
   sectionAction: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingBottom: 3,
+    gap: 3,
+    minHeight: 44,
     paddingLeft: 12,
-    paddingVertical: 6,
   },
   sectionActionText: {
     color: COLORS.accent,
     fontSize: 13,
     fontWeight: '700',
-  },
-  sectionActionChevron: {
-    color: COLORS.accent,
-    fontSize: 20,
-    marginLeft: 3,
   },
   dayTabs: { gap: 8, paddingBottom: 18 },
   dayTab: {
