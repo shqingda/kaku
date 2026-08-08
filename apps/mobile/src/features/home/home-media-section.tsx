@@ -131,39 +131,48 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
       : getCollectionStatusLabel(item.subjectType, 'doing');
 
   return (
-    <Link
-      asChild
-      href={{
-        pathname: '/subject/[id]',
-        params: { id: String(item.id) },
-      }}
-    >
-      <Pressable
-        accessibilityLabel={`打开${item.title}`}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    <View style={styles.card}>
+      <Link
+        asChild
+        href={{
+          pathname: '/subject/[id]',
+          params: { id: String(item.id) },
+        }}
       >
-        <Link.AppleZoom>
-          <View style={styles.cover}>
-            <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
-            {item.coverUrl ? (
-              <Image
-                contentFit="cover"
-                source={item.coverUrl}
-                style={StyleSheet.absoluteFill}
-                transition={120}
-              />
-            ) : null}
-          </View>
-        </Link.AppleZoom>
-        <Text numberOfLines={2} style={styles.cardTitle}>
-          {item.title}
-        </Text>
-        <Text numberOfLines={1} style={styles.cardMeta}>
-          {progress}
-        </Text>
-      </Pressable>
-    </Link>
+        <Pressable
+          accessibilityLabel={`打开${item.title}`}
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.cardButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Link.AppleZoom>
+            <View style={styles.cover}>
+              <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
+              {item.coverUrl ? (
+                <Image
+                  contentFit="cover"
+                  source={item.coverUrl}
+                  style={StyleSheet.absoluteFill}
+                  transition={120}
+                />
+              ) : null}
+            </View>
+          </Link.AppleZoom>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={2}
+            style={styles.cardTitle}
+          >
+            {item.title}
+          </Text>
+          <Text numberOfLines={1} style={styles.cardMeta}>
+            {progress}
+          </Text>
+        </Pressable>
+      </Link>
+    </View>
   );
 }
 
@@ -189,6 +198,7 @@ const styles = StyleSheet.create({
   typeTabs: { paddingBottom: 2, paddingTop: 4 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
   card: { width: 104 },
+  cardButton: { width: '100%' },
   cover: {
     alignItems: 'center',
     backgroundColor: COLORS.track,
@@ -203,6 +213,7 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     fontSize: 13,
     fontWeight: '700',
+    height: 36,
     lineHeight: 18,
     marginTop: 9,
   },
