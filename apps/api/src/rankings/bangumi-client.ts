@@ -3,10 +3,34 @@ import { z } from 'zod';
 import type { RankedSubjectPage } from './model.ts';
 
 const BANGUMI_API_URL = 'https://api.bgm.tv';
-const PAGE_SIZE = 30;
+const BANGUMI_NEXT_URL = 'https://next.bgm.tv';
+const P1_PAGE_SIZE = 24;
+// Keep both upstreams on the same cursor cadence so a temporary P1 failure
+// cannot make the next recovered page skip or repeat ranked subjects.
+const V0_PAGE_SIZE = P1_PAGE_SIZE;
 const EDGE_CACHE_TTL_SECONDS = 30 * 60;
 
-const bangumiRankedSubjectPageSchema = z.object({
+const bangumiP1RankedSubjectPageSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      images: z
+        .object({
+          common: z.string().optional(),
+          medium: z.string().optional(),
+          small: z.string().optional(),
+        })
+        .nullish(),
+      name: z.string(),
+      nameCN: z.string(),
+      rating: z.object({ score: z.number() }).nullish(),
+      type: z.number().int(),
+    }),
+  ),
+  total: z.number().int().nonnegative(),
+});
+
+const bangumiV0RankedSubjectPageSchema = z.object({
   data: z.array(
     z.object({
       date: z.string().nullish(),
@@ -42,22 +66,8 @@ function secureImage(url?: string) {
   return url?.replace(/^http:/, 'https:');
 }
 
-export async function getBangumiRankedSubjects({
-  fetcher = fetch,
-  offset,
-  subjectType,
-}: {
-  fetcher?: typeof fetch;
-  offset: number;
-  subjectType: number;
-}): Promise<RankedSubjectPage> {
-  const url = new URL('/v0/subjects', BANGUMI_API_URL);
-  url.searchParams.set('limit', String(PAGE_SIZE));
-  url.searchParams.set('offset', String(offset));
-  url.searchParams.set('sort', 'rank');
-  url.searchParams.set('type', String(subjectType));
-
-  const response = await fetcher(url, {
+function createRequestInit(): RequestInit & { cf: { cacheEverything: boolean; cacheTtl: number } } {
+  return {
     cf: {
       cacheEverything: true,
       cacheTtl: EDGE_CACHE_TTL_SECONDS,
@@ -66,7 +76,85 @@ export async function getBangumiRankedSubjects({
       Accept: 'application/json',
       'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
     },
+  };
+}
+
+async function getP1RankedSubjects({
+  fetcher,
+  offset,
+  subjectType,
+}: {
+  fetcher: typeof fetch;
+  offset: number;
+  subjectType: number;
+}): Promise<RankedSubjectPage | undefined> {
+  const page = Math.floor(offset / P1_PAGE_SIZE) + 1;
+  const url = new URL('/p1/subjects', BANGUMI_NEXT_URL);
+  url.searchParams.set('type', String(subjectType));
+  url.searchParams.set('sort', 'rank');
+  url.searchParams.set('page', String(page));
+
+  const response = await fetcher(url, createRequestInit()).catch((error) => {
+    console.warn('Bangumi P1 ranking request failed; falling back to v0.', error);
+    return undefined;
   });
+  if (!response?.ok) {
+    if (response) {
+      console.warn(
+        `Bangumi P1 ranking returned ${response.status}; falling back to v0.`,
+      );
+    }
+    return undefined;
+  }
+
+  const result = bangumiP1RankedSubjectPageSchema.safeParse(
+    await response.json().catch(() => null),
+  );
+  if (!result.success) {
+    console.warn(
+      'Bangumi P1 ranking response was not recognized; falling back to v0.',
+      result.error.issues,
+    );
+    return undefined;
+  }
+
+  const nextOffset = page * P1_PAGE_SIZE;
+
+  return {
+    items: result.data.data.map((subject) => ({
+      coverUrl: secureImage(
+        subject.images?.common ??
+          subject.images?.medium ??
+          subject.images?.small,
+      ),
+      id: subject.id,
+      score: subject.rating?.score,
+      title: subject.nameCN.trim() || subject.name,
+      type: subject.type,
+    })),
+    nextOffset:
+      result.data.data.length > 0 && page < result.data.total
+        ? nextOffset
+        : undefined,
+  };
+}
+
+async function getV0RankedSubjects({
+  fetcher,
+  offset,
+  subjectType,
+}: {
+  fetcher: typeof fetch;
+  offset: number;
+  subjectType: number;
+}): Promise<RankedSubjectPage> {
+  const url = new URL('/v0/subjects', BANGUMI_API_URL);
+  url.searchParams.set('limit', String(V0_PAGE_SIZE));
+  url.searchParams.set('offset', String(offset));
+  url.searchParams.set('sort', 'rank');
+  url.searchParams.set('type', String(subjectType));
+
+  const response = await fetcher(url, createRequestInit());
 
   if (!response.ok) {
     throw new BangumiRankingError(
@@ -77,7 +165,7 @@ export async function getBangumiRankedSubjects({
     );
   }
 
-  const result = bangumiRankedSubjectPageSchema.safeParse(
+  const result = bangumiV0RankedSubjectPageSchema.safeParse(
     await response.json().catch(() => null),
   );
 
@@ -109,4 +197,19 @@ export async function getBangumiRankedSubjects({
         : undefined,
     total: result.data.total,
   };
+}
+
+export async function getBangumiRankedSubjects({
+  fetcher = fetch,
+  offset,
+  subjectType,
+}: {
+  fetcher?: typeof fetch;
+  offset: number;
+  subjectType: number;
+}): Promise<RankedSubjectPage> {
+  return (
+    (await getP1RankedSubjects({ fetcher, offset, subjectType })) ??
+    getV0RankedSubjects({ fetcher, offset, subjectType })
+  );
 }

@@ -20,7 +20,7 @@ const rankedSubjectPageSchema = z.object({
     }),
   ),
   nextOffset: z.number().int().nonnegative().optional(),
-  total: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative().optional(),
 });
 
 export async function getPublicRankedSubjects(

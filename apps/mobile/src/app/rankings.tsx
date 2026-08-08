@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
-  FlatList,
+  AccessibilityInfo,
+  Animated,
+  Easing,
   Platform,
   Pressable,
   StyleSheet,
@@ -28,11 +30,48 @@ export default function RankingsScreen() {
   );
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
+  const entranceOpacity = useRef(new Animated.Value(0)).current;
+  const entranceTranslateY = useRef(new Animated.Value(6)).current;
   const subjects = useMemo(
     () => rankingQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [rankingQuery.data],
   );
-  const total = rankingQuery.data?.pages[0]?.total ?? 0;
+  const total = rankingQuery.data?.pages[0]?.total;
+
+  useEffect(() => {
+    let active = true;
+
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
+      if (!active) return;
+
+      if (reduceMotion) {
+        entranceOpacity.setValue(1);
+        entranceTranslateY.setValue(0);
+        return;
+      }
+
+      Animated.parallel([
+        Animated.timing(entranceOpacity, {
+          duration: 180,
+          easing: Easing.out(Easing.cubic),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(entranceTranslateY, {
+          duration: 220,
+          easing: Easing.out(Easing.cubic),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+
+    return () => {
+      active = false;
+      entranceOpacity.stopAnimation();
+      entranceTranslateY.stopAnimation();
+    };
+  }, [entranceOpacity, entranceTranslateY]);
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -43,7 +82,7 @@ export default function RankingsScreen() {
           title: `${subjectTypeLabel}排行榜`,
         }}
       />
-      <FlatList
+      <Animated.FlatList
         contentContainerStyle={styles.content}
         data={subjects}
         initialNumToRender={Platform.OS === 'android' ? 6 : 12}
@@ -84,7 +123,7 @@ export default function RankingsScreen() {
             <View style={styles.header}>
               <Text style={styles.title}>{subjectTypeLabel}排行榜</Text>
               <Text style={styles.subtitle}>
-                Bangumi 综合排名 · {total ? `${total} 个条目` : '读取中'}
+                Bangumi 综合排名
               </Text>
             </View>
             <SubjectTypeTabs
@@ -128,6 +167,10 @@ export default function RankingsScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
+        style={{
+          opacity: entranceOpacity,
+          transform: [{ translateY: entranceTranslateY }],
+        }}
         updateCellsBatchingPeriod={Platform.OS === 'android' ? 60 : 40}
         windowSize={Platform.OS === 'android' ? 5 : 7}
       />

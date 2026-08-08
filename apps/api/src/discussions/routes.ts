@@ -1,4 +1,4 @@
-import type { Hono } from 'hono';
+import type { Context, Hono } from 'hono';
 import { z } from 'zod';
 
 import { BangumiOAuthError } from '../auth/bangumi-client.ts';
@@ -15,6 +15,7 @@ import { createD1AuthStore } from '../auth/store.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiDiscussionError,
+  createBangumiGroupTopicReply,
   createBangumiSubjectTopicReply,
 } from './bangumi-client.ts';
 
@@ -24,7 +25,7 @@ const createReplySchema = z.object({
   turnstileToken: z.string().min(1).max(2048),
 });
 
-function getTopicId(value: string) {
+function getTopicId(value: string | undefined) {
   const topicId = Number(value);
   return Number.isSafeInteger(topicId) && topicId > 0 ? topicId : null;
 }
@@ -36,7 +37,10 @@ export function registerDiscussionRoutes(
   const now = dependencies.now ?? Date.now;
   const fetcher = dependencies.fetcher ?? fetch;
 
-  app.post('/me/subject-topics/:topicId/replies', async (context) => {
+  async function createReply(
+    context: Context<{ Bindings: Env }>,
+    upstream: typeof createBangumiSubjectTopicReply,
+  ) {
     const topicId = getTopicId(context.req.param('topicId'));
     const parsedBody = createReplySchema.safeParse(
       await context.req.json().catch(() => null),
@@ -66,7 +70,7 @@ export function registerDiscussionRoutes(
         store,
         userId: authentication.userId,
       });
-      const reply = await createBangumiSubjectTopicReply({
+      const reply = await upstream({
         accessToken,
         content: parsedBody.data.content,
         fetcher,
@@ -114,5 +118,12 @@ export function registerDiscussionRoutes(
 
       throw error;
     }
-  });
+  }
+
+  app.post('/me/subject-topics/:topicId/replies', (context) =>
+    createReply(context, createBangumiSubjectTopicReply),
+  );
+  app.post('/me/group-topics/:topicId/replies', (context) =>
+    createReply(context, createBangumiGroupTopicReply),
+  );
 }

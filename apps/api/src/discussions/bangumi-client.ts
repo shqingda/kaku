@@ -16,34 +16,31 @@ export class BangumiDiscussionError extends Error {
   }
 }
 
-export async function createBangumiSubjectTopicReply({
+async function createBangumiTopicReply({
   accessToken,
   content,
   fetcher = fetch,
+  path,
   replyTo,
-  topicId,
   turnstileToken,
 }: {
   accessToken: string;
   content: string;
   fetcher?: typeof fetch;
+  path: string;
   replyTo?: number;
-  topicId: number;
   turnstileToken: string;
 }): Promise<{ id: number }> {
-  const response = await fetcher(
-    `${BANGUMI_PRIVATE_API_URL}/subjects/-/topics/${topicId}/replies`,
-    {
-      body: JSON.stringify({ content, replyTo, turnstileToken }),
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
-      },
-      method: 'POST',
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}${path}`, {
+    body: JSON.stringify({ content, replyTo, turnstileToken }),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
     },
-  );
+    method: 'POST',
+  });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -71,4 +68,28 @@ export async function createBangumiSubjectTopicReply({
   }
 
   return createdReplySchema.parse(await response.json());
+}
+
+export function createBangumiSubjectTopicReply({
+  topicId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  topicId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/subjects/-/topics/${topicId}/replies`,
+  });
+}
+
+export function createBangumiGroupTopicReply({
+  topicId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  topicId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/groups/-/topics/${topicId}/replies`,
+  });
 }

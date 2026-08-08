@@ -16,7 +16,7 @@ export type CalendarDay = {
 export type DiscoverSubjectPage = {
   items: DiscoverSubject[];
   nextOffset?: number;
-  total: number;
+  total?: number;
 };
 
 export type DiscoverProvider = {

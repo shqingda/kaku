@@ -10,5 +10,5 @@ export type RankedSubject = {
 export type RankedSubjectPage = {
   items: RankedSubject[];
   nextOffset?: number;
-  total: number;
+  total?: number;
 };

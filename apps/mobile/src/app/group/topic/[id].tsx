@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Platform,
@@ -10,22 +12,36 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicGroupTopic } from '@/features/community/use-community';
-import {
-  DiscussionReadOnlyNotice,
-  EmptyDiscussionReplies,
-} from '@/features/discussions/discussion-read-only';
+import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
+import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function GroupTopicScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const topicQuery = usePublicGroupTopic(Number(id));
+  const numericTopicId = Number(id);
+  const { isSigningIn, session, signIn } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const topicQuery = usePublicGroupTopic(numericTopicId);
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+
+  async function openComposer(reply?: DiscussionReply) {
+    if (!session) {
+      const signedIn = await signIn();
+      if (!signedIn) return;
+    }
+
+    setReplyingTo(reply);
+    setComposerVisible(true);
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -39,7 +55,6 @@ export default function GroupTopicScreen() {
           ListEmptyComponent={
             topic && !topicQuery.isError ? <EmptyDiscussionReplies /> : null
           }
-          ListFooterComponent={topic ? <DiscussionReadOnlyNotice /> : null}
           ListHeaderComponent={
             <>
               <DiscussionStatus
@@ -83,6 +98,7 @@ export default function GroupTopicScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
+              onReply={session ? openComposer : undefined}
               reply={item}
             />
           )}
@@ -90,7 +106,44 @@ export default function GroupTopicScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
+        {topic ? (
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={COLORS.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? '参与讨论…'
+                    : '登录后参与讨论'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
+      <DiscussionReplyComposer
+        onClose={() => setComposerVisible(false)}
+        replyingTo={replyingTo}
+        target={{ id: numericTopicId, kind: 'group-topic' }}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -119,4 +172,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   topicMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 7 },
+  replyBar: {
+    backgroundColor: COLORS.background,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 48,
+    paddingHorizontal: 17,
+  },
+  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  pressed: { opacity: 0.62 },
 });

@@ -154,7 +154,7 @@ export default function TopicScreen() {
       <DiscussionReplyComposer
         onClose={() => setComposerVisible(false)}
         replyingTo={replyingTo}
-        topicId={numericTopicId}
+        target={{ id: numericTopicId, kind: 'subject-topic' }}
         visible={composerVisible}
       />
     </SafeAreaView>

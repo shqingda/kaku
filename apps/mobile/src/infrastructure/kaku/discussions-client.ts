@@ -35,3 +35,29 @@ export async function createSubjectTopicReply(
 
   return createdReplySchema.parse(await response.json());
 }
+
+export async function createGroupTopicReply(
+  request: AuthenticatedRequest,
+  input: {
+    content: string;
+    replyTo?: number;
+    topicId: number;
+    turnstileToken: string;
+  },
+) {
+  const response = await request(`/me/group-topics/${input.topicId}/replies`, {
+    body: JSON.stringify({
+      content: input.content,
+      replyTo: input.replyTo,
+      turnstileToken: input.turnstileToken,
+    }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return createdReplySchema.parse(await response.json());
+}

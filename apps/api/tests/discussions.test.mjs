@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createBangumiSubjectTopicReply } from '../src/discussions/bangumi-client.ts';
+import {
+  createBangumiGroupTopicReply,
+  createBangumiSubjectTopicReply,
+} from '../src/discussions/bangumi-client.ts';
 
 test('creating a subject topic reply keeps OAuth and Turnstile server-side', async () => {
   const fetcher = async (input, init) => {
@@ -29,4 +32,25 @@ test('creating a subject topic reply keeps OAuth and Turnstile server-side', asy
   });
 
   assert.deepEqual(reply, { id: 10001 });
+});
+
+test('creating a group topic reply uses the group P1 endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/groups/-/topics/123/replies',
+    );
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return Response.json({ id: 10002 });
+  };
+
+  const reply = await createBangumiGroupTopicReply({
+    accessToken: 'access-token',
+    content: '小组回复',
+    fetcher,
+    topicId: 123,
+    turnstileToken: 'turnstile-token',
+  });
+
+  assert.deepEqual(reply, { id: 10002 });
 });

@@ -17,25 +17,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 
 import type { DiscussionReply } from './model';
-import { useCreateSubjectTopicReply } from './use-create-subject-topic-reply';
+import {
+  type DiscussionReplyTarget,
+  useCreateDiscussionReply,
+} from './use-create-discussion-reply';
 
 const MAX_CONTENT_LENGTH = 5000;
 
 export function DiscussionReplyComposer({
   onClose,
   replyingTo,
-  topicId,
+  target,
   visible,
 }: {
   onClose: () => void;
   replyingTo?: DiscussionReply;
-  topicId: number;
+  target: DiscussionReplyTarget;
   visible: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
-  const createReply = useCreateSubjectTopicReply(topicId);
+  const createReply = useCreateDiscussionReply(target);
   const canSend = content.trim().length > 0 && !createReply.isPending;
 
   useEffect(() => {
