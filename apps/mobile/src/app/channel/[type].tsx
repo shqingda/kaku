@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { Image } from 'expo-image';
 import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -17,20 +17,21 @@ import { useChannel } from '@/features/channels/use-channel';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 
+const CHANNEL_TYPES = [
+  { id: 2, label: '动画' },
+  { id: 1, label: '书籍' },
+  { id: 3, label: '音乐' },
+  { id: 4, label: '游戏' },
+  { id: 6, label: '三次元' },
+] as const;
+
 export default function ChannelScreen() {
   const { type } = useLocalSearchParams<{ type?: string }>();
-  const subjectType = getSubjectTypeFromSlug(type);
-  const label = getSubjectTypeLabel(subjectType);
+  const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
+  const label = subjectType === 1 ? '阅读' : getSubjectTypeLabel(subjectType);
   const channelQuery = useChannel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
   const ranked = rankingQuery.data?.pages[0]?.items.slice(0, 6) ?? [];
-
-  function changeType(nextType: number) {
-    router.replace({
-      pathname: '/channel/[type]',
-      params: { type: getSubjectTypeSlug(nextType) },
-    });
-  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -46,8 +47,9 @@ export default function ChannelScreen() {
         </View>
         <SubjectTypeTabs
           contentContainerStyle={styles.typeTabs}
-          onChange={changeType}
+          onChange={setSubjectType}
           selectedType={subjectType}
+          types={CHANNEL_TYPES}
         />
 
         <SectionHeading
@@ -100,7 +102,7 @@ export default function ChannelScreen() {
             <ChannelAction
               icon={{ android: 'calendar_month', ios: 'calendar', web: 'calendar_month' }}
               label="每日放送"
-              onPress={() => router.push('/explore')}
+              onPress={() => router.push('/calendar')}
             />
           ) : null}
         </View>

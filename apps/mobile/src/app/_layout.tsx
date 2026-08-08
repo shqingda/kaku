@@ -84,6 +84,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="calendar"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '每日放送',
+            }}
+          />
+          <Stack.Screen
             name="browse"
             options={{
               headerBackButtonDisplayMode: 'minimal',
@@ -188,7 +197,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '发现',
+              title: '综合',
             }}
           />
           <Stack.Screen

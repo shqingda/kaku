@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +21,7 @@ import {
 } from '@/features/catalog/subject-types';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import {
   useBangumiCalendar,
@@ -41,7 +41,7 @@ export default function ExploreScreen() {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
-  const calendarQuery = useBangumiCalendar();
+  const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
   const searchSubjects = useMemo(
@@ -80,7 +80,7 @@ export default function ExploreScreen() {
           headerBackButtonDisplayMode: 'minimal',
           headerShown: true,
           headerShadowVisible: false,
-          title: '发现',
+          title: '综合',
         }}
       />
       {keyword ? (
@@ -141,9 +141,11 @@ export default function ExploreScreen() {
                 </View>
                 <View style={styles.communityText}>
                   <Text style={styles.communityTitle}>
-                    {getSubjectTypeLabel(selectedSearchType)}频道
+                    频道
                   </Text>
-                  <Text style={styles.communityMeta}>近期热门与高分精选</Text>
+                  <Text numberOfLines={1} style={styles.communityMeta}>
+                    {selectedSearchType === 1 ? '阅读' : getSubjectTypeLabel(selectedSearchType)}频道 · 近期热门与高分精选
+                  </Text>
                 </View>
               </View>
               <Text style={styles.chevron}>›</Text>
@@ -174,67 +176,82 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
-            <View style={styles.sectionHeader}>
-              <View>
-                <Text style={styles.sectionTitle}>每日放送</Text>
-                <Text style={styles.sectionMeta}>看看今天有哪些新节目</Text>
-              </View>
-            </View>
-
-            {calendarQuery.isPending ? (
-              <State title="正在读取放送表" text="本周动画加载中。" />
-            ) : calendarQuery.isError ? (
-              <State
-                action={() => void calendarQuery.refetch()}
-                title="放送表读取失败"
-                text="请检查网络后重试。"
-              />
-            ) : (
+            {selectedSearchType === 2 ? (
               <>
-                <ScrollView
-                  contentContainerStyle={styles.dayTabs}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                >
-                  {calendarQuery.data.map((day) => {
-                    const isSelected = day.id === selectedCalendarDay?.id;
+                <View style={styles.sectionHeader}>
+                  <View>
+                    <Text style={styles.sectionTitle}>每日放送</Text>
+                    <Text style={styles.sectionMeta}>看看今天有哪些新节目</Text>
+                  </View>
+                  <Pressable
+                    accessibilityLabel="查看全部每日放送"
+                    accessibilityRole="button"
+                    onPress={() => router.push('/calendar')}
+                    style={({ pressed }) => [
+                      styles.sectionAction,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.sectionActionText}>查看全部</Text>
+                    <Text style={styles.sectionActionChevron}>›</Text>
+                  </Pressable>
+                </View>
+                {calendarQuery.isPending ? (
+                  <State title="正在读取放送表" text="本周动画加载中。" />
+                ) : calendarQuery.isError ? (
+                  <State
+                    action={() => void calendarQuery.refetch()}
+                    title="放送表读取失败"
+                    text="请检查网络后重试。"
+                  />
+                ) : (
+                  <>
+                    <ScrollView
+                      contentContainerStyle={styles.dayTabs}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                    >
+                      {calendarQuery.data.map((day) => {
+                        const isSelected = day.id === selectedCalendarDay?.id;
 
-                    return (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: isSelected }}
-                        key={day.id}
-                        onPress={() => setSelectedDay(day.id)}
-                        style={[
-                          styles.dayTab,
-                          isSelected && styles.dayTabSelected,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.dayTabText,
-                            isSelected && styles.dayTabTextSelected,
-                          ]}
-                        >
-                          {day.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-                <FlatList
-                  contentContainerStyle={styles.calendarList}
-                  data={selectedCalendarDay?.subjects ?? []}
-                  horizontal
-                  keyExtractor={(item) => String(item.id)}
-                  ListEmptyComponent={
-                    <State title="今天暂无条目" text="放送表还没有相关数据。" />
-                  }
-                  renderItem={({ item }) => <CalendarCard item={item} />}
-                  showsHorizontalScrollIndicator={false}
-                />
+                        return (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected }}
+                            key={day.id}
+                            onPress={() => setSelectedDay(day.id)}
+                            style={[
+                              styles.dayTab,
+                              isSelected && styles.dayTabSelected,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.dayTabText,
+                                isSelected && styles.dayTabTextSelected,
+                              ]}
+                            >
+                              {day.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                    <FlatList
+                      contentContainerStyle={styles.calendarList}
+                      data={selectedCalendarDay?.subjects ?? []}
+                      horizontal
+                      keyExtractor={(item) => String(item.id)}
+                      ListEmptyComponent={
+                        <State title="今天暂无条目" text="放送表还没有相关数据。" />
+                      }
+                      renderItem={({ item }) => <CalendarCard item={item} />}
+                      showsHorizontalScrollIndicator={false}
+                    />
+                  </>
+                )}
               </>
-            )}
+            ) : null}
             <RankingSection
               isError={rankedQuery.isError}
               isPending={rankedQuery.isPending}
@@ -259,23 +276,12 @@ function SearchField({
   onSubmit: () => void;
 }) {
   return (
-    <View style={styles.searchBar}>
-      <SymbolView
-        name={{ android: 'search', ios: 'magnifyingglass', web: 'search' }}
-        size={17}
-        tintColor={COLORS.subtle}
-      />
-      <TextInput
-        clearButtonMode="while-editing"
-        onChangeText={onChangeDraft}
-        onSubmitEditing={onSubmit}
-        placeholder="搜索条目"
-        placeholderTextColor={COLORS.subtle}
-        returnKeyType="search"
-        style={styles.searchInput}
-        value={draft}
-      />
-    </View>
+    <SubjectSearchField
+      onChangeText={onChangeDraft}
+      onSubmit={onSubmit}
+      style={styles.searchBar}
+      value={draft}
+    />
   );
 }
 
@@ -571,7 +577,7 @@ const styles = StyleSheet.create({
   },
   communityTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
   communityMeta: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
-  communityCopy: { alignItems: 'center', flexDirection: 'row' },
+  communityCopy: { alignItems: 'center', flex: 1, flexDirection: 'row' },
   communityIcon: {
     alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
@@ -580,21 +586,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 42,
   },
-  communityText: { marginLeft: 13 },
+  communityText: { flex: 1, marginLeft: 13, paddingRight: 10 },
   searchBar: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 17,
-    flexDirection: 'row',
     marginTop: 14,
-    paddingHorizontal: 15,
-  },
-  searchInput: {
-    color: COLORS.ink,
-    flex: 1,
-    fontSize: 16,
-    height: 50,
-    marginLeft: 9,
   },
   subjectTypeTabs: { paddingBottom: 2, paddingTop: 12 },
   sectionHeader: {

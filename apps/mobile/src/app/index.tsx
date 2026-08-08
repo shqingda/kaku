@@ -252,8 +252,15 @@ function QuickActions() {
             ios: 'calendar',
             web: 'calendar_month',
           }}
-          label="每日放送"
-          meta="查看今天和本周播出的动画"
+          label="综合"
+          meta="频道、放送、排行榜与社区入口"
+        />
+        <QuickActionRow
+          hasDivider
+          href={{ pathname: '/channel/[type]', params: { type: 'anime' } }}
+          icon={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
+          label="频道"
+          meta="浏览动画、阅读、音乐、游戏与三次元"
         />
         <QuickActionRow
           hasDivider
@@ -286,7 +293,7 @@ function QuickActionRow({
   meta,
 }: {
   hasDivider?: boolean;
-  href: '/community' | '/explore' | '/rankings';
+  href: Parameters<typeof router.push>[0];
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   meta: string;

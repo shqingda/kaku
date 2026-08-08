@@ -3,16 +3,15 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Keyboard,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import type { AuthSession } from '@/features/auth/model';
+import { SubjectSearchField } from '@/features/shared/subject-search-field';
 
 import { ProfileMenu } from './profile-menu';
 
@@ -62,29 +61,11 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
       </View>
 
       <View style={styles.tools}>
-        <View style={styles.searchBox}>
-          <SymbolView
-            name={{
-              android: 'search',
-              ios: 'magnifyingglass',
-              web: 'search',
-            }}
-            size={19}
-            tintColor={COLORS.muted}
-            weight="medium"
-          />
-          <TextInput
-            accessibilityLabel="搜索条目"
-            clearButtonMode="while-editing"
-            onChangeText={setSearchDraft}
-            onSubmitEditing={submitSearch}
-            placeholder="搜索条目"
-            placeholderTextColor={COLORS.muted}
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={searchDraft}
-          />
-        </View>
+        <SubjectSearchField
+          onChangeText={setSearchDraft}
+          onSubmit={submitSearch}
+          value={searchDraft}
+        />
       </View>
     </View>
   );
@@ -111,26 +92,5 @@ const styles = StyleSheet.create({
     width: 44,
   },
   tools: { marginTop: 14 },
-  searchBox: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 15,
-    flex: 1,
-    flexDirection: 'row',
-    gap: 10,
-    height: 50,
-    paddingHorizontal: 16,
-  },
-  searchInput: {
-    color: COLORS.ink,
-    flex: 1,
-    fontSize: 16,
-    height: 24,
-    includeFontPadding: false,
-    lineHeight: 22,
-    paddingVertical: 0,
-    textAlignVertical: 'center',
-    transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }],
-  },
   pressed: { opacity: 0.62 },
 });

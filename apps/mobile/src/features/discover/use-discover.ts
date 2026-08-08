@@ -9,8 +9,9 @@ import { bangumiDiscoverProvider } from '@/infrastructure/bangumi/discover/provi
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function useBangumiCalendar() {
+export function useBangumiCalendar(enabled = true) {
   return useQuery({
+    enabled,
     queryFn: ({ signal }) => bangumiDiscoverProvider.getCalendar(signal),
     queryKey: queryKeys.calendar(),
     retry: shouldRetryBangumiQuery,
