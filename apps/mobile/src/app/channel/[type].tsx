@@ -87,9 +87,14 @@ export default function ChannelScreen() {
             }
           />
           <ChannelAction
-            icon={{ android: 'search', ios: 'magnifyingglass', web: 'search' }}
-            label="搜索"
-            onPress={() => router.push('/explore')}
+            icon={{ android: 'filter_alt', ios: 'line.3.horizontal.decrease', web: 'filter_alt' }}
+            label="分类浏览"
+            onPress={() =>
+              router.push({
+                pathname: '/browse',
+                params: { type: getSubjectTypeSlug(subjectType) },
+              })
+            }
           />
           {subjectType === 2 ? (
             <ChannelAction

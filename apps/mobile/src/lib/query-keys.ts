@@ -10,6 +10,12 @@ export const queryKeys = {
   calendar: () => ['calendar', 'bangumi'] as const,
   channel: (subjectType: number) =>
     ['channel', 'kaku', subjectType] as const,
+  browseSubjects: (
+    subjectType: number,
+    sort: string,
+    year?: number,
+    tag?: string,
+  ) => ['browse', 'kaku', subjectType, sort, year ?? 'all', tag ?? 'all'] as const,
   rankedSubjects: (subjectType: number) =>
     ['ranked-subjects', 'bangumi', subjectType] as const,
   subjectSearch: (keyword: string, subjectType: number) =>

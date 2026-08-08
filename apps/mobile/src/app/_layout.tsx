@@ -84,6 +84,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="browse"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '分类浏览',
+            }}
+          />
+          <Stack.Screen
             name="group/[name]"
             options={{
               headerBackButtonDisplayMode: 'minimal',
