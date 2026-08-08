@@ -27,7 +27,7 @@ export function HomePage() {
           <h1>把每一部喜欢，<br /><em>留在一个安静的地方。</em></h1>
           <p>Kaku 是一个为移动端重新设计的 Bangumi 第三方客户端。收藏、追踪、评分与讨论，都更轻、更快，也更像原生 App。</p>
           <div className="hero-actions">
-            <a className="button primary" href="/pricing">查看计划</a>
+            <a className="button primary" href="/pricing">免费测试</a>
             <a className="button secondary" href="#features">了解 Kaku <span>↓</span></a>
           </div>
           <div className="platform-note"><span>●</span> iPhone · Android · macOS 计划中</div>
@@ -87,9 +87,9 @@ export function HomePage() {
         <div>
           <span className="eyebrow">正在认真做出来</span>
           <h2>下一集，继续。</h2>
-          <p>Kaku 正在 iOS 与 Android 上测试。核心功能在公开测试期保持免费。</p>
+          <p>Kaku 正在 iOS 与 Android 上测试，当前全部功能免费开放。</p>
         </div>
-        <a className="button light" href="/pricing">查看定价与路线</a>
+        <a className="button light" href="/pricing">了解免费使用</a>
       </section>
     </>
   );

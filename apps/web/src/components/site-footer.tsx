@@ -9,7 +9,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="footer-links">
-        <a href="/pricing">定价</a>
+        <a href="/pricing">免费使用</a>
         <a href="/privacy">隐私政策</a>
         <a href="/terms">服务条款</a>
         <a href="/support">支持</a>

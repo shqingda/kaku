@@ -1,6 +1,6 @@
 const navigation = [
   { href: '/#features', label: '功能' },
-  { href: '/pricing', label: '定价' },
+  { href: '/pricing', label: '免费' },
   { href: '/#privacy', label: '隐私' },
   { href: '/support', label: '支持' },
 ];
@@ -17,7 +17,7 @@ export function SiteHeader() {
           <a href={item.href} key={item.href}>{item.label}</a>
         ))}
       </nav>
-      <a className="nav-cta" href="/pricing">查看计划</a>
+      <a className="nav-cta" href="/pricing">免费测试</a>
     </header>
   );
 }
