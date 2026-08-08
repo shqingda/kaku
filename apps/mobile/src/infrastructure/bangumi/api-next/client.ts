@@ -20,6 +20,7 @@ import {
 } from './schemas';
 import type { BangumiSubjectCharacterName } from './schemas';
 import { createBangumiRequester } from '../transport/http-client';
+import { getRemainingPageOffsets } from '../subject-extras/pagination';
 
 const requestJson = createBangumiRequester({
   baseUrl: 'https://next.bgm.tv',
@@ -51,14 +52,9 @@ export async function getBangumiSubjectCharacterNames(
     0,
     signal,
   );
-  const remainingOffsets = Array.from(
-    {
-      length: Math.max(
-        0,
-        Math.ceil(firstPage.total / CHARACTER_PAGE_SIZE) - 1,
-      ),
-    },
-    (_, index) => (index + 1) * CHARACTER_PAGE_SIZE,
+  const remainingOffsets = getRemainingPageOffsets(
+    firstPage.total,
+    CHARACTER_PAGE_SIZE,
   );
   const remainingPages = await Promise.all(
     remainingOffsets.map((offset) =>

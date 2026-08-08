@@ -8,6 +8,7 @@ import {
 } from '../src/infrastructure/bangumi/reviews/adapter.ts';
 import { mapBangumiEntityDetail } from '../src/infrastructure/bangumi/people/adapter.ts';
 import { mapBangumiSubjectCharacters } from '../src/infrastructure/bangumi/subject-extras/adapter.ts';
+import { getRemainingPageOffsets } from '../src/infrastructure/bangumi/subject-extras/pagination.ts';
 import {
   bangumiDiscussionReplySchema,
 } from '../src/infrastructure/bangumi/api-next/schemas.ts';
@@ -318,6 +319,13 @@ test('Bangumi subject characters prefer localized Chinese names', () => {
 
   assert.equal(mapped[0].name, '简体中文角色名');
   assert.equal(mapped[1].name, 'フォールバック名');
+});
+
+test('subject character names request every page above 100 entries', () => {
+  assert.deepEqual(getRemainingPageOffsets(0, 100), []);
+  assert.deepEqual(getRemainingPageOffsets(100, 100), []);
+  assert.deepEqual(getRemainingPageOffsets(101, 100), [100]);
+  assert.deepEqual(getRemainingPageOffsets(301, 100), [100, 200, 300]);
 });
 
 test('Bangumi comments and reviews expose the next offset', () => {
