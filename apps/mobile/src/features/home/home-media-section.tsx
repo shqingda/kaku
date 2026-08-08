@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -131,35 +131,39 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
       : getCollectionStatusLabel(item.subjectType, 'doing');
 
   return (
-    <Pressable
-      accessibilityLabel={`打开${item.title}`}
-      accessibilityRole="button"
-      onPress={() =>
-        router.push({
-          pathname: '/subject/[id]',
-          params: { id: String(item.id) },
-        })
-      }
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    <Link
+      asChild
+      href={{
+        pathname: '/subject/[id]',
+        params: { id: String(item.id) },
+      }}
     >
-      <View style={styles.cover}>
-        <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
-        {item.coverUrl ? (
-          <Image
-            contentFit="cover"
-            source={item.coverUrl}
-            style={StyleSheet.absoluteFill}
-            transition={120}
-          />
-        ) : null}
-      </View>
-      <Text numberOfLines={2} style={styles.cardTitle}>
-        {item.title}
-      </Text>
-      <Text numberOfLines={1} style={styles.cardMeta}>
-        {progress}
-      </Text>
-    </Pressable>
+      <Pressable
+        accessibilityLabel={`打开${item.title}`}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      >
+        <Link.AppleZoom>
+          <View style={styles.cover}>
+            <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
+            {item.coverUrl ? (
+              <Image
+                contentFit="cover"
+                source={item.coverUrl}
+                style={StyleSheet.absoluteFill}
+                transition={120}
+              />
+            ) : null}
+          </View>
+        </Link.AppleZoom>
+        <Text numberOfLines={2} style={styles.cardTitle}>
+          {item.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.cardMeta}>
+          {progress}
+        </Text>
+      </Pressable>
+    </Link>
   );
 }
 

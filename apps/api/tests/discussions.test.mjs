@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  createBangumiEpisodeComment,
   createBangumiGroupTopicReply,
   createBangumiSubjectTopicReply,
 } from '../src/discussions/bangumi-client.ts';
@@ -32,6 +33,33 @@ test('creating a subject topic reply keeps OAuth and Turnstile server-side', asy
   });
 
   assert.deepEqual(reply, { id: 10001 });
+});
+
+test('creating an episode comment uses the episode P1 endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/episodes/987/comments',
+    );
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), {
+      content: '这一集的演出很好。',
+      replyTo: 456,
+      turnstileToken: 'turnstile-token',
+    });
+    return Response.json({ id: 10003 });
+  };
+
+  const reply = await createBangumiEpisodeComment({
+    accessToken: 'access-token',
+    content: '这一集的演出很好。',
+    episodeId: 987,
+    fetcher,
+    replyTo: 456,
+    turnstileToken: 'turnstile-token',
+  });
+
+  assert.deepEqual(reply, { id: 10003 });
 });
 
 test('creating a group topic reply uses the group P1 endpoint', async () => {

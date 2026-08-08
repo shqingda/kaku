@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   FlatList,
@@ -19,8 +21,9 @@ import {
   usePersonalCollection,
   useSavePersonalCollection,
 } from '@/features/collections/use-personal-collection';
-import { DiscussionReadOnlyNotice } from '@/features/discussions/discussion-read-only';
+import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -35,7 +38,9 @@ export default function EpisodeScreen() {
     episodeNumber: string;
     id: string;
   }>();
-  const { session } = useAuth();
+  const { isSigningIn, session, signIn } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
   const subjectId = Number(id);
   const episodeNumber = Number(episodeParam);
   const catalogQuery = useCatalogSubject(subjectId);
@@ -57,6 +62,18 @@ export default function EpisodeScreen() {
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id);
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
+
+  async function openComposer(reply?: DiscussionReply) {
+    if (!session) {
+      const signedIn = await signIn();
+      if (!signedIn) {
+        return;
+      }
+    }
+
+    setReplyingTo(reply);
+    setComposerVisible(true);
+  }
 
   if (catalogQuery.isPending) {
     return (
@@ -178,6 +195,7 @@ export default function EpisodeScreen() {
       />
       <View style={styles.contentView}>
         <FlatList
+          style={styles.list}
           contentContainerStyle={styles.content}
           data={replies}
           initialNumToRender={8}
@@ -271,16 +289,12 @@ export default function EpisodeScreen() {
               />
             </>
           }
-          ListFooterComponent={
-            !commentsQuery.isPending && !commentsQuery.isError ? (
-              <DiscussionReadOnlyNotice />
-            ) : null
-          }
           renderItem={({ index, item }) => (
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
+              onReply={session ? openComposer : undefined}
               reply={item}
             />
           )}
@@ -288,7 +302,46 @@ export default function EpisodeScreen() {
           updateCellsBatchingPeriod={40}
           windowSize={7}
         />
+        {catalogEpisode ? (
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={COLORS.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? `参与本${isTrack ? '曲' : '集'}讨论…`
+                    : '登录后参与讨论'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
+      {catalogEpisode ? (
+        <DiscussionReplyComposer
+          onClose={() => setComposerVisible(false)}
+          replyingTo={replyingTo}
+          target={{ id: catalogEpisode.id, kind: 'episode' }}
+          visible={composerVisible}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -296,6 +349,7 @@ export default function EpisodeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   contentView: { flex: 1 },
+  list: { flex: 1 },
   content: { padding: 20, paddingBottom: 28 },
   episodeCard: {
     alignItems: 'flex-start',
@@ -363,5 +417,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  replyBar: {
+    backgroundColor: COLORS.background,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 48,
+    paddingHorizontal: 17,
+  },
+  replyButtonText: { color: COLORS.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });

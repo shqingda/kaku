@@ -93,3 +93,15 @@ export function createBangumiGroupTopicReply({
     path: `/groups/-/topics/${topicId}/replies`,
   });
 }
+
+export function createBangumiEpisodeComment({
+  episodeId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  episodeId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/episodes/${episodeId}/comments`,
+  });
+}

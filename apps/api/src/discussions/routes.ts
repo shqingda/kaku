@@ -15,6 +15,7 @@ import { createD1AuthStore } from '../auth/store.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiDiscussionError,
+  createBangumiEpisodeComment,
   createBangumiGroupTopicReply,
   createBangumiSubjectTopicReply,
 } from './bangumi-client.ts';
@@ -25,10 +26,19 @@ const createReplySchema = z.object({
   turnstileToken: z.string().min(1).max(2048),
 });
 
-function getTopicId(value: string | undefined) {
-  const topicId = Number(value);
-  return Number.isSafeInteger(topicId) && topicId > 0 ? topicId : null;
+function getPositiveId(value: string | undefined) {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
+
+type CreateUpstreamReply = (input: {
+  accessToken: string;
+  content: string;
+  fetcher: typeof fetch;
+  replyTo?: number;
+  targetId: number;
+  turnstileToken: string;
+}) => Promise<{ id: number }>;
 
 export function registerDiscussionRoutes(
   app: Hono<{ Bindings: Env }>,
@@ -39,14 +49,14 @@ export function registerDiscussionRoutes(
 
   async function createReply(
     context: Context<{ Bindings: Env }>,
-    upstream: typeof createBangumiSubjectTopicReply,
+    targetId: number | null,
+    upstream: CreateUpstreamReply,
   ) {
-    const topicId = getTopicId(context.req.param('topicId'));
     const parsedBody = createReplySchema.safeParse(
       await context.req.json().catch(() => null),
     );
 
-    if (!topicId || !parsedBody.success) {
+    if (!targetId || !parsedBody.success) {
       return context.json(
         { error: 'invalid_topic_reply', message: '回复内容格式不正确。' },
         400,
@@ -75,7 +85,7 @@ export function registerDiscussionRoutes(
         content: parsedBody.data.content,
         fetcher,
         replyTo: parsedBody.data.replyTo,
-        topicId,
+        targetId,
         turnstileToken: parsedBody.data.turnstileToken,
       });
 
@@ -121,9 +131,27 @@ export function registerDiscussionRoutes(
   }
 
   app.post('/me/subject-topics/:topicId/replies', (context) =>
-    createReply(context, createBangumiSubjectTopicReply),
+    createReply(
+      context,
+      getPositiveId(context.req.param('topicId')),
+      ({ targetId, ...input }) =>
+        createBangumiSubjectTopicReply({ ...input, topicId: targetId }),
+    ),
   );
   app.post('/me/group-topics/:topicId/replies', (context) =>
-    createReply(context, createBangumiGroupTopicReply),
+    createReply(
+      context,
+      getPositiveId(context.req.param('topicId')),
+      ({ targetId, ...input }) =>
+        createBangumiGroupTopicReply({ ...input, topicId: targetId }),
+    ),
+  );
+  app.post('/me/episodes/:episodeId/comments', (context) =>
+    createReply(
+      context,
+      getPositiveId(context.req.param('episodeId')),
+      ({ targetId, ...input }) =>
+        createBangumiEpisodeComment({ ...input, episodeId: targetId }),
+    ),
   );
 }
