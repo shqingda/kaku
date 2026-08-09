@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -103,6 +103,10 @@ export function CollectionControls({
   }
 
   function saveDraft(draft: CollectionBoxDraft) {
+    if (!draft.collectionStatus) {
+      return;
+    }
+
     const clearsProgress =
       item.watchedEpisodeNumbers.length > 0 &&
       (draft.collectionStatus === 'wish' ||
@@ -115,23 +119,16 @@ export function CollectionControls({
       ((item.readChapterCount ?? 0) > 0 || (item.readVolumeCount ?? 0) > 0) &&
       (draft.collectionStatus === 'wish' ||
         draft.collectionStatus === undefined);
-    const removesCollection =
-      draft.collectionStatus === undefined && status !== undefined;
-
     if (
       !clearsProgress &&
       !clearsReadingProgress &&
-      !clearsRating &&
-      !removesCollection
+      !clearsRating
     ) {
       void applyDraft(draft);
       return;
     }
 
-    const action =
-      draft.collectionStatus === 'wish'
-        ? `改为${getCollectionStatusLabel(subjectType, 'wish')}`
-        : '取消收藏';
+    const action = `改为${getCollectionStatusLabel(subjectType, 'wish')}`;
     const clearedRecords = [
       clearsProgress
         ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
@@ -170,6 +167,26 @@ export function CollectionControls({
       [
         { style: 'cancel', text: '取消' },
         { onPress: () => router.push('/account'), text: '去登录' },
+      ],
+    );
+  }
+
+  function openRemovalFlow() {
+    Alert.alert(
+      '在 Bangumi 取消收藏？',
+      'Bangumi 官方 API 暂未开放取消收藏，Kaku 需要打开原条目页面完成。返回 Kaku 后会自动重新读取收藏状态。',
+      [
+        { style: 'cancel', text: '保留' },
+        {
+          onPress: () => {
+            void Linking.openURL(`https://bgm.tv/subject/${item.id}`)
+              .then(() => setIsOpen(false))
+              .catch(() => {
+                Alert.alert('无法打开 Bangumi', '请稍后重试。');
+              });
+          },
+          text: '打开 Bangumi',
+        },
       ],
     );
   }
@@ -307,15 +324,7 @@ export function CollectionControls({
         isSaving={isSaving}
         item={item}
         onClose={() => setIsOpen(false)}
-        onRemove={() =>
-          saveDraft({
-            collectionStatus: undefined,
-            rating: undefined,
-            readChapterCount: 0,
-            readVolumeCount: 0,
-            watchedCount: 0,
-          })
-        }
+        onRemove={openRemovalFlow}
         onSave={saveDraft}
         supportsProgress={supportsProgress}
         visible={isOpen}

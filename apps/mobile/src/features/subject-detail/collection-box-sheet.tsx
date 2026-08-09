@@ -542,18 +542,22 @@ export function CollectionBoxSheet({
               ) : null}
               <Pressable
                 accessibilityRole="button"
-                disabled={isSaving}
+                accessibilityState={{ disabled: !status || isSaving }}
+                disabled={!status || isSaving}
                 onPress={save}
                 style={({ pressed }) => [
                   styles.footerButton,
                   styles.saveButton,
+                  (!status || isSaving) && styles.disabledButton,
                   pressed && styles.pressed,
                 ]}
               >
                 {isSaving ? (
                   <ActivityIndicator color={COLORS.surface} />
                 ) : (
-                  <Text style={styles.saveText}>保存</Text>
+                  <Text style={styles.saveText}>
+                    {status ? '保存' : '选择状态'}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -861,5 +865,6 @@ const styles = StyleSheet.create({
   removeText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
   saveButton: { backgroundColor: COLORS.accent },
   saveText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
+  disabledButton: { opacity: 0.46 },
   pressed: { opacity: 0.58 },
 });

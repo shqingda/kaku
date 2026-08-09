@@ -18,6 +18,7 @@ export function usePersonalCollection(subjectId: number) {
     enabled: Boolean(session) && Number.isInteger(subjectId) && subjectId > 0,
     queryFn: () => getPersonalCollection(request, subjectId),
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
+    refetchOnWindowFocus: 'always',
     retry: false,
     staleTime: 60 * 1000,
   });
