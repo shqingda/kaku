@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicGroupTopic } from '@/features/community/use-community';
-import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
+import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
