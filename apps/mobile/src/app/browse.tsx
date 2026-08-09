@@ -114,7 +114,12 @@ export default function BrowseScreen() {
                 onChangeText={setYearDraft}
                 placeholder="年份，如 2026"
                 placeholderTextColor={COLORS.subtle}
-                style={styles.filterInput}
+                style={[
+                  styles.filterInput,
+                  yearDraft && process.env.EXPO_OS === 'ios'
+                    ? styles.filterInputValueIos
+                    : null,
+                ]}
                 value={yearDraft}
               />
               <View style={styles.filterDivider} />
@@ -125,7 +130,12 @@ export default function BrowseScreen() {
                 placeholder="标签，如 TV、科幻"
                 placeholderTextColor={COLORS.subtle}
                 returnKeyType="search"
-                style={styles.filterInput}
+                style={[
+                  styles.filterInput,
+                  tagDraft && process.env.EXPO_OS === 'ios'
+                    ? styles.filterInputValueIos
+                    : null,
+                ]}
                 value={tagDraft}
               />
               <Pressable onPress={applyFilters} style={styles.applyButton}>
@@ -195,6 +205,7 @@ const styles = StyleSheet.create({
   sortTextSelected: { color: COLORS.accent },
   filterCard: { alignItems: 'center', backgroundColor: COLORS.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
   filterInput: { color: COLORS.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
+  filterInputValueIos: { height: 24, transform: [{ translateY: -1 }] },
   filterDivider: { backgroundColor: COLORS.track, height: 24, width: StyleSheet.hairlineWidth },
   applyButton: { alignItems: 'center', backgroundColor: COLORS.ink, borderRadius: 13, height: 40, justifyContent: 'center', paddingHorizontal: 14 },
   applyText: { color: COLORS.surface, fontSize: 12, fontWeight: '800' },
