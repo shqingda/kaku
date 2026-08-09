@@ -89,16 +89,6 @@ export default function ChannelScreen() {
             }
           />
           <ChannelAction
-            icon={{ android: 'local_offer', ios: 'tag', web: 'local_offer' }}
-            label="标签索引"
-            onPress={() =>
-              router.push({
-                pathname: '/tags',
-                params: { type: getSubjectTypeSlug(subjectType) },
-              })
-            }
-          />
-          <ChannelAction
             icon={{ android: 'filter_alt', ios: 'line.3.horizontal.decrease', web: 'filter_alt' }}
             label="分类浏览"
             onPress={() =>
