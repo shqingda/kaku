@@ -19,6 +19,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 
@@ -131,6 +132,9 @@ export default function RankingsScreen() {
               onChange={setSubjectType}
               selectedType={subjectType}
             />
+            {rankingQuery.data && rankingQuery.isError ? (
+              <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
+            ) : null}
           </>
         }
         maxToRenderPerBatch={Platform.OS === 'android' ? 6 : 12}

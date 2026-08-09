@@ -16,6 +16,7 @@ import type { ChannelSubject } from '@/features/channels/model';
 import { useChannel } from '@/features/channels/use-channel';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 
 const CHANNEL_TYPES = [
   { id: 2, label: '动画' },
@@ -56,9 +57,12 @@ export default function ChannelScreen() {
           meta="根据最近 30 日关注"
           title="近期热门"
         />
-        {channelQuery.isPending ? (
+        {channelQuery.data && channelQuery.isError ? (
+          <CachedDataNotice onRetry={() => void channelQuery.refetch()} />
+        ) : null}
+        {channelQuery.isPending && !channelQuery.data ? (
           <ChannelState title="正在读取热门条目" text={`${label}频道加载中。`} />
-        ) : channelQuery.isError ? (
+        ) : channelQuery.isError && !channelQuery.data ? (
           <ChannelState
             action={() => void channelQuery.refetch()}
             title="热门条目读取失败"
@@ -122,9 +126,12 @@ export default function ChannelScreen() {
             <Text style={styles.allText}>全部 ›</Text>
           </Pressable>
         </View>
-        {rankingQuery.isPending ? (
+        {rankingQuery.data && rankingQuery.isError ? (
+          <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
+        ) : null}
+        {rankingQuery.isPending && !rankingQuery.data ? (
           <ChannelState title="正在读取高分条目" text="排行榜加载中。" />
-        ) : rankingQuery.isError ? (
+        ) : rankingQuery.isError && !rankingQuery.data ? (
           <ChannelState
             action={() => void rankingQuery.refetch()}
             title="高分条目读取失败"

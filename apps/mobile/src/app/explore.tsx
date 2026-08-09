@@ -21,6 +21,7 @@ import {
 } from '@/features/catalog/subject-types';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import {
@@ -271,9 +272,12 @@ export default function ExploreScreen() {
                     />
                   </Pressable>
                 </View>
-                {calendarQuery.isPending ? (
+                {calendarQuery.data && calendarQuery.isError ? (
+                  <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
+                ) : null}
+                {calendarQuery.isPending && !calendarQuery.data ? (
                   <State title="正在读取放送表" text="本周动画加载中。" />
-                ) : calendarQuery.isError ? (
+                ) : calendarQuery.isError && !calendarQuery.data ? (
                   <State
                     action={() => void calendarQuery.refetch()}
                     title="放送表读取失败"
@@ -408,12 +412,15 @@ function RankingSection({
           />
         </Pressable>
       </View>
-      {isPending ? (
+      {subjects.length > 0 && isError ? (
+        <CachedDataNotice onRetry={onRetry} />
+      ) : null}
+      {isPending && subjects.length === 0 ? (
         <State
           title="正在读取排行榜"
           text={`高评分${subjectTypeLabel}加载中。`}
         />
-      ) : isError ? (
+      ) : isError && subjects.length === 0 ? (
         <State action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
       ) : (
         <View style={styles.rankingList}>

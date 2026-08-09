@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { useBangumiCalendar } from '@/features/discover/use-discover';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 
 function currentWeekdayId() {
   const day = new Date().getDay();
@@ -89,6 +90,9 @@ export default function CalendarScreen() {
                 );
               })}
             </ScrollView>
+            {calendarQuery.data && calendarQuery.isError ? (
+              <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
+            ) : null}
             <View style={styles.listHeading}>
               <Text style={styles.listTitle}>
                 {selectedCalendarDay?.label ?? '本周'}放送
