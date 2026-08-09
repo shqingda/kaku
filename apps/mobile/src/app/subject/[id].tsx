@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -27,6 +27,7 @@ import {
   useSubjectComments,
   useSubjectReviews,
 } from '@/features/reviews/use-subject-reviews';
+import { rememberRecentSubject } from '@/features/history/recent-subjects';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
@@ -119,6 +120,18 @@ export default function SubjectScreen() {
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
   const detailLabels = getSubjectDetailLabels(subjectType);
+
+  useEffect(() => {
+    if (!catalogSubject) return;
+
+    void rememberRecentSubject({
+      coverUrl: catalogSubject.coverUrl,
+      id: catalogSubject.id,
+      title: catalogSubject.title,
+      type: catalogSubject.type,
+      viewedAt: Date.now(),
+    });
+  }, [catalogSubject]);
 
   function goBack() {
     if (router.canGoBack()) {

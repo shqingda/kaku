@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import {
+  router,
+  Stack,
+  useFocusEffect,
+  useLocalSearchParams,
+} from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
@@ -31,6 +36,12 @@ import {
   saveRecentSearches,
 } from '@/features/search/search-history';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
+import { RecentSubjectsSection } from '@/features/history/recent-subjects-section';
+import type { RecentSubject } from '@/features/history/recent-subjects-model';
+import {
+  clearRecentSubjects,
+  loadRecentSubjects,
+} from '@/features/history/recent-subjects';
 import {
   useBangumiCalendar,
   useBangumiRankedSubjects,
@@ -50,6 +61,7 @@ export default function ExploreScreen() {
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
@@ -76,6 +88,20 @@ export default function ExploreScreen() {
       active = false;
     };
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void loadRecentSubjects().then((items) => {
+        if (active) setRecentSubjects(items);
+      });
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   function rememberSearch(nextKeyword: string) {
     setRecentSearches((current) => {
@@ -105,6 +131,11 @@ export default function ExploreScreen() {
   function clearSearchHistory() {
     setRecentSearches([]);
     void clearRecentSearches();
+  }
+
+  function clearBrowsingHistory() {
+    setRecentSubjects([]);
+    void clearRecentSubjects();
   }
 
   function updateDraft(value: string) {
@@ -156,11 +187,17 @@ export default function ExploreScreen() {
             onSubmit={submitSearch}
           />
           {!draft ? (
-            <RecentSearches
-              items={recentSearches}
-              onClear={clearSearchHistory}
-              onSelect={selectRecentSearch}
-            />
+            <>
+              <RecentSearches
+                items={recentSearches}
+                onClear={clearSearchHistory}
+                onSelect={selectRecentSearch}
+              />
+              <RecentSubjectsSection
+                items={recentSubjects}
+                onClear={clearBrowsingHistory}
+              />
+            </>
           ) : null}
           <SubjectTypeTabs
             contentContainerStyle={styles.subjectTypeTabs}
