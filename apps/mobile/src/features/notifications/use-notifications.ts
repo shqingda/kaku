@@ -15,6 +15,7 @@ export function useNotifications() {
     enabled: Boolean(session),
     queryFn: ({ signal }) => getNotifications(request, signal),
     queryKey: queryKeys.notifications(session?.user.id),
+    meta: { private: true },
     retry: 1,
     staleTime: 30 * 1000,
   });

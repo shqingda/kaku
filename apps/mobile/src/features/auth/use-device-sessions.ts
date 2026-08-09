@@ -24,6 +24,7 @@ export function useDeviceSessions() {
       return parseDeviceSessions(response);
     },
     queryKey: deviceSessionsKey(session?.user.id),
+    meta: { private: true },
     retry: false,
   });
 }

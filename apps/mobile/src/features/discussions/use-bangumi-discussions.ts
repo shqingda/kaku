@@ -62,6 +62,7 @@ export function useBangumiSubjectTopic(topicId: number) {
       ...queryKeys.subjectTopic(topicId),
       session?.user.id ?? 'public',
     ],
+    meta: session ? { private: true } : undefined,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });
@@ -92,6 +93,7 @@ export function useBangumiEpisodeComments(episodeId?: number) {
       ...queryKeys.episodeComments(episodeId),
       session?.user.id ?? 'public',
     ],
+    meta: session ? { private: true } : undefined,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

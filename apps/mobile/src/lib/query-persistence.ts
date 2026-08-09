@@ -9,6 +9,10 @@ type PersistableQuery = {
 export const QUERY_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
 export const QUERY_CACHE_BUSTER = 'public-catalog-v1';
 
+export function isPrivateQuery(query: { meta?: Record<string, unknown> }) {
+  return query.meta?.private === true;
+}
+
 export function shouldPersistPublicQuery(query: PersistableQuery) {
   return (
     query.meta?.persist === true &&

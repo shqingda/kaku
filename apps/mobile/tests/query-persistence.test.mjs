@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   QUERY_CACHE_MAX_AGE,
+  isPrivateQuery,
   shouldPersistPublicQuery,
 } from '../src/lib/query-persistence.ts';
 
@@ -37,4 +38,10 @@ test('pending, failed, and empty query results are not persisted', () => {
 
 test('public cache expires after one day', () => {
   assert.equal(QUERY_CACHE_MAX_AGE, 86_400_000);
+});
+
+test('only explicitly private queries are cleared after sign out', () => {
+  assert.equal(isPrivateQuery({ meta: { private: true } }), true);
+  assert.equal(isPrivateQuery({ meta: { persist: true } }), false);
+  assert.equal(isPrivateQuery({}), false);
 });

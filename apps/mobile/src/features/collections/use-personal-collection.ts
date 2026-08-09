@@ -19,6 +19,7 @@ export function usePersonalCollection(subjectId: number) {
     queryFn: ({ signal }) =>
       getPersonalCollection(request, subjectId, signal),
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
+    meta: { private: true },
     refetchOnWindowFocus: 'always',
     retry: false,
     staleTime: 60 * 1000,

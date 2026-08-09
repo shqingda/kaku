@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
@@ -18,6 +19,7 @@ import {
   KakuApiError,
   refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
+import { isPrivateQuery } from '@/lib/query-persistence';
 
 import {
   canRefreshSession,
@@ -55,6 +57,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -140,6 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void restoreSession();
   }, [clearSession, refreshSession]);
+
+  useEffect(() => {
+    if (session || isLoading) return;
+
+    queryClient.removeQueries({ predicate: isPrivateQuery });
+  }, [isLoading, queryClient, session]);
 
   const completeSignIn = useCallback(async (callbackUrl: string) => {
     const code = getHandoffCode(callbackUrl);

@@ -84,6 +84,7 @@ export function useSubjectReview(reviewId: number) {
       ...queryKeys.subjectReview(reviewId),
       session?.user.id ?? 'public',
     ],
+    meta: session ? { private: true } : undefined,
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

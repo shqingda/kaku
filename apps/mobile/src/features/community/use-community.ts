@@ -103,6 +103,7 @@ export function usePublicGroupTopic(topicId: number) {
       ...queryKeys.groupTopic(topicId),
       session?.user.id ?? 'public',
     ],
+    meta: session ? { private: true } : undefined,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

@@ -19,6 +19,7 @@ export function useEntityCollection(
     queryFn: ({ signal }) =>
       getEntityCollection(request, kind, entityId, signal),
     queryKey: queryKeys.entityCollection(session?.user.id, kind, entityId),
+    meta: { private: true },
     retry: false,
     staleTime: 60 * 1000,
   });

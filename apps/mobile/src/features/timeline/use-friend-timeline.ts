@@ -24,6 +24,7 @@ export function useFriendTimeline() {
     queryFn: ({ pageParam, signal }) =>
       getFriendTimeline(request, pageParam, signal),
     queryKey: queryKeys.friendTimeline(session?.user.id),
+    meta: { private: true },
     retry: 1,
     staleTime: 60 * 1000,
   });
