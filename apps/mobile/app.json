@@ -8,6 +8,7 @@
     "scheme": "kaku",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "buildNumber": "1",
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.shqingda.kaku"
     },
@@ -19,7 +20,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.shqingda.kaku"
+      "package": "com.shqingda.kaku",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
