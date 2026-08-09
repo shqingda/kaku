@@ -39,7 +39,7 @@ button { font: inherit; }
   z-index: 50;
 }
 .brand { align-items: center; display: flex; font-size: 19px; font-weight: 760; gap: 9px; letter-spacing: -0.03em; width: fit-content; }
-.brand-mark { align-items: center; background: var(--ink); border-radius: 10px; color: white; display: inline-flex; font-size: 15px; font-weight: 800; height: 32px; justify-content: center; width: 32px; }
+.brand-mark { border-radius: 9px; display: block; height: 32px; object-fit: cover; width: 32px; }
 .brand-mark.small { border-radius: 8px; height: 28px; width: 28px; }
 .site-nav { align-items: center; display: flex; gap: 30px; }
 .site-nav a { color: #565450; font-size: 14px; font-weight: 580; transition: color 150ms ease; }

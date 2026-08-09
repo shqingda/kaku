@@ -2,7 +2,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
-        <span className="brand-mark small" aria-hidden="true">K</span>
+        <img alt="" aria-hidden="true" className="brand-mark small" src="/kaku-icon.png" />
         <div>
           <strong>Kaku</strong>
           <p>为喜欢的作品，留一个安静的位置。</p>

@@ -9,7 +9,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <a aria-label="Kaku 首页" className="brand" href="/">
-        <span className="brand-mark" aria-hidden="true">K</span>
+        <img alt="" aria-hidden="true" className="brand-mark" src="/kaku-icon.png" />
         <span>Kaku</span>
       </a>
       <nav aria-label="主导航" className="site-nav">
