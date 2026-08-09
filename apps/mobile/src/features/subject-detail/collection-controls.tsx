@@ -61,6 +61,7 @@ export function CollectionControls({
       );
       await onSave({
         collectionStatus: draft.collectionStatus ?? null,
+        comment: draft.comment,
         rating: canSavePersonalData ? draft.rating : undefined,
         watchedEpisodeNumbers:
           canSavePersonalData && supportsProgress

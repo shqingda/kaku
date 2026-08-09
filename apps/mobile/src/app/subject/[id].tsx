@@ -175,6 +175,7 @@ export default function SubjectScreen() {
   const year = catalogSubject.year;
   const progressSubject = {
     collectionStatus: personalCollection?.collectionStatus ?? null,
+    comment: session ? personalCollection?.comment ?? '' : undefined,
     coverUrl: coverUrl ?? '',
     episodeAirDates: catalogSubject.episodes.map(
       (episode) => episode.airDate ?? '',

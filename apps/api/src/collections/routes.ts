@@ -23,6 +23,7 @@ const collectionUpdateSchema = z.object({
   collectionStatus: z
     .enum(['wish', 'completed', 'doing', 'onHold', 'dropped'])
     .nullable(),
+  comment: z.string().max(1000).optional(),
   rating: z.number().int().min(1).max(10).optional(),
   watchedEpisodeNumbers: z
     .array(z.number().int().positive())
@@ -161,6 +162,7 @@ export function registerCollectionRoutes(
       await saveBangumiPersonalCollection({
         accessToken,
         collectionStatus: parsedBody.data.collectionStatus,
+        comment: parsedBody.data.comment,
         fetcher,
         rating: parsedBody.data.rating,
         subjectId,

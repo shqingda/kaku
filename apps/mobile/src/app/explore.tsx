@@ -192,7 +192,7 @@ export default function ExploreScreen() {
                   />
                 </View>
                 <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>全站日志</Text>
+                  <Text style={styles.communityTitle}>日志</Text>
                   <Text style={styles.communityMeta}>最新公开长文与用户评论</Text>
                 </View>
               </View>

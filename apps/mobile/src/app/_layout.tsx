@@ -71,7 +71,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '全站日志',
+              title: '日志',
             }}
           />
           <Stack.Screen

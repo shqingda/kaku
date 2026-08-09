@@ -29,7 +29,7 @@ export default function GlobalBlogsScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: '全站日志' }} />
+      <Stack.Screen options={{ title: '日志' }} />
       <FlatList
         contentContainerStyle={styles.content}
         data={blogs}
@@ -61,7 +61,7 @@ export default function GlobalBlogsScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>全站日志</Text>
+            <Text style={styles.title}>日志</Text>
             <Text style={styles.meta}>
               来自 Bangumi 用户的最新长文
               {totalPages ? ` · ${totalPages} 页` : ''}

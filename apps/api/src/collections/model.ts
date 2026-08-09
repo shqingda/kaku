@@ -7,6 +7,7 @@ export type CollectionStatus =
 
 export type PersonalCollection = {
   collectionStatus: CollectionStatus;
+  comment: string;
   rating?: number;
   subjectId: number;
   watchedEpisodeNumbers: number[];

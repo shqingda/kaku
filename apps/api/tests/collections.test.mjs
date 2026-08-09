@@ -26,6 +26,7 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
 
     if (url.includes('/users/kaku-user/collections/42')) {
       return Response.json({
+        comment: '值得慢慢看',
         rate: 9,
         subject_id: 42,
         subject_type: 2,
@@ -49,10 +50,29 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
 
   assert.deepEqual(collection, {
     collectionStatus: 'doing',
+    comment: '值得慢慢看',
     rating: 9,
     subjectId: 42,
     watchedEpisodeNumbers: [1, 3],
   });
+});
+
+test('Bangumi collection treats a null comment as an empty note', async () => {
+  const collection = await getBangumiPersonalCollection({
+    accessToken,
+    fetcher: async () =>
+      Response.json({
+        comment: null,
+        rate: 0,
+        subject_id: 43,
+        subject_type: 1,
+        type: 1,
+      }),
+    subjectId: 43,
+    username: 'kaku-user',
+  });
+
+  assert.equal(collection.comment, '');
 });
 
 test('saving progress updates only changed Bangumi episode states', async () => {
@@ -75,13 +95,18 @@ test('saving progress updates only changed Bangumi episode states', async () => 
   await saveBangumiPersonalCollection({
     accessToken,
     collectionStatus: 'doing',
+    comment: '保留一点观后感',
     fetcher,
     rating: 8,
     subjectId: 42,
     watchedEpisodeNumbers: [1, 2],
   });
 
-  assert.deepEqual(JSON.parse(requests[0].body), { rate: 8, type: 3 });
+  assert.deepEqual(JSON.parse(requests[0].body), {
+    comment: '保留一点观后感',
+    rate: 8,
+    type: 3,
+  });
   const patches = requests
     .filter((request) => request.method === 'PATCH')
     .map((request) => JSON.parse(request.body));

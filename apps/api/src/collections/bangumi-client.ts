@@ -12,6 +12,7 @@ const USER_AGENT = 'Kaku/0.1 (Bangumi third-party client; development)';
 const PAGE_SIZE = 1000;
 
 const userCollectionSchema = z.object({
+  comment: z.string().nullish().transform((comment) => comment ?? ''),
   rate: z.number().int().min(0).max(10),
   subject_id: z.number().int().positive(),
   subject_type: z.number().int().positive(),
@@ -134,6 +135,7 @@ export async function getBangumiPersonalCollection({
 
   return {
     collectionStatus,
+    comment: collection.comment,
     ...(collection.rate > 0 ? { rating: collection.rate } : {}),
     subjectId,
     watchedEpisodeNumbers: episodeCollections
@@ -208,6 +210,7 @@ async function updateEpisodeCollections({
 export async function saveBangumiPersonalCollection({
   accessToken,
   collectionStatus,
+  comment,
   fetcher,
   rating,
   subjectId,
@@ -215,6 +218,7 @@ export async function saveBangumiPersonalCollection({
 }: {
   accessToken: string;
   collectionStatus: CollectionStatus;
+  comment?: string;
   fetcher: typeof fetch;
   rating?: number;
   subjectId: number;
@@ -224,6 +228,7 @@ export async function saveBangumiPersonalCollection({
     `${BANGUMI_API_URL}/v0/users/-/collections/${subjectId}`,
     {
       body: JSON.stringify({
+        ...(comment !== undefined ? { comment } : {}),
         rate: rating ?? 0,
         type: collectionStatusToBangumiType[collectionStatus],
       }),

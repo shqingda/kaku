@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -25,6 +25,7 @@ import { canRateCollectionStatus } from '@/features/watching/progress';
 
 export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
+  comment?: string;
   rating?: number;
   watchedCount: number;
 };
@@ -57,6 +58,7 @@ export function CollectionBoxSheet({
   visible: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const contentScrollRef = useRef<ScrollView>(null);
   const [status, setStatus] = useState<CollectionStatus | undefined>(
     item.collectionStatus ?? undefined,
   );
@@ -64,6 +66,7 @@ export function CollectionBoxSheet({
     String(item.watchedEpisodeNumbers.length),
   );
   const [rating, setRating] = useState(item.rating);
+  const [comment, setComment] = useState(item.comment ?? '');
   const canEditPersonalData = canRateCollectionStatus(status);
   const showsProgress =
     canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
@@ -78,9 +81,11 @@ export function CollectionBoxSheet({
     setStatus(item.collectionStatus ?? undefined);
     setWatchedCount(String(item.watchedEpisodeNumbers.length));
     setRating(item.rating);
+    setComment(item.comment ?? '');
   }, [
     item.collectionStatus,
     item.rating,
+    item.comment,
     item.watchedEpisodeNumbers.length,
     visible,
   ]);
@@ -94,6 +99,7 @@ export function CollectionBoxSheet({
 
     onSave({
       collectionStatus: status,
+      comment: item.comment !== undefined ? comment.trim() : undefined,
       rating: canEditPersonalData ? rating : undefined,
       watchedCount: nextCount,
     });
@@ -107,7 +113,7 @@ export function CollectionBoxSheet({
       visible={visible}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'height' : undefined}
         style={styles.backdrop}
       >
         <Pressable
@@ -151,6 +157,7 @@ export function CollectionBoxSheet({
           <ScrollView
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
+            ref={contentScrollRef}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.section}>
@@ -315,41 +322,62 @@ export function CollectionBoxSheet({
                 )}
               </View>
             </View>
-          </ScrollView>
 
-          <View style={styles.footer}>
-            {item.collectionStatus ? (
+            {item.comment !== undefined ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>收藏备注</Text>
+                <TextInput
+                  accessibilityLabel="收藏备注"
+                  maxLength={1000}
+                  multiline
+                  onChangeText={setComment}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      contentScrollRef.current?.scrollToEnd({ animated: true });
+                    }, 250);
+                  }}
+                  placeholder="写下你对这个条目的简短记录"
+                  placeholderTextColor={COLORS.subtle}
+                  style={styles.commentInput}
+                  textAlignVertical="top"
+                  value={comment}
+                />
+              </View>
+            ) : null}
+            <View style={styles.footer}>
+              {item.collectionStatus ? (
+                <Pressable
+                  accessibilityLabel="取消收藏"
+                  accessibilityRole="button"
+                  disabled={isSaving}
+                  onPress={onRemove}
+                  style={({ pressed }) => [
+                    styles.footerButton,
+                    styles.removeButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.removeText}>取消收藏</Text>
+                </Pressable>
+              ) : null}
               <Pressable
-                accessibilityLabel="取消收藏"
                 accessibilityRole="button"
                 disabled={isSaving}
-                onPress={onRemove}
+                onPress={save}
                 style={({ pressed }) => [
                   styles.footerButton,
-                  styles.removeButton,
+                  styles.saveButton,
                   pressed && styles.pressed,
                 ]}
               >
-                <Text style={styles.removeText}>取消收藏</Text>
+                {isSaving ? (
+                  <ActivityIndicator color={COLORS.surface} />
+                ) : (
+                  <Text style={styles.saveText}>保存</Text>
+                )}
               </Pressable>
-            ) : null}
-            <Pressable
-              accessibilityRole="button"
-              disabled={isSaving}
-              onPress={save}
-              style={({ pressed }) => [
-                styles.footerButton,
-                styles.saveButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              {isSaving ? (
-                <ActivityIndicator color={COLORS.surface} />
-              ) : (
-                <Text style={styles.saveText}>保存</Text>
-              )}
-            </Pressable>
-          </View>
+            </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -545,6 +573,16 @@ const styles = StyleSheet.create({
     color: COLORS.subtle,
     fontSize: 12,
     lineHeight: 18,
+  },
+  commentInput: {
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    color: COLORS.ink,
+    fontSize: 14,
+    lineHeight: 20,
+    minHeight: 92,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   footer: {
     alignItems: 'center',

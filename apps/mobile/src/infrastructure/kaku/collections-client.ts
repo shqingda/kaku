@@ -14,6 +14,7 @@ const personalCollectionSchema = z.object({
     'onHold',
     'dropped',
   ]),
+  comment: z.string(),
   rating: z.number().int().min(1).max(10).optional(),
   subjectId: z.number().int().positive(),
   watchedEpisodeNumbers: z.array(z.number().int().positive()),

@@ -7,6 +7,7 @@ export type CollectionStatus =
 
 export type WatchingItem = {
   collectionStatus?: CollectionStatus | null;
+  comment?: string;
   id: number;
   title: string;
   coverUrl: string;
