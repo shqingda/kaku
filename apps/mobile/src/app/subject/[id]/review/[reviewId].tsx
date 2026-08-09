@@ -111,7 +111,9 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           }
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
+          onRefresh={() => void reviewQuery.refetch()}
           ref={replyNavigation.listRef}
+          refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
           renderItem={({ index, item }) => (
             <ReplyListItem

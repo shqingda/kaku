@@ -52,6 +52,8 @@ export default function SubjectRelationsScreen() {
               </Text>
             </View>
           }
+          onRefresh={() => void relationsQuery.refetch()}
+          refreshing={relationsQuery.isRefetching && !relationsQuery.isPending}
           renderItem={({ item }) => (
             <Link
               asChild

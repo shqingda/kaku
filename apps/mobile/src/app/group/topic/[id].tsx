@@ -106,7 +106,9 @@ export default function GroupTopicScreen() {
           }
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
+          onRefresh={() => void topicQuery.refetch()}
           ref={replyNavigation.listRef}
+          refreshing={topicQuery.isRefetching && !topicQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
           renderItem={({ index, item }) => (
             <ReplyListItem

@@ -43,6 +43,16 @@ export default function SubjectCharactersScreen() {
               </Text>
             </View>
           }
+          onRefresh={() =>
+            void Promise.all([
+              charactersQuery.refetch(),
+              subjectQuery.refetch(),
+            ])
+          }
+          refreshing={
+            (charactersQuery.isRefetching || subjectQuery.isRefetching) &&
+            !charactersQuery.isPending
+          }
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Link

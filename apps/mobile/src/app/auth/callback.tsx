@@ -42,8 +42,8 @@ export default function AuthCallbackScreen() {
             <View style={styles.errorMark}>
               <Text style={styles.errorMarkText}>!</Text>
             </View>
-          <Text style={styles.title}>登录没有完成</Text>
-          <Text style={styles.message}>{error}</Text>
+            <Text style={styles.title}>登录没有完成</Text>
+            <Text style={styles.message}>{error}</Text>
             <View style={styles.actions}>
               <Pressable
                 accessibilityRole="button"
@@ -58,7 +58,9 @@ export default function AuthCallbackScreen() {
               <Pressable
                 accessibilityRole="button"
                 disabled={isSigningIn}
-                onPress={() => void signIn().then((ok) => ok && router.replace('/'))}
+                onPress={() =>
+                  void signIn().then((ok) => ok && router.replace('/'))
+                }
                 style={({ pressed }) => [
                   styles.primaryButton,
                   (pressed || isSigningIn) && styles.pressed,

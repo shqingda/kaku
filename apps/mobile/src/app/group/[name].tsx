@@ -141,6 +141,14 @@ export default function GroupScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() =>
+          void Promise.all([groupQuery.refetch(), topicsQuery.refetch()])
+        }
+        refreshing={
+          (groupQuery.isRefetching || topicsQuery.isRefetching) &&
+          !groupQuery.isPending &&
+          !topicsQuery.isPending
+        }
         renderItem={({ index, item }) => (
           <View
             style={[

@@ -77,6 +77,8 @@ export default function SubjectCommentsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void commentsQuery.refetch()}
+        refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
         renderItem={({ index, item }) => (
           <View style={[styles.card, index === 0 && styles.firstCard]}>
             <View style={styles.commentHeader}>

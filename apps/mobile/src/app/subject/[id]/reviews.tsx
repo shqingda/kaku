@@ -74,6 +74,8 @@ export default function SubjectReviewsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void reviewsQuery.refetch()}
+        refreshing={reviewsQuery.isRefetching && !reviewsQuery.isPending}
         renderItem={({ index, item }) => (
           <Pressable
             accessibilityLabel={`打开评论：${item.title}`}

@@ -202,7 +202,21 @@ export default function EpisodeScreen() {
           keyExtractor={(reply) => reply.id}
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
+          onRefresh={() =>
+            void Promise.all([
+              catalogQuery.refetch(),
+              commentsQuery.refetch(),
+              ...(session ? [collectionQuery.refetch()] : []),
+            ])
+          }
           ref={replyNavigation.listRef}
+          refreshing={
+            (catalogQuery.isRefetching ||
+              commentsQuery.isRefetching ||
+              collectionQuery.isRefetching) &&
+            !catalogQuery.isPending &&
+            !commentsQuery.isPending
+          }
           removeClippedSubviews={Platform.OS === 'android'}
           ListEmptyComponent={
             commentsQuery.isPending || commentsQuery.isError ? null : (

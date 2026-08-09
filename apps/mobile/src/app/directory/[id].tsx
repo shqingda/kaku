@@ -132,6 +132,14 @@ export default function PublicIndexScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() =>
+          void Promise.all([indexQuery.refetch(), itemsQuery.refetch()])
+        }
+        refreshing={
+          (indexQuery.isRefetching || itemsQuery.isRefetching) &&
+          !indexQuery.isPending &&
+          !itemsQuery.isPending
+        }
         renderItem={({ item }) => {
           const href = getIndexItemHref(item);
           const row = (
