@@ -82,7 +82,10 @@ export type PublicUserProfile = {
 };
 
 export type UsersProvider = {
-  getPublicUser: (username: string) => Promise<PublicUserProfile>;
+  getPublicUser: (
+    username: string,
+    signal?: AbortSignal,
+  ) => Promise<PublicUserProfile>;
   getPublicUserCollections: (
     username: string,
     subjectType: number,
@@ -93,10 +96,12 @@ export type UsersProvider = {
   getPublicUserBlogs: (
     username: string,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<PublicUserBlogPage>;
   getPublicUserFriends: (
     username: string,
     offset: number,
+    signal?: AbortSignal,
   ) => Promise<PublicUserFriendPage>;
   getPublicUserEntities: (
     username: string,
@@ -106,5 +111,6 @@ export type UsersProvider = {
   getPublicUserTimeline: (
     username: string,
     cursor?: string,
+    signal?: AbortSignal,
   ) => Promise<PublicTimelinePage>;
 };

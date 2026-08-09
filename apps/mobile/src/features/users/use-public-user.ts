@@ -19,7 +19,8 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 export function usePublicUser(username: string) {
   return useQuery({
     enabled: username.trim().length > 0,
-    queryFn: () => bangumiUsersProvider.getPublicUser(username),
+    queryFn: ({ signal }) =>
+      bangumiUsersProvider.getPublicUser(username, signal),
     queryKey: queryKeys.publicUser(username),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -70,10 +71,11 @@ export function usePublicUserBlogs(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserBlogs(
         username.trim(),
         pageParam,
+        signal,
       ),
     queryKey: queryKeys.publicUserBlogs(username),
     retry: shouldRetryBangumiQuery,
@@ -92,10 +94,11 @@ export function usePublicUserFriends(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserFriends(
         username.trim(),
         pageParam,
+        signal,
       ),
     queryKey: queryKeys.publicUserFriends(username),
     retry: shouldRetryBangumiQuery,
@@ -132,10 +135,11 @@ export function usePublicUserTimeline(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserTimeline(
         username.trim(),
         pageParam,
+        signal,
       ),
     queryKey: queryKeys.publicUserTimeline(username),
     retry: shouldRetryBangumiQuery,

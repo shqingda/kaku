@@ -145,6 +145,7 @@ export async function getBangumiReview(
 export async function getBangumiUserBlogs(
   username: string,
   offset = 0,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: '10',
@@ -152,6 +153,7 @@ export async function getBangumiUserBlogs(
   });
   const json = await requestJson(
     `/p1/users/${encodeURIComponent(username)}/blogs?${query}`,
+    { signal },
   );
   return bangumiUserBlogsSchema.parse(json);
 }
@@ -160,6 +162,7 @@ export async function getBangumiUserTimeline(
   username: string,
   until?: number,
   limit = 10,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({ limit: String(limit) });
 
@@ -169,6 +172,7 @@ export async function getBangumiUserTimeline(
 
   const json = await requestJson(
     `/p1/users/${encodeURIComponent(username)}/timeline?${query}`,
+    { signal },
   );
   return bangumiUserTimelineSchema.parse(json);
 }
@@ -176,6 +180,7 @@ export async function getBangumiUserTimeline(
 export async function getBangumiUserFriends(
   username: string,
   offset: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: '20',
@@ -183,6 +188,7 @@ export async function getBangumiUserFriends(
   });
   const json = await requestJson(
     `/p1/users/${encodeURIComponent(username)}/friends?${query}`,
+    { signal },
   );
   return bangumiUserFriendsSchema.parse(json);
 }

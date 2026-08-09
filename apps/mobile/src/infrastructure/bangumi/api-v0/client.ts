@@ -64,9 +64,13 @@ export async function getBangumiPerson(personId: number) {
   };
 }
 
-export async function getBangumiPublicUser(username: string) {
+export async function getBangumiPublicUser(
+  username: string,
+  signal?: AbortSignal,
+) {
   const json = await requestJson(
     `/v0/users/${encodeURIComponent(username)}`,
+    { signal },
   );
   return bangumiPublicUserSchema.parse(json);
 }

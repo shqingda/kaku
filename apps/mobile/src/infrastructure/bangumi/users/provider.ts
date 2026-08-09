@@ -28,8 +28,8 @@ const COLLECTION_TYPE: Record<CollectionStatus, number> = {
 };
 
 export const bangumiUsersProvider: UsersProvider = {
-  async getPublicUser(username) {
-    const profile = await getBangumiPublicUser(username);
+  async getPublicUser(username, signal) {
+    const profile = await getBangumiPublicUser(username, signal);
 
     return {
       avatarUrl:
@@ -58,12 +58,12 @@ export const bangumiUsersProvider: UsersProvider = {
     );
     return toPublicUserCollectionPage(collections, subjectType);
   },
-  async getPublicUserBlogs(username, offset) {
-    const blogs = await getBangumiUserBlogs(username, offset);
+  async getPublicUserBlogs(username, offset, signal) {
+    const blogs = await getBangumiUserBlogs(username, offset, signal);
     return toPublicUserBlogPage(blogs, offset);
   },
-  async getPublicUserFriends(username, offset) {
-    const friends = await getBangumiUserFriends(username, offset);
+  async getPublicUserFriends(username, offset, signal) {
+    const friends = await getBangumiUserFriends(username, offset, signal);
     return toPublicUserFriendPage(friends, offset);
   },
   async getPublicUserEntities(username, kind, signal) {
@@ -74,12 +74,13 @@ export const bangumiUsersProvider: UsersProvider = {
     );
     return toPublicUserEntityCollectionPage(entities, kind);
   },
-  async getPublicUserTimeline(username, cursor) {
+  async getPublicUserTimeline(username, cursor, signal) {
     const limit = 10;
     const timeline = await getBangumiUserTimeline(
       username,
       cursor === undefined ? undefined : Number(cursor),
       limit,
+      signal,
     );
     return toPublicTimelinePage(timeline, limit);
   },
