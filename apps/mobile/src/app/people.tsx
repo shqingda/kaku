@@ -1,0 +1,326 @@
+import { useMemo, useState } from 'react';
+import { Image } from 'expo-image';
+import { Link, Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { COLORS } from '@/constants/design';
+import {
+  CHARACTER_TYPES,
+  PEOPLE_GENDERS,
+  PEOPLE_KINDS,
+  PEOPLE_SORTS,
+  PERSON_TYPES,
+  type PeopleKind,
+  type PeopleSort,
+  type PublicPersonSummary,
+} from '@/features/people-browser/model';
+import { useGlobalPeople } from '@/features/people-browser/use-global-people';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
+
+export default function PeopleScreen() {
+  const [kind, setKind] = useState<PeopleKind>('character');
+  const [sort, setSort] = useState<PeopleSort>('collects');
+  const [type, setType] = useState<number>();
+  const [gender, setGender] = useState<number>();
+  const peopleQuery = useGlobalPeople(kind, sort, type, gender);
+  const people = useMemo(
+    () => peopleQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [peopleQuery.data],
+  );
+  const typeOptions = kind === 'character' ? CHARACTER_TYPES : PERSON_TYPES;
+  const totalPages = peopleQuery.data?.pages[0]?.totalPages;
+
+  function changeKind(nextKind: PeopleKind) {
+    setKind(nextKind);
+    setType(undefined);
+    setGender(undefined);
+  }
+
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <Stack.Screen options={{ title: '人物' }} />
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={people}
+        initialNumToRender={10}
+        keyExtractor={(item) => `${item.kind}-${item.id}`}
+        ListEmptyComponent={
+          peopleQuery.isPending ? (
+            <State title="人物加载中" text="正在读取 Bangumi 公开人物资料。" />
+          ) : peopleQuery.isError ? (
+            <State
+              action={() => void peopleQuery.refetch()}
+              title="人物读取失败"
+              text="Bangumi 偶尔会响应较慢，请稍后重试。"
+            />
+          ) : (
+            <State title="暂无人物" text="当前筛选条件下没有找到资料。" />
+          )
+        }
+        ListFooterComponent={
+          people.length > 0 ? (
+            <PagedListFooter
+              hasNextPage={Boolean(peopleQuery.hasNextPage)}
+              isError={peopleQuery.isFetchNextPageError}
+              isFetching={peopleQuery.isFetchingNextPage}
+              loadedCount={people.length}
+              onRetry={() => void peopleQuery.fetchNextPage()}
+            />
+          ) : null
+        }
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>人物</Text>
+            <Text style={styles.meta}>
+              浏览虚构角色与现实人物{totalPages ? ` · ${totalPages} 页` : ''}
+            </Text>
+            <View style={styles.kindTabs}>
+              {PEOPLE_KINDS.map((item) => (
+                <FilterButton
+                  key={item.id}
+                  label={item.label}
+                  onPress={() => changeKind(item.id)}
+                  selected={kind === item.id}
+                  wide
+                />
+              ))}
+            </View>
+            <FilterRow label="排序">
+              {PEOPLE_SORTS.map((item) => (
+                <FilterButton
+                  key={item.id}
+                  label={item.label}
+                  onPress={() => setSort(item.id)}
+                  selected={sort === item.id}
+                />
+              ))}
+            </FilterRow>
+            <FilterRow label="类型">
+              {typeOptions.map((item) => (
+                <FilterButton
+                  key={item.id ?? 'all'}
+                  label={item.label}
+                  onPress={() => setType(item.id)}
+                  selected={type === item.id}
+                />
+              ))}
+            </FilterRow>
+            <FilterRow label="性别">
+              {PEOPLE_GENDERS.map((item) => (
+                <FilterButton
+                  key={item.id ?? 'all'}
+                  label={item.label}
+                  onPress={() => setGender(item.id)}
+                  selected={gender === item.id}
+                />
+              ))}
+            </FilterRow>
+          </View>
+        }
+        maxToRenderPerBatch={10}
+        onEndReached={() => {
+          if (
+            peopleQuery.hasNextPage &&
+            !peopleQuery.isFetchingNextPage &&
+            !peopleQuery.isFetchNextPageError
+          ) {
+            void peopleQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
+        removeClippedSubviews={Platform.OS === 'android'}
+        renderItem={({ index, item }) => (
+          <PersonRow
+            hasDivider={index > 0}
+            isFirst={index === 0}
+            isLast={index === people.length - 1}
+            item={item}
+          />
+        )}
+        showsVerticalScrollIndicator={false}
+        windowSize={7}
+      />
+    </SafeAreaView>
+  );
+}
+
+function FilterRow({ children, label }: { children: React.ReactNode; label: string }) {
+  return (
+    <View style={styles.filterSection}>
+      <Text style={styles.filterLabel}>{label}</Text>
+      <ScrollView
+        contentContainerStyle={styles.filterOptions}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
+function FilterButton({ label, onPress, selected, wide = false }: {
+  label: string;
+  onPress: () => void;
+  selected: boolean;
+  wide?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[
+        styles.filter,
+        wide && styles.kindTab,
+        selected && styles.filterSelected,
+      ]}
+    >
+      <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function PersonRow({ hasDivider, isFirst, isLast, item }: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicPersonSummary;
+}) {
+  const pathname = item.kind === 'character' ? '/character/[id]' : '/person/[id]';
+  return (
+    <View style={[
+      styles.rowCard,
+      isFirst && styles.firstRowCard,
+      isLast && styles.lastRowCard,
+    ]}>
+      <Link asChild href={{ pathname, params: { id: String(item.id) } }}>
+        <Pressable
+          android_ripple={{ color: COLORS.track }}
+          style={StyleSheet.flatten([
+            styles.row,
+            hasDivider && styles.rowDivider,
+          ])}
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarFallback}>{item.name.slice(0, 1)}</Text>
+            {item.imageUrl ? (
+              <Image
+                contentFit="cover"
+                source={item.imageUrl}
+                style={StyleSheet.absoluteFill}
+                transition={120}
+              />
+            ) : null}
+          </View>
+          <View style={styles.rowMain}>
+            <Text numberOfLines={2} style={styles.rowTitle}>{item.name}</Text>
+            {item.categories.length > 0 ? (
+              <Text numberOfLines={1} style={styles.categories}>
+                {item.categories.join(' · ')}
+              </Text>
+            ) : null}
+            <Text numberOfLines={2} style={styles.rowMeta}>
+              {item.metadata || (item.kind === 'character' ? '虚构角色' : '现实人物')}
+            </Text>
+          </View>
+          <View style={styles.trailing}>
+            {item.commentCount > 0 ? (
+              <View style={styles.commentCount}>
+                <SymbolView
+                  name={{ android: 'chat_bubble_outline', ios: 'bubble.left', web: 'chat_bubble_outline' }}
+                  size={11}
+                  tintColor={COLORS.subtle}
+                />
+                <Text style={styles.commentText}>{item.commentCount}</Text>
+              </View>
+            ) : null}
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </Pressable>
+      </Link>
+    </View>
+  );
+}
+
+function State({ action, text, title }: {
+  action?: () => void;
+  text: string;
+  title: string;
+}) {
+  return (
+    <View style={styles.state}>
+      <Text style={styles.stateTitle}>{title}</Text>
+      <Text style={styles.stateText}>{text}</Text>
+      {action ? (
+        <Pressable onPress={action} style={styles.retry}>
+          <Text style={styles.retryText}>重试</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { backgroundColor: COLORS.background, flex: 1 },
+  content: { paddingBottom: 48, paddingHorizontal: 20 },
+  header: { paddingBottom: 18, paddingTop: 20 },
+  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  kindTabs: { flexDirection: 'row', gap: 8, marginTop: 20 },
+  kindTab: { flex: 1, minHeight: 44 },
+  filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
+  filterLabel: { color: COLORS.subtle, fontSize: 11, fontWeight: '700', width: 40 },
+  filterOptions: { gap: 8, paddingRight: 12 },
+  filter: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    justifyContent: 'center',
+    minHeight: 38,
+    paddingHorizontal: 15,
+  },
+  filterSelected: { backgroundColor: COLORS.ink },
+  filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  filterTextSelected: { color: COLORS.surface },
+  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
+  lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 122, paddingVertical: 16 },
+  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
+  avatar: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 18,
+    height: 86,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 70,
+  },
+  avatarFallback: { color: COLORS.accent, fontSize: 20, fontWeight: '800' },
+  rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
+  rowTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  categories: { color: COLORS.accentRich, fontSize: 12, fontWeight: '700', marginTop: 7 },
+  rowMeta: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  trailing: { alignItems: 'flex-end', alignSelf: 'stretch', justifyContent: 'space-between', marginLeft: 8, paddingVertical: 5 },
+  commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  commentText: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
+  chevron: { color: COLORS.subtle, fontSize: 26, fontWeight: '300' },
+  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 30 },
+  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 15, paddingHorizontal: 17, paddingVertical: 9 },
+  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+});

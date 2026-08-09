@@ -147,6 +147,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="people"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '人物',
+            }}
+          />
+          <Stack.Screen
             name="character/[id]"
             options={{
               headerBackButtonDisplayMode: 'minimal',

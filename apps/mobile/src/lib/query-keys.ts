@@ -1,6 +1,19 @@
 export const queryKeys = {
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   globalIndexes: (sort: string) => ['indexes', 'kaku', sort] as const,
+  globalPeople: (
+    kind: string,
+    sort: string,
+    type?: number,
+    gender?: number,
+  ) => [
+    'people-browser',
+    'kaku',
+    kind,
+    sort,
+    type ?? 'all-types',
+    gender ?? 'all-genders',
+  ] as const,
   personalCollection: (userId: number | undefined, subjectId: number) =>
     ['collections', 'kaku', userId ?? 'signed-out', subjectId] as const,
   friendTimeline: (userId: number | undefined) =>

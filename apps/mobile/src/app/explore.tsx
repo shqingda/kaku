@@ -220,6 +220,28 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push('/people')}
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'people_outline', ios: 'person.2', web: 'people_outline' }}
+                    size={19}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>人物</Text>
+                  <Text style={styles.communityMeta}>虚构角色与现实人物</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>

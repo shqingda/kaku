@@ -12,6 +12,7 @@ import { registerCollectionRoutes } from './collections/routes.ts';
 import { registerDiscussionRoutes } from './discussions/routes.ts';
 import { registerIndexRoutes } from './indexes/routes.ts';
 import { registerNotificationRoutes } from './notifications/routes.ts';
+import { registerPeopleBrowserRoutes } from './people-browser/routes.ts';
 import {
   type RankingDependencies,
   registerRankingRoutes,
@@ -38,6 +39,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerDiscussionRoutes(app, dependencies);
   registerIndexRoutes(app, dependencies);
   registerNotificationRoutes(app, dependencies);
+  registerPeopleBrowserRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
 
