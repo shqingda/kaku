@@ -12,17 +12,18 @@ import {
 } from './adapter';
 
 export const bangumiIndexesProvider: IndexesProvider = {
-  async getSubjectIndexes(subjectId, offset) {
+  async getSubjectIndexes(subjectId, offset, signal) {
     const limit = 30;
     const page = await getBangumiSubjectIndexes(
       subjectId,
       offset,
       limit,
+      signal,
     );
     return toPublicIndexPage(page, offset, limit);
   },
-  async getIndex(indexId) {
-    const detail = await getBangumiIndex(indexId);
+  async getIndex(indexId, signal) {
+    const detail = await getBangumiIndex(indexId, signal);
     const summary = toPublicIndexSummary(detail);
 
     return {
@@ -32,9 +33,14 @@ export const bangumiIndexesProvider: IndexesProvider = {
       replyCount: detail.replies,
     };
   },
-  async getIndexItems(indexId, offset) {
+  async getIndexItems(indexId, offset, signal) {
     const limit = 50;
-    const page = await getBangumiIndexRelated(indexId, offset, limit);
+    const page = await getBangumiIndexRelated(
+      indexId,
+      offset,
+      limit,
+      signal,
+    );
     return toPublicIndexItemPage(page, offset);
   },
 };

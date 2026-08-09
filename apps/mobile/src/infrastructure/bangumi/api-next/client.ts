@@ -197,6 +197,7 @@ export async function getBangumiSubjectIndexes(
   subjectId: number,
   offset: number,
   limit: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: String(limit),
@@ -204,12 +205,16 @@ export async function getBangumiSubjectIndexes(
   });
   const json = await requestJson(
     `/p1/subjects/${subjectId}/indexes?${query}`,
+    { signal },
   );
   return bangumiIndexPageSchema.parse(json);
 }
 
-export async function getBangumiIndex(indexId: number) {
-  const json = await requestJson(`/p1/indexes/${indexId}`);
+export async function getBangumiIndex(
+  indexId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/p1/indexes/${indexId}`, { signal });
   return bangumiIndexSchema.parse(json);
 }
 
@@ -217,6 +222,7 @@ export async function getBangumiIndexRelated(
   indexId: number,
   offset: number,
   limit: number,
+  signal?: AbortSignal,
 ) {
   const query = new URLSearchParams({
     limit: String(limit),
@@ -224,13 +230,15 @@ export async function getBangumiIndexRelated(
   });
   const json = await requestJson(
     `/p1/indexes/${indexId}/related?${query}`,
+    { signal },
   );
   return bangumiIndexRelatedSchema.parse(json);
 }
 
-export async function getBangumiCommunity() {
+export async function getBangumiCommunity(signal?: AbortSignal) {
   const json = await requestJson(
     '/p1/groups?sort=members&limit=12&offset=0',
+    { signal },
   );
   return bangumiGroupPageSchema.parse(json);
 }
@@ -238,16 +246,21 @@ export async function getBangumiCommunity() {
 export async function getBangumiCommunityTopics(
   offset: number,
   limit: number,
+  signal?: AbortSignal,
 ) {
   const json = await requestJson(
     `/p1/groups/-/topics?mode=all&limit=${limit}&offset=${offset}`,
+    { signal },
   );
   return bangumiGroupTopicPageSchema.parse(json);
 }
 
-export async function getBangumiGroup(groupName: string) {
+export async function getBangumiGroup(
+  groupName: string,
+  signal?: AbortSignal,
+) {
   const encodedName = encodeURIComponent(groupName);
-  const json = await requestJson(`/p1/groups/${encodedName}`);
+  const json = await requestJson(`/p1/groups/${encodedName}`, { signal });
   return bangumiGroupDetailSchema.parse(json);
 }
 
@@ -255,15 +268,20 @@ export async function getBangumiGroupTopics(
   groupName: string,
   offset: number,
   limit: number,
+  signal?: AbortSignal,
 ) {
   const encodedName = encodeURIComponent(groupName);
   const json = await requestJson(
     `/p1/groups/${encodedName}/topics?limit=${limit}&offset=${offset}`,
+    { signal },
   );
   return bangumiGroupTopicPageSchema.parse(json);
 }
 
-export async function getBangumiGroupTopic(topicId: number) {
-  const json = await requestJson(`/p1/groups/-/topics/${topicId}`);
+export async function getBangumiGroupTopic(
+  topicId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/p1/groups/-/topics/${topicId}`, { signal });
   return bangumiGroupTopicSchema.parse(json);
 }

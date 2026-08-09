@@ -21,7 +21,7 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function usePublicCommunity() {
   return useQuery({
-    queryFn: getPublicCommunity,
+    queryFn: ({ signal }) => getPublicCommunity(signal),
     queryKey: queryKeys.community(),
     retry: shouldRetryBangumiQuery,
     staleTime: 2 * 60 * 1000,
@@ -38,8 +38,8 @@ export function usePublicCommunityTopics() {
   >({
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      getPublicCommunityTopics(pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      getPublicCommunityTopics(pageParam, signal),
     queryKey: queryKeys.communityTopics(),
     retry: shouldRetryBangumiQuery,
     staleTime: 2 * 60 * 1000,
@@ -49,7 +49,7 @@ export function usePublicCommunityTopics() {
 export function usePublicGroup(groupName: string) {
   return useQuery({
     enabled: groupName.trim().length > 0,
-    queryFn: () => getPublicGroup(groupName),
+    queryFn: ({ signal }) => getPublicGroup(groupName, signal),
     queryKey: queryKeys.group(groupName),
     retry: shouldRetryBangumiQuery,
     staleTime: 2 * 60 * 1000,
@@ -67,8 +67,8 @@ export function usePublicGroupTopics(groupName: string) {
     enabled: groupName.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      getPublicGroupTopics(groupName, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      getPublicGroupTopics(groupName, pageParam, signal),
     queryKey: queryKeys.groupTopics(groupName),
     retry: shouldRetryBangumiQuery,
     staleTime: 2 * 60 * 1000,
@@ -82,7 +82,7 @@ export function usePublicGroupTopic(topicId: number) {
     enabled: Number.isInteger(topicId) && topicId > 0,
     queryFn: async ({ signal }) => {
       if (!session) {
-        return getPublicGroupTopic(topicId);
+        return getPublicGroupTopic(topicId, signal);
       }
 
       const topic = await getAuthenticatedGroupTopic(

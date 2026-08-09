@@ -23,8 +23,8 @@ export function useSubjectIndexes(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      bangumiIndexesProvider.getSubjectIndexes(subjectId, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      bangumiIndexesProvider.getSubjectIndexes(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectIndexes(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -34,7 +34,8 @@ export function useSubjectIndexes(subjectId: number) {
 export function usePublicIndex(indexId: number) {
   return useQuery({
     enabled: Number.isInteger(indexId) && indexId > 0,
-    queryFn: () => bangumiIndexesProvider.getIndex(indexId),
+    queryFn: ({ signal }) =>
+      bangumiIndexesProvider.getIndex(indexId, signal),
     queryKey: queryKeys.publicIndex(indexId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -52,8 +53,8 @@ export function usePublicIndexItems(indexId: number) {
     enabled: Number.isInteger(indexId) && indexId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      bangumiIndexesProvider.getIndexItems(indexId, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      bangumiIndexesProvider.getIndexItems(indexId, pageParam, signal),
     queryKey: queryKeys.publicIndexItems(indexId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
