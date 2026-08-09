@@ -18,6 +18,7 @@ import {
   getBangumiGroupTopic,
   getBangumiGroupTopics,
 } from '../api-next/client';
+import { BangumiRequestError } from '../transport/http-client';
 
 export async function getPublicCommunity(): Promise<PublicCommunity> {
   const groups = await getBangumiCommunity();
@@ -72,13 +73,21 @@ export async function getPublicGroupTopics(
 
 export async function getPublicGroupTopic(
   topicId: number,
-): Promise<PublicGroupTopic> {
-  const topic = await getBangumiGroupTopic(topicId);
+): Promise<PublicGroupTopic | null> {
+  try {
+    const topic = await getBangumiGroupTopic(topicId);
 
-  return {
-    ...toPublicGroupTopic(topic),
-    groupName: topic.group.name,
-    groupTitle: topic.group.title,
-    replies: mapBangumiReplies(topic.replies),
-  };
+    return {
+      ...toPublicGroupTopic(topic),
+      groupName: topic.group.name,
+      groupTitle: topic.group.title,
+      replies: mapBangumiReplies(topic.replies),
+    };
+  } catch (error) {
+    if (error instanceof BangumiRequestError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }

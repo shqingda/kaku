@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
+import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
@@ -48,12 +49,12 @@ export default function TopicScreen() {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <Stack.Screen options={{ title: '话题不可用' }} />
-        <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>暂时无法查看这个话题</Text>
-          <Text style={styles.errorText}>
-            该话题可能需要登录，也可能正在审核或已被删除。接入登录功能后可以再次尝试。
-          </Text>
-        </View>
+        <DiscussionUnavailableState
+          isSigningIn={isSigningIn}
+          onRetry={() => void topicQuery.refetch()}
+          onSignIn={() => void signIn()}
+          signedIn={Boolean(session)}
+        />
       </SafeAreaView>
     );
   }
@@ -181,9 +182,6 @@ const styles = StyleSheet.create({
   topicMetaRow: { flexDirection: 'row', marginTop: 8 },
   topicAuthor: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   topicMeta: { color: COLORS.subtle, fontSize: 13 },
-  errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
   replyBar: {
     backgroundColor: COLORS.background,
     paddingBottom: 10,

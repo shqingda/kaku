@@ -59,13 +59,17 @@ export async function getAuthenticatedGroupTopic(
   topicId: number,
   signal?: AbortSignal,
 ) {
-  return bangumiGroupTopicSchema.parse(
-    await getAuthenticatedDiscussion(
-      request,
-      `/me/group-topics/${topicId}`,
-      signal,
-    ),
-  );
+  const response = await request(`/me/group-topics/${topicId}`, { signal });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return bangumiGroupTopicSchema.parse(await response.json());
 }
 
 export async function getAuthenticatedEpisodeComments(

@@ -90,6 +90,8 @@ export function usePublicGroupTopic(topicId: number) {
         topicId,
         signal,
       );
+      if (!topic) return null;
+
       return {
         ...toPublicGroupTopic(topic),
         groupName: topic.group.name,

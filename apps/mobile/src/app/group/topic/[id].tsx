@@ -17,6 +17,7 @@ import { usePublicGroupTopic } from '@/features/community/use-community';
 import { EmptyDiscussionReplies } from '@/features/discussions/discussion-read-only';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -41,6 +42,20 @@ export default function GroupTopicScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  if (!topic && !topicQuery.isPending && !topicQuery.isError) {
+    return (
+      <SafeAreaView edges={['bottom']} style={styles.screen}>
+        <Stack.Screen options={{ title: '话题不可用' }} />
+        <DiscussionUnavailableState
+          isSigningIn={isSigningIn}
+          onRetry={() => void topicQuery.refetch()}
+          onSignIn={() => void signIn()}
+          signedIn={Boolean(session)}
+        />
+      </SafeAreaView>
+    );
   }
 
   return (
