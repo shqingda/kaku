@@ -55,6 +55,29 @@ const bangumiEntityDetailSchema = z.object({
   type: z.number(),
 });
 
+export const bangumiCharacterSearchPageSchema = z.object({
+  data: z.array(bangumiEntityDetailSchema),
+  limit: z.number(),
+  offset: z.number(),
+  total: z.number(),
+});
+
+const bangumiPersonSearchItemSchema = z.object({
+  career: z.array(z.string()),
+  id: z.number(),
+  images: bangumiImagesSchema,
+  name: z.string(),
+  short_summary: z.string().nullable().optional(),
+  type: z.number(),
+});
+
+export const bangumiPersonSearchPageSchema = z.object({
+  data: z.array(bangumiPersonSearchItemSchema),
+  limit: z.number(),
+  offset: z.number(),
+  total: z.number(),
+});
+
 export const bangumiCharacterSchema = bangumiEntityDetailSchema;
 export const bangumiPersonSchema = bangumiEntityDetailSchema;
 
@@ -305,6 +328,15 @@ export type BangumiSubjectSearchResponse = z.infer<
 >;
 export type BangumiEntityDetailResponse = z.infer<
   typeof bangumiEntityDetailSchema
+>;
+export type BangumiCharacterSearchPageResponse = z.infer<
+  typeof bangumiCharacterSearchPageSchema
+>;
+export type BangumiPersonSearchItemResponse = z.infer<
+  typeof bangumiPersonSearchItemSchema
+>;
+export type BangumiPersonSearchPageResponse = z.infer<
+  typeof bangumiPersonSearchPageSchema
 >;
 export type BangumiEntitySubjectsResponse = z.infer<
   typeof bangumiEntitySubjectsSchema

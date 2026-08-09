@@ -14,6 +14,7 @@ export function useGlobalPeople(
   sort: PeopleSort,
   type?: number,
   gender?: number,
+  enabled = true,
 ) {
   return useInfiniteQuery<
     GlobalPeoplePage,
@@ -22,6 +23,7 @@ export function useGlobalPeople(
     ReturnType<typeof queryKeys.globalPeople>,
     number
   >({
+    enabled,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) =>

@@ -4,6 +4,7 @@ import { Link, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -26,16 +27,28 @@ import {
 } from '@/features/people-browser/model';
 import { useGlobalPeople } from '@/features/people-browser/use-global-people';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { usePeopleSearch } from '@/features/people-browser/use-people-search';
 
 export default function PeopleScreen() {
   const [kind, setKind] = useState<PeopleKind>('character');
   const [sort, setSort] = useState<PeopleSort>('collects');
   const [type, setType] = useState<number>();
   const [gender, setGender] = useState<number>();
-  const peopleQuery = useGlobalPeople(kind, sort, type, gender);
+  const [draft, setDraft] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const peopleQuery = useGlobalPeople(
+    kind,
+    sort,
+    type,
+    gender,
+    !keyword,
+  );
+  const searchQuery = usePeopleSearch(kind, keyword);
+  const activeQuery = keyword ? searchQuery : peopleQuery;
   const people = useMemo(
-    () => peopleQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [peopleQuery.data],
+    () => activeQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [activeQuery.data],
   );
   const typeOptions = kind === 'character' ? CHARACTER_TYPES : PERSON_TYPES;
   const totalPages = peopleQuery.data?.pages[0]?.totalPages;
@@ -44,6 +57,18 @@ export default function PeopleScreen() {
     setKind(nextKind);
     setType(undefined);
     setGender(undefined);
+  }
+
+  function updateDraft(value: string) {
+    setDraft(value);
+    if (!value) setKeyword('');
+  }
+
+  function submitSearch() {
+    const nextKeyword = draft.trim();
+    if (!nextKeyword) return;
+    setKeyword(nextKeyword);
+    Keyboard.dismiss();
   }
 
   return (
@@ -55,26 +80,33 @@ export default function PeopleScreen() {
         initialNumToRender={10}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
-          peopleQuery.isPending ? (
-            <State title="人物加载中" text="正在读取 Bangumi 公开人物资料。" />
-          ) : peopleQuery.isError ? (
+          activeQuery.isPending ? (
             <State
-              action={() => void peopleQuery.refetch()}
-              title="人物读取失败"
+              title={keyword ? '正在搜索' : '人物加载中'}
+              text={keyword ? `正在查找“${keyword}”。` : '正在读取 Bangumi 公开人物资料。'}
+            />
+          ) : activeQuery.isError ? (
+            <State
+              action={() => void activeQuery.refetch()}
+              title={keyword ? '搜索失败' : '人物读取失败'}
               text="Bangumi 偶尔会响应较慢，请稍后重试。"
             />
           ) : (
-            <State title="暂无人物" text="当前筛选条件下没有找到资料。" />
+            <State
+              title={keyword ? '没有搜索结果' : '暂无人物'}
+              text={keyword ? `没有找到与“${keyword}”相关的资料。` : '当前筛选条件下没有找到资料。'}
+            />
           )
         }
         ListFooterComponent={
           people.length > 0 ? (
             <PagedListFooter
-              hasNextPage={Boolean(peopleQuery.hasNextPage)}
-              isError={peopleQuery.isFetchNextPageError}
-              isFetching={peopleQuery.isFetchingNextPage}
+              hasNextPage={Boolean(activeQuery.hasNextPage)}
+              isError={activeQuery.isFetchNextPageError}
+              isFetching={activeQuery.isFetchingNextPage}
               loadedCount={people.length}
-              onRetry={() => void peopleQuery.fetchNextPage()}
+              onRetry={() => void activeQuery.fetchNextPage()}
+              total={keyword ? searchQuery.data?.pages[0]?.total : undefined}
             />
           ) : null
         }
@@ -82,8 +114,18 @@ export default function PeopleScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>人物</Text>
             <Text style={styles.meta}>
-              浏览虚构角色与现实人物{totalPages ? ` · ${totalPages} 页` : ''}
+              {keyword
+                ? `搜索${kind === 'character' ? '虚构角色' : '现实人物'}`
+                : `浏览虚构角色与现实人物${totalPages ? ` · ${totalPages} 页` : ''}`}
             </Text>
+            <SubjectSearchField
+              accessibilityLabel="搜索角色或人物"
+              onChangeText={updateDraft}
+              onSubmit={submitSearch}
+              placeholder={kind === 'character' ? '搜索虚构角色' : '搜索现实人物'}
+              style={styles.searchField}
+              value={draft}
+            />
             <View style={styles.kindTabs}>
               {PEOPLE_KINDS.map((item) => (
                 <FilterButton
@@ -95,49 +137,72 @@ export default function PeopleScreen() {
                 />
               ))}
             </View>
-            <FilterRow label="排序">
-              {PEOPLE_SORTS.map((item) => (
-                <FilterButton
-                  key={item.id}
-                  label={item.label}
-                  onPress={() => setSort(item.id)}
-                  selected={sort === item.id}
-                />
-              ))}
-            </FilterRow>
-            <FilterRow label="类型">
-              {typeOptions.map((item) => (
-                <FilterButton
-                  key={item.id ?? 'all'}
-                  label={item.label}
-                  onPress={() => setType(item.id)}
-                  selected={type === item.id}
-                />
-              ))}
-            </FilterRow>
-            <FilterRow label="性别">
-              {PEOPLE_GENDERS.map((item) => (
-                <FilterButton
-                  key={item.id ?? 'all'}
-                  label={item.label}
-                  onPress={() => setGender(item.id)}
-                  selected={gender === item.id}
-                />
-              ))}
-            </FilterRow>
+            {keyword ? (
+              <View style={styles.searchSummary}>
+                <Text numberOfLines={1} style={styles.searchSummaryText}>
+                  “{keyword}” · {searchQuery.data?.pages[0]?.total ?? 0} 个结果
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => {
+                    setDraft('');
+                    setKeyword('');
+                  }}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text style={styles.clearSearch}>清除</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <FilterRow label="排序">
+                  {PEOPLE_SORTS.map((item) => (
+                    <FilterButton
+                      key={item.id}
+                      label={item.label}
+                      onPress={() => setSort(item.id)}
+                      selected={sort === item.id}
+                    />
+                  ))}
+                </FilterRow>
+                <FilterRow label="类型">
+                  {typeOptions.map((item) => (
+                    <FilterButton
+                      key={item.id ?? 'all'}
+                      label={item.label}
+                      onPress={() => setType(item.id)}
+                      selected={type === item.id}
+                    />
+                  ))}
+                </FilterRow>
+                <FilterRow label="性别">
+                  {PEOPLE_GENDERS.map((item) => (
+                    <FilterButton
+                      key={item.id ?? 'all'}
+                      label={item.label}
+                      onPress={() => setGender(item.id)}
+                      selected={gender === item.id}
+                    />
+                  ))}
+                </FilterRow>
+              </>
+            )}
           </View>
         }
         maxToRenderPerBatch={10}
         onEndReached={() => {
           if (
-            peopleQuery.hasNextPage &&
-            !peopleQuery.isFetchingNextPage &&
-            !peopleQuery.isFetchNextPageError
+            activeQuery.hasNextPage &&
+            !activeQuery.isFetchingNextPage &&
+            !activeQuery.isFetchNextPageError
           ) {
-            void peopleQuery.fetchNextPage();
+            void activeQuery.fetchNextPage();
           }
         }}
         onEndReachedThreshold={0.45}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <PersonRow
@@ -279,7 +344,8 @@ const styles = StyleSheet.create({
   header: { paddingBottom: 18, paddingTop: 20 },
   title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
   meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
-  kindTabs: { flexDirection: 'row', gap: 8, marginTop: 20 },
+  searchField: { marginTop: 20 },
+  kindTabs: { flexDirection: 'row', gap: 8, marginTop: 12 },
   kindTab: { flex: 1, minHeight: 44 },
   filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
   filterLabel: { color: COLORS.subtle, fontSize: 11, fontWeight: '700', width: 40 },
@@ -295,6 +361,15 @@ const styles = StyleSheet.create({
   filterSelected: { backgroundColor: COLORS.ink },
   filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
   filterTextSelected: { color: COLORS.surface },
+  searchSummary: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 48,
+    paddingHorizontal: 4,
+  },
+  searchSummaryText: { color: COLORS.muted, flex: 1, fontSize: 13 },
+  clearSearch: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
@@ -323,4 +398,5 @@ const styles = StyleSheet.create({
   stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
   retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 15, paddingHorizontal: 17, paddingVertical: 9 },
   retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
 });

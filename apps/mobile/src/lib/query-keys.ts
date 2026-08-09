@@ -17,6 +17,8 @@ export const queryKeys = {
     type ?? 'all-types',
     gender ?? 'all-genders',
   ] as const,
+  peopleSearch: (kind: string, keyword: string) =>
+    ['people-search', 'bangumi', kind, keyword.trim()] as const,
   personalCollection: (userId: number | undefined, subjectId: number) =>
     ['collections', 'kaku', userId ?? 'signed-out', subjectId] as const,
   friendTimeline: (userId: number | undefined) =>

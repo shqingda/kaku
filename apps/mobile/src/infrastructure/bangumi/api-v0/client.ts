@@ -2,9 +2,11 @@ import {
   bangumiCharacterSchema,
   bangumiCalendarSchema,
   bangumiEntityRelationsSchema,
+  bangumiCharacterSearchPageSchema,
   bangumiEntitySubjectsSchema,
   bangumiEpisodePageSchema,
   bangumiPersonSchema,
+  bangumiPersonSearchPageSchema,
   bangumiPublicUserSchema,
   bangumiSubjectCharactersSchema,
   bangumiSubjectRelationsSchema,
@@ -62,6 +64,28 @@ export async function getBangumiPerson(personId: number) {
     peers: bangumiEntityRelationsSchema.parse(peersJson),
     subjects: bangumiEntitySubjectsSchema.parse(subjectsJson),
   };
+}
+
+export async function searchBangumiEntities(
+  kind: 'character' | 'person',
+  keyword: string,
+  offset: number,
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams({
+    limit: String(SEARCH_PAGE_SIZE),
+    offset: String(offset),
+  });
+  const path = kind === 'character' ? 'characters' : 'persons';
+  const json = await requestJson(`/v0/search/${path}?${query}`, {
+    body: JSON.stringify({ keyword }),
+    method: 'POST',
+    signal,
+  });
+
+  return kind === 'character'
+    ? { kind, page: bangumiCharacterSearchPageSchema.parse(json) }
+    : { kind, page: bangumiPersonSearchPageSchema.parse(json) };
 }
 
 export async function getBangumiPublicUser(
