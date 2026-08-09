@@ -134,28 +134,79 @@ export const bangumiIndexSchema = bangumiSlimIndexSchema.extend({
   replies: z.number(),
 });
 
+const bangumiIndexImageSchema = z
+  .object({
+    common: z.string().optional(),
+    grid: z.string().optional(),
+    large: z.string().optional(),
+    medium: z.string().optional(),
+    small: z.string().optional(),
+  })
+  .optional();
+
+const bangumiIndexSubjectSchema = z.object({
+  id: z.number(),
+  images: bangumiIndexImageSchema,
+  name: z.string(),
+  nameCN: z.string(),
+  rating: z
+    .object({
+      score: z.number(),
+    })
+    .optional(),
+  type: z.number(),
+});
+
+const bangumiIndexPersonSchema = z.object({
+  id: z.number(),
+  images: bangumiIndexImageSchema,
+  name: z.string(),
+  nameCN: z.string(),
+});
+
 export const bangumiIndexRelatedSchema = z.object({
   data: z.array(
     z.object({
+      blog: z
+        .object({
+          icon: z.string().optional(),
+          id: z.number(),
+          title: z.string(),
+        })
+        .optional(),
+      cat: z.number(),
+      character: bangumiIndexPersonSchema.optional(),
       comment: z.string(),
-      subject: z
+      episode: z
         .object({
           id: z.number(),
-          images: z
-            .object({
-              common: z.string().optional(),
-              medium: z.string().optional(),
-              small: z.string().optional(),
-            })
-            .optional(),
           name: z.string(),
           nameCN: z.string(),
-          rating: z
+          sort: z.number(),
+          subject: bangumiIndexSubjectSchema.optional(),
+          subjectID: z.number(),
+        })
+        .optional(),
+      groupTopic: z
+        .object({
+          group: z
             .object({
-              score: z.number(),
+              icon: bangumiIndexImageSchema,
+              name: z.string(),
             })
             .optional(),
-          type: z.number(),
+          id: z.number(),
+          title: z.string(),
+        })
+        .optional(),
+      person: bangumiIndexPersonSchema.optional(),
+      subject: bangumiIndexSubjectSchema.optional(),
+      subjectTopic: z
+        .object({
+          id: z.number(),
+          parentID: z.number(),
+          subject: bangumiIndexSubjectSchema.optional(),
+          title: z.string(),
         })
         .optional(),
     }),

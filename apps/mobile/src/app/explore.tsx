@@ -198,6 +198,28 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push('/directories')}
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'list_alt', ios: 'list.bullet.rectangle', web: 'list_alt' }}
+                    size={18}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>目录</Text>
+                  <Text style={styles.communityMeta}>用户整理的主题收藏与推荐</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>

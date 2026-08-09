@@ -55,6 +55,7 @@ test('index item page maps subjects and exposes its next offset', () => {
     {
       data: [
         {
+          cat: 0,
           comment: '推荐',
           subject: {
             id: 400602,
@@ -76,6 +77,7 @@ test('index item page maps subjects and exposes its next offset', () => {
     comment: '推荐',
     coverUrl: 'https://lain.bgm.tv/frieren.jpg',
     id: 400602,
+    kind: 'subject',
     score: 8.5,
     title: '葬送的芙莉莲',
     type: 2,
@@ -85,7 +87,7 @@ test('index item page maps subjects and exposes its next offset', () => {
 test('index item page stops at the end', () => {
   const page = toPublicIndexItemPage(
     {
-      data: [{ comment: '', subject: undefined }],
+      data: [{ cat: 0, comment: '', subject: undefined }],
       total: 1,
     },
     0,
@@ -93,4 +95,33 @@ test('index item page stops at the end', () => {
 
   assert.equal(page.nextOffset, undefined);
   assert.deepEqual(page.items, []);
+});
+
+test('index item page preserves non-subject directory entries', () => {
+  const page = toPublicIndexItemPage(
+    {
+      data: [
+        {
+          cat: 1,
+          character: {
+            id: 77007,
+            images: { medium: 'https://lain.bgm.tv/character.jpg' },
+            name: '鏑木紫',
+            nameCN: '',
+          },
+          comment: '喜欢的角色',
+        },
+      ],
+      total: 1,
+    },
+    0,
+  );
+
+  assert.deepEqual(page.items[0], {
+    comment: '喜欢的角色',
+    coverUrl: 'https://lain.bgm.tv/character.jpg',
+    id: 77007,
+    kind: 'character',
+    title: '鏑木紫',
+  });
 });

@@ -138,6 +138,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="directories"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '目录发现',
+            }}
+          />
+          <Stack.Screen
             name="character/[id]"
             options={{
               headerBackButtonDisplayMode: 'minimal',

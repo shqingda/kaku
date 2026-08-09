@@ -10,6 +10,7 @@ import { registerChannelRoutes } from './channels/routes.ts';
 import { registerBrowseRoutes } from './browse/routes.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
 import { registerDiscussionRoutes } from './discussions/routes.ts';
+import { registerIndexRoutes } from './indexes/routes.ts';
 import { registerNotificationRoutes } from './notifications/routes.ts';
 import {
   type RankingDependencies,
@@ -35,6 +36,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerChannelRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
   registerDiscussionRoutes(app, dependencies);
+  registerIndexRoutes(app, dependencies);
   registerNotificationRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);

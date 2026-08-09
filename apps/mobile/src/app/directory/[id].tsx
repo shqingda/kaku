@@ -1,6 +1,12 @@
 import { useMemo } from 'react';
 import { Image } from 'expo-image';
-import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
+import {
+  type Href,
+  Link,
+  router,
+  Stack,
+  useLocalSearchParams,
+} from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +18,7 @@ import {
   usePublicIndex,
   usePublicIndexItems,
 } from '@/features/indexes/use-indexes';
+import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 export default function PublicIndexScreen() {
@@ -125,21 +132,16 @@ export default function PublicIndexScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        renderItem={({ item }) => (
-          <Link
-            asChild
-            href={{
-              pathname: '/subject/[id]',
-              params: { id: String(item.id) },
-            }}
-          >
+        renderItem={({ item }) => {
+          const href = getIndexItemHref(item);
+          const row = (
             <Pressable
-              accessibilityHint="进入条目详情"
+              accessibilityHint={href ? '进入详情' : undefined}
               accessibilityLabel={`打开${item.title}`}
               accessibilityRole="button"
               style={styles.subjectRow}
             >
-              <Link.AppleZoom>
+              {href ? <Link.AppleZoom>
                 <View style={styles.cover}>
                   <Text style={styles.coverFallback}>
                     {item.title.slice(0, 1)}
@@ -153,14 +155,30 @@ export default function PublicIndexScreen() {
                     />
                   ) : null}
                 </View>
-              </Link.AppleZoom>
+              </Link.AppleZoom> : (
+                <View style={styles.cover}>
+                  <Text style={styles.coverFallback}>
+                    {item.title.slice(0, 1)}
+                  </Text>
+                  {item.coverUrl ? (
+                    <Image
+                      contentFit="cover"
+                      source={item.coverUrl}
+                      style={StyleSheet.absoluteFill}
+                      transition={120}
+                    />
+                  ) : null}
+                </View>
+              )}
               <View style={styles.subjectMain}>
                 <Text numberOfLines={2} style={styles.subjectTitle}>
                   {item.title}
                 </Text>
                 <Text numberOfLines={2} style={styles.subjectMeta}>
-                  {getSubjectTypeLabel(item.type)} ·{' '}
-                  {item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}
+                  {getIndexItemLabel(item)}
+                  {item.kind === 'subject'
+                    ? ` · ${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`
+                    : ''}
                   {item.comment ? ` · ${item.comment}` : ''}
                 </Text>
               </View>
@@ -175,12 +193,67 @@ export default function PublicIndexScreen() {
                 weight="semibold"
               />
             </Pressable>
-          </Link>
-        )}
+          );
+
+          return href ? <Link asChild href={href}>{row}</Link> : row;
+        }}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
+}
+
+function getIndexItemLabel(item: PublicIndexItem) {
+  if (item.kind === 'subject' && item.type) {
+    return getSubjectTypeLabel(item.type);
+  }
+  return {
+    blog: '日志',
+    character: '角色',
+    episode: '章节',
+    groupTopic: '小组话题',
+    person: '人物',
+    subject: '条目',
+    subjectTopic: '条目话题',
+  }[item.kind];
+}
+
+function getIndexItemHref(item: PublicIndexItem): Href | undefined {
+  switch (item.kind) {
+    case 'subject':
+      return { pathname: '/subject/[id]', params: { id: String(item.id) } };
+    case 'character':
+      return { pathname: '/character/[id]', params: { id: String(item.id) } };
+    case 'person':
+      return { pathname: '/person/[id]', params: { id: String(item.id) } };
+    case 'blog':
+      return { pathname: '/blog/[id]', params: { id: String(item.id) } };
+    case 'groupTopic':
+      return {
+        pathname: '/group/topic/[id]',
+        params: { id: String(item.id) },
+      };
+    case 'episode':
+      return item.parentId && item.episodeNumber
+        ? {
+            pathname: '/subject/[id]/episode/[episodeNumber]',
+            params: {
+              episodeNumber: String(item.episodeNumber),
+              id: String(item.parentId),
+            },
+          }
+        : undefined;
+    case 'subjectTopic':
+      return item.parentId
+        ? {
+            pathname: '/subject/[id]/topic/[topicId]',
+            params: {
+              id: String(item.parentId),
+              topicId: String(item.id),
+            },
+          }
+        : undefined;
+  }
 }
 
 const styles = StyleSheet.create({

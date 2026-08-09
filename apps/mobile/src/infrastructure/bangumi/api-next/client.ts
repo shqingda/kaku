@@ -213,7 +213,6 @@ export async function getBangumiIndexRelated(
   limit: number,
 ) {
   const query = new URLSearchParams({
-    cat: '0',
     limit: String(limit),
     offset: String(offset),
   });
