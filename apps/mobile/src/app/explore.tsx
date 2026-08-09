@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -23,6 +23,13 @@ import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { RecentSearches } from '@/features/search/recent-searches';
+import {
+  addRecentSearch,
+  clearRecentSearches,
+  loadRecentSearches,
+  saveRecentSearches,
+} from '@/features/search/search-history';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import {
   useBangumiCalendar,
@@ -42,6 +49,7 @@ export default function ExploreScreen() {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
@@ -57,13 +65,46 @@ export default function ExploreScreen() {
     [calendarQuery.data, selectedDay],
   );
 
+  useEffect(() => {
+    let active = true;
+
+    void loadRecentSearches().then((items) => {
+      if (active) setRecentSearches(items);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function rememberSearch(nextKeyword: string) {
+    setRecentSearches((current) => {
+      const next = addRecentSearch(current, nextKeyword);
+      void saveRecentSearches(next);
+      return next;
+    });
+  }
+
   function submitSearch() {
     const nextKeyword = draft.trim();
 
     if (nextKeyword) {
       setKeyword(nextKeyword);
+      rememberSearch(nextKeyword);
       Keyboard.dismiss();
     }
+  }
+
+  function selectRecentSearch(nextKeyword: string) {
+    setDraft(nextKeyword);
+    setKeyword(nextKeyword);
+    rememberSearch(nextKeyword);
+    Keyboard.dismiss();
+  }
+
+  function clearSearchHistory() {
+    setRecentSearches([]);
+    void clearRecentSearches();
   }
 
   function updateDraft(value: string) {
@@ -114,6 +155,13 @@ export default function ExploreScreen() {
             onChangeDraft={updateDraft}
             onSubmit={submitSearch}
           />
+          {!draft ? (
+            <RecentSearches
+              items={recentSearches}
+              onClear={clearSearchHistory}
+              onSelect={selectRecentSearch}
+            />
+          ) : null}
           <SubjectTypeTabs
             contentContainerStyle={styles.subjectTypeTabs}
             onChange={setSelectedSearchType}

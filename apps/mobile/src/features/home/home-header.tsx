@@ -11,6 +11,11 @@ import {
 
 import { COLORS } from '@/constants/design';
 import type { AuthSession } from '@/features/auth/model';
+import {
+  addRecentSearch,
+  loadRecentSearches,
+  saveRecentSearches,
+} from '@/features/search/search-history';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 
 import { ProfileMenu } from './profile-menu';
@@ -26,6 +31,9 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
     }
 
     Keyboard.dismiss();
+    void loadRecentSearches().then((current) =>
+      saveRecentSearches(addRecentSearch(current, keyword)),
+    );
     router.push({ pathname: '/explore', params: { q: keyword } });
   }
 
