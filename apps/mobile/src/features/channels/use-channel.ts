@@ -6,6 +6,7 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useChannel(subjectType: number) {
   return useQuery({
+    meta: { persist: true },
     queryFn: ({ signal }) => getChannelSubjects(subjectType, signal),
     queryKey: queryKeys.channel(subjectType),
     retry: shouldRetryBangumiQuery,

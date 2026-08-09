@@ -12,6 +12,7 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 export function useBangumiCalendar(enabled = true) {
   return useQuery({
     enabled,
+    meta: { persist: true },
     queryFn: ({ signal }) => bangumiDiscoverProvider.getCalendar(signal),
     queryKey: queryKeys.calendar(),
     retry: shouldRetryBangumiQuery,
@@ -29,6 +30,7 @@ export function useBangumiRankedSubjects(subjectType = 2) {
   >({
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: { persist: true },
     queryFn: ({ pageParam, signal }) =>
       bangumiDiscoverProvider.getRankedSubjects(
         subjectType,

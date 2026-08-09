@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react';
 import Constants from 'expo-constants';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Linking,
@@ -14,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { queryPersister } from '@/lib/query-persister';
 
 const WEBSITE_URL = 'https://kaku-web.shqingda.workers.dev';
 
@@ -68,7 +70,36 @@ async function openExternalUrl(url: string) {
 }
 
 export default function AboutScreen() {
+  const queryClient = useQueryClient();
   const version = Constants.expoConfig?.version ?? '开发版';
+
+  async function clearPublicCache() {
+    queryClient.removeQueries({
+      predicate: (query) => query.meta?.persist === true,
+    });
+
+    try {
+      await queryPersister.removeClient();
+      Alert.alert('缓存已清除');
+    } catch {
+      Alert.alert('清除失败', '请稍后重试。');
+    }
+  }
+
+  function confirmClearCache() {
+    Alert.alert(
+      '清除浏览缓存？',
+      '将删除离线保存的公开条目、频道与排行榜，不会退出登录或删除收藏。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => void clearPublicCache(),
+          style: 'destructive',
+          text: '清除',
+        },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -90,6 +121,31 @@ export default function AboutScreen() {
 
         <AboutLinkGroup links={productLinks} />
         <AboutLinkGroup links={legalLinks} />
+        <View style={styles.group}>
+          <Pressable
+            accessibilityLabel="清除浏览缓存"
+            accessibilityRole="button"
+            onPress={confirmClearCache}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          >
+            <View style={styles.rowIconMuted}>
+              <SymbolView
+                name={{
+                  android: 'delete_sweep',
+                  ios: 'trash',
+                  web: 'delete_sweep',
+                }}
+                size={18}
+                tintColor={COLORS.muted}
+                weight="medium"
+              />
+            </View>
+            <View style={styles.rowCopy}>
+              <Text style={styles.rowLabelWithoutMargin}>清除浏览缓存</Text>
+              <Text style={styles.rowDescription}>登录和收藏数据不会受影响</Text>
+            </View>
+          </Pressable>
+        </View>
 
         <Text style={styles.footer}>用心记录每一次观看与阅读。</Text>
       </ScrollView>
@@ -188,6 +244,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
+  rowIconMuted: {
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  rowCopy: { flex: 1, marginLeft: 13 },
   rowLabel: {
     color: COLORS.ink,
     flex: 1,
@@ -195,6 +260,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 13,
   },
+  rowLabelWithoutMargin: {
+    color: COLORS.ink,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  rowDescription: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
   footer: {
     color: COLORS.subtle,
     fontSize: 12,
