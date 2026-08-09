@@ -16,12 +16,15 @@ import {
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { AuthSession } from '@/features/auth/model';
+import { useNotifications } from '@/features/notifications/use-notifications';
 
 const MENU_WIDTH = 252;
 const MENU_EDGE_MARGIN = 12;
 
 export function ProfileMenu({ session }: { session: AuthSession }) {
   const { signOut } = useAuth();
+  const notificationsQuery = useNotifications();
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
   const triggerRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
   const [anchor, setAnchor] = useState({
@@ -107,6 +110,16 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
               weight="semibold"
             />
           )}
+          {unreadCount > 0 ? (
+            <View
+              accessibilityLabel={`${unreadCount} 条未读通知`}
+              style={styles.notificationBadge}
+            >
+              <Text style={styles.notificationBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
 
@@ -179,6 +192,19 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
             <View style={styles.divider} />
 
             <MenuItem
+              badge={unreadCount}
+              icon={{
+                android: 'notifications',
+                ios: 'bell',
+                web: 'notifications',
+              }}
+              label="通知"
+              onPress={() => {
+                closeMenu();
+                router.push('/notifications');
+              }}
+            />
+            <MenuItem
               icon={{
                 android: 'account_circle',
                 ios: 'person.crop.circle',
@@ -216,10 +242,12 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
 }
 
 function MenuItem({
+  badge,
   icon,
   label,
   onPress,
 }: {
+  badge?: number;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   onPress: () => void;
@@ -242,6 +270,11 @@ function MenuItem({
         />
       </View>
       <Text style={styles.itemText}>{label}</Text>
+      {badge ? (
+        <View style={styles.menuBadge}>
+          <Text style={styles.menuBadgeText}>{badge > 99 ? '99+' : badge}</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -254,6 +287,26 @@ const styles = StyleSheet.create({
     width: 44,
   },
   avatar: { borderRadius: 18, height: 36, width: 36 },
+  notificationBadge: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.background,
+    borderRadius: 9,
+    borderWidth: 2,
+    justifyContent: 'center',
+    minHeight: 18,
+    minWidth: 18,
+    paddingHorizontal: 3,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  notificationBadgeText: {
+    color: COLORS.surface,
+    fontSize: 9,
+    fontWeight: '800',
+    lineHeight: 12,
+  },
   backdrop: {
     backgroundColor: 'rgba(0, 0, 0, 0.0001)',
     flex: 1,
@@ -308,6 +361,20 @@ const styles = StyleSheet.create({
     height: 22,
     justifyContent: 'center',
     width: 22,
+  },
+  menuBadge: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 10,
+    justifyContent: 'center',
+    minHeight: 20,
+    minWidth: 20,
+    paddingHorizontal: 6,
+  },
+  menuBadgeText: {
+    color: COLORS.accent,
+    fontSize: 10,
+    fontWeight: '800',
   },
   itemPressed: { backgroundColor: COLORS.track },
   itemText: {
