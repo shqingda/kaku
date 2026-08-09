@@ -31,12 +31,14 @@ export function EntityDetailScreen({
   data,
   isError,
   isPending,
+  isRefreshing,
   kind,
   onRetry,
 }: {
   data?: PublicEntityDetail;
   isError: boolean;
   isPending: boolean;
+  isRefreshing: boolean;
   kind: '人物' | '角色';
   onRetry: () => void;
 }) {
@@ -207,6 +209,8 @@ export function EntityDetailScreen({
               ) : null}
             </>
           }
+          onRefresh={onRetry}
+          refreshing={isRefreshing}
           renderItem={({ item }) => (
             <EntityRelationRow item={item} kind={kind} />
           )}

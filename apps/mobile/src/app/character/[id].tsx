@@ -12,6 +12,7 @@ export default function CharacterScreen() {
       data={characterQuery.data}
       isError={characterQuery.isError}
       isPending={characterQuery.isPending}
+      isRefreshing={characterQuery.isRefetching && !characterQuery.isPending}
       kind="角色"
       onRetry={() => void characterQuery.refetch()}
     />

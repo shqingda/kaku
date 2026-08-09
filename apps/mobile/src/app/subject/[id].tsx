@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -227,6 +228,26 @@ export default function SubjectScreen() {
           styles.content,
           { paddingTop: insets.top + 12 },
         ]}
+        refreshControl={
+          <RefreshControl
+            onRefresh={() =>
+              void Promise.all([
+                catalogQuery.refetch(),
+                commentsQuery.refetch(),
+                reviewsQuery.refetch(),
+                ...(session ? [collectionQuery.refetch()] : []),
+              ])
+            }
+            refreshing={
+              (catalogQuery.isRefetching ||
+                commentsQuery.isRefetching ||
+                reviewsQuery.isRefetching ||
+                collectionQuery.isRefetching) &&
+              !catalogQuery.isPending
+            }
+            tintColor={COLORS.accent}
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
         <SubjectHero coverUrl={coverUrl} title={title} year={year} />

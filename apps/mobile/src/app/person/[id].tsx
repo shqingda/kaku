@@ -12,6 +12,7 @@ export default function PersonScreen() {
       data={personQuery.data}
       isError={personQuery.isError}
       isPending={personQuery.isPending}
+      isRefreshing={personQuery.isRefetching && !personQuery.isPending}
       kind="人物"
       onRetry={() => void personQuery.refetch()}
     />

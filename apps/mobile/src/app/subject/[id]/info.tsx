@@ -1,5 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
@@ -48,6 +55,15 @@ export default function SubjectInfoScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              onRefresh={() => void subjectQuery.refetch()}
+              refreshing={
+                subjectQuery.isRefetching && !subjectQuery.isPending
+              }
+              tintColor={COLORS.accent}
+            />
+          }
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>

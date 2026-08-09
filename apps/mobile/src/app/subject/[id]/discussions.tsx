@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
@@ -66,6 +73,22 @@ export default function SubjectDiscussionsScreen() {
             void discussionQuery.fetchNextPage();
           }
         }}
+        refreshControl={
+          <RefreshControl
+            onRefresh={() =>
+              void Promise.all([
+                subjectQuery.refetch(),
+                discussionQuery.refetch(),
+              ])
+            }
+            refreshing={
+              (subjectQuery.isRefetching || discussionQuery.isRefetching) &&
+              !subjectQuery.isPending &&
+              !discussionQuery.isPending
+            }
+            tintColor={COLORS.accent}
+          />
+        }
         scrollEventThrottle={160}
         showsVerticalScrollIndicator={false}
       >
