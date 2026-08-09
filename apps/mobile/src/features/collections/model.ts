@@ -5,6 +5,7 @@ export type PersonalCollection = {
   comment: string;
   rating?: number;
   subjectId: number;
+  tags: string[];
   watchedEpisodeNumbers: number[];
 };
 
@@ -12,5 +13,6 @@ export type PersonalCollectionUpdate = {
   collectionStatus: CollectionStatus | null;
   comment?: string;
   rating?: number;
+  tags?: string[];
   watchedEpisodeNumbers?: number[];
 };

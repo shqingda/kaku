@@ -25,6 +25,7 @@ const collectionUpdateSchema = z.object({
     .nullable(),
   comment: z.string().max(1000).optional(),
   rating: z.number().int().min(1).max(10).optional(),
+  tags: z.array(z.string().min(1).regex(/^\S+$/)).optional(),
   watchedEpisodeNumbers: z
     .array(z.number().int().positive())
     .max(5000)
@@ -166,6 +167,7 @@ export function registerCollectionRoutes(
         fetcher,
         rating: parsedBody.data.rating,
         subjectId,
+        tags: parsedBody.data.tags,
         watchedEpisodeNumbers: parsedBody.data.watchedEpisodeNumbers,
       });
 

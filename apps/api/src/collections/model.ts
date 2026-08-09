@@ -10,6 +10,7 @@ export type PersonalCollection = {
   comment: string;
   rating?: number;
   subjectId: number;
+  tags: string[];
   watchedEpisodeNumbers: number[];
 };
 

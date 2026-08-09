@@ -16,6 +16,10 @@ const userCollectionSchema = z.object({
   rate: z.number().int().min(0).max(10),
   subject_id: z.number().int().positive(),
   subject_type: z.number().int().positive(),
+  tags: z
+    .array(z.string())
+    .nullish()
+    .transform((tags) => [...new Set(tags ?? [])]),
   type: z.number().int().min(1).max(5),
 });
 
@@ -138,6 +142,7 @@ export async function getBangumiPersonalCollection({
     comment: collection.comment,
     ...(collection.rate > 0 ? { rating: collection.rate } : {}),
     subjectId,
+    tags: collection.tags,
     watchedEpisodeNumbers: episodeCollections
       .filter((item) => item.type === 2 && item.episode.type === 0)
       .map((item) => Math.trunc(item.episode.ep))
@@ -214,6 +219,7 @@ export async function saveBangumiPersonalCollection({
   fetcher,
   rating,
   subjectId,
+  tags,
   watchedEpisodeNumbers,
 }: {
   accessToken: string;
@@ -222,6 +228,7 @@ export async function saveBangumiPersonalCollection({
   fetcher: typeof fetch;
   rating?: number;
   subjectId: number;
+  tags?: string[];
   watchedEpisodeNumbers?: number[];
 }) {
   const response = await fetcher(
@@ -230,6 +237,7 @@ export async function saveBangumiPersonalCollection({
       body: JSON.stringify({
         ...(comment !== undefined ? { comment } : {}),
         rate: rating ?? 0,
+        ...(tags !== undefined ? { tags } : {}),
         type: collectionStatusToBangumiType[collectionStatus],
       }),
       headers: headers(accessToken, true),

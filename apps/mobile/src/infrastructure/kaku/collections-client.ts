@@ -17,6 +17,7 @@ const personalCollectionSchema = z.object({
   comment: z.string(),
   rating: z.number().int().min(1).max(10).optional(),
   subjectId: z.number().int().positive(),
+  tags: z.array(z.string()),
   watchedEpisodeNumbers: z.array(z.number().int().positive()),
 });
 

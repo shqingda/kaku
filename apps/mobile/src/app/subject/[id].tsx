@@ -183,6 +183,7 @@ export default function SubjectScreen() {
     id: subjectId,
     rating: personalCollection?.rating,
     summary,
+    tags: session ? personalCollection?.tags ?? [] : undefined,
     title,
     totalEpisodes,
     type: catalogSubject.type,

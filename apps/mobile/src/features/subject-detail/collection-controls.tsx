@@ -63,6 +63,7 @@ export function CollectionControls({
         collectionStatus: draft.collectionStatus ?? null,
         comment: draft.comment,
         rating: canSavePersonalData ? draft.rating : undefined,
+        tags: draft.tags,
         watchedEpisodeNumbers:
           canSavePersonalData && supportsProgress
             ? resizeWatchedEpisodes(

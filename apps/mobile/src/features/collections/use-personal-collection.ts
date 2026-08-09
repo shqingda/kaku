@@ -55,6 +55,7 @@ export function useSavePersonalCollection(subjectId: number) {
               comment: update.comment ?? previous?.comment ?? '',
               rating: update.rating,
               subjectId,
+              tags: update.tags ?? previous?.tags ?? [],
               watchedEpisodeNumbers: update.watchedEpisodeNumbers ?? [],
             }
           : null,

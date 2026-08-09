@@ -27,6 +27,7 @@ export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
   comment?: string;
   rating?: number;
+  tags?: string[];
   watchedCount: number;
 };
 
@@ -67,6 +68,8 @@ export function CollectionBoxSheet({
   );
   const [rating, setRating] = useState(item.rating);
   const [comment, setComment] = useState(item.comment ?? '');
+  const [tags, setTags] = useState(item.tags ?? []);
+  const [tagDraft, setTagDraft] = useState('');
   const canEditPersonalData = canRateCollectionStatus(status);
   const showsProgress =
     canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
@@ -82,10 +85,13 @@ export function CollectionBoxSheet({
     setWatchedCount(String(item.watchedEpisodeNumbers.length));
     setRating(item.rating);
     setComment(item.comment ?? '');
+    setTags(item.tags ?? []);
+    setTagDraft('');
   }, [
     item.collectionStatus,
     item.rating,
     item.comment,
+    item.tags,
     item.watchedEpisodeNumbers.length,
     visible,
   ]);
@@ -97,12 +103,33 @@ export function CollectionBoxSheet({
         ? Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
         : 0;
 
+    const pendingTag = tagDraft.trim();
+    const nextTags =
+      item.tags !== undefined &&
+      pendingTag &&
+      !tags.includes(pendingTag)
+        ? [...tags, pendingTag]
+        : tags;
+
     onSave({
       collectionStatus: status,
       comment: item.comment !== undefined ? comment.trim() : undefined,
       rating: canEditPersonalData ? rating : undefined,
+      tags: item.tags !== undefined ? nextTags : undefined,
       watchedCount: nextCount,
     });
+  }
+
+  function addTag() {
+    const nextTag = tagDraft.trim();
+
+    if (!nextTag || tags.includes(nextTag)) {
+      setTagDraft('');
+      return;
+    }
+
+    setTags((current) => [...current, nextTag]);
+    setTagDraft('');
   }
 
   return (
@@ -344,6 +371,57 @@ export function CollectionBoxSheet({
                 />
               </View>
             ) : null}
+
+            {item.tags !== undefined ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>收藏标签</Text>
+                <View style={styles.tagsEditor}>
+                  {tags.map((tag) => (
+                    <View key={tag} style={styles.tagChip}>
+                      <Text numberOfLines={1} style={styles.tagText}>
+                        {tag}
+                      </Text>
+                      <Pressable
+                        accessibilityLabel={`删除标签 ${tag}`}
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() =>
+                          setTags((current) =>
+                            current.filter((item) => item !== tag),
+                          )
+                        }
+                      >
+                        <SymbolView
+                          name={{
+                            android: 'close',
+                            ios: 'xmark',
+                            web: 'close',
+                          }}
+                          size={10}
+                          tintColor={COLORS.muted}
+                          weight="semibold"
+                        />
+                      </Pressable>
+                    </View>
+                  ))}
+                  <TextInput
+                    accessibilityLabel="添加收藏标签"
+                    autoCapitalize="none"
+                    onChangeText={(value) =>
+                      setTagDraft(value.replace(/\s/g, ''))
+                    }
+                    onSubmitEditing={addTag}
+                    placeholder={
+                      tags.length === 0 ? '输入标签后按回车' : '添加标签'
+                    }
+                    placeholderTextColor={COLORS.subtle}
+                    returnKeyType="done"
+                    style={styles.tagInput}
+                    value={tagDraft}
+                  />
+                </View>
+              </View>
+            ) : null}
             <View style={styles.footer}>
               {item.collectionStatus ? (
                 <Pressable
@@ -583,6 +661,41 @@ const styles = StyleSheet.create({
     minHeight: 92,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  tagsEditor: {
+    alignItems: 'center',
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    minHeight: 52,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  tagChip: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 5,
+    height: 30,
+    maxWidth: '100%',
+    paddingHorizontal: 9,
+  },
+  tagText: {
+    color: COLORS.ink,
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tagInput: {
+    color: COLORS.ink,
+    flexGrow: 1,
+    fontSize: 13,
+    height: 30,
+    minWidth: 120,
+    padding: 0,
   },
   footer: {
     alignItems: 'center',

@@ -30,6 +30,7 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
         rate: 9,
         subject_id: 42,
         subject_type: 2,
+        tags: ['公路片', '奇幻'],
         type: 3,
       });
     }
@@ -53,6 +54,7 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
     comment: '值得慢慢看',
     rating: 9,
     subjectId: 42,
+    tags: ['公路片', '奇幻'],
     watchedEpisodeNumbers: [1, 3],
   });
 });
@@ -66,13 +68,20 @@ test('Bangumi collection treats a null comment as an empty note', async () => {
         rate: 0,
         subject_id: 43,
         subject_type: 1,
+        tags: null,
         type: 1,
       }),
     subjectId: 43,
     username: 'kaku-user',
   });
 
-  assert.equal(collection.comment, '');
+  assert.deepEqual(collection, {
+    collectionStatus: 'wish',
+    comment: '',
+    subjectId: 43,
+    tags: [],
+    watchedEpisodeNumbers: [],
+  });
 });
 
 test('saving progress updates only changed Bangumi episode states', async () => {
@@ -99,12 +108,14 @@ test('saving progress updates only changed Bangumi episode states', async () => 
     fetcher,
     rating: 8,
     subjectId: 42,
+    tags: ['重温', '演出'],
     watchedEpisodeNumbers: [1, 2],
   });
 
   assert.deepEqual(JSON.parse(requests[0].body), {
     comment: '保留一点观后感',
     rate: 8,
+    tags: ['重温', '演出'],
     type: 3,
   });
   const patches = requests
