@@ -1,4 +1,5 @@
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -20,6 +21,9 @@ import {
   useRevokeDeviceSession,
 } from '@/features/auth/use-device-sessions';
 import { useNotifications } from '@/features/notifications/use-notifications';
+import { clearRecentSubjects } from '@/features/history/recent-subjects';
+import { clearRecentSearches } from '@/features/search/search-history';
+import { queryPersister } from '@/lib/query-persister';
 
 function formatSessionTime(timestamp: number) {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -31,6 +35,8 @@ function formatSessionTime(timestamp: number) {
 }
 
 export default function AccountScreen() {
+  const [isClearingLocalData, setIsClearingLocalData] = useState(false);
+  const queryClient = useQueryClient();
   const {
     error,
     disconnectBangumi,
@@ -60,6 +66,46 @@ export default function AccountScreen() {
           onPress: () => void disconnectBangumi(),
           style: 'destructive',
           text: '断开全部设备',
+        },
+      ],
+    );
+  }
+
+  async function clearLocalData() {
+    setIsClearingLocalData(true);
+    try {
+      queryClient.removeQueries({
+        predicate: (query) => query.meta?.persist === true,
+      });
+
+      const results = await Promise.allSettled([
+        queryPersister.removeClient(),
+        clearRecentSearches(),
+        clearRecentSubjects(),
+        Image.clearMemoryCache(),
+        Image.clearDiskCache(),
+      ]);
+
+      if (results.some((result) => result.status === 'rejected')) {
+        Alert.alert('部分数据未能清理', '可以稍后再试，不影响继续使用。');
+        return;
+      }
+
+      Alert.alert('已清理', '公开缓存、图片和最近记录已从本机移除。');
+    } finally {
+      setIsClearingLocalData(false);
+    }
+  }
+
+  function confirmClearLocalData() {
+    Alert.alert(
+      '清理本地数据？',
+      '将删除公开内容缓存、图片缓存、最近搜索和最近浏览。不会退出登录，也不会修改 Bangumi 收藏。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => void clearLocalData(),
+          text: '清理',
         },
       ],
     );
@@ -265,9 +311,12 @@ export default function AccountScreen() {
         ) : (
           <>
             <View style={styles.intro}>
-              <View style={styles.logoMark}>
-                <Text style={styles.logoText}>K</Text>
-              </View>
+              <Image
+                accessibilityLabel="Kaku"
+                contentFit="cover"
+                source={require('../../assets/images/kaku-icon.png')}
+                style={styles.logoMark}
+              />
               <Text style={styles.title}>连接 Bangumi</Text>
               <Text style={styles.description}>
                 登录后同步收藏、观看进度和评分。Kaku 不会在手机里保存 Bangumi
@@ -309,6 +358,24 @@ export default function AccountScreen() {
             </Pressable>
           </>
         )}
+        {!isLoading ? (
+          <>
+            <Text style={styles.menuSectionTitle}>本地存储</Text>
+            <View style={styles.menuGroup}>
+              <AccountMenuRow
+                description="公开缓存、图片与最近记录"
+                icon={{
+                  android: 'delete_sweep',
+                  ios: 'trash',
+                  web: 'delete_sweep',
+                }}
+                label="清理本地数据"
+                loading={isClearingLocalData}
+                onPress={confirmClearLocalData}
+              />
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -320,6 +387,7 @@ function AccountMenuRow({
   hasDivider = false,
   icon,
   label,
+  loading = false,
   onPress,
 }: {
   badge?: number;
@@ -327,12 +395,14 @@ function AccountMenuRow({
   hasDivider?: boolean;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
+  loading?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      disabled={loading}
       onPress={onPress}
       style={({ pressed }) => [
         styles.menuRow,
@@ -357,15 +427,19 @@ function AccountMenuRow({
           <Text style={styles.menuBadgeText}>{badge > 99 ? '99+' : badge}</Text>
         </View>
       ) : null}
-      <SymbolView
-        name={{
-          android: 'chevron_right',
-          ios: 'chevron.right',
-          web: 'chevron_right',
-        }}
-        size={14}
-        tintColor={COLORS.subtle}
-      />
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="small" />
+      ) : (
+        <SymbolView
+          name={{
+            android: 'chevron_right',
+            ios: 'chevron.right',
+            web: 'chevron_right',
+          }}
+          size={14}
+          tintColor={COLORS.subtle}
+        />
+      )}
     </Pressable>
   );
 }
@@ -377,15 +451,11 @@ const styles = StyleSheet.create({
   stateText: { color: COLORS.muted, fontSize: 14 },
   intro: { alignItems: 'center', marginBottom: 32 },
   logoMark: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 22,
+    borderRadius: 20,
     height: 76,
-    justifyContent: 'center',
     marginBottom: 22,
     width: 76,
   },
-  logoText: { color: COLORS.accent, fontSize: 36, fontWeight: '800' },
   title: {
     color: COLORS.ink,
     fontSize: 30,
