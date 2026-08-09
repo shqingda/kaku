@@ -18,6 +18,7 @@ import {
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
@@ -149,6 +150,12 @@ export default function RankingsScreen() {
         }}
         onEndReachedThreshold={0.45}
         removeClippedSubviews={Platform.OS === 'android'}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void rankingQuery.refetch()}
+            refreshing={rankingQuery.isRefetching && !rankingQuery.isPending}
+          />
+        }
         renderItem={({ index, item }) => (
           <View
             style={[

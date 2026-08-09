@@ -27,6 +27,7 @@ import {
 import type { DiscoverSubject } from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { RecentSearches } from '@/features/search/recent-searches';
 import {
@@ -146,6 +147,11 @@ export default function ExploreScreen() {
     }
   }
 
+  function refreshOverview() {
+    void rankedQuery.refetch();
+    if (selectedSearchType === 2) void calendarQuery.refetch();
+  }
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
@@ -164,11 +170,13 @@ export default function ExploreScreen() {
           isFetchNextPageError={searchQuery.isFetchNextPageError}
           isFetchingNextPage={searchQuery.isFetchingNextPage}
           isPending={searchQuery.isPending}
+          isRefetching={searchQuery.isRefetching}
           keyword={keyword}
           onChangeDraft={updateDraft}
           onChangeSubjectType={setSelectedSearchType}
           onLoadMore={() => void searchQuery.fetchNextPage()}
           onRetry={() => void searchQuery.refetch()}
+          onRefresh={() => void searchQuery.refetch()}
           onSubmit={submitSearch}
           subjects={searchSubjects}
           subjectType={selectedSearchType}
@@ -179,6 +187,16 @@ export default function ExploreScreen() {
           contentContainerStyle={styles.content}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={refreshOverview}
+              refreshing={
+                (rankedQuery.isRefetching || calendarQuery.isRefetching) &&
+                !rankedQuery.isPending &&
+                !calendarQuery.isPending
+              }
+            />
+          }
           showsVerticalScrollIndicator={false}
         >
           <SearchField
@@ -571,11 +589,13 @@ function SearchResults({
   isFetchNextPageError,
   isFetchingNextPage,
   isPending,
+  isRefetching,
   keyword,
   onChangeDraft,
   onChangeSubjectType,
   onLoadMore,
   onRetry,
+  onRefresh,
   onSubmit,
   subjects,
   subjectType,
@@ -587,11 +607,13 @@ function SearchResults({
   isFetchNextPageError: boolean;
   isFetchingNextPage: boolean;
   isPending: boolean;
+  isRefetching: boolean;
   keyword: string;
   onChangeDraft: (value: string) => void;
   onChangeSubjectType: (subjectType: number) => void;
   onLoadMore: () => void;
   onRetry: () => void;
+  onRefresh: () => void;
   onSubmit: () => void;
   subjects: DiscoverSubject[];
   subjectType: number;
@@ -662,6 +684,12 @@ function SearchResults({
         }
       }}
       onEndReachedThreshold={0.45}
+      refreshControl={
+        <AppRefreshControl
+          onRefresh={onRefresh}
+          refreshing={isRefetching && !isPending}
+        />
+      }
       renderItem={({ index, item }) => (
         <View
           style={[

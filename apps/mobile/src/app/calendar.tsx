@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { useBangumiCalendar } from '@/features/discover/use-discover';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 
 function currentWeekdayId() {
@@ -111,6 +112,12 @@ export default function CalendarScreen() {
             item={item}
           />
         )}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void calendarQuery.refetch()}
+            refreshing={calendarQuery.isRefetching && !calendarQuery.isPending}
+          />
+        }
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

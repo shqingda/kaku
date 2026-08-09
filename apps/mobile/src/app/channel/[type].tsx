@@ -16,6 +16,7 @@ import type { ChannelSubject } from '@/features/channels/model';
 import { useChannel } from '@/features/channels/use-channel';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 
 const CHANNEL_TYPES = [
@@ -34,11 +35,25 @@ export default function ChannelScreen() {
   const rankingQuery = useBangumiRankedSubjects(subjectType);
   const ranked = rankingQuery.data?.pages[0]?.items.slice(0, 6) ?? [];
 
+  function refreshChannel() {
+    void Promise.all([channelQuery.refetch(), rankingQuery.refetch()]);
+  }
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: `${label}频道` }} />
       <ScrollView
         contentContainerStyle={styles.content}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={refreshChannel}
+            refreshing={
+              (channelQuery.isRefetching || rankingQuery.isRefetching) &&
+              !channelQuery.isPending &&
+              !rankingQuery.isPending
+            }
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>

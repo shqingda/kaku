@@ -21,6 +21,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import type { DiscoverSubject } from '@/features/discover/model';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
@@ -159,6 +160,12 @@ export default function BrowseScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void browseQuery.refetch()}
+            refreshing={browseQuery.isRefetching && !browseQuery.isPending}
+          />
+        }
         renderItem={({ item }) => <BrowseCard item={item} />}
         showsVerticalScrollIndicator={false}
       />
