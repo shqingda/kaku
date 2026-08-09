@@ -5,6 +5,7 @@ import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -50,6 +51,22 @@ export default function PublicUserScreen() {
   const collections = collectionsPage?.items ?? [];
   const friends = friendsPage?.items ?? [];
   const timeline = timelinePage?.items ?? [];
+  const isRefreshing =
+    userQuery.isRefetching ||
+    blogsQuery.isRefetching ||
+    collectionsQuery.isRefetching ||
+    friendsQuery.isRefetching ||
+    timelineQuery.isRefetching;
+
+  async function refreshProfile() {
+    await Promise.all([
+      userQuery.refetch(),
+      blogsQuery.refetch(),
+      collectionsQuery.refetch(),
+      friendsQuery.refetch(),
+      timelineQuery.refetch(),
+    ]);
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -353,6 +370,14 @@ export default function PublicUserScreen() {
                 selectedType={collectionSubjectType}
               />
             </>
+          }
+          refreshControl={
+            <RefreshControl
+              colors={[COLORS.accent]}
+              onRefresh={() => void refreshProfile()}
+              refreshing={isRefreshing}
+              tintColor={COLORS.accent}
+            />
           }
           renderItem={({ item }) => (
             <View style={styles.collectionCard}>
