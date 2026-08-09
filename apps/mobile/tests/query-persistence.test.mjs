@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import {
+  QUERY_CACHE_MAX_AGE,
+  shouldPersistPublicQuery,
+} from '../src/lib/query-persistence.ts';
+
+test('only explicitly marked successful public queries are persisted', () => {
+  assert.equal(
+    shouldPersistPublicQuery({
+      meta: { persist: true },
+      state: { dataUpdatedAt: 1, status: 'success' },
+    }),
+    true,
+  );
+  assert.equal(
+    shouldPersistPublicQuery({
+      state: { dataUpdatedAt: 1, status: 'success' },
+    }),
+    false,
+  );
+});
+
+test('pending, failed, and empty query results are not persisted', () => {
+  for (const state of [
+    { dataUpdatedAt: 0, status: 'success' },
+    { dataUpdatedAt: 1, status: 'pending' },
+    { dataUpdatedAt: 1, status: 'error' },
+  ]) {
+    assert.equal(
+      shouldPersistPublicQuery({ meta: { persist: true }, state }),
+      false,
+    );
+  }
+});
+
+test('public cache expires after one day', () => {
+  assert.equal(QUERY_CACHE_MAX_AGE, 86_400_000);
+});

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -7,6 +8,12 @@ import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
 } from '@/lib/query-retry';
+import {
+  QUERY_CACHE_BUSTER,
+  QUERY_CACHE_MAX_AGE,
+  shouldPersistPublicQuery,
+} from '@/lib/query-persistence';
+import { queryPersister } from '@/lib/query-persister';
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -14,7 +21,7 @@ export default function RootLayout() {
       new QueryClient({
         defaultOptions: {
           queries: {
-            gcTime: 30 * 60 * 1000,
+            gcTime: QUERY_CACHE_MAX_AGE,
             refetchOnReconnect: true,
             retry: shouldRetryBangumiQuery,
             retryDelay: bangumiRetryDelay,
@@ -24,9 +31,20 @@ export default function RootLayout() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        buster: QUERY_CACHE_BUSTER,
+        dehydrateOptions: {
+          shouldDehydrateMutation: () => false,
+          shouldDehydrateQuery: shouldPersistPublicQuery,
+        },
+        maxAge: QUERY_CACHE_MAX_AGE,
+        persister: queryPersister,
+      }}
+    >
       <AuthProvider>
-          <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen
             name="timeline"
@@ -360,8 +378,8 @@ export default function RootLayout() {
               title: '制作人员',
             }}
           />
-          </Stack>
+        </Stack>
       </AuthProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

@@ -35,9 +35,15 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@tanstack/query-async-storage-persister':
+        specifier: ^5.101.4
+        version: 5.101.4
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.101.4(react@19.2.3)
+      '@tanstack/react-query-persist-client':
+        specifier: ^5.101.4
+        version: 5.101.4(@tanstack/react-query@5.101.4(react@19.2.3))(react@19.2.3)
       expo:
         specifier: ~57.0.9
         version: 57.0.9(@babel/core@7.29.7(supports-color@10.2.2))(@expo/dom-webview@57.0.1)(@expo/metro-runtime@57.0.8)(expo-router@57.0.9)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.10.1(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)(typescript@7.0.2)
@@ -74,6 +80,9 @@ importers:
       expo-splash-screen:
         specifier: ~57.0.5
         version: 57.0.5(expo@57.0.9)(supports-color@10.2.2)(typescript@7.0.2)
+      expo-sqlite:
+        specifier: ~57.0.1
+        version: 57.0.1(expo@57.0.9)(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       expo-status-bar:
         specifier: ~57.0.1
         version: 57.0.1(expo@57.0.9)(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
@@ -1857,8 +1866,20 @@ packages:
   '@speed-highlight/core@1.2.17':
     resolution: {integrity: sha512-Z92FwKpCtfaW1V0jTU/fh3QzYEZN8wDwrzRIBoADCJfn4mJCNcJN/XegifX7BDrQ8/h9Xh/JnbyMchL0FqXrkg==}
 
+  '@tanstack/query-async-storage-persister@5.101.4':
+    resolution: {integrity: sha512-ROenNOVvxIZ1zKsBAiIvvslLo2xD8Me/vFz/tChdmuI7ciU+ET63yRrQ01W899Tx1ayQXdsGQJqYqjjVZk+OBQ==}
+
   '@tanstack/query-core@5.101.4':
     resolution: {integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==}
+
+  '@tanstack/query-persist-client-core@5.101.4':
+    resolution: {integrity: sha512-Bmu+RfWhwYEyYZEwSeKC0gX4+KTkiEB3yO8oz9BfAY/Jfe3ndz9EnYVhihIZPmWIr8NXayF7JuraNQcrXQQCCg==}
+
+  '@tanstack/react-query-persist-client@5.101.4':
+    resolution: {integrity: sha512-CY5i7PPKS/5B8OR2zAs9nCbLpgqI4jN8eBhtAxKRMNHyGcQhmyOy4PkkJrAAXT+ecGj++fBJTgQw6OpyCt/2SQ==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.101.4
+      react: ^18 || ^19
 
   '@tanstack/react-query@5.101.4':
     resolution: {integrity: sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==}
@@ -6217,7 +6238,22 @@ snapshots:
 
   '@speed-highlight/core@1.2.17': {}
 
+  '@tanstack/query-async-storage-persister@5.101.4':
+    dependencies:
+      '@tanstack/query-core': 5.101.4
+      '@tanstack/query-persist-client-core': 5.101.4
+
   '@tanstack/query-core@5.101.4': {}
+
+  '@tanstack/query-persist-client-core@5.101.4':
+    dependencies:
+      '@tanstack/query-core': 5.101.4
+
+  '@tanstack/react-query-persist-client@5.101.4(@tanstack/react-query@5.101.4(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@tanstack/query-persist-client-core': 5.101.4
+      '@tanstack/react-query': 5.101.4(react@19.2.3)
+      react: 19.2.3
 
   '@tanstack/react-query@5.101.4(react@19.2.3)':
     dependencies:
@@ -6413,8 +6449,7 @@ snapshots:
 
   asap@2.0.6: {}
 
-  await-lock@2.2.2:
-    optional: true
+  await-lock@2.2.2: {}
 
   babel-plugin-polyfill-corejs2@0.4.17(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2):
     dependencies:
@@ -7190,6 +7225,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  expo-sqlite@57.0.1(expo@57.0.9)(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+    dependencies:
+      await-lock: 2.2.2
+      expo: 57.0.9(@babel/core@7.29.7(supports-color@10.2.2))(@expo/dom-webview@57.0.1)(@expo/metro-runtime@57.0.8)(expo-router@57.0.9)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.10.1(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)(typescript@7.0.2)
+      react: 19.2.3
+      react-native: 0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.3)(supports-color@10.2.2)
 
   expo-sqlite@57.0.1(expo@57.0.9)(react-native@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.17)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8):
     dependencies:
