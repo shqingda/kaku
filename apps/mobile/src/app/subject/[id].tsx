@@ -29,12 +29,14 @@ import {
   useSubjectReviews,
 } from '@/features/reviews/use-subject-reviews';
 import { rememberRecentSubject } from '@/features/history/recent-subjects';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function DetailEntry({
   hint,
@@ -106,12 +108,12 @@ export default function SubjectScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
-  const subjectId = Number(id);
-  const catalogQuery = useCatalogSubject(Number(id));
-  const collectionQuery = usePersonalCollection(subjectId);
-  const saveCollection = useSavePersonalCollection(subjectId);
-  const commentsQuery = useSubjectComments(Number(id));
-  const reviewsQuery = useSubjectReviews(Number(id));
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const catalogQuery = useCatalogSubject(subjectId ?? 0);
+  const collectionQuery = usePersonalCollection(subjectId ?? 0);
+  const saveCollection = useSavePersonalCollection(subjectId ?? 0);
+  const commentsQuery = useSubjectComments(subjectId ?? 0);
+  const reviewsQuery = useSubjectReviews(subjectId ?? 0);
   const catalogSubject = catalogQuery.data;
   const personalCollection = collectionQuery.data;
   const watchedEpisodeNumbers =
@@ -140,6 +142,10 @@ export default function SubjectScreen() {
     } else {
       router.replace('/');
     }
+  }
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个条目链接缺少有效编号。" />;
   }
 
   if (catalogQuery.isPending) {

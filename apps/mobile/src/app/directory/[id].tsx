@@ -20,18 +20,24 @@ import {
 } from '@/features/indexes/use-indexes';
 import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function PublicIndexScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const indexId = Number(id);
-  const indexQuery = usePublicIndex(indexId);
-  const itemsQuery = usePublicIndexItems(indexId);
+  const indexId = parsePositiveIntegerRouteParam(id);
+  const indexQuery = usePublicIndex(indexId ?? 0);
+  const itemsQuery = usePublicIndexItems(indexId ?? 0);
   const index = indexQuery.data;
   const items = useMemo(
     () => itemsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [itemsQuery.data],
   );
   const itemTotal = itemsQuery.data?.pages[0]?.total ?? 0;
+
+  if (!indexId) {
+    return <InvalidRouteState message="这个目录链接缺少有效编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

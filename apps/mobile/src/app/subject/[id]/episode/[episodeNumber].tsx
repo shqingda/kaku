@@ -28,6 +28,8 @@ import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function formatAirDate(date?: string) {
   return date ? date.replaceAll('-', '.') : '放送时间待定';
@@ -41,8 +43,10 @@ export default function EpisodeScreen() {
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const subjectId = Number(id);
-  const episodeNumber = Number(episodeParam);
+  const parsedSubjectId = parsePositiveIntegerRouteParam(id);
+  const parsedEpisodeNumber = parsePositiveIntegerRouteParam(episodeParam);
+  const subjectId = parsedSubjectId ?? 0;
+  const episodeNumber = parsedEpisodeNumber ?? 0;
   const catalogQuery = useCatalogSubject(subjectId);
   const collectionQuery = usePersonalCollection(subjectId);
   const saveCollection = useSavePersonalCollection(subjectId);
@@ -73,6 +77,10 @@ export default function EpisodeScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  if (!parsedSubjectId || !parsedEpisodeNumber) {
+    return <InvalidRouteState message="这个章节链接缺少有效编号。" />;
   }
 
   if (catalogQuery.isPending) {

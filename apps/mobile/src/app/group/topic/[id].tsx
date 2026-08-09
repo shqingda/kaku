@@ -22,14 +22,16 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { formatActivityTime } from '@/lib/format-activity-time';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function GroupTopicScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const numericTopicId = Number(id);
+  const numericTopicId = parsePositiveIntegerRouteParam(id);
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const topicQuery = usePublicGroupTopic(numericTopicId);
+  const topicQuery = usePublicGroupTopic(numericTopicId ?? 0);
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
@@ -42,6 +44,10 @@ export default function GroupTopicScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  if (!numericTopicId) {
+    return <InvalidRouteState message="这个小组话题链接缺少有效编号。" />;
   }
 
   if (!topic && !topicQuery.isPending && !topicQuery.isError) {

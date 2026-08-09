@@ -21,6 +21,8 @@ import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { formatActivityTime } from '@/lib/format-activity-time';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectReviewScreen() {
   return <ReviewDiscussionScreen kind="review" />;
@@ -31,11 +33,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
     id?: string;
     reviewId?: string;
   }>();
-  const numericReviewId = Number(reviewId ?? id);
+  const numericReviewId = parsePositiveIntegerRouteParam(reviewId ?? id);
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const reviewQuery = useSubjectReview(numericReviewId);
+  const reviewQuery = useSubjectReview(numericReviewId ?? 0);
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
@@ -51,6 +53,10 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  if (!numericReviewId) {
+    return <InvalidRouteState message={`这篇${contentLabel}链接缺少有效编号。`} />;
   }
 
   return (

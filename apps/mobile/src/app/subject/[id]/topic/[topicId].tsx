@@ -21,14 +21,16 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function TopicScreen() {
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
-  const numericTopicId = Number(topicId);
+  const numericTopicId = parsePositiveIntegerRouteParam(topicId);
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const topicQuery = useBangumiSubjectTopic(numericTopicId);
+  const topicQuery = useBangumiSubjectTopic(numericTopicId ?? 0);
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
@@ -43,6 +45,10 @@ export default function TopicScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  if (!numericTopicId) {
+    return <InvalidRouteState message="这个讨论链接缺少有效编号。" />;
   }
 
   if (!topic && !topicQuery.isPending && !topicQuery.isError) {
