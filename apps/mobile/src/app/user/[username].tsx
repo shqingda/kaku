@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
@@ -30,7 +29,6 @@ import {
 
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { session } = useAuth();
   const userQuery = usePublicUser(username);
   const blogsQuery = usePublicUserBlogs(username);
   const [collectionSubjectType, setCollectionSubjectType] = useState(2);
@@ -52,36 +50,11 @@ export default function PublicUserScreen() {
   const collections = collectionsPage?.items ?? [];
   const friends = friendsPage?.items ?? [];
   const timeline = timelinePage?.items ?? [];
-  const isOwnProfile = session?.user.username === username;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
         options={{
-          headerRight: isOwnProfile
-            ? () => (
-                <Pressable
-                  accessibilityLabel="打开账户与设备"
-                  accessibilityRole="button"
-                  onPress={() => router.push('/account')}
-                  style={({ pressed }) => [
-                    styles.navigationAction,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <SymbolView
-                    name={{
-                      android: 'settings',
-                      ios: 'gearshape.fill',
-                      web: 'settings',
-                    }}
-                    size={22}
-                    tintColor={COLORS.ink}
-                    weight="semibold"
-                  />
-                </Pressable>
-              )
-            : undefined,
           title: user?.nickname ?? '用户主页',
         }}
       />
@@ -505,13 +478,6 @@ const styles = StyleSheet.create({
   },
   username: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sign: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
-  navigationAction: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: 4,
-  },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',

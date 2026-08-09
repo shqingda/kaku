@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -18,6 +19,7 @@ import {
   useDeviceSessions,
   useRevokeDeviceSession,
 } from '@/features/auth/use-device-sessions';
+import { useNotifications } from '@/features/notifications/use-notifications';
 
 function formatSessionTime(timestamp: number) {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -40,6 +42,7 @@ export default function AccountScreen() {
   } = useAuth();
   const sessionsQuery = useDeviceSessions();
   const revokeSession = useRevokeDeviceSession();
+  const notificationsQuery = useNotifications();
 
   async function handleSignIn() {
     if (await signIn()) {
@@ -126,40 +129,52 @@ export default function AccountScreen() {
                 />
               </View>
             </Pressable>
-            <Pressable
-              accessibilityLabel="查看通知"
-              accessibilityRole="button"
-              onPress={() => router.push('/notifications')}
-              style={({ pressed }) => [
-                styles.menuCard,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.menuIcon}>
-                <SymbolView
-                  name={{
-                    android: 'notifications',
-                    ios: 'bell.fill',
-                    web: 'notifications',
-                  }}
-                  size={18}
-                  tintColor={COLORS.accent}
-                />
-              </View>
-              <View style={styles.menuCopy}>
-                <Text style={styles.menuTitle}>通知</Text>
-                <Text style={styles.menuDescription}>回复、好友与修订消息</Text>
-              </View>
-              <SymbolView
-                name={{
-                  android: 'chevron_right',
-                  ios: 'chevron.right',
-                  web: 'chevron_right',
+            <Text style={styles.menuSectionTitle}>内容与互动</Text>
+            <View style={styles.menuGroup}>
+              <AccountMenuRow
+                description="收藏与进度变化"
+                icon={{
+                  android: 'history',
+                  ios: 'clock.arrow.circlepath',
+                  web: 'history',
                 }}
-                size={14}
-                tintColor={COLORS.subtle}
+                label="我的动态"
+                onPress={() =>
+                  router.push({
+                    pathname: '/user/timeline/[username]',
+                    params: { username: session.user.username },
+                  })
+                }
               />
-            </Pressable>
+              <AccountMenuRow
+                description="公开发布的日志"
+                hasDivider
+                icon={{
+                  android: 'article',
+                  ios: 'doc.text',
+                  web: 'article',
+                }}
+                label="我的日志"
+                onPress={() =>
+                  router.push({
+                    pathname: '/user/blogs/[username]',
+                    params: { username: session.user.username },
+                  })
+                }
+              />
+              <AccountMenuRow
+                badge={notificationsQuery.data?.unreadCount}
+                description="回复、好友与修订消息"
+                hasDivider
+                icon={{
+                  android: 'notifications',
+                  ios: 'bell',
+                  web: 'notifications',
+                }}
+                label="通知"
+                onPress={() => router.push('/notifications')}
+              />
+            </View>
             <View style={styles.sessionsCard}>
               <View style={styles.sessionsHeading}>
                 <Text style={styles.sessionsTitle}>登录设备</Text>
@@ -278,6 +293,62 @@ export default function AccountScreen() {
   );
 }
 
+function AccountMenuRow({
+  badge,
+  description,
+  hasDivider = false,
+  icon,
+  label,
+  onPress,
+}: {
+  badge?: number;
+  description: string;
+  hasDivider?: boolean;
+  icon: ComponentProps<typeof SymbolView>['name'];
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.menuRow,
+        hasDivider && styles.menuRowDivider,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={styles.menuIcon}>
+        <SymbolView
+          name={icon}
+          size={18}
+          tintColor={COLORS.accent}
+          weight="semibold"
+        />
+      </View>
+      <View style={styles.menuCopy}>
+        <Text style={styles.menuTitle}>{label}</Text>
+        <Text style={styles.menuDescription}>{description}</Text>
+      </View>
+      {badge ? (
+        <View style={styles.menuBadge}>
+          <Text style={styles.menuBadgeText}>{badge > 99 ? '99+' : badge}</Text>
+        </View>
+      ) : null}
+      <SymbolView
+        name={{
+          android: 'chevron_right',
+          ios: 'chevron.right',
+          web: 'chevron_right',
+        }}
+        size={14}
+        tintColor={COLORS.subtle}
+      />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
@@ -384,14 +455,28 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   profileLinkText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
-  menuCard: {
-    alignItems: 'center',
+  menuSectionTitle: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+    marginTop: 22,
+    paddingHorizontal: 4,
+  },
+  menuGroup: {
     backgroundColor: COLORS.surface,
     borderRadius: 20,
-    flexDirection: 'row',
-    marginTop: 14,
-    minHeight: 72,
+    overflow: 'hidden',
     paddingHorizontal: 18,
+  },
+  menuRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 68,
+  },
+  menuRowDivider: {
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   menuIcon: {
     alignItems: 'center',
@@ -404,6 +489,21 @@ const styles = StyleSheet.create({
   menuCopy: { flex: 1, marginLeft: 13 },
   menuTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
   menuDescription: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
+  menuBadge: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderRadius: 10,
+    justifyContent: 'center',
+    marginRight: 9,
+    minHeight: 20,
+    minWidth: 20,
+    paddingHorizontal: 6,
+  },
+  menuBadgeText: {
+    color: COLORS.surface,
+    fontSize: 10,
+    fontWeight: '800',
+  },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,

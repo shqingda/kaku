@@ -193,7 +193,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
                 ios: 'gearshape',
                 web: 'settings',
               }}
-              label="登录设备管理"
+              label="账户与设备"
               onPress={goToAccount}
             />
 

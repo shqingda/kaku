@@ -77,3 +77,20 @@ test('public timeline keeps episode progress semantics', () => {
   assert.equal(page.items[0].subjectId, 300);
   assert.equal(page.items[0].text, '完成了 《示例动画》 5 of 12 话');
 });
+
+test('public timeline explains a registration event', () => {
+  const timeline = bangumiUserTimelineSchema.parse([
+    {
+      batch: false,
+      cat: 1,
+      createdAt: 100,
+      id: 201,
+      memo: {},
+      type: 1,
+    },
+  ]);
+
+  const page = toPublicTimelinePage(timeline, 10);
+
+  assert.equal(page.items[0].text, '加入了 Bangumi');
+});

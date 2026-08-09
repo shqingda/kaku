@@ -162,6 +162,20 @@ export function toPublicTimelineItem(
   let text = '更新了一条动态';
 
   switch (item.cat) {
+    case 1:
+      text =
+        item.type === 1
+          ? '加入了 Bangumi'
+          : item.type === 2
+            ? '添加了好友'
+            : item.type === 3
+              ? '加入了小组'
+              : item.type === 4
+                ? '创建了小组'
+                : item.type === 5
+                  ? '加入了乐园'
+                  : '完成了一项日常活动';
+      break;
     case 2:
       text = wikiSubject ? withSubject('编辑了条目 ') : '参与了条目编辑';
       break;

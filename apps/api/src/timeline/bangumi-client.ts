@@ -130,6 +130,21 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
   const progressSingle = item.memo.progress?.single;
 
   switch (item.cat) {
+    case 1:
+      return {
+        text:
+          item.type === 1
+            ? '加入了 Bangumi'
+            : item.type === 2
+              ? '添加了好友'
+              : item.type === 3
+                ? '加入了小组'
+                : item.type === 4
+                  ? '创建了小组'
+                  : item.type === 5
+                    ? '加入了乐园'
+                    : '完成了一项日常活动',
+      };
     case 2:
       return item.memo.wiki?.subject
         ? subjectDescription({

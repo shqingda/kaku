@@ -154,6 +154,33 @@ test('Bangumi batch progress timeline exposes completed episode counts', async (
   );
 });
 
+test('Bangumi daily timeline keeps its real action', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: false,
+        cat: 1,
+        createdAt: 1_785_940_000,
+        id: 46,
+        memo: {},
+        replies: 0,
+        type: 1,
+        user: {
+          avatar: {},
+          nickname: '好友 A',
+          username: 'friend-a',
+        },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.equal(page.items[0]?.text, '加入了 Bangumi');
+});
+
 test('Bangumi friend timeline uses the last raw id as its next cursor', async () => {
   const fetcher = async (input) => {
     assert.equal(
