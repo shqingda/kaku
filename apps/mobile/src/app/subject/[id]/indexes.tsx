@@ -81,6 +81,8 @@ export default function SubjectIndexesScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void indexesQuery.refetch()}
+        refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
         renderItem={({ item }) => (
           <Pressable
             onPress={() =>

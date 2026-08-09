@@ -246,6 +246,13 @@ export default function StaffScreen() {
             </View>
           }
           maxToRenderPerBatch={16}
+          onRefresh={() =>
+            void Promise.all([staffQuery.refetch(), subjectQuery.refetch()])
+          }
+          refreshing={
+            (staffQuery.isRefetching || subjectQuery.isRefetching) &&
+            !staffQuery.isPending
+          }
           renderItem={({ item }) => <StaffRow item={item} />}
           renderSectionFooter={({ section }) =>
             section.totalCount > COLLAPSED_COUNT ? (
