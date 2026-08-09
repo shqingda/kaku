@@ -38,11 +38,14 @@ export async function getBangumiSubject(
   return bangumiSubjectSchema.parse(json);
 }
 
-export async function getBangumiCharacter(characterId: number) {
+export async function getBangumiCharacter(
+  characterId: number,
+  signal?: AbortSignal,
+) {
   const [detailJson, subjectsJson, peersJson] = await Promise.all([
-    requestJson(`/v0/characters/${characterId}`),
-    requestJson(`/v0/characters/${characterId}/subjects`),
-    requestJson(`/v0/characters/${characterId}/persons`),
+    requestJson(`/v0/characters/${characterId}`, { signal }),
+    requestJson(`/v0/characters/${characterId}/subjects`, { signal }),
+    requestJson(`/v0/characters/${characterId}/persons`, { signal }),
   ]);
 
   return {
@@ -52,11 +55,11 @@ export async function getBangumiCharacter(characterId: number) {
   };
 }
 
-export async function getBangumiPerson(personId: number) {
+export async function getBangumiPerson(personId: number, signal?: AbortSignal) {
   const [detailJson, subjectsJson, peersJson] = await Promise.all([
-    requestJson(`/v0/persons/${personId}`),
-    requestJson(`/v0/persons/${personId}/subjects`),
-    requestJson(`/v0/persons/${personId}/characters`),
+    requestJson(`/v0/persons/${personId}`, { signal }),
+    requestJson(`/v0/persons/${personId}/subjects`, { signal }),
+    requestJson(`/v0/persons/${personId}/characters`, { signal }),
   ]);
 
   return {
@@ -137,8 +140,13 @@ export async function getBangumiUserEntityCollections(
     : bangumiUserPersonCollectionsSchema.parse(json);
 }
 
-export async function getBangumiSubjectStaff(subjectId: number) {
-  const json = await requestJson(`/v0/subjects/${subjectId}/persons`);
+export async function getBangumiSubjectStaff(
+  subjectId: number,
+  signal?: AbortSignal,
+) {
+  const json = await requestJson(`/v0/subjects/${subjectId}/persons`, {
+    signal,
+  });
   return bangumiSubjectStaffSchema.parse(json);
 }
 

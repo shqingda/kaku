@@ -7,7 +7,8 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 export function useSubjectStaff(subjectId: number) {
   return useQuery({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () => bangumiStaffProvider.getSubjectStaff(subjectId),
+    queryFn: ({ signal }) =>
+      bangumiStaffProvider.getSubjectStaff(subjectId, signal),
     queryKey: queryKeys.subjectStaff(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,

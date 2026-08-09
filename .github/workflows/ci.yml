@@ -37,5 +37,11 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Bundle iOS app
+        run: pnpm --filter @kaku/mobile exec expo export --platform ios --output-dir /tmp/kaku-ios
+
+      - name: Bundle Android app
+        run: pnpm --filter @kaku/mobile exec expo export --platform android --output-dir /tmp/kaku-android
+
       - name: Build website
         run: pnpm build:web

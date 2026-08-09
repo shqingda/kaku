@@ -31,8 +31,9 @@ const responseSchema = z.object({
 export async function getPersonalCollection(
   request: (path: string, init?: RequestInit) => Promise<Response>,
   subjectId: number,
+  signal?: AbortSignal,
 ): Promise<PersonalCollection | null> {
-  const response = await request(`/me/collections/${subjectId}`);
+  const response = await request(`/me/collections/${subjectId}`, { signal });
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));

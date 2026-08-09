@@ -7,7 +7,8 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 export function useCharacter(characterId: number) {
   return useQuery({
     enabled: Number.isInteger(characterId) && characterId > 0,
-    queryFn: () => bangumiPeopleProvider.getCharacter(characterId),
+    queryFn: ({ signal }) =>
+      bangumiPeopleProvider.getCharacter(characterId, signal),
     queryKey: queryKeys.character(characterId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
@@ -17,7 +18,7 @@ export function useCharacter(characterId: number) {
 export function usePerson(personId: number) {
   return useQuery({
     enabled: Number.isInteger(personId) && personId > 0,
-    queryFn: () => bangumiPeopleProvider.getPerson(personId),
+    queryFn: ({ signal }) => bangumiPeopleProvider.getPerson(personId, signal),
     queryKey: queryKeys.person(personId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,

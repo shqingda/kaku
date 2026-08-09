@@ -16,7 +16,8 @@ export function usePersonalCollection(subjectId: number) {
 
   return useQuery({
     enabled: Boolean(session) && Number.isInteger(subjectId) && subjectId > 0,
-    queryFn: () => getPersonalCollection(request, subjectId),
+    queryFn: ({ signal }) =>
+      getPersonalCollection(request, subjectId, signal),
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
     refetchOnWindowFocus: 'always',
     retry: false,

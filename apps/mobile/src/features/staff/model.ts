@@ -8,5 +8,8 @@ export type StaffCredit = {
 };
 
 export type StaffProvider = {
-  getSubjectStaff: (subjectId: number) => Promise<StaffCredit[]>;
+  getSubjectStaff: (
+    subjectId: number,
+    signal?: AbortSignal,
+  ) => Promise<StaffCredit[]>;
 };

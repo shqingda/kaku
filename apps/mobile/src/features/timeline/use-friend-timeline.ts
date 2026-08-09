@@ -21,7 +21,8 @@ export function useFriendTimeline() {
     enabled: Boolean(session),
     getNextPageParam: (lastPage) => lastPage.nextUntil,
     initialPageParam: undefined,
-    queryFn: ({ pageParam }) => getFriendTimeline(request, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      getFriendTimeline(request, pageParam, signal),
     queryKey: queryKeys.friendTimeline(session?.user.id),
     retry: 1,
     staleTime: 60 * 1000,

@@ -38,6 +38,12 @@ export type PublicEntityDetail = {
 };
 
 export type PeopleProvider = {
-  getCharacter: (characterId: number) => Promise<PublicEntityDetail>;
-  getPerson: (personId: number) => Promise<PublicEntityDetail>;
+  getCharacter: (
+    characterId: number,
+    signal?: AbortSignal,
+  ) => Promise<PublicEntityDetail>;
+  getPerson: (
+    personId: number,
+    signal?: AbortSignal,
+  ) => Promise<PublicEntityDetail>;
 };

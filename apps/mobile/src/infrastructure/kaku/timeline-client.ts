@@ -29,8 +29,9 @@ const createdTimelineSchema = z.object({ id: z.number().int().positive() });
 export async function getFriendTimeline(
   request: (path: string, init?: RequestInit) => Promise<Response>,
   until?: number,
+  signal?: AbortSignal,
 ): Promise<FriendTimelinePage> {
-  const response = await request(getFriendTimelinePath(until));
+  const response = await request(getFriendTimelinePath(until), { signal });
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));

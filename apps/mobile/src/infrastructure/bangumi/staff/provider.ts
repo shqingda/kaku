@@ -21,8 +21,8 @@ function toStaffCredit(
 }
 
 export const bangumiStaffProvider: StaffProvider = {
-  async getSubjectStaff(subjectId) {
-    const credits = await getBangumiSubjectStaff(subjectId);
+  async getSubjectStaff(subjectId, signal) {
+    const credits = await getBangumiSubjectStaff(subjectId, signal);
     return credits.map(toStaffCredit);
   },
 };

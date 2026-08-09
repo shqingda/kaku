@@ -14,8 +14,8 @@ export function useDeviceSessions() {
 
   return useQuery({
     enabled: Boolean(session),
-    queryFn: async () => {
-      const response = await request('/auth/sessions');
+    queryFn: async ({ signal }) => {
+      const response = await request('/auth/sessions', { signal });
 
       if (!response.ok) {
         throw new Error(await readErrorMessage(response));
