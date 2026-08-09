@@ -32,7 +32,7 @@ export const queryKeys = {
     sort: string,
     year?: number,
     tag?: string,
-  ) => ['browse', 'kaku', subjectType, sort, year ?? 'all', tag ?? 'all'] as const,
+  ) => ['browse-v2', 'kaku', subjectType, sort, year ?? 'all', tag ?? 'all'] as const,
   rankedSubjects: (subjectType: number) =>
     ['ranked-subjects', 'bangumi', subjectType] as const,
   subjectSearch: (keyword: string, subjectType: number) =>

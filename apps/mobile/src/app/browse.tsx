@@ -4,7 +4,6 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Keyboard,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -195,7 +194,7 @@ const styles = StyleSheet.create({
   sortText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
   sortTextSelected: { color: COLORS.accent },
   filterCard: { alignItems: 'center', backgroundColor: COLORS.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
-  filterInput: { color: COLORS.ink, flex: 1, fontSize: 13, height: 24, includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center', transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }] },
+  filterInput: { color: COLORS.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
   filterDivider: { backgroundColor: COLORS.track, height: 24, width: StyleSheet.hairlineWidth },
   applyButton: { alignItems: 'center', backgroundColor: COLORS.ink, borderRadius: 13, height: 40, justifyContent: 'center', paddingHorizontal: 14 },
   applyText: { color: COLORS.surface, fontSize: 12, fontWeight: '800' },
