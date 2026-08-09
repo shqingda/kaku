@@ -65,6 +65,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="about"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '关于 Kaku',
+            }}
+          />
+          <Stack.Screen
             name="notifications"
             options={{
               headerBackButtonDisplayMode: 'minimal',

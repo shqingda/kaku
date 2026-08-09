@@ -174,6 +174,17 @@ export default function AccountScreen() {
                 label="通知"
                 onPress={() => router.push('/notifications')}
               />
+              <AccountMenuRow
+                description="版本、帮助与隐私"
+                hasDivider
+                icon={{
+                  android: 'info',
+                  ios: 'info.circle',
+                  web: 'info',
+                }}
+                label="关于 Kaku"
+                onPress={() => router.push('/about')}
+              />
             </View>
             <View style={styles.sessionsCard}>
               <View style={styles.sessionsHeading}>
@@ -286,6 +297,16 @@ export default function AccountScreen() {
             <Text style={styles.privacyText}>
               授权在系统浏览器中完成，密码不会经过 Kaku。
             </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/about')}
+              style={({ pressed }) => [
+                styles.aboutLink,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.aboutLinkText}>关于、帮助与隐私</Text>
+            </Pressable>
           </>
         )}
       </ScrollView>
@@ -409,6 +430,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     textAlign: 'center',
   },
+  aboutLink: { alignSelf: 'center', marginTop: 10, padding: 10 },
+  aboutLinkText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
   profileCard: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,
