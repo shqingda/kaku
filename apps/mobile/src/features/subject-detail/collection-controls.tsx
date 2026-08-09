@@ -62,6 +62,7 @@ export function CollectionControls({
       await onSave({
         collectionStatus: draft.collectionStatus ?? null,
         comment: draft.comment,
+        isPrivate: draft.isPrivate,
         rating: canSavePersonalData ? draft.rating : undefined,
         tags: draft.tags,
         watchedEpisodeNumbers:

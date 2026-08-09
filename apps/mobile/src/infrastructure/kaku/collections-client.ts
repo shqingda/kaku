@@ -15,6 +15,7 @@ const personalCollectionSchema = z.object({
     'dropped',
   ]),
   comment: z.string(),
+  isPrivate: z.boolean(),
   rating: z.number().int().min(1).max(10).optional(),
   subjectId: z.number().int().positive(),
   tags: z.array(z.string()),

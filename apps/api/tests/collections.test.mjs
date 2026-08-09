@@ -27,6 +27,7 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
     if (url.includes('/users/kaku-user/collections/42')) {
       return Response.json({
         comment: '值得慢慢看',
+        private: true,
         rate: 9,
         subject_id: 42,
         subject_type: 2,
@@ -52,6 +53,7 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
   assert.deepEqual(collection, {
     collectionStatus: 'doing',
     comment: '值得慢慢看',
+    isPrivate: true,
     rating: 9,
     subjectId: 42,
     tags: ['公路片', '奇幻'],
@@ -65,6 +67,7 @@ test('Bangumi collection treats a null comment as an empty note', async () => {
     fetcher: async () =>
       Response.json({
         comment: null,
+        private: null,
         rate: 0,
         subject_id: 43,
         subject_type: 1,
@@ -78,6 +81,7 @@ test('Bangumi collection treats a null comment as an empty note', async () => {
   assert.deepEqual(collection, {
     collectionStatus: 'wish',
     comment: '',
+    isPrivate: false,
     subjectId: 43,
     tags: [],
     watchedEpisodeNumbers: [],
@@ -106,6 +110,7 @@ test('saving progress updates only changed Bangumi episode states', async () => 
     collectionStatus: 'doing',
     comment: '保留一点观后感',
     fetcher,
+    isPrivate: true,
     rating: 8,
     subjectId: 42,
     tags: ['重温', '演出'],
@@ -114,6 +119,7 @@ test('saving progress updates only changed Bangumi episode states', async () => 
 
   assert.deepEqual(JSON.parse(requests[0].body), {
     comment: '保留一点观后感',
+    private: true,
     rate: 8,
     tags: ['重温', '演出'],
     type: 3,

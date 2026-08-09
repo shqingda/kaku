@@ -181,6 +181,7 @@ export default function SubjectScreen() {
       (episode) => episode.airDate ?? '',
     ),
     id: subjectId,
+    isPrivate: session ? personalCollection?.isPrivate ?? false : undefined,
     rating: personalCollection?.rating,
     summary,
     tags: session ? personalCollection?.tags ?? [] : undefined,

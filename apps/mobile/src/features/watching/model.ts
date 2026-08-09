@@ -9,6 +9,7 @@ export type WatchingItem = {
   collectionStatus?: CollectionStatus | null;
   comment?: string;
   id: number;
+  isPrivate?: boolean;
   title: string;
   coverUrl: string;
   rating?: number;

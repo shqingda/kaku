@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -26,6 +27,7 @@ import { canRateCollectionStatus } from '@/features/watching/progress';
 export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
   comment?: string;
+  isPrivate?: boolean;
   rating?: number;
   tags?: string[];
   watchedCount: number;
@@ -68,6 +70,7 @@ export function CollectionBoxSheet({
   );
   const [rating, setRating] = useState(item.rating);
   const [comment, setComment] = useState(item.comment ?? '');
+  const [isPrivate, setIsPrivate] = useState(item.isPrivate ?? false);
   const [tags, setTags] = useState(item.tags ?? []);
   const [tagDraft, setTagDraft] = useState('');
   const canEditPersonalData = canRateCollectionStatus(status);
@@ -85,12 +88,14 @@ export function CollectionBoxSheet({
     setWatchedCount(String(item.watchedEpisodeNumbers.length));
     setRating(item.rating);
     setComment(item.comment ?? '');
+    setIsPrivate(item.isPrivate ?? false);
     setTags(item.tags ?? []);
     setTagDraft('');
   }, [
     item.collectionStatus,
     item.rating,
     item.comment,
+    item.isPrivate,
     item.tags,
     item.watchedEpisodeNumbers.length,
     visible,
@@ -114,6 +119,7 @@ export function CollectionBoxSheet({
     onSave({
       collectionStatus: status,
       comment: item.comment !== undefined ? comment.trim() : undefined,
+      isPrivate: item.isPrivate !== undefined ? isPrivate : undefined,
       rating: canEditPersonalData ? rating : undefined,
       tags: item.tags !== undefined ? nextTags : undefined,
       watchedCount: nextCount,
@@ -422,6 +428,30 @@ export function CollectionBoxSheet({
                 </View>
               </View>
             ) : null}
+
+            {item.isPrivate !== undefined ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>可见范围</Text>
+                <View style={styles.privacyRow}>
+                  <View style={styles.privacyCopy}>
+                    <Text style={styles.privacyTitle}>仅自己可见</Text>
+                    <Text style={styles.privacyDescription}>
+                      隐藏这条收藏记录
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="仅自己可见"
+                    ios_backgroundColor={COLORS.track}
+                    onValueChange={setIsPrivate}
+                    trackColor={{
+                      false: COLORS.track,
+                      true: COLORS.accentSoft,
+                    }}
+                    value={isPrivate}
+                  />
+                </View>
+              </View>
+            ) : null}
             <View style={styles.footer}>
               {item.collectionStatus ? (
                 <Pressable
@@ -696,6 +726,23 @@ const styles = StyleSheet.create({
     height: 30,
     minWidth: 120,
     padding: 0,
+  },
+  privacyRow: {
+    alignItems: 'center',
+    backgroundColor: '#F7F6F2',
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  privacyCopy: { flex: 1, gap: 4, paddingRight: 16 },
+  privacyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  privacyDescription: {
+    color: COLORS.subtle,
+    fontSize: 11,
+    lineHeight: 16,
   },
   footer: {
     alignItems: 'center',

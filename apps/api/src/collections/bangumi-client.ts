@@ -13,6 +13,10 @@ const PAGE_SIZE = 1000;
 
 const userCollectionSchema = z.object({
   comment: z.string().nullish().transform((comment) => comment ?? ''),
+  private: z
+    .boolean()
+    .nullish()
+    .transform((isPrivate) => isPrivate ?? false),
   rate: z.number().int().min(0).max(10),
   subject_id: z.number().int().positive(),
   subject_type: z.number().int().positive(),
@@ -140,6 +144,7 @@ export async function getBangumiPersonalCollection({
   return {
     collectionStatus,
     comment: collection.comment,
+    isPrivate: collection.private,
     ...(collection.rate > 0 ? { rating: collection.rate } : {}),
     subjectId,
     tags: collection.tags,
@@ -217,6 +222,7 @@ export async function saveBangumiPersonalCollection({
   collectionStatus,
   comment,
   fetcher,
+  isPrivate,
   rating,
   subjectId,
   tags,
@@ -226,6 +232,7 @@ export async function saveBangumiPersonalCollection({
   collectionStatus: CollectionStatus;
   comment?: string;
   fetcher: typeof fetch;
+  isPrivate?: boolean;
   rating?: number;
   subjectId: number;
   tags?: string[];
@@ -236,6 +243,7 @@ export async function saveBangumiPersonalCollection({
     {
       body: JSON.stringify({
         ...(comment !== undefined ? { comment } : {}),
+        ...(isPrivate !== undefined ? { private: isPrivate } : {}),
         rate: rating ?? 0,
         ...(tags !== undefined ? { tags } : {}),
         type: collectionStatusToBangumiType[collectionStatus],

@@ -8,6 +8,7 @@ export type CollectionStatus =
 export type PersonalCollection = {
   collectionStatus: CollectionStatus;
   comment: string;
+  isPrivate: boolean;
   rating?: number;
   subjectId: number;
   tags: string[];

@@ -24,6 +24,7 @@ const collectionUpdateSchema = z.object({
     .enum(['wish', 'completed', 'doing', 'onHold', 'dropped'])
     .nullable(),
   comment: z.string().max(1000).optional(),
+  isPrivate: z.boolean().optional(),
   rating: z.number().int().min(1).max(10).optional(),
   tags: z.array(z.string().min(1).regex(/^\S+$/)).optional(),
   watchedEpisodeNumbers: z
@@ -165,6 +166,7 @@ export function registerCollectionRoutes(
         collectionStatus: parsedBody.data.collectionStatus,
         comment: parsedBody.data.comment,
         fetcher,
+        isPrivate: parsedBody.data.isPrivate,
         rating: parsedBody.data.rating,
         subjectId,
         tags: parsedBody.data.tags,
