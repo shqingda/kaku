@@ -34,6 +34,14 @@ export default function CommunityScreen() {
     [topicsQuery.data],
   );
   const topicTotal = topicsQuery.data?.pages[0]?.total ?? 0;
+  const isRefreshing =
+    (communityQuery.isRefetching || topicsQuery.isRefetching) &&
+    !communityQuery.isPending &&
+    !topicsQuery.isPending;
+
+  function refreshCommunity() {
+    void Promise.all([communityQuery.refetch(), topicsQuery.refetch()]);
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -144,6 +152,8 @@ export default function CommunityScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={refreshCommunity}
+        refreshing={isRefreshing}
         renderItem={({ index, item }) => (
           <View
             style={[

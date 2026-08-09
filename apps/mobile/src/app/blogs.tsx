@@ -101,6 +101,8 @@ export default function GlobalBlogsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void blogsQuery.refetch()}
+        refreshing={blogsQuery.isRefetching && !blogsQuery.isPending}
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <BlogRow

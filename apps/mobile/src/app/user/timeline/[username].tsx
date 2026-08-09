@@ -81,6 +81,8 @@ export default function PublicUserTimelineScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void timelineQuery.refetch()}
+        refreshing={timelineQuery.isRefetching && !timelineQuery.isPending}
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <View

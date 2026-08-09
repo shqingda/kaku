@@ -100,6 +100,8 @@ export default function DirectoriesScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void indexesQuery.refetch()}
+        refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <IndexRow

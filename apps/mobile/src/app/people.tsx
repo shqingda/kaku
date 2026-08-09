@@ -203,6 +203,8 @@ export default function PeopleScreen() {
         onEndReachedThreshold={0.45}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
+        onRefresh={() => void activeQuery.refetch()}
+        refreshing={activeQuery.isRefetching && !activeQuery.isPending}
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <PersonRow

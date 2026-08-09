@@ -76,6 +76,8 @@ export default function PublicUserFriendsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void friendsQuery.refetch()}
+        refreshing={friendsQuery.isRefetching && !friendsQuery.isPending}
         renderItem={({ item }) => (
           <PublicUserFriendCard
             friend={item}

@@ -172,6 +172,10 @@ export default function PublicUserCollectionsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onRefresh={() => void collectionsQuery.refetch()}
+        refreshing={
+          collectionsQuery.isRefetching && !collectionsQuery.isPending
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <View
