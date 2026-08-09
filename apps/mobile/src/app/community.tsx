@@ -20,6 +20,11 @@ import {
 } from '@/features/community/use-community';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
+const compactNumber = new Intl.NumberFormat('zh-CN', {
+  maximumFractionDigits: 1,
+  notation: 'compact',
+});
+
 export default function CommunityScreen() {
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
@@ -75,6 +80,8 @@ export default function CommunityScreen() {
                 >
                   {community.groups.map((group) => (
                     <Pressable
+                      accessibilityLabel={`打开小组：${group.title}，${group.memberCount} 人`}
+                      accessibilityRole="button"
                       key={group.name}
                       onPress={() =>
                         router.push({
@@ -114,7 +121,7 @@ export default function CommunityScreen() {
               <Text style={styles.sectionTitle}>最新话题</Text>
               {topics.length > 0 ? (
                 <Text style={styles.sectionMeta}>
-                  {topics.length} / {topicTotal}
+                  已加载 {topics.length} · 共 {compactNumber.format(topicTotal)}
                 </Text>
               ) : null}
             </View>
