@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  getBangumiEntityCollection,
   getBangumiPersonalCollection,
   saveBangumiPersonalCollection,
+  setBangumiEntityCollection,
 } from '../src/collections/bangumi-client.ts';
 
 const accessToken = 'bangumi-access-token';
@@ -160,4 +162,70 @@ test('saving book progress maps chapters and volumes', async () => {
     type: 3,
     vol_status: 14,
   });
+});
+
+test('entity collection reads missing state and writes official methods', async () => {
+  const requests = [];
+  let readCount = 0;
+  const fetcher = async (input, init = {}) => {
+    requests.push({ method: init.method ?? 'GET', url: String(input) });
+    if ((init.method ?? 'GET') === 'GET') {
+      readCount += 1;
+      return readCount === 1
+        ? new Response(null, { status: 404 })
+        : Response.json({ id: 1, name: '角色' });
+    }
+    return new Response(null, { status: 204 });
+  };
+
+  assert.equal(
+    await getBangumiEntityCollection({
+      accessToken,
+      entityId: 1,
+      fetcher,
+      kind: 'character',
+      username: 'kaku-user',
+    }),
+    false,
+  );
+  assert.equal(
+    await getBangumiEntityCollection({
+      accessToken,
+      entityId: 1,
+      fetcher,
+      kind: 'character',
+      username: 'kaku-user',
+    }),
+    true,
+  );
+  await setBangumiEntityCollection({
+    accessToken,
+    collected: true,
+    entityId: 1,
+    fetcher,
+    kind: 'character',
+  });
+  await setBangumiEntityCollection({
+    accessToken,
+    collected: false,
+    entityId: 2,
+    fetcher,
+    kind: 'person',
+  });
+
+  assert.deepEqual(
+    requests.map(({ method, url }) => ({ method, path: new URL(url).pathname })),
+    [
+      {
+        method: 'GET',
+        path: '/v0/users/kaku-user/collections/-/characters/1',
+      },
+      {
+        method: 'GET',
+        path: '/v0/users/kaku-user/collections/-/characters/1',
+      },
+      { method: 'POST', path: '/v0/characters/1/collect' },
+      { method: 'DELETE', path: '/v0/persons/2/collect' },
+    ],
+  );
 });

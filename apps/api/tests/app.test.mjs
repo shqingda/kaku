@@ -129,3 +129,28 @@ test('marking notifications read is an authenticated route', async () => {
     message: '请先登录 Kaku。',
   });
 });
+
+test('entity collections are registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const [method, body] of [
+    ['GET', undefined],
+    ['PUT', JSON.stringify({ collected: true })],
+  ]) {
+    const response = await app.request(
+      '/me/entities/character/1/collection',
+      {
+        body,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        method,
+      },
+      { DB: {} },
+    );
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});

@@ -1,0 +1,66 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useAuth } from '@/features/auth/auth-provider';
+import {
+  getEntityCollection,
+  saveEntityCollection,
+  type EntityCollectionKind,
+} from '@/infrastructure/kaku/entity-collections-client';
+import { queryKeys } from '@/lib/query-keys';
+
+export function useEntityCollection(
+  kind: EntityCollectionKind,
+  entityId: number,
+) {
+  const { request, session } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(session) && Number.isInteger(entityId) && entityId > 0,
+    queryFn: ({ signal }) =>
+      getEntityCollection(request, kind, entityId, signal),
+    queryKey: queryKeys.entityCollection(session?.user.id, kind, entityId),
+    retry: false,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useSaveEntityCollection(
+  kind: EntityCollectionKind,
+  entityId: number,
+) {
+  const { request, session } = useAuth();
+  const queryClient = useQueryClient();
+  const queryKey = queryKeys.entityCollection(
+    session?.user.id,
+    kind,
+    entityId,
+  );
+
+  return useMutation<boolean, Error, boolean, { previous?: boolean }>({
+    mutationFn: (collected) =>
+      saveEntityCollection(request, kind, entityId, collected),
+    onError: (_error, _collected, context) => {
+      queryClient.setQueryData(queryKey, context?.previous);
+    },
+    onMutate: async (collected) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<boolean>(queryKey);
+      queryClient.setQueryData(queryKey, collected);
+      return { previous };
+    },
+    onSuccess: (collected) => {
+      queryClient.setQueryData(queryKey, collected);
+      void queryClient.invalidateQueries({
+        queryKey:
+          kind === 'character'
+            ? queryKeys.character(entityId)
+            : queryKeys.person(entityId),
+      });
+      if (session) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.publicUserEntities(session.user.username, kind),
+        });
+      }
+    },
+  });
+}

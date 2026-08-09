@@ -1,16 +1,31 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { useMemo } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
+import { playSuccessHaptic } from '@/lib/haptics';
 
 import {
   buildEntityListItems,
   EntityRelationRow,
 } from './entity-relation-list';
 import type { PublicEntityDetail } from './model';
+import {
+  useEntityCollection,
+  useSaveEntityCollection,
+} from './use-entity-collection';
 
 export function EntityDetailScreen({
   data,
@@ -25,10 +40,37 @@ export function EntityDetailScreen({
   kind: '人物' | '角色';
   onRetry: () => void;
 }) {
+  const { isSigningIn, session, signIn } = useAuth();
+  const entityKind = kind === '角色' ? 'character' : 'person';
+  const entityId = data?.id ?? 0;
+  const collectionQuery = useEntityCollection(entityKind, entityId);
+  const saveCollection = useSaveEntityCollection(entityKind, entityId);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
+
+  async function toggleCollection() {
+    if (!session) {
+      await signIn();
+      return;
+    }
+
+    if (collectionQuery.isError) {
+      await collectionQuery.refetch();
+      return;
+    }
+
+    try {
+      await saveCollection.mutateAsync(!collectionQuery.data);
+      playSuccessHaptic();
+    } catch (error) {
+      Alert.alert(
+        '收藏没有保存',
+        error instanceof Error ? error.message : '请稍后重试。',
+      );
+    }
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -73,6 +115,65 @@ export function EntityDetailScreen({
                     {' · '}
                     {(data.commentCount ?? 0).toLocaleString('zh-CN')} 条评论
                   </Text>
+                  <Pressable
+                    accessibilityLabel={
+                      session
+                        ? collectionQuery.data
+                          ? `取消收藏${kind}`
+                          : `收藏${kind}`
+                        : `登录后收藏${kind}`
+                    }
+                    accessibilityRole="button"
+                    disabled={
+                      isSigningIn ||
+                      (Boolean(session) && collectionQuery.isPending) ||
+                      saveCollection.isPending
+                    }
+                    onPress={() => void toggleCollection()}
+                    style={({ pressed }) => [
+                      styles.collectionButton,
+                      collectionQuery.data && styles.collectedButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    {(session && collectionQuery.isPending) ||
+                    saveCollection.isPending ? (
+                      <ActivityIndicator color={COLORS.accent} size="small" />
+                    ) : (
+                      <SymbolView
+                        name={{
+                          android: collectionQuery.data
+                            ? 'favorite'
+                            : 'favorite_border',
+                          ios: collectionQuery.data ? 'heart.fill' : 'heart',
+                          web: collectionQuery.data
+                            ? 'favorite'
+                            : 'favorite_border',
+                        }}
+                        size={15}
+                        tintColor={
+                          collectionQuery.data ? COLORS.accent : COLORS.muted
+                        }
+                        weight="semibold"
+                      />
+                    )}
+                    <Text
+                      style={[
+                        styles.collectionButtonText,
+                        collectionQuery.data && styles.collectedButtonText,
+                      ]}
+                    >
+                      {isSigningIn
+                        ? '正在登录'
+                        : !session
+                          ? '登录后收藏'
+                          : collectionQuery.isError
+                            ? '重试'
+                            : collectionQuery.data
+                              ? '已收藏'
+                              : '收藏'}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
 
@@ -172,6 +273,24 @@ const styles = StyleSheet.create({
   },
   kind: { color: COLORS.muted, fontSize: 13, marginTop: 8 },
   stats: { color: COLORS.subtle, fontSize: 11, marginTop: 6 },
+  collectionButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.track,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 14,
+    minHeight: 38,
+    paddingHorizontal: 13,
+  },
+  collectedButton: { backgroundColor: COLORS.accentSoft },
+  collectionButtonText: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  collectedButtonText: { color: COLORS.accent },
   panel: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,
@@ -216,4 +335,5 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
 });

@@ -63,6 +63,8 @@ export class BangumiApiError extends Error {
   }
 }
 
+export type BangumiEntityKind = 'character' | 'person';
+
 function headers(accessToken: string, hasBody = false) {
   return {
     Accept: 'application/json',
@@ -81,6 +83,69 @@ async function readJson(response: Response) {
   }
 
   return response.json();
+}
+
+function entityPath(kind: BangumiEntityKind) {
+  return kind === 'character' ? 'characters' : 'persons';
+}
+
+export async function getBangumiEntityCollection({
+  accessToken,
+  entityId,
+  fetcher,
+  kind,
+  username,
+}: {
+  accessToken: string;
+  entityId: number;
+  fetcher: typeof fetch;
+  kind: BangumiEntityKind;
+  username: string;
+}) {
+  const response = await fetcher(
+    `${BANGUMI_API_URL}/v0/users/${encodeURIComponent(username)}/collections/-/${entityPath(kind)}/${entityId}`,
+    {
+      headers: headers(accessToken),
+      signal: AbortSignal.timeout(12_000),
+    },
+  );
+
+  if (response.status === 404) {
+    return false;
+  }
+
+  await readJson(response);
+  return true;
+}
+
+export async function setBangumiEntityCollection({
+  accessToken,
+  collected,
+  entityId,
+  fetcher,
+  kind,
+}: {
+  accessToken: string;
+  collected: boolean;
+  entityId: number;
+  fetcher: typeof fetch;
+  kind: BangumiEntityKind;
+}) {
+  const response = await fetcher(
+    `${BANGUMI_API_URL}/v0/${entityPath(kind)}/${entityId}/collect`,
+    {
+      headers: headers(accessToken),
+      method: collected ? 'POST' : 'DELETE',
+      signal: AbortSignal.timeout(12_000),
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiApiError(
+      `Bangumi ${collected ? '收藏' : '取消收藏'}失败（${response.status}）`,
+      response.status,
+    );
+  }
 }
 
 async function getEpisodeCollections(

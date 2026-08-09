@@ -60,6 +60,18 @@ export const queryKeys = {
     ['people', 'bangumi', 'character', characterId] as const,
   person: (personId: number) =>
     ['people', 'bangumi', 'person', personId] as const,
+  entityCollection: (
+    userId: number | undefined,
+    kind: string,
+    entityId: number,
+  ) =>
+    [
+      'entity-collections',
+      'kaku',
+      userId ?? 'signed-out',
+      kind,
+      entityId,
+    ] as const,
   publicUser: (username: string) =>
     ['users', 'bangumi', username] as const,
   publicUserCollections: (
