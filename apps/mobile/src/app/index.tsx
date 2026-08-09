@@ -28,9 +28,10 @@ export default function HomeScreen() {
   const animeQuery = usePublicUserCollections(username, 2, 'doing');
   const bookQuery = usePublicUserCollections(username, 1, 'doing');
   const realQuery = usePublicUserCollections(username, 6, 'doing');
+  const timelineQuery = useFriendTimeline();
   const isRefreshing =
     Boolean(session) &&
-    [animeQuery, bookQuery, realQuery].some(
+    [animeQuery, bookQuery, realQuery, timelineQuery].some(
       (query) => query.isRefetching && !query.isPending,
     );
   const trackingQueries = {
@@ -57,6 +58,7 @@ export default function HomeScreen() {
       animeQuery.refetch(),
       bookQuery.refetch(),
       realQuery.refetch(),
+      timelineQuery.refetch(),
     ]);
   }
 
@@ -96,7 +98,7 @@ export default function HomeScreen() {
                 username={username}
               />
             ) : null}
-            <TimelineBoundary />
+            <TimelineBoundary timelineQuery={timelineQuery} />
             <QuickActions />
           </>
         ) : (
@@ -107,9 +109,12 @@ export default function HomeScreen() {
   );
 }
 
-function TimelineBoundary() {
+function TimelineBoundary({
+  timelineQuery,
+}: {
+  timelineQuery: ReturnType<typeof useFriendTimeline>;
+}) {
   const [composerVisible, setComposerVisible] = useState(false);
-  const timelineQuery = useFriendTimeline();
   const items = timelineQuery.data?.pages[0]?.items.slice(0, 4) ?? [];
 
   return (
