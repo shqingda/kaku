@@ -31,8 +31,9 @@ const responseSchema = z.object({
 
 export async function getNotifications(
   request: (path: string, init?: RequestInit) => Promise<Response>,
+  signal?: AbortSignal,
 ): Promise<NotificationList> {
-  const response = await request('/me/notifications');
+  const response = await request('/me/notifications', { signal });
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));

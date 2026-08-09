@@ -13,7 +13,7 @@ export function useNotifications() {
 
   return useQuery({
     enabled: Boolean(session),
-    queryFn: () => getNotifications(request),
+    queryFn: ({ signal }) => getNotifications(request, signal),
     queryKey: queryKeys.notifications(session?.user.id),
     retry: 1,
     staleTime: 30 * 1000,
