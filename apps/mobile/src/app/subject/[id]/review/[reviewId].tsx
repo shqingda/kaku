@@ -23,6 +23,10 @@ import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function SubjectReviewScreen() {
+  return <ReviewDiscussionScreen kind="review" />;
+}
+
+export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const { id, reviewId } = useLocalSearchParams<{
     id?: string;
     reviewId?: string;
@@ -35,6 +39,7 @@ export default function SubjectReviewScreen() {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const contentLabel = kind === 'blog' ? '日志' : '评论';
 
   async function openComposer(reply?: DiscussionReply) {
     if (!session) {
@@ -50,7 +55,7 @@ export default function SubjectReviewScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: '评论' }} />
+      <Stack.Screen options={{ title: contentLabel }} />
       <View style={styles.contentView}>
         <FlatList
           style={styles.list}
@@ -64,10 +69,10 @@ export default function SubjectReviewScreen() {
           ListHeaderComponent={
             <>
               <DiscussionStatus
-                errorText="评论读取失败，请检查网络后重试。"
+                errorText={`${contentLabel}读取失败，请检查网络后重试。`}
                 isError={reviewQuery.isError}
                 isPending={reviewQuery.isPending}
-                loadingText="正在读取评论正文和回复…"
+                loadingText={`正在读取${contentLabel}正文和回复…`}
                 onRetry={() => void reviewQuery.refetch()}
               />
               {review ? (
@@ -124,7 +129,7 @@ export default function SubjectReviewScreen() {
         {review ? (
           <View style={styles.replyBar}>
             <Pressable
-              accessibilityLabel={session ? '回复评论' : '登录后回复评论'}
+              accessibilityLabel={session ? `回复${contentLabel}` : `登录后回复${contentLabel}`}
               accessibilityRole="button"
               disabled={isSigningIn}
               onPress={() => void openComposer()}
@@ -146,8 +151,8 @@ export default function SubjectReviewScreen() {
                 {isSigningIn
                   ? '正在登录…'
                   : session
-                    ? '回复这篇评论…'
-                    : '登录后回复评论'}
+                    ? `回复这篇${contentLabel}…`
+                    : `登录后回复${contentLabel}`}
               </Text>
             </Pressable>
           </View>
