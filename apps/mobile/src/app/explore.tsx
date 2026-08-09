@@ -176,6 +176,28 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push('/blogs')}
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'article', ios: 'doc.text', web: 'article' }}
+                    size={18}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>全站日志</Text>
+                  <Text style={styles.communityMeta}>最新公开长文与用户评论</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>

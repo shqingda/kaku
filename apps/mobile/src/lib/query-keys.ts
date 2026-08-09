@@ -1,4 +1,5 @@
 export const queryKeys = {
+  globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   personalCollection: (userId: number | undefined, subjectId: number) =>
     ['collections', 'kaku', userId ?? 'signed-out', subjectId] as const,
   friendTimeline: (userId: number | undefined) =>

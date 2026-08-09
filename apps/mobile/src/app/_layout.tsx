@@ -66,6 +66,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="blogs"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '全站日志',
+            }}
+          />
+          <Stack.Screen
             name="community"
             options={{
               headerBackButtonDisplayMode: 'minimal',

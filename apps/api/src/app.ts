@@ -5,6 +5,7 @@ import {
   registerAuthRoutes,
 } from './auth/routes.ts';
 import type { Env } from './env.ts';
+import { registerBlogRoutes } from './blogs/routes.ts';
 import { registerChannelRoutes } from './channels/routes.ts';
 import { registerBrowseRoutes } from './browse/routes.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
@@ -29,6 +30,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
 
   registerAuthRoutes(app, dependencies);
+  registerBlogRoutes(app, dependencies);
   registerBrowseRoutes(app, dependencies);
   registerChannelRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
