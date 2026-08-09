@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
+import { AppState, Platform } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import {
@@ -29,6 +30,17 @@ export default function RootLayout() {
         },
       }),
   );
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    focusManager.setFocused(AppState.currentState === 'active');
+    const subscription = AppState.addEventListener('change', (status) => {
+      focusManager.setFocused(status === 'active');
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   return (
     <PersistQueryClientProvider
