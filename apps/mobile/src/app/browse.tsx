@@ -21,6 +21,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import type { DiscoverSubject } from '@/features/discover/model';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 const SORTS: Array<{ id: BrowseSort; label: string }> = [
@@ -146,6 +147,9 @@ export default function BrowseScreen() {
               {getSubjectTypeLabel(subjectType)} · {SORTS.find((item) => item.id === sort)?.label}
               {year ? ` · ${year}` : ''}{tag ? ` · ${tag}` : ''}
             </Text>
+            {items.length > 0 && browseQuery.isError ? (
+              <CachedDataNotice onRetry={() => void browseQuery.refetch()} />
+            ) : null}
           </View>
         }
         numColumns={2}

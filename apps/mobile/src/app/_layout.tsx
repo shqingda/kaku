@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -58,6 +59,7 @@ export default function RootLayout() {
         }}
       >
         <AuthProvider>
+          <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen

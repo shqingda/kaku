@@ -1,6 +1,5 @@
 import { useState, type ComponentProps } from 'react';
 import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -63,7 +62,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
