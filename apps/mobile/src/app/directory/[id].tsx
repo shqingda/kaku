@@ -116,7 +116,7 @@ export default function PublicIndexScreen() {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>收录条目</Text>
                 <Text style={styles.sectionMeta}>
-                  {items.length} / {itemTotal}
+                  已加载 {items.length} · 共 {itemTotal.toLocaleString('zh-CN')}
                 </Text>
               </View>
             ) : null}

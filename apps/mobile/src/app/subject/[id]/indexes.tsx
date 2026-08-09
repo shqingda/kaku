@@ -39,7 +39,7 @@ export default function SubjectIndexesScreen() {
               <Text style={styles.title}>相关目录</Text>
               <Text style={styles.meta}>
                 {indexesQuery.data
-                  ? `显示 ${indexes.length} / ${total}`
+                  ? `已加载 ${indexes.length} · 共 ${total.toLocaleString('zh-CN')}`
                   : '公开内容'}
               </Text>
             </View>

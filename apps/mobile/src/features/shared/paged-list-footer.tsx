@@ -51,10 +51,10 @@ export function PagedListFooter({
         {hasNextPage
           ? total === undefined
             ? `继续上滑加载更多 · 已显示 ${loadedCount} 个结果`
-            : `继续上滑加载更多 · 已显示 ${loadedCount}/${total}`
+            : `继续上滑加载更多 · 已显示 ${loadedCount.toLocaleString('zh-CN')} / ${total.toLocaleString('zh-CN')}`
           : total === undefined
             ? `已加载全部 ${loadedCount} 个结果`
-            : `已显示全部 ${loadedCount} 个结果`}
+            : `已显示全部 ${loadedCount.toLocaleString('zh-CN')} 个结果`}
       </Text>
     </View>
   );

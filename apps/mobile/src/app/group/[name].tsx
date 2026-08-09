@@ -105,7 +105,7 @@ export default function GroupScreen() {
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>小组话题</Text>
                   <Text style={styles.sectionCount}>
-                    {topics.length} / {topicTotal}
+                    已加载 {topics.length} · 共 {topicTotal.toLocaleString('zh-CN')}
                   </Text>
                 </View>
                 <DiscussionStatus
