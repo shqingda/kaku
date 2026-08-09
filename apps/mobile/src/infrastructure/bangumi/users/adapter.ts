@@ -25,6 +25,23 @@ const COLLECTION_STATUS: Record<number, CollectionStatus> = {
   5: 'dropped',
 };
 
+const TIMELINE_COLLECTION_VERBS: Record<number, string> = {
+  1: '想读',
+  2: '想看',
+  3: '想听',
+  4: '想玩',
+  5: '读过',
+  6: '看过',
+  7: '听过',
+  8: '玩过',
+  9: '在读',
+  10: '在看',
+  11: '在听',
+  12: '在玩',
+  13: '搁置了',
+  14: '抛弃了',
+};
+
 function secureImage(url?: string) {
   return url?.replace(/^http:/, 'https:');
 }
@@ -124,19 +141,83 @@ export function toPublicUserFriendPage(
 export function toPublicTimelineItem(
   item: BangumiUserTimeline[number],
 ): PublicTimelineItem {
-  const subjects = item.memo.subject ?? [];
-  const firstSubject = subjects[0]?.subject;
+  const firstSubject = item.memo.subject?.[0];
+  const progressBatch = item.memo.progress?.batch;
+  const progressSingle = item.memo.progress?.single;
+  const wikiSubject = item.memo.wiki?.subject;
+  const subject =
+    firstSubject?.subject ??
+    progressBatch?.subject ??
+    progressSingle?.subject ??
+    wikiSubject;
+
+  const subjectTitle = subject
+    ? subject.nameCN?.trim() || subject.name
+    : undefined;
+  const withSubject = (leading: string, trailing = '') =>
+    subjectTitle
+      ? `${leading}《${subjectTitle}》${trailing}`
+      : leading.trim();
+
+  let text = '更新了一条动态';
+
+  switch (item.cat) {
+    case 2:
+      text = wikiSubject ? withSubject('编辑了条目 ') : '参与了条目编辑';
+      break;
+    case 3:
+      text = firstSubject
+        ? withSubject(
+            `${item.batch ? '收藏了' : (TIMELINE_COLLECTION_VERBS[item.type] ?? '收藏了')} `,
+            firstSubject.comment ? `：${firstSubject.comment}` : '',
+          )
+        : '更新了收藏';
+      break;
+    case 4:
+      if (progressBatch) {
+        const progress =
+          progressBatch.epsUpdate !== undefined
+            ? `${progressBatch.epsUpdate} of ${progressBatch.epsTotal} 话`
+            : progressBatch.volsUpdate !== undefined
+              ? `${progressBatch.volsUpdate} of ${progressBatch.volsTotal} 卷`
+              : '';
+        text = withSubject('完成了 ', progress ? ` ${progress}` : '');
+      } else if (progressSingle) {
+        const verb =
+          item.type === 1 ? '想看' : item.type === 2 ? '看过' : '抛弃了';
+        text = withSubject(
+          `${verb} `,
+          ` 第 ${progressSingle.episode.sort} 话`,
+        );
+      } else {
+        text = '更新了观看进度';
+      }
+      break;
+    case 5:
+      text =
+        item.memo.status?.tsukkomi ??
+        item.memo.status?.sign ??
+        (item.memo.status?.nickname
+          ? `将昵称改为 ${item.memo.status.nickname.after}`
+          : '更新了状态');
+      break;
+    case 6:
+      text = item.memo.blog
+        ? `发表了日志《${item.memo.blog.title}》`
+        : '发表了日志';
+      break;
+    case 7:
+      text = item.memo.index
+        ? `更新了目录《${item.memo.index.title}》`
+        : '更新了目录';
+      break;
+  }
 
   return {
     createdAt: item.createdAt,
     id: item.id,
-    subjectId: subjects.length === 1 ? firstSubject?.id : undefined,
-    text:
-      subjects.length === 0
-        ? '发布了一条公开动态'
-        : subjects.length === 1
-          ? `更新了《${firstSubject?.nameCN.trim() || firstSubject?.name}》的收藏状态`
-          : `更新了 ${subjects.length} 个条目的收藏状态`,
+    subjectId: subject?.id,
+    text,
   };
 }
 

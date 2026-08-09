@@ -53,6 +53,35 @@ const bangumiSubjectTopicSchema = z.object({
   updatedAt: z.number(),
 });
 
+const bangumiGroupSchema = z.object({
+  accessible: z.boolean(),
+  createdAt: z.number(),
+  icon: z.object({
+    large: z.string(),
+    medium: z.string(),
+    small: z.string(),
+  }),
+  id: z.number(),
+  members: z.number(),
+  name: z.string(),
+  nsfw: z.boolean(),
+  title: z.string(),
+});
+
+const bangumiGroupTopicSchema = bangumiSubjectTopicSchema.extend({
+  group: bangumiGroupSchema,
+});
+
+const bangumiBlogSchema = z.object({
+  content: z.string(),
+  createdAt: z.number(),
+  id: z.number(),
+  replies: z.number(),
+  title: z.string(),
+  updatedAt: z.number(),
+  user: bangumiUserSchema,
+});
+
 export class BangumiDiscussionError extends Error {
   code?: string;
   status: number;
@@ -85,6 +114,30 @@ function discussionError(
   );
 }
 
+async function getBangumiDiscussionJson({
+  accessToken,
+  fetcher,
+  path,
+}: {
+  accessToken: string;
+  fetcher: typeof fetch;
+  path: string;
+}) {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}${path}`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+    },
+  });
+
+  if (!response.ok) {
+    throw discussionError(response);
+  }
+
+  return response.json();
+}
+
 export async function getBangumiSubjectTopic({
   accessToken,
   fetcher = fetch,
@@ -94,22 +147,77 @@ export async function getBangumiSubjectTopic({
   fetcher?: typeof fetch;
   topicId: number;
 }) {
-  const response = await fetcher(
-    `${BANGUMI_PRIVATE_API_URL}/subjects/-/topics/${topicId}`,
-    {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
-      },
-    },
+  return bangumiSubjectTopicSchema.parse(
+    await getBangumiDiscussionJson({
+      accessToken,
+      fetcher,
+      path: `/subjects/-/topics/${topicId}`,
+    }),
   );
+}
 
-  if (!response.ok) {
-    throw discussionError(response);
-  }
+export async function getBangumiGroupTopic({
+  accessToken,
+  fetcher = fetch,
+  topicId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  topicId: number;
+}) {
+  return bangumiGroupTopicSchema.parse(
+    await getBangumiDiscussionJson({
+      accessToken,
+      fetcher,
+      path: `/groups/-/topics/${topicId}`,
+    }),
+  );
+}
 
-  return bangumiSubjectTopicSchema.parse(await response.json());
+export async function getBangumiEpisodeComments({
+  accessToken,
+  episodeId,
+  fetcher = fetch,
+}: {
+  accessToken: string;
+  episodeId: number;
+  fetcher?: typeof fetch;
+}) {
+  return z.array(bangumiDiscussionReplySchema).parse(
+    await getBangumiDiscussionJson({
+      accessToken,
+      fetcher,
+      path: `/episodes/${episodeId}/comments`,
+    }),
+  );
+}
+
+export async function getBangumiReview({
+  accessToken,
+  fetcher = fetch,
+  reviewId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  reviewId: number;
+}) {
+  const [blog, comments] = await Promise.all([
+    getBangumiDiscussionJson({
+      accessToken,
+      fetcher,
+      path: `/blogs/${reviewId}`,
+    }),
+    getBangumiDiscussionJson({
+      accessToken,
+      fetcher,
+      path: `/blogs/${reviewId}/comments`,
+    }),
+  ]);
+
+  return {
+    blog: bangumiBlogSchema.parse(blog),
+    comments: z.array(bangumiDiscussionReplySchema).parse(comments),
+  };
 }
 
 async function createBangumiTopicReply({

@@ -6,6 +6,9 @@ import {
   createBangumiGroupTopicReply,
   createBangumiReviewReply,
   createBangumiSubjectTopicReply,
+  getBangumiEpisodeComments,
+  getBangumiGroupTopic,
+  getBangumiReview,
   getBangumiSubjectTopic,
 } from '../src/discussions/bangumi-client.ts';
 
@@ -43,6 +46,87 @@ test('reading a restricted subject topic forwards OAuth through Kaku', async () 
 
   assert.equal(topic.id, 22447);
   assert.equal(topic.title, '登录后可见的话题');
+});
+
+test('authenticated discussion reads use each matching P1 endpoint', async () => {
+  const requestedUrls = [];
+  const reply = {
+    content: '登录后可见的回复',
+    createdAt: 1_785_940_000,
+    creatorID: 1,
+    id: 10,
+  };
+  const fetcher = async (input, init) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+
+    if (url.endsWith('/groups/-/topics/123')) {
+      return Response.json({
+        createdAt: 1_785_940_000,
+        creatorID: 1,
+        group: {
+          accessible: true,
+          createdAt: 1,
+          icon: { large: '', medium: '', small: '' },
+          id: 9,
+          members: 100,
+          name: 'test',
+          nsfw: false,
+          title: '测试小组',
+        },
+        id: 123,
+        parentID: 9,
+        replies: [reply],
+        replyCount: 1,
+        title: '小组话题',
+        updatedAt: 1_785_940_000,
+      });
+    }
+    if (url.endsWith('/episodes/987/comments')) {
+      return Response.json([reply]);
+    }
+    if (url.endsWith('/blogs/378109/comments')) {
+      return Response.json([reply]);
+    }
+    if (url.endsWith('/blogs/378109')) {
+      return Response.json({
+        content: '评论正文',
+        createdAt: 1,
+        id: 378109,
+        replies: 1,
+        title: '长评',
+        updatedAt: 2,
+        user: { id: 1, nickname: '测试用户', username: 'tester' },
+      });
+    }
+
+    return new Response(null, { status: 404 });
+  };
+
+  const [groupTopic, episodeComments, review] = await Promise.all([
+    getBangumiGroupTopic({
+      accessToken: 'access-token',
+      fetcher,
+      topicId: 123,
+    }),
+    getBangumiEpisodeComments({
+      accessToken: 'access-token',
+      episodeId: 987,
+      fetcher,
+    }),
+    getBangumiReview({
+      accessToken: 'access-token',
+      fetcher,
+      reviewId: 378109,
+    }),
+  ]);
+
+  assert.equal(groupTopic.replies[0].content, '登录后可见的回复');
+  assert.equal(episodeComments[0].id, 10);
+  assert.equal(review.blog.title, '长评');
+  assert.equal(review.comments[0].id, 10);
+  assert.equal(requestedUrls.length, 4);
 });
 
 test('creating a subject topic reply keeps OAuth and Turnstile server-side', async () => {

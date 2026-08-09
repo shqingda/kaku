@@ -6,8 +6,12 @@ import {
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { mapBangumiTopic } from '@/infrastructure/bangumi/discussions/adapter';
+import { mapBangumiEpisodeComments } from '@/infrastructure/bangumi/discussions/adapter';
 import { bangumiDiscussionsProvider } from '@/infrastructure/bangumi/discussions/provider';
-import { getAuthenticatedSubjectTopic } from '@/infrastructure/kaku/discussions-client';
+import {
+  getAuthenticatedEpisodeComments,
+  getAuthenticatedSubjectTopic,
+} from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
@@ -64,11 +68,30 @@ export function useBangumiSubjectTopic(topicId: number) {
 }
 
 export function useBangumiEpisodeComments(episodeId?: number) {
+  const { request, session } = useAuth();
+
   return useQuery({
     enabled: Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
-    queryFn: ({ signal }) =>
-      bangumiDiscussionsProvider.getEpisodeComments(episodeId!, signal),
-    queryKey: queryKeys.episodeComments(episodeId),
+    queryFn: async ({ signal }) => {
+      if (!session) {
+        return bangumiDiscussionsProvider.getEpisodeComments(
+          episodeId!,
+          signal,
+        );
+      }
+
+      return mapBangumiEpisodeComments(
+        await getAuthenticatedEpisodeComments(
+          request,
+          episodeId!,
+          signal,
+        ),
+      );
+    },
+    queryKey: [
+      ...queryKeys.episodeComments(episodeId),
+      session?.user.id ?? 'public',
+    ],
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

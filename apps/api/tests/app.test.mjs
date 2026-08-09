@@ -58,6 +58,25 @@ test('restricted subject topics are registered as an authenticated route', async
   });
 });
 
+test('restricted community reads are registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+  const paths = [
+    '/me/group-topics/123',
+    '/me/episodes/987/comments',
+    '/me/reviews/378109',
+  ];
+
+  for (const path of paths) {
+    const response = await app.request(path, undefined, { DB: {} });
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});
+
 test('review replies are registered as an authenticated route', async () => {
   const response = await createApp({ createStore: () => ({}) }).request(
     '/me/reviews/378109/replies',

@@ -5,6 +5,13 @@ import {
 } from '@tanstack/react-query';
 
 import { bangumiReviewsProvider } from '@/infrastructure/bangumi/reviews/provider';
+import { useAuth } from '@/features/auth/auth-provider';
+import {
+  cleanBangumiContent,
+  mapBangumiReplies,
+} from '@/infrastructure/bangumi/discussions/adapter';
+import { mapBangumiReviewDetail } from '@/infrastructure/bangumi/reviews/adapter';
+import { getAuthenticatedReview } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
@@ -53,11 +60,30 @@ export function useSubjectReviews(subjectId: number) {
 }
 
 export function useSubjectReview(reviewId: number) {
+  const { request, session } = useAuth();
+
   return useQuery<SubjectReviewDetail>({
     enabled: Number.isInteger(reviewId) && reviewId > 0,
-    queryFn: ({ signal }) =>
-      bangumiReviewsProvider.getReview(reviewId, signal),
-    queryKey: queryKeys.subjectReview(reviewId),
+    queryFn: async ({ signal }) => {
+      if (!session) {
+        return bangumiReviewsProvider.getReview(reviewId, signal);
+      }
+
+      const { blog, comments } = await getAuthenticatedReview(
+        request,
+        reviewId,
+        signal,
+      );
+      return mapBangumiReviewDetail(
+        blog,
+        cleanBangumiContent(blog.content),
+        mapBangumiReplies(comments),
+      );
+    },
+    queryKey: [
+      ...queryKeys.subjectReview(reviewId),
+      session?.user.id ?? 'public',
+    ],
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

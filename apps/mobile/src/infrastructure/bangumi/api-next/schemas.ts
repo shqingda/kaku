@@ -218,25 +218,65 @@ export const bangumiUserFriendsSchema = z.object({
   total: z.number(),
 });
 
+const bangumiTimelineSubjectSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  nameCN: z.string().optional(),
+  type: z.number().default(0),
+});
+
 export const bangumiUserTimelineSchema = z.array(
   z.object({
+    batch: z.boolean().default(false),
+    cat: z.number().default(0),
     createdAt: z.number(),
     id: z.number(),
     memo: z
       .object({
+        blog: z.object({ title: z.string() }).optional(),
+        index: z.object({ title: z.string() }).optional(),
+        progress: z
+          .object({
+            batch: z
+              .object({
+                epsTotal: z.string(),
+                epsUpdate: z.number().optional(),
+                subject: bangumiTimelineSubjectSchema,
+                volsTotal: z.string(),
+                volsUpdate: z.number().optional(),
+              })
+              .optional(),
+            single: z
+              .object({
+                episode: z.object({ sort: z.number() }),
+                subject: bangumiTimelineSubjectSchema,
+              })
+              .optional(),
+          })
+          .optional(),
+        status: z
+          .object({
+            nickname: z
+              .object({ after: z.string(), before: z.string() })
+              .optional(),
+            sign: z.string().optional(),
+            tsukkomi: z.string().optional(),
+          })
+          .optional(),
         subject: z
           .array(
             z.object({
-              subject: z.object({
-                id: z.number(),
-                name: z.string(),
-                nameCN: z.string(),
-              }),
+              comment: z.string().default(''),
+              subject: bangumiTimelineSubjectSchema,
             }),
           )
           .optional(),
+        wiki: z
+          .object({ subject: bangumiTimelineSubjectSchema.optional() })
+          .optional(),
       })
       .passthrough(),
+    type: z.number().default(0),
   }),
 );
 

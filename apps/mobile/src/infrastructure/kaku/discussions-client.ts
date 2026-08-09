@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { bangumiSubjectTopicSchema } from '@/infrastructure/bangumi/api-next/schemas';
+import {
+  bangumiBlogCommentsSchema,
+  bangumiBlogSchema,
+  bangumiEpisodeCommentsSchema,
+  bangumiGroupTopicSchema,
+  bangumiSubjectTopicSchema,
+} from '@/infrastructure/bangumi/api-next/schemas';
 import { readErrorMessage } from './auth-client';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
@@ -32,6 +38,66 @@ export async function getAuthenticatedSubjectTopic(
   }
 
   return bangumiSubjectTopicSchema.parse(await response.json());
+}
+
+async function getAuthenticatedDiscussion(
+  request: AuthenticatedRequest,
+  path: string,
+  signal?: AbortSignal,
+) {
+  const response = await request(path, { signal });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return response.json();
+}
+
+export async function getAuthenticatedGroupTopic(
+  request: AuthenticatedRequest,
+  topicId: number,
+  signal?: AbortSignal,
+) {
+  return bangumiGroupTopicSchema.parse(
+    await getAuthenticatedDiscussion(
+      request,
+      `/me/group-topics/${topicId}`,
+      signal,
+    ),
+  );
+}
+
+export async function getAuthenticatedEpisodeComments(
+  request: AuthenticatedRequest,
+  episodeId: number,
+  signal?: AbortSignal,
+) {
+  return bangumiEpisodeCommentsSchema.parse(
+    await getAuthenticatedDiscussion(
+      request,
+      `/me/episodes/${episodeId}/comments`,
+      signal,
+    ),
+  );
+}
+
+export async function getAuthenticatedReview(
+  request: AuthenticatedRequest,
+  reviewId: number,
+  signal?: AbortSignal,
+) {
+  const json = await getAuthenticatedDiscussion(
+    request,
+    `/me/reviews/${reviewId}`,
+    signal,
+  );
+  const reviewSchema = z.object({
+    blog: bangumiBlogSchema,
+    comments: bangumiBlogCommentsSchema,
+  });
+
+  return reviewSchema.parse(json);
 }
 
 async function createReply(
