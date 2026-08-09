@@ -16,7 +16,9 @@ import {
   getSubjectTypeLabel,
 } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import type { CollectionStatus } from '@/features/watching/model';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 const COLLECTION_STATUSES: CollectionStatus[] = [
   'wish',
@@ -34,12 +36,17 @@ function formatCount(value: number) {
 
 export default function SubjectInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const subjectQuery = useCatalogSubject(Number(id));
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const subject = subjectQuery.data;
   const subjectTypeLabel = getSubjectTypeLabel(subject?.type);
   const publicInfoKeys = new Set(getSubjectInfoKeys(subject?.type ?? 2));
   const publicInfo =
     subject?.info.filter((item) => publicInfoKeys.has(item.key)) ?? [];
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个资料链接缺少有效条目编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

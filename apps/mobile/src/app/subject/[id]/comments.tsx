@@ -7,17 +7,24 @@ import { COLORS } from '@/constants/design';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { formatActivityTime } from '@/lib/format-activity-time';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectCommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const commentsQuery = useSubjectComments(Number(id));
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const commentsQuery = useSubjectComments(subjectId ?? 0);
   const comments = useMemo(
     () => commentsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [commentsQuery.data],
   );
   const total = commentsQuery.data?.pages[0]?.total ?? 0;
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个吐槽箱链接缺少有效条目编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

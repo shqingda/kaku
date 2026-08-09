@@ -6,18 +6,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectReviews } from '@/features/reviews/use-subject-reviews';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { formatActivityTime } from '@/lib/format-activity-time';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const subjectId = Number(id);
-  const reviewsQuery = useSubjectReviews(subjectId);
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const reviewsQuery = useSubjectReviews(subjectId ?? 0);
   const reviews = useMemo(
     () => reviewsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [reviewsQuery.data],
   );
   const total = reviewsQuery.data?.pages[0]?.total ?? 0;
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个评论列表链接缺少有效条目编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

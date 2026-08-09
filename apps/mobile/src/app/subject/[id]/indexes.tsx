@@ -6,17 +6,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { formatActivityTime } from '@/lib/format-activity-time';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectIndexesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const indexesQuery = useSubjectIndexes(Number(id));
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const indexesQuery = useSubjectIndexes(subjectId ?? 0);
   const indexes = useMemo(
     () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [indexesQuery.data],
   );
   const total = indexesQuery.data?.pages[0]?.total ?? 0;
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个条目目录链接缺少有效编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

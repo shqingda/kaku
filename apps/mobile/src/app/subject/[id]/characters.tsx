@@ -6,15 +6,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectCharactersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const subjectId = Number(id);
-  const charactersQuery = useSubjectCharacters(subjectId);
-  const subjectQuery = useCatalogSubject(subjectId);
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const charactersQuery = useSubjectCharacters(subjectId ?? 0);
+  const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
   const title = labels.characters?.label ?? '角色与人物';
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个角色名单链接缺少有效条目编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

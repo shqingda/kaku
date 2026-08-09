@@ -14,8 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 const COLLAPSED_COUNT = 3;
 const ROLE_PRIORITY = [
@@ -163,9 +165,9 @@ function StaffRow({ item }: { item: StaffCredit }) {
 
 export default function StaffScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const subjectId = Number(id);
-  const staffQuery = useSubjectStaff(subjectId);
-  const subjectQuery = useCatalogSubject(subjectId);
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const staffQuery = useSubjectStaff(subjectId ?? 0);
+  const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
   const title = labels.credits.label;
   const pageTitle = labels.credits.pageTitle;
@@ -189,6 +191,10 @@ export default function StaffScreen() {
 
       return next;
     });
+  }
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个制作人员链接缺少有效条目编号。" />;
   }
 
   return (

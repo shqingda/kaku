@@ -15,20 +15,26 @@ import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { TopicList } from '@/features/discussions/topic-list';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectDiscussionsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const subjectId = Number(id);
-  const subjectQuery = useCatalogSubject(subjectId);
-  const discussionQuery = useBangumiSubjectTopics(subjectId, 30);
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const subjectQuery = useCatalogSubject(subjectId ?? 0);
+  const discussionQuery = useBangumiSubjectTopics(subjectId ?? 0, 30);
   const subjectTopics = useMemo(
     () =>
       discussionQuery.data?.pages.flatMap((page) => page.topics) ?? [],
     [discussionQuery.data],
   );
   const topicTotal = discussionQuery.data?.pages[0]?.total ?? 0;
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个讨论版链接缺少有效条目编号。" />;
+  }
 
   if (subjectQuery.isError) {
     return (

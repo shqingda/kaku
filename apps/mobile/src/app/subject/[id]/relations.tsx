@@ -11,7 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
+import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 const TYPE_LABELS: Record<number, string> = {
   1: '书籍',
@@ -23,7 +25,12 @@ const TYPE_LABELS: Record<number, string> = {
 
 export default function SubjectRelationsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const relationsQuery = useSubjectRelations(Number(id));
+  const subjectId = parsePositiveIntegerRouteParam(id);
+  const relationsQuery = useSubjectRelations(subjectId ?? 0);
+
+  if (!subjectId) {
+    return <InvalidRouteState message="这个关联条目链接缺少有效编号。" />;
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
