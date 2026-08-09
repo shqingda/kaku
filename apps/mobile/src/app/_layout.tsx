@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { AppState, Platform } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
@@ -43,20 +44,21 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        buster: QUERY_CACHE_BUSTER,
-        dehydrateOptions: {
-          shouldDehydrateMutation: () => false,
-          shouldDehydrateQuery: shouldPersistPublicQuery,
-        },
-        maxAge: QUERY_CACHE_MAX_AGE,
-        persister: queryPersister,
-      }}
-    >
-      <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+    <AppErrorBoundary>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          buster: QUERY_CACHE_BUSTER,
+          dehydrateOptions: {
+            shouldDehydrateMutation: () => false,
+            shouldDehydrateQuery: shouldPersistPublicQuery,
+          },
+          maxAge: QUERY_CACHE_MAX_AGE,
+          persister: queryPersister,
+        }}
+      >
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen
             name="timeline"
@@ -399,8 +401,9 @@ export default function RootLayout() {
               title: '制作人员',
             }}
           />
-        </Stack>
-      </AuthProvider>
-    </PersistQueryClientProvider>
+          </Stack>
+        </AuthProvider>
+      </PersistQueryClientProvider>
+    </AppErrorBoundary>
   );
 }
