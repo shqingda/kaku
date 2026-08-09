@@ -1,3 +1,4 @@
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { PublicIndexPage } from './model.ts';
 
 const BANGUMI_INDEX_URL = 'https://bgm.tv/index/browser';
@@ -133,7 +134,7 @@ export async function getBangumiIndexes({
   const response = await fetcher(url, {
     headers: {
       Accept: 'text/html',
-      'User-Agent': 'Kaku/1.0 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   });
 

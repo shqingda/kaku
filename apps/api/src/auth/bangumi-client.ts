@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { Env } from '../env.ts';
 
 const tokenResponseSchema = z.object({
@@ -22,7 +23,6 @@ const currentUserSchema = z.object({
   username: z.string().min(1),
 });
 
-const USER_AGENT = 'Kaku/0.1 (Bangumi third-party client; development)';
 
 export type BangumiTokenResponse = z.infer<typeof tokenResponseSchema>;
 export type BangumiCurrentUser = z.infer<typeof currentUserSchema>;
@@ -62,7 +62,7 @@ export async function exchangeAuthorizationCode(
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': USER_AGENT,
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     method: 'POST',
     signal: AbortSignal.timeout(12_000),
@@ -88,7 +88,7 @@ export async function refreshBangumiAccessToken(
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': USER_AGENT,
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     method: 'POST',
     signal: AbortSignal.timeout(12_000),
@@ -105,7 +105,7 @@ export async function getBangumiCurrentUser(
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      'User-Agent': USER_AGENT,
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     signal: AbortSignal.timeout(12_000),
   });

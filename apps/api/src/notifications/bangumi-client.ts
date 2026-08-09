@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type {
   NotificationList,
   NotificationTarget,
@@ -128,7 +129,7 @@ export async function getBangumiNotifications({
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   });
 
@@ -166,7 +167,7 @@ export async function markBangumiNotificationsRead({
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'Kaku/0.1 (https://kaku-web.shqingda.workers.dev)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     method: 'POST',
   });

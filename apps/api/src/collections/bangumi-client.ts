@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+
 import {
   bangumiTypeToCollectionStatus,
   collectionStatusToBangumiType,
@@ -8,7 +10,6 @@ import {
 } from './model.ts';
 
 const BANGUMI_API_URL = 'https://api.bgm.tv';
-const USER_AGENT = 'Kaku/0.1 (Bangumi third-party client; development)';
 const PAGE_SIZE = 1000;
 
 const userCollectionSchema = z.object({
@@ -70,7 +71,7 @@ function headers(accessToken: string, hasBody = false) {
     Accept: 'application/json',
     Authorization: `Bearer ${accessToken}`,
     ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-    'User-Agent': USER_AGENT,
+    'User-Agent': BANGUMI_USER_AGENT,
   };
 }
 

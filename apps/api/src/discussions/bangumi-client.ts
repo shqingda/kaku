@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+
 const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
@@ -127,7 +129,7 @@ async function getBangumiDiscussionJson({
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   });
 
@@ -241,7 +243,7 @@ async function createBangumiTopicReply({
       Accept: 'application/json',
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     method: 'POST',
   });

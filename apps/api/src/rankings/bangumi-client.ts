@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { RankedSubjectPage } from './model.ts';
 
 const BANGUMI_API_URL = 'https://api.bgm.tv';
@@ -74,7 +75,7 @@ function createRequestInit(): RequestInit & { cf: { cacheEverything: boolean; ca
     },
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   };
 }

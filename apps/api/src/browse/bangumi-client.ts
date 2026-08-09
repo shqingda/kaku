@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { BrowseSubjectPage } from './model.ts';
 
 const BANGUMI_NEXT_URL = 'https://next.bgm.tv';
@@ -90,7 +91,7 @@ async function searchBangumiSubjectsByTag({
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+        'User-Agent': BANGUMI_USER_AGENT,
       },
       method: 'POST',
       signal: AbortSignal.timeout(12_000),
@@ -154,7 +155,7 @@ export async function browseBangumiSubjects({
   const response = await fetcher(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
     signal: AbortSignal.timeout(12_000),
   });

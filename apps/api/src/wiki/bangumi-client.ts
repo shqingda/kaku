@@ -1,3 +1,4 @@
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { PublicWikiRevisionFeed } from './model.ts';
 
 const BANGUMI_WIKI_URL = 'https://bgm.tv/wiki';
@@ -121,7 +122,7 @@ export async function getBangumiWikiFeed({
       const response = await fetcher(url, {
         headers: {
           Accept: 'text/html',
-          'User-Agent': 'Kaku/1.0 (https://github.com/shqingda/kaku)',
+          'User-Agent': BANGUMI_USER_AGENT,
         },
         signal: AbortSignal.timeout(12_000),
       });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import { getBangumiRankedSubjects } from '../rankings/bangumi-client.ts';
 import type { ChannelSubjectList } from './model.ts';
 
@@ -47,7 +48,7 @@ export async function getBangumiChannelSubjects({
     cf: { cacheEverything: true, cacheTtl: EDGE_CACHE_TTL_SECONDS },
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   } as RequestInit).catch(() => undefined);
   const result = response?.ok

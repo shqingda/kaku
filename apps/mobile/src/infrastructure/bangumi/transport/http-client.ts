@@ -1,4 +1,5 @@
 const REQUEST_TIMEOUT_MS = 12_000;
+const BANGUMI_USER_AGENT = 'Kaku/1.0 (https://github.com/shqingda/kaku)';
 
 type RequestOptions = {
   body?: string;
@@ -46,8 +47,7 @@ export function createBangumiRequester(config: RequesterConfig) {
         headers: {
           Accept: 'application/json',
           ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
-          'User-Agent':
-            'Kaku/0.1 (Bangumi third-party client; development)',
+          'User-Agent': BANGUMI_USER_AGENT,
         },
         body: options?.body,
         method: options?.method,

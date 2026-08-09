@@ -1,3 +1,4 @@
+import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { PublicBlogPage } from './model.ts';
 
 const BANGUMI_WEB_URL = 'https://bgm.tv';
@@ -126,7 +127,7 @@ export async function getBangumiBlogs({
   const response = await fetcher(`${BANGUMI_WEB_URL}${path}`, {
     headers: {
       Accept: 'text/html',
-      'User-Agent': 'Kaku/1.0 (https://github.com/shqingda/kaku)',
+      'User-Agent': BANGUMI_USER_AGENT,
     },
   });
 
