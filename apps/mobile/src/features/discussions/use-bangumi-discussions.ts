@@ -4,7 +4,10 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
+import { useAuth } from '@/features/auth/auth-provider';
+import { mapBangumiTopic } from '@/infrastructure/bangumi/discussions/adapter';
 import { bangumiDiscussionsProvider } from '@/infrastructure/bangumi/discussions/provider';
+import { getAuthenticatedSubjectTopic } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
@@ -35,11 +38,26 @@ export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
 }
 
 export function useBangumiSubjectTopic(topicId: number) {
+  const { request, session } = useAuth();
+
   return useQuery({
     enabled: Number.isInteger(topicId) && topicId > 0,
-    queryFn: ({ signal }) =>
-      bangumiDiscussionsProvider.getSubjectTopic(topicId, signal),
-    queryKey: queryKeys.subjectTopic(topicId),
+    queryFn: async ({ signal }) => {
+      if (!session) {
+        return bangumiDiscussionsProvider.getSubjectTopic(topicId, signal);
+      }
+
+      const topic = await getAuthenticatedSubjectTopic(
+        request,
+        topicId,
+        signal,
+      );
+      return topic ? mapBangumiTopic(topic) : null;
+    },
+    queryKey: [
+      ...queryKeys.subjectTopic(topicId),
+      session?.user.id ?? 'public',
+    ],
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

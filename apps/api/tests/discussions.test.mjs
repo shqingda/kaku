@@ -6,7 +6,44 @@ import {
   createBangumiGroupTopicReply,
   createBangumiReviewReply,
   createBangumiSubjectTopicReply,
+  getBangumiSubjectTopic,
 } from '../src/discussions/bangumi-client.ts';
+
+test('reading a restricted subject topic forwards OAuth through Kaku', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/subjects/-/topics/22447',
+    );
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.equal(init.headers.Accept, 'application/json');
+
+    return Response.json({
+      createdAt: 1_785_940_000,
+      creator: {
+        id: 1,
+        nickname: '测试用户',
+        username: 'tester',
+      },
+      creatorID: 1,
+      id: 22447,
+      parentID: 123,
+      replies: [],
+      replyCount: 0,
+      title: '登录后可见的话题',
+      updatedAt: 1_785_940_000,
+    });
+  };
+
+  const topic = await getBangumiSubjectTopic({
+    accessToken: 'access-token',
+    fetcher,
+    topicId: 22447,
+  });
+
+  assert.equal(topic.id, 22447);
+  assert.equal(topic.title, '登录后可见的话题');
+});
 
 test('creating a subject topic reply keeps OAuth and Turnstile server-side', async () => {
   const fetcher = async (input, init) => {

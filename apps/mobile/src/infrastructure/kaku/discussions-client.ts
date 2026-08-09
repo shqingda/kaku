@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { bangumiSubjectTopicSchema } from '@/infrastructure/bangumi/api-next/schemas';
 import { readErrorMessage } from './auth-client';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
@@ -14,6 +15,24 @@ type CreateReplyInput = {
   replyTo?: number;
   turnstileToken: string;
 };
+
+export async function getAuthenticatedSubjectTopic(
+  request: AuthenticatedRequest,
+  topicId: number,
+  signal?: AbortSignal,
+) {
+  const response = await request(`/me/subject-topics/${topicId}`, { signal });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return bangumiSubjectTopicSchema.parse(await response.json());
+}
 
 async function createReply(
   request: AuthenticatedRequest,

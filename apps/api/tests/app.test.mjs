@@ -44,6 +44,20 @@ test('episode comments are registered as an authenticated route', async () => {
   });
 });
 
+test('restricted subject topics are registered as an authenticated route', async () => {
+  const response = await createApp({ createStore: () => ({}) }).request(
+    '/me/subject-topics/22447',
+    undefined,
+    { DB: {} },
+  );
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), {
+    error: 'unauthorized',
+    message: '请先登录 Kaku。',
+  });
+});
+
 test('review replies are registered as an authenticated route', async () => {
   const response = await createApp({ createStore: () => ({}) }).request(
     '/me/reviews/378109/replies',

@@ -3,6 +3,55 @@ import { z } from 'zod';
 const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
+const bangumiUserSchema = z.object({
+  avatar: z
+    .object({
+      large: z.string().optional(),
+      medium: z.string().optional(),
+      small: z.string().optional(),
+    })
+    .optional(),
+  id: z.number(),
+  nickname: z.string(),
+  username: z.string(),
+});
+
+type BangumiDiscussionReply = {
+  content: string;
+  createdAt: number;
+  creator?: z.infer<typeof bangumiUserSchema>;
+  creatorID: number;
+  id: number;
+  relatedID?: number;
+  replies?: BangumiDiscussionReply[];
+  user?: z.infer<typeof bangumiUserSchema>;
+};
+
+const bangumiDiscussionReplySchema: z.ZodType<BangumiDiscussionReply> =
+  z.lazy(() =>
+    z.object({
+      content: z.string(),
+      createdAt: z.number(),
+      creator: bangumiUserSchema.optional(),
+      creatorID: z.number(),
+      id: z.number(),
+      relatedID: z.number().optional(),
+      replies: z.array(bangumiDiscussionReplySchema).optional(),
+      user: bangumiUserSchema.optional(),
+    }),
+  );
+
+const bangumiSubjectTopicSchema = z.object({
+  createdAt: z.number(),
+  creator: bangumiUserSchema.optional(),
+  creatorID: z.number(),
+  id: z.number(),
+  parentID: z.number(),
+  replies: z.array(bangumiDiscussionReplySchema),
+  replyCount: z.number(),
+  title: z.string(),
+  updatedAt: z.number(),
+});
 
 export class BangumiDiscussionError extends Error {
   code?: string;
@@ -14,6 +63,53 @@ export class BangumiDiscussionError extends Error {
     this.code = code;
     this.status = status;
   }
+}
+
+function discussionError(
+  response: Response,
+  code?: string,
+  fallbackMessage = '讨论请求没有成功，请稍后重试。',
+) {
+  return new BangumiDiscussionError(
+    response.status,
+    code === 'CAPTCHA_ERROR'
+      ? '安全验证已过期，请重新验证后再试。'
+      : response.status === 429
+        ? '操作得太频繁了，请稍后再试。'
+        : response.status === 404
+          ? '这条讨论已不存在或当前账号无法访问。'
+          : response.status >= 500
+            ? 'Bangumi 讨论服务暂时不可用。'
+            : fallbackMessage,
+    code,
+  );
+}
+
+export async function getBangumiSubjectTopic({
+  accessToken,
+  fetcher = fetch,
+  topicId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  topicId: number;
+}) {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/subjects/-/topics/${topicId}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': 'Kaku/0.1 (https://github.com/shqingda/kaku)',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw discussionError(response);
+  }
+
+  return bangumiSubjectTopicSchema.parse(await response.json());
 }
 
 async function createBangumiTopicReply({
@@ -52,18 +148,10 @@ async function createBangumiTopicReply({
         ? body.code
         : undefined;
 
-    throw new BangumiDiscussionError(
-      response.status,
-      code === 'CAPTCHA_ERROR'
-        ? '安全验证已过期，请重新验证后再试。'
-        : response.status === 429
-          ? '回复得太频繁了，请稍后再试。'
-          : response.status === 404
-            ? '这条讨论已不存在或当前账号无法访问。'
-            : response.status >= 500
-              ? 'Bangumi 讨论服务暂时不可用。'
-              : '回复没有发送成功，请稍后重试。',
+    throw discussionError(
+      response,
       code,
+      '回复没有发送成功，请稍后重试。',
     );
   }
 
