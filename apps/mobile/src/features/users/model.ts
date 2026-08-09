@@ -45,6 +45,22 @@ export type PublicUserFriendPage = {
   total: number;
 };
 
+export type PublicUserEntityKind = 'character' | 'person';
+
+export type PublicUserEntityCollection = {
+  collectedAt: string;
+  id: number;
+  imageUrl?: string;
+  kind: PublicUserEntityKind;
+  name: string;
+  subtitle: string;
+};
+
+export type PublicUserEntityCollectionPage = {
+  items: PublicUserEntityCollection[];
+  total: number;
+};
+
 export type PublicTimelineItem = {
   createdAt: number;
   id: number;
@@ -82,6 +98,11 @@ export type UsersProvider = {
     username: string,
     offset: number,
   ) => Promise<PublicUserFriendPage>;
+  getPublicUserEntities: (
+    username: string,
+    kind: PublicUserEntityKind,
+    signal?: AbortSignal,
+  ) => Promise<PublicUserEntityCollectionPage>;
   getPublicUserTimeline: (
     username: string,
     cursor?: string,

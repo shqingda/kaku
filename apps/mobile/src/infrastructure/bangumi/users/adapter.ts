@@ -7,6 +7,8 @@ import type {
   PublicUserCollectionPage,
   PublicUserFriend,
   PublicUserFriendPage,
+  PublicUserEntityCollectionPage,
+  PublicUserEntityKind,
   PublicTimelineItem,
   PublicTimelinePage,
 } from '../../../features/users/model.ts';
@@ -15,7 +17,11 @@ import type {
   BangumiUserBlogs,
   BangumiUserFriends,
 } from '../api-next/schemas.ts';
-import type { BangumiUserCollectionsResponse } from '../api-v0/schemas.ts';
+import type {
+  BangumiUserCharacterCollectionsResponse,
+  BangumiUserCollectionsResponse,
+  BangumiUserPersonCollectionsResponse,
+} from '../api-v0/schemas.ts';
 
 const COLLECTION_STATUS: Record<number, CollectionStatus> = {
   1: 'wish',
@@ -135,6 +141,44 @@ export function toPublicUserFriendPage(
     items: response.data.map(toPublicUserFriend),
     nextOffset:
       nextOffset < response.total ? nextOffset : undefined,
+    total: response.total,
+  };
+}
+
+const PERSON_CAREER_LABELS: Record<string, string> = {
+  actor: '演员',
+  artist: '艺术家',
+  illustrator: '插画家',
+  mangaka: '漫画家',
+  producer: '制作人',
+  seiyu: '声优',
+  writer: '作家',
+};
+
+export function toPublicUserEntityCollectionPage(
+  response:
+    | BangumiUserCharacterCollectionsResponse
+    | BangumiUserPersonCollectionsResponse,
+  kind: PublicUserEntityKind,
+): PublicUserEntityCollectionPage {
+  return {
+    items: response.data.map((entity) => ({
+      collectedAt: entity.created_at,
+      id: entity.id,
+      imageUrl: secureImage(
+        entity.images?.medium ??
+          entity.images?.large ??
+          entity.images?.small,
+      ),
+      kind,
+      name: entity.name,
+      subtitle:
+        kind === 'person' && 'career' in entity
+          ? entity.career
+              .map((career) => PERSON_CAREER_LABELS[career] ?? career)
+              .join(' · ') || '人物'
+          : '角色',
+    })),
     total: response.total,
   };
 }

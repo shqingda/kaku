@@ -8,6 +8,7 @@ import type {
   PublicUserBlogPage,
   PublicUserCollectionPage,
   PublicUserFriendPage,
+  PublicUserEntityKind,
   PublicTimelinePage,
 } from './model';
 import type { CollectionStatus } from '@/features/watching/model';
@@ -97,6 +98,24 @@ export function usePublicUserFriends(username: string) {
         pageParam,
       ),
     queryKey: queryKeys.publicUserFriends(username),
+    retry: shouldRetryBangumiQuery,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function usePublicUserEntities(
+  username: string,
+  kind: PublicUserEntityKind,
+) {
+  return useQuery({
+    enabled: username.trim().length > 0,
+    queryFn: ({ signal }) =>
+      bangumiUsersProvider.getPublicUserEntities(
+        username.trim(),
+        kind,
+        signal,
+      ),
+    queryKey: queryKeys.publicUserEntities(username, kind),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

@@ -4,6 +4,7 @@ import type { CollectionStatus } from '@/features/watching/model';
 import {
   getBangumiPublicUser,
   getBangumiUserCollections,
+  getBangumiUserEntityCollections,
 } from '../api-v0/client';
 import {
   getBangumiUserFriends,
@@ -14,6 +15,7 @@ import {
   toPublicUserBlogPage,
   toPublicUserCollectionPage,
   toPublicUserFriendPage,
+  toPublicUserEntityCollectionPage,
   toPublicTimelinePage,
 } from './adapter';
 
@@ -63,6 +65,14 @@ export const bangumiUsersProvider: UsersProvider = {
   async getPublicUserFriends(username, offset) {
     const friends = await getBangumiUserFriends(username, offset);
     return toPublicUserFriendPage(friends, offset);
+  },
+  async getPublicUserEntities(username, kind, signal) {
+    const entities = await getBangumiUserEntityCollections(
+      username,
+      kind,
+      signal,
+    );
+    return toPublicUserEntityCollectionPage(entities, kind);
   },
   async getPublicUserTimeline(username, cursor) {
     const limit = 10;

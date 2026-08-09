@@ -12,6 +12,8 @@ import {
   bangumiSubjectSearchSchema,
   bangumiSubjectSchema,
   bangumiUserCollectionsSchema,
+  bangumiUserCharacterCollectionsSchema,
+  bangumiUserPersonCollectionsSchema,
   type BangumiEpisodeResponse,
 } from './schemas';
 import { createBangumiRequester } from '../transport/http-client';
@@ -89,6 +91,22 @@ export async function getBangumiUserCollections(
     { signal },
   );
   return bangumiUserCollectionsSchema.parse(json);
+}
+
+export async function getBangumiUserEntityCollections(
+  username: string,
+  kind: 'character' | 'person',
+  signal?: AbortSignal,
+) {
+  const path = kind === 'character' ? 'characters' : 'persons';
+  const json = await requestJson(
+    `/v0/users/${encodeURIComponent(username)}/collections/-/${path}`,
+    { signal },
+  );
+
+  return kind === 'character'
+    ? bangumiUserCharacterCollectionsSchema.parse(json)
+    : bangumiUserPersonCollectionsSchema.parse(json);
 }
 
 export async function getBangumiSubjectStaff(subjectId: number) {

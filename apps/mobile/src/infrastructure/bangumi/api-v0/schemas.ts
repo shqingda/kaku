@@ -122,6 +122,33 @@ export const bangumiUserCollectionsSchema = z.object({
   total: z.number(),
 });
 
+const bangumiUserEntityCollectionSchema = z.object({
+  created_at: z.string(),
+  id: z.number(),
+  images: bangumiImagesSchema,
+  name: z.string(),
+  type: z.number(),
+});
+
+const bangumiUserEntityCollectionPageSchema = z.object({
+  data: z.array(bangumiUserEntityCollectionSchema),
+  limit: z.number(),
+  offset: z.number(),
+  total: z.number(),
+});
+
+export const bangumiUserCharacterCollectionsSchema =
+  bangumiUserEntityCollectionPageSchema;
+
+export const bangumiUserPersonCollectionsSchema =
+  bangumiUserEntityCollectionPageSchema.extend({
+    data: z.array(
+      bangumiUserEntityCollectionSchema.extend({
+        career: z.array(z.string()),
+      }),
+    ),
+  });
+
 const bangumiPublicSubjectSchema = z.object({
   date: z.string().nullable().optional(),
   id: z.number(),
@@ -290,4 +317,10 @@ export type BangumiPublicUserResponse = z.infer<
 >;
 export type BangumiUserCollectionsResponse = z.infer<
   typeof bangumiUserCollectionsSchema
+>;
+export type BangumiUserCharacterCollectionsResponse = z.infer<
+  typeof bangumiUserCharacterCollectionsSchema
+>;
+export type BangumiUserPersonCollectionsResponse = z.infer<
+  typeof bangumiUserPersonCollectionsSchema
 >;

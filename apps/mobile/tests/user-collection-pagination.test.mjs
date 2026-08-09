@@ -5,6 +5,7 @@ import {
   toPublicUserBlogPage,
   toPublicUserCollectionPage,
   toPublicUserFriendPage,
+  toPublicUserEntityCollectionPage,
 } from '../src/infrastructure/bangumi/users/adapter.ts';
 
 const collection = {
@@ -128,5 +129,40 @@ test('public user friend page maps avatars and stops at the end', () => {
     avatarUrl: 'https://lain.bgm.tv/pic/user/m/1.jpg',
     nickname: 'Sai',
     username: 'sai',
+  });
+});
+
+test('public user entity collections stay provider neutral', () => {
+  const page = toPublicUserEntityCollectionPage(
+    {
+      data: [
+        {
+          career: ['seiyu', 'actor'],
+          created_at: '2026-08-09T00:00:00+08:00',
+          id: 1,
+          images: { medium: 'http://lain.bgm.tv/person.jpg' },
+          name: '种崎敦美',
+          type: 1,
+        },
+      ],
+      limit: 50,
+      offset: 0,
+      total: 1,
+    },
+    'person',
+  );
+
+  assert.deepEqual(page, {
+    items: [
+      {
+        collectedAt: '2026-08-09T00:00:00+08:00',
+        id: 1,
+        imageUrl: 'https://lain.bgm.tv/person.jpg',
+        kind: 'person',
+        name: '种崎敦美',
+        subtitle: '声优 · 演员',
+      },
+    ],
+    total: 1,
   });
 });

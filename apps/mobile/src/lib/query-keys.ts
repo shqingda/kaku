@@ -79,6 +79,8 @@ export const queryKeys = {
     ['users', 'bangumi', username, 'blogs'] as const,
   publicUserFriends: (username: string) =>
     ['users', 'bangumi', username, 'friends'] as const,
+  publicUserEntities: (username: string, kind: string) =>
+    ['users', 'bangumi', username, 'entities', kind] as const,
   publicUserTimeline: (username: string) =>
     ['users', 'bangumi', username, 'timeline'] as const,
   subjectIndexes: (subjectId: number) =>

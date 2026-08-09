@@ -122,6 +122,47 @@ export default function PublicUserScreen() {
                   ) : null}
                 </View>
               </View>
+              <Pressable
+                accessibilityLabel="查看角色与人物收藏"
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: '/user/entities/[username]',
+                    params: { username: user.username },
+                  })
+                }
+                style={({ pressed }) => [
+                  styles.entityEntry,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={styles.entityEntryIcon}>
+                  <SymbolView
+                    name={{
+                      android: 'favorite',
+                      ios: 'person.2.fill',
+                      web: 'favorite',
+                    }}
+                    size={19}
+                    tintColor={COLORS.accent}
+                    weight="semibold"
+                  />
+                </View>
+                <View style={styles.entityEntryMain}>
+                  <Text style={styles.entityEntryTitle}>角色与人物</Text>
+                  <Text style={styles.entityEntryHint}>查看公开收藏</Text>
+                </View>
+                <SymbolView
+                  name={{
+                    android: 'chevron_right',
+                    ios: 'chevron.right',
+                    web: 'chevron_right',
+                  }}
+                  size={13}
+                  tintColor={COLORS.subtle}
+                  weight="semibold"
+                />
+              </Pressable>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>好友</Text>
                 <View style={styles.sectionRight}>
@@ -503,6 +544,25 @@ const styles = StyleSheet.create({
   },
   username: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sign: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
+  entityEntry: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    flexDirection: 'row',
+    minHeight: 74,
+    paddingHorizontal: 16,
+  },
+  entityEntryIcon: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 15,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  entityEntryMain: { flex: 1, marginLeft: 13 },
+  entityEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  entityEntryHint: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sectionHeader: {
     alignItems: 'flex-end',
     flexDirection: 'row',

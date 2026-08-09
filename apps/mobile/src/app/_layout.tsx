@@ -269,6 +269,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="user/entities/[username]"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '角色与人物',
+            }}
+          />
+          <Stack.Screen
             name="user/timeline/[username]"
             options={{
               headerBackButtonDisplayMode: 'minimal',
