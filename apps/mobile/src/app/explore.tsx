@@ -242,6 +242,33 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/tags',
+                  params: { type: getSubjectTypeSlug(selectedSearchType) },
+                })
+              }
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'local_offer', ios: 'tag', web: 'local_offer' }}
+                    size={18}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>标签索引</Text>
+                  <Text style={styles.communityMeta}>按主题发现更多条目</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>

@@ -18,6 +18,7 @@ import {
   registerRankingRoutes,
 } from './rankings/routes.ts';
 import { registerTimelineRoutes } from './timeline/routes.ts';
+import { registerTagRoutes } from './tags/routes.ts';
 
 type AppDependencies = AuthDependencies & RankingDependencies;
 
@@ -41,6 +42,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerNotificationRoutes(app, dependencies);
   registerPeopleBrowserRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
+  registerTagRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
 
   app.onError((error, context) => {

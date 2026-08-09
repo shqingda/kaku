@@ -89,6 +89,16 @@ export default function ChannelScreen() {
             }
           />
           <ChannelAction
+            icon={{ android: 'local_offer', ios: 'tag', web: 'local_offer' }}
+            label="标签索引"
+            onPress={() =>
+              router.push({
+                pathname: '/tags',
+                params: { type: getSubjectTypeSlug(subjectType) },
+              })
+            }
+          />
+          <ChannelAction
             icon={{ android: 'filter_alt', ios: 'line.3.horizontal.decrease', web: 'filter_alt' }}
             label="分类浏览"
             onPress={() =>
@@ -259,12 +269,13 @@ const styles = StyleSheet.create({
   coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
   cardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700', height: 40, lineHeight: 19, marginTop: 9 },
   cardMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
-  actions: { flexDirection: 'row', gap: 10, paddingTop: 16 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 16 },
   action: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: 18,
-    flex: 1,
+    flexBasis: '47%',
+    flexGrow: 1,
     paddingHorizontal: 8,
     paddingVertical: 16,
   },

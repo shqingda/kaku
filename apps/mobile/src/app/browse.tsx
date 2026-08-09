@@ -32,13 +32,21 @@ const SORTS: Array<{ id: BrowseSort; label: string }> = [
 ];
 
 export default function BrowseScreen() {
-  const { type } = useLocalSearchParams<{ type?: string }>();
+  const { tag: initialTag, type } = useLocalSearchParams<{
+    tag?: string;
+    type?: string;
+  }>();
+  const normalizedInitialTag = typeof initialTag === 'string'
+    ? initialTag.trim().slice(0, 30)
+    : '';
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
   const [sort, setSort] = useState<BrowseSort>('rank');
   const [yearDraft, setYearDraft] = useState('');
-  const [tagDraft, setTagDraft] = useState('');
+  const [tagDraft, setTagDraft] = useState(normalizedInitialTag);
   const [year, setYear] = useState<number>();
-  const [tag, setTag] = useState<string>();
+  const [tag, setTag] = useState<string | undefined>(
+    normalizedInitialTag || undefined,
+  );
   const browseQuery = useBrowseSubjects({ sort, subjectType, tag, year });
   const items = useMemo(
     () => browseQuery.data?.pages.flatMap((page) => page.items) ?? [],

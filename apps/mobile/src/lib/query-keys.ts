@@ -1,6 +1,8 @@
 export const queryKeys = {
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   globalIndexes: (sort: string) => ['indexes', 'kaku', sort] as const,
+  globalTags: (subjectType: number) =>
+    ['tags', 'kaku', subjectType] as const,
   globalPeople: (
     kind: string,
     sort: string,

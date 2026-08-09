@@ -5,13 +5,17 @@ import { SymbolView } from 'expo-symbols';
 import { COLORS } from '@/constants/design';
 
 export function SubjectSearchField({
+  accessibilityLabel = '搜索条目',
   onChangeText,
   onSubmit,
+  placeholder = '搜索条目',
   style,
   value,
 }: {
+  accessibilityLabel?: string;
   onChangeText: (value: string) => void;
   onSubmit: () => void;
+  placeholder?: string;
   style?: StyleProp<ViewStyle>;
   value: string;
 }) {
@@ -24,11 +28,11 @@ export function SubjectSearchField({
         weight="medium"
       />
       <TextInput
-        accessibilityLabel="搜索条目"
+        accessibilityLabel={accessibilityLabel}
         clearButtonMode="while-editing"
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
-        placeholder="搜索条目"
+        placeholder={placeholder}
         placeholderTextColor={COLORS.muted}
         returnKeyType="search"
         style={styles.searchInput}

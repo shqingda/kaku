@@ -1,0 +1,178 @@
+import { useMemo, useState } from 'react';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { COLORS } from '@/constants/design';
+import {
+  getSubjectTypeFromSlug,
+  getSubjectTypeLabel,
+  getSubjectTypeSlug,
+} from '@/features/catalog/subject-types';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import type { PublicTag } from '@/features/tags/model';
+import { useGlobalTags } from '@/features/tags/use-global-tags';
+
+const compactNumber = new Intl.NumberFormat('zh-CN', {
+  maximumFractionDigits: 1,
+  notation: 'compact',
+});
+
+export default function TagsScreen() {
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const [subjectType, setSubjectType] = useState<number>(() =>
+    getSubjectTypeFromSlug(type));
+  const [draft, setDraft] = useState('');
+  const tagsQuery = useGlobalTags(subjectType);
+  const items = useMemo(
+    () => tagsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [tagsQuery.data],
+  );
+
+  function browseTag(tag = draft) {
+    const normalized = tag.trim();
+    if (!normalized) return;
+    Keyboard.dismiss();
+    router.push({
+      pathname: '/browse',
+      params: { tag: normalized, type: getSubjectTypeSlug(subjectType) },
+    });
+  }
+
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <Stack.Screen options={{ title: '标签索引' }} />
+      <FlatList
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.content}
+        data={items}
+        key={subjectType}
+        keyExtractor={(item) => item.name}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <TagState
+            error={tagsQuery.isError}
+            loading={tagsQuery.isPending}
+            onRetry={() => void tagsQuery.refetch()}
+          />
+        }
+        ListFooterComponent={items.length ? (
+          <PagedListFooter
+            hasNextPage={Boolean(tagsQuery.hasNextPage)}
+            isError={tagsQuery.isFetchNextPageError}
+            isFetching={tagsQuery.isFetchingNextPage}
+            loadedCount={items.length}
+            onRetry={() => void tagsQuery.fetchNextPage()}
+          />
+        ) : null}
+        ListHeaderComponent={
+          <View>
+            <View style={styles.hero}>
+              <Text style={styles.title}>标签索引</Text>
+              <Text style={styles.subtitle}>从常用标签发现感兴趣的条目</Text>
+            </View>
+            <SubjectTypeTabs
+              contentContainerStyle={styles.tabs}
+              onChange={setSubjectType}
+              selectedType={subjectType}
+            />
+            <SubjectSearchField
+              accessibilityLabel="按标签浏览"
+              onChangeText={setDraft}
+              onSubmit={() => browseTag()}
+              placeholder="输入标签，如 科幻"
+              style={styles.search}
+              value={draft}
+            />
+            <Text style={styles.sectionTitle}>
+              {getSubjectTypeLabel(subjectType)}标签
+            </Text>
+          </View>
+        }
+        numColumns={2}
+        onEndReached={() => {
+          if (tagsQuery.hasNextPage && !tagsQuery.isFetchingNextPage) {
+            void tagsQuery.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.45}
+        renderItem={({ item }) => (
+          <TagCard item={item} onPress={() => browseTag(item.name)} />
+        )}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
+  );
+}
+
+function TagCard({ item, onPress }: { item: PublicTag; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityLabel={`${item.name}，${item.count} 个条目`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.tag, pressed && styles.pressed]}
+    >
+      <Text numberOfLines={1} style={styles.tagName}>{item.name}</Text>
+      <Text style={styles.tagCount}>{compactNumber.format(item.count)}</Text>
+    </Pressable>
+  );
+}
+
+function TagState({ error, loading, onRetry }: {
+  error: boolean;
+  loading: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <View style={styles.state}>
+      <Text style={styles.stateTitle}>
+        {loading ? '正在读取标签' : error ? '标签加载失败' : '暂无标签'}
+      </Text>
+      <Text style={styles.stateText}>
+        {error ? 'Bangumi 偶尔会响应较慢，请稍后重试。' : '换一种条目类型看看。'}
+      </Text>
+      {error ? (
+        <Pressable onPress={onRetry} style={styles.retry}>
+          <Text style={styles.retryText}>重试</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { backgroundColor: COLORS.background, flex: 1 },
+  content: { paddingBottom: 44, paddingHorizontal: 20 },
+  row: { gap: 10 },
+  hero: { paddingHorizontal: 4, paddingTop: 24 },
+  title: { color: COLORS.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
+  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 7 },
+  tabs: { paddingBottom: 2, paddingTop: 20 },
+  search: { marginTop: 14 },
+  sectionTitle: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginBottom: 14, marginTop: 28 },
+  tag: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderCurve: 'continuous',
+    borderRadius: 16,
+    flex: 1,
+    flexDirection: 'row',
+    height: 54,
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    maxWidth: '49%',
+    paddingHorizontal: 15,
+  },
+  tagName: { color: COLORS.ink, flex: 1, fontSize: 14, fontWeight: '700' },
+  tagCount: { color: COLORS.subtle, fontSize: 11, marginLeft: 8 },
+  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 34, width: '100%' },
+  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 14, paddingHorizontal: 17, paddingVertical: 9 },
+  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
+});

@@ -111,6 +111,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="tags"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '标签索引',
+            }}
+          />
+          <Stack.Screen
             name="group/[name]"
             options={{
               headerBackButtonDisplayMode: 'minimal',
