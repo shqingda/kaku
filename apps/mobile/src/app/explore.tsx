@@ -269,6 +269,28 @@ export default function ExploreScreen() {
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push('/wiki')}
+              style={({ pressed }) => [
+                styles.communityEntry,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.communityCopy}>
+                <View style={styles.communityIcon}>
+                  <SymbolView
+                    name={{ android: 'edit_note', ios: 'pencil.line', web: 'edit_note' }}
+                    size={19}
+                    tintColor={COLORS.accent}
+                  />
+                </View>
+                <View style={styles.communityText}>
+                  <Text style={styles.communityTitle}>维基动态</Text>
+                  <Text style={styles.communityMeta}>最新条目修订与修改记录</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>

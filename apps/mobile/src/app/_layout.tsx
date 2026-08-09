@@ -120,6 +120,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="wiki"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '维基动态',
+            }}
+          />
+          <Stack.Screen
             name="group/[name]"
             options={{
               headerBackButtonDisplayMode: 'minimal',

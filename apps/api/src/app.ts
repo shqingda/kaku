@@ -19,6 +19,7 @@ import {
 } from './rankings/routes.ts';
 import { registerTimelineRoutes } from './timeline/routes.ts';
 import { registerTagRoutes } from './tags/routes.ts';
+import { registerWikiRoutes } from './wiki/routes.ts';
 
 type AppDependencies = AuthDependencies & RankingDependencies;
 
@@ -44,6 +45,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerRankingRoutes(app, dependencies);
   registerTagRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
+  registerWikiRoutes(app, dependencies);
 
   app.onError((error, context) => {
     console.error(error);

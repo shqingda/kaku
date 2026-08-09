@@ -1,0 +1,183 @@
+import { useMemo } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { router, Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { COLORS } from '@/constants/design';
+import type { PublicWikiRevision } from '@/features/wiki/model';
+import { useWikiRevisions } from '@/features/wiki/use-wiki-revisions';
+import { formatActivityTime } from '@/lib/format-activity-time';
+
+export default function WikiScreen() {
+  const revisionsQuery = useWikiRevisions();
+  const revisions = useMemo(
+    () => revisionsQuery.data?.items ?? [],
+    [revisionsQuery.data],
+  );
+
+  return (
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <Stack.Screen options={{ title: '维基动态' }} />
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={revisions}
+        initialNumToRender={12}
+        keyExtractor={(item) => `${item.subjectId}-${item.revisionUrl}`}
+        ListEmptyComponent={
+          revisionsQuery.isPending ? (
+            <State title="正在读取维基动态" text="最新公开修订加载中。" />
+          ) : revisionsQuery.isError ? (
+            <State
+              action={() => void revisionsQuery.refetch()}
+              title="维基动态读取失败"
+              text="Bangumi 偶尔会响应较慢，请稍后重试。"
+            />
+          ) : (
+            <State title="暂无修订" text="这里暂时没有公开的条目修订。" />
+          )
+        }
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>维基动态</Text>
+            <Text style={styles.meta}>查看 Bangumi 最近的公开条目修订</Text>
+          </View>
+        }
+        maxToRenderPerBatch={12}
+        removeClippedSubviews={Platform.OS === 'android'}
+        renderItem={({ index, item }) => (
+          <RevisionRow
+            hasDivider={index > 0}
+            isFirst={index === 0}
+            isLast={index === revisions.length - 1}
+            item={item}
+          />
+        )}
+        showsVerticalScrollIndicator={false}
+        windowSize={7}
+      />
+    </SafeAreaView>
+  );
+}
+
+function RevisionRow({
+  hasDivider,
+  isFirst,
+  isLast,
+  item,
+}: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicWikiRevision;
+}) {
+  return (
+    <View
+      style={[
+        styles.rowCard,
+        isFirst && styles.firstRowCard,
+        isLast && styles.lastRowCard,
+      ]}
+    >
+      <Pressable
+        accessibilityLabel={`打开条目：${item.title}`}
+        accessibilityRole="button"
+        onPress={() =>
+          router.push({
+            pathname: '/subject/[id]',
+            params: { id: String(item.subjectId) },
+          })
+        }
+        style={({ pressed }) => [
+          styles.row,
+          hasDivider && styles.rowDivider,
+          pressed && styles.pressed,
+        ]}
+      >
+        <View style={styles.revisionIcon}>
+          <SymbolView
+            name={{ android: 'edit_note', ios: 'pencil.line', web: 'edit_note' }}
+            size={19}
+            tintColor={COLORS.accent}
+          />
+        </View>
+        <View style={styles.rowMain}>
+          <Text numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
+          <Text numberOfLines={2} style={styles.note}>
+            {item.note || '更新条目信息'}
+          </Text>
+          <Text numberOfLines={1} style={styles.rowMeta}>
+            {item.author} · {formatActivityTime(item.editedAt)}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityLabel={`查看“${item.title}”的修改对比`}
+          accessibilityRole="link"
+          hitSlop={8}
+          onPress={(event) => {
+            event.stopPropagation();
+            void WebBrowser.openBrowserAsync(item.revisionUrl);
+          }}
+          style={({ pressed }) => [styles.compare, pressed && styles.pressed]}
+        >
+          <Text style={styles.compareText}>对比</Text>
+        </Pressable>
+      </Pressable>
+    </View>
+  );
+}
+
+function State({ action, text, title }: {
+  action?: () => void;
+  text: string;
+  title: string;
+}) {
+  return (
+    <View style={styles.state}>
+      <Text style={styles.stateTitle}>{title}</Text>
+      <Text style={styles.stateText}>{text}</Text>
+      {action ? (
+        <Pressable
+          onPress={action}
+          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
+        >
+          <Text style={styles.retryText}>重试</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { backgroundColor: COLORS.background, flex: 1 },
+  content: { paddingBottom: 48, paddingHorizontal: 20 },
+  header: { paddingBottom: 18, paddingTop: 20 },
+  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
+  lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 112, paddingVertical: 16 },
+  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
+  revisionIcon: { alignItems: 'center', backgroundColor: COLORS.accentSoft, borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
+  rowMain: { flex: 1, marginLeft: 13, minWidth: 0 },
+  rowTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
+  note: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
+  rowMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 7 },
+  compare: { alignItems: 'center', backgroundColor: COLORS.background, borderRadius: 11, justifyContent: 'center', marginLeft: 10, minHeight: 36, paddingHorizontal: 11 },
+  compareText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
+  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 30 },
+  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 15, paddingHorizontal: 17, paddingVertical: 9 },
+  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+});

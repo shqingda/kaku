@@ -1,4 +1,5 @@
 export const queryKeys = {
+  wikiRevisions: () => ['wiki', 'kaku', 'revisions'] as const,
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   globalIndexes: (sort: string) => ['indexes', 'kaku', sort] as const,
   globalTags: (subjectType: number) =>
