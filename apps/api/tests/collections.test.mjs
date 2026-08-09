@@ -28,11 +28,13 @@ test('Bangumi collection maps status, rating, and main-story progress', async ()
       return Response.json({
         comment: '值得慢慢看',
         private: true,
+        ep_status: 5,
         rate: 9,
         subject_id: 42,
         subject_type: 2,
         tags: ['公路片', '奇幻'],
         type: 3,
+        vol_status: 1,
       });
     }
 
@@ -68,11 +70,13 @@ test('Bangumi collection treats a null comment as an empty note', async () => {
       Response.json({
         comment: null,
         private: null,
+        ep_status: null,
         rate: 0,
         subject_id: 43,
         subject_type: 1,
         tags: null,
         type: 1,
+        vol_status: null,
       }),
     subjectId: 43,
     username: 'kaku-user',
@@ -82,6 +86,8 @@ test('Bangumi collection treats a null comment as an empty note', async () => {
     collectionStatus: 'wish',
     comment: '',
     isPrivate: false,
+    readChapterCount: 0,
+    readVolumeCount: 0,
     subjectId: 43,
     tags: [],
     watchedEpisodeNumbers: [],
@@ -131,4 +137,27 @@ test('saving progress updates only changed Bangumi episode states', async () => 
     { episode_id: [102], type: 2 },
     { episode_id: [103], type: 0 },
   ]);
+});
+
+test('saving book progress maps chapters and volumes', async () => {
+  let body;
+
+  await saveBangumiPersonalCollection({
+    accessToken,
+    collectionStatus: 'doing',
+    fetcher: async (_input, init = {}) => {
+      body = JSON.parse(init.body);
+      return new Response(null, { status: 204 });
+    },
+    readChapterCount: 126,
+    readVolumeCount: 14,
+    subjectId: 44,
+  });
+
+  assert.deepEqual(body, {
+    ep_status: 126,
+    rate: 0,
+    type: 3,
+    vol_status: 14,
+  });
 });

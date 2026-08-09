@@ -197,6 +197,9 @@ function CollectionRowEditor({ item }: { item: PublicUserCollection }) {
     episodeAirDates: [],
     id: item.id,
     rating: item.rate,
+    readChapterCount: item.subjectType === 1 ? item.progress : undefined,
+    readVolumeCount:
+      item.subjectType === 1 ? item.volumeProgress : undefined,
     summary: '',
     title: item.title,
     totalEpisodes: item.totalEpisodes,

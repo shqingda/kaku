@@ -21,6 +21,7 @@ const collection = {
   },
   type: 3,
   updated_at: '2026-07-28T10:00:00+08:00',
+  vol_status: 2,
 };
 
 test('public user collection page maps progress and next offset', () => {
@@ -43,6 +44,7 @@ test('public user collection page maps progress and next offset', () => {
     title: '葬送的芙莉莲',
     totalEpisodes: 28,
     updatedAt: '2026-07-28T10:00:00+08:00',
+    volumeProgress: 2,
   });
 });
 

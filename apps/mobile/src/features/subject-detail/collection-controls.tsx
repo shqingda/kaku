@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import type { PersonalCollectionUpdate } from '@/features/collections/model';
 import {
   getCollectionStatusLabel,
+  supportsReadingProgress,
   supportsWatchProgress,
 } from '@/features/catalog/subject-types';
 import { getRatingLabel } from '@/features/reviews/rating-label';
@@ -42,6 +43,7 @@ export function CollectionControls({
   const subjectType = item.type ?? 2;
   const supportsProgress =
     supportsWatchProgress(subjectType) && item.totalEpisodes > 0;
+  const supportsBookProgress = supportsReadingProgress(subjectType);
   const status = item.collectionStatus ?? undefined;
   const canShowPersonalData = canRateCollectionStatus(status);
   const displayedProgress = supportsProgress
@@ -63,6 +65,18 @@ export function CollectionControls({
         collectionStatus: draft.collectionStatus ?? null,
         comment: draft.comment,
         isPrivate: draft.isPrivate,
+        readChapterCount:
+          supportsBookProgress && canSavePersonalData
+            ? draft.readChapterCount
+            : supportsBookProgress
+              ? 0
+              : undefined,
+        readVolumeCount:
+          supportsBookProgress && canSavePersonalData
+            ? draft.readVolumeCount
+            : supportsBookProgress
+              ? 0
+              : undefined,
         rating: canSavePersonalData ? draft.rating : undefined,
         tags: draft.tags,
         watchedEpisodeNumbers:
@@ -97,10 +111,19 @@ export function CollectionControls({
       item.rating !== undefined &&
       (draft.collectionStatus === 'wish' ||
         draft.collectionStatus === undefined);
+    const clearsReadingProgress =
+      ((item.readChapterCount ?? 0) > 0 || (item.readVolumeCount ?? 0) > 0) &&
+      (draft.collectionStatus === 'wish' ||
+        draft.collectionStatus === undefined);
     const removesCollection =
       draft.collectionStatus === undefined && status !== undefined;
 
-    if (!clearsProgress && !clearsRating && !removesCollection) {
+    if (
+      !clearsProgress &&
+      !clearsReadingProgress &&
+      !clearsRating &&
+      !removesCollection
+    ) {
       void applyDraft(draft);
       return;
     }
@@ -112,6 +135,9 @@ export function CollectionControls({
     const clearedRecords = [
       clearsProgress
         ? `已看的 ${item.watchedEpisodeNumbers.length} 集`
+        : null,
+      clearsReadingProgress
+        ? `阅读进度（${item.readChapterCount ?? 0} 章 / ${item.readVolumeCount ?? 0} 卷）`
         : null,
       clearsRating ? `${item.rating} 分评分` : null,
     ].filter(Boolean);
@@ -285,6 +311,8 @@ export function CollectionControls({
           saveDraft({
             collectionStatus: undefined,
             rating: undefined,
+            readChapterCount: 0,
+            readVolumeCount: 0,
             watchedCount: 0,
           })
         }

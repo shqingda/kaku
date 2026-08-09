@@ -16,6 +16,8 @@ const personalCollectionSchema = z.object({
   ]),
   comment: z.string(),
   isPrivate: z.boolean(),
+  readChapterCount: z.number().int().nonnegative().optional(),
+  readVolumeCount: z.number().int().nonnegative().optional(),
   rating: z.number().int().min(1).max(10).optional(),
   subjectId: z.number().int().positive(),
   tags: z.array(z.string()),

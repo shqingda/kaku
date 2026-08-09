@@ -5,6 +5,7 @@ import {
   getCollectionStatusLabel,
   getSubjectDetailLabels,
   getSubjectInfoKeys,
+  supportsReadingProgress,
   supportsWatchProgress,
   usesEpisodeData,
 } from '../src/features/catalog/subject-types.ts';
@@ -21,6 +22,8 @@ test('only watchable media exposes watched episode progress', () => {
   assert.equal(supportsWatchProgress(2), true);
   assert.equal(supportsWatchProgress(6), true);
   assert.equal(supportsWatchProgress(3), false);
+  assert.equal(supportsReadingProgress(1), true);
+  assert.equal(supportsReadingProgress(2), false);
   assert.equal(usesEpisodeData(3), true);
   assert.equal(usesEpisodeData(4), false);
 });

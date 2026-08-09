@@ -10,6 +10,8 @@ export type WatchingItem = {
   comment?: string;
   id: number;
   isPrivate?: boolean;
+  readChapterCount?: number;
+  readVolumeCount?: number;
   title: string;
   coverUrl: string;
   rating?: number;

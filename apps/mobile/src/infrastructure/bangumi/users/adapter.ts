@@ -65,6 +65,7 @@ export function toPublicUserCollection(
       collection.subject.name_cn.trim() || collection.subject.name,
     totalEpisodes: collection.subject.eps,
     updatedAt: collection.updated_at,
+    volumeProgress: collection.vol_status,
   };
 }
 

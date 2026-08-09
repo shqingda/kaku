@@ -182,6 +182,14 @@ export default function SubjectScreen() {
     ),
     id: subjectId,
     isPrivate: session ? personalCollection?.isPrivate ?? false : undefined,
+    readChapterCount:
+      session && catalogSubject.type === 1
+        ? personalCollection?.readChapterCount ?? 0
+        : undefined,
+    readVolumeCount:
+      session && catalogSubject.type === 1
+        ? personalCollection?.readVolumeCount ?? 0
+        : undefined,
     rating: personalCollection?.rating,
     summary,
     tags: session ? personalCollection?.tags ?? [] : undefined,

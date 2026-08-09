@@ -114,6 +114,7 @@ export const bangumiUserCollectionsSchema = z.object({
       }),
       type: z.number(),
       updated_at: z.string(),
+      vol_status: z.number(),
     }),
   ),
   limit: z.number(),

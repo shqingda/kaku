@@ -54,6 +54,10 @@ export function useSavePersonalCollection(subjectId: number) {
               collectionStatus: update.collectionStatus,
               comment: update.comment ?? previous?.comment ?? '',
               isPrivate: update.isPrivate ?? previous?.isPrivate ?? false,
+              readChapterCount:
+                update.readChapterCount ?? previous?.readChapterCount,
+              readVolumeCount:
+                update.readVolumeCount ?? previous?.readVolumeCount,
               rating: update.rating,
               subjectId,
               tags: update.tags ?? previous?.tags ?? [],

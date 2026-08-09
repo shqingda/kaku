@@ -5,6 +5,7 @@ export type PublicUserCollection = {
   coverUrl?: string;
   id: number;
   progress: number;
+  volumeProgress: number;
   rate?: number;
   subjectType: number;
   title: string;

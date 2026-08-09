@@ -139,6 +139,10 @@ export function supportsWatchProgress(subjectType: number) {
   return subjectType === 2 || subjectType === 6;
 }
 
+export function supportsReadingProgress(subjectType: number) {
+  return subjectType === 1;
+}
+
 export function usesEpisodeData(subjectType: number) {
   return supportsWatchProgress(subjectType) || subjectType === 3;
 }

@@ -28,6 +28,8 @@ export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
   comment?: string;
   isPrivate?: boolean;
+  readChapterCount?: number;
+  readVolumeCount?: number;
   rating?: number;
   tags?: string[];
   watchedCount: number;
@@ -71,11 +73,21 @@ export function CollectionBoxSheet({
   const [rating, setRating] = useState(item.rating);
   const [comment, setComment] = useState(item.comment ?? '');
   const [isPrivate, setIsPrivate] = useState(item.isPrivate ?? false);
+  const [readChapterCount, setReadChapterCount] = useState(
+    String(item.readChapterCount ?? 0),
+  );
+  const [readVolumeCount, setReadVolumeCount] = useState(
+    String(item.readVolumeCount ?? 0),
+  );
   const [tags, setTags] = useState(item.tags ?? []);
   const [tagDraft, setTagDraft] = useState('');
   const canEditPersonalData = canRateCollectionStatus(status);
   const showsProgress =
     canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
+  const showsReadingProgress =
+    canEditPersonalData &&
+    item.readChapterCount !== undefined &&
+    item.readVolumeCount !== undefined;
   const progressDigits = String(item.totalEpisodes).length;
   const progressTotalWidth = 22 + progressDigits * 10;
 
@@ -89,6 +101,8 @@ export function CollectionBoxSheet({
     setRating(item.rating);
     setComment(item.comment ?? '');
     setIsPrivate(item.isPrivate ?? false);
+    setReadChapterCount(String(item.readChapterCount ?? 0));
+    setReadVolumeCount(String(item.readVolumeCount ?? 0));
     setTags(item.tags ?? []);
     setTagDraft('');
   }, [
@@ -96,6 +110,8 @@ export function CollectionBoxSheet({
     item.rating,
     item.comment,
     item.isPrivate,
+    item.readChapterCount,
+    item.readVolumeCount,
     item.tags,
     item.watchedEpisodeNumbers.length,
     visible,
@@ -107,6 +123,8 @@ export function CollectionBoxSheet({
       showsProgress && Number.isInteger(parsedCount)
         ? Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
         : 0;
+    const parsedChapterCount = Number(readChapterCount);
+    const parsedVolumeCount = Number(readVolumeCount);
 
     const pendingTag = tagDraft.trim();
     const nextTags =
@@ -120,6 +138,16 @@ export function CollectionBoxSheet({
       collectionStatus: status,
       comment: item.comment !== undefined ? comment.trim() : undefined,
       isPrivate: item.isPrivate !== undefined ? isPrivate : undefined,
+      readChapterCount:
+        item.readChapterCount !== undefined &&
+        Number.isInteger(parsedChapterCount)
+          ? Math.max(parsedChapterCount, 0)
+          : undefined,
+      readVolumeCount:
+        item.readVolumeCount !== undefined &&
+        Number.isInteger(parsedVolumeCount)
+          ? Math.max(parsedVolumeCount, 0)
+          : undefined,
       rating: canEditPersonalData ? rating : undefined,
       tags: item.tags !== undefined ? nextTags : undefined,
       watchedCount: nextCount,
@@ -280,6 +308,43 @@ export function CollectionBoxSheet({
                   </>
                 ) : null}
 
+                {showsReadingProgress ? (
+                  <>
+                    <View style={styles.recordRow}>
+                      <Text style={styles.recordTitle}>阅读进度</Text>
+                      <View style={styles.readingFields}>
+                        <View style={styles.readingField}>
+                          <TextInput
+                            accessibilityLabel="已读章节"
+                            keyboardType="number-pad"
+                            onChangeText={(value) =>
+                              setReadChapterCount(value.replace(/\D/g, ''))
+                            }
+                            selectTextOnFocus
+                            style={styles.readingInput}
+                            value={readChapterCount}
+                          />
+                          <Text style={styles.readingUnit}>章</Text>
+                        </View>
+                        <View style={styles.readingField}>
+                          <TextInput
+                            accessibilityLabel="已读卷数"
+                            keyboardType="number-pad"
+                            onChangeText={(value) =>
+                              setReadVolumeCount(value.replace(/\D/g, ''))
+                            }
+                            selectTextOnFocus
+                            style={styles.readingInput}
+                            value={readVolumeCount}
+                          />
+                          <Text style={styles.readingUnit}>卷</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.recordDivider} />
+                  </>
+                ) : null}
+
                 {canEditPersonalData ? (
                   <View style={styles.ratingRecord}>
                     <View style={styles.ratingHeading}>
@@ -345,10 +410,17 @@ export function CollectionBoxSheet({
                             item.type ?? 2,
                             'wish',
                           )}状态不记录${
-                            supportsProgress ? '观看进度和' : ''
+                            supportsProgress
+                              ? '观看进度和'
+                              : item.readChapterCount !== undefined
+                                ? '阅读进度和'
+                                : ''
                           }评分`
                         : `选择收藏状态后可${
-                            supportsProgress ? '记录进度和' : ''
+                            supportsProgress ||
+                            item.readChapterCount !== undefined
+                              ? '记录进度和'
+                              : ''
                           }评分`}
                     </Text>
                   </View>
@@ -623,6 +695,34 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     textAlignVertical: 'center',
   },
+  readingFields: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  readingField: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  readingInput: {
+    backgroundColor: COLORS.surface,
+    borderColor: '#D8D3CA',
+    borderRadius: 8,
+    borderWidth: 1,
+    color: COLORS.accent,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    height: 32,
+    includeFontPadding: false,
+    lineHeight: 20,
+    padding: 0,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    width: 48,
+  },
+  readingUnit: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
   ratingRecord: { gap: 12 },
   ratingHeading: {
     alignItems: 'center',

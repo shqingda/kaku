@@ -13,6 +13,12 @@ const PAGE_SIZE = 1000;
 
 const userCollectionSchema = z.object({
   comment: z.string().nullish().transform((comment) => comment ?? ''),
+  ep_status: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullish()
+    .transform((count) => count ?? 0),
   private: z
     .boolean()
     .nullish()
@@ -25,6 +31,12 @@ const userCollectionSchema = z.object({
     .nullish()
     .transform((tags) => [...new Set(tags ?? [])]),
   type: z.number().int().min(1).max(5),
+  vol_status: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullish()
+    .transform((count) => count ?? 0),
 });
 
 const episodeCollectionPageSchema = z.object({
@@ -145,6 +157,12 @@ export async function getBangumiPersonalCollection({
     collectionStatus,
     comment: collection.comment,
     isPrivate: collection.private,
+    ...(collection.subject_type === 1
+      ? {
+          readChapterCount: collection.ep_status,
+          readVolumeCount: collection.vol_status,
+        }
+      : {}),
     ...(collection.rate > 0 ? { rating: collection.rate } : {}),
     subjectId,
     tags: collection.tags,
@@ -223,6 +241,8 @@ export async function saveBangumiPersonalCollection({
   comment,
   fetcher,
   isPrivate,
+  readChapterCount,
+  readVolumeCount,
   rating,
   subjectId,
   tags,
@@ -233,6 +253,8 @@ export async function saveBangumiPersonalCollection({
   comment?: string;
   fetcher: typeof fetch;
   isPrivate?: boolean;
+  readChapterCount?: number;
+  readVolumeCount?: number;
   rating?: number;
   subjectId: number;
   tags?: string[];
@@ -244,9 +266,15 @@ export async function saveBangumiPersonalCollection({
       body: JSON.stringify({
         ...(comment !== undefined ? { comment } : {}),
         ...(isPrivate !== undefined ? { private: isPrivate } : {}),
+        ...(readChapterCount !== undefined
+          ? { ep_status: readChapterCount }
+          : {}),
         rate: rating ?? 0,
         ...(tags !== undefined ? { tags } : {}),
         type: collectionStatusToBangumiType[collectionStatus],
+        ...(readVolumeCount !== undefined
+          ? { vol_status: readVolumeCount }
+          : {}),
       }),
       headers: headers(accessToken, true),
       method: 'POST',

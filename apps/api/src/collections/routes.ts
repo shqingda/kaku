@@ -25,6 +25,8 @@ const collectionUpdateSchema = z.object({
     .nullable(),
   comment: z.string().max(1000).optional(),
   isPrivate: z.boolean().optional(),
+  readChapterCount: z.number().int().nonnegative().optional(),
+  readVolumeCount: z.number().int().nonnegative().optional(),
   rating: z.number().int().min(1).max(10).optional(),
   tags: z.array(z.string().min(1).regex(/^\S+$/)).optional(),
   watchedEpisodeNumbers: z
@@ -167,6 +169,8 @@ export function registerCollectionRoutes(
         comment: parsedBody.data.comment,
         fetcher,
         isPrivate: parsedBody.data.isPrivate,
+        readChapterCount: parsedBody.data.readChapterCount,
+        readVolumeCount: parsedBody.data.readVolumeCount,
         rating: parsedBody.data.rating,
         subjectId,
         tags: parsedBody.data.tags,

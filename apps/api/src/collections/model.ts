@@ -9,6 +9,8 @@ export type PersonalCollection = {
   collectionStatus: CollectionStatus;
   comment: string;
   isPrivate: boolean;
+  readChapterCount?: number;
+  readVolumeCount?: number;
   rating?: number;
   subjectId: number;
   tags: string[];
