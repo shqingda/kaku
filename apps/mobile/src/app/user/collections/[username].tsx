@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -35,11 +36,14 @@ const COLLECTION_STATUSES = new Set<CollectionStatus>([
   'wish',
 ]);
 
-const TRACKING_TYPES = [
-  { id: 2, label: '动画' },
-  { id: 1, label: '书籍' },
-  { id: 6, label: '三次元' },
-] as const;
+const COLLECTION_STATUS_OPTIONS: Array<CollectionStatus | undefined> = [
+  undefined,
+  'wish',
+  'completed',
+  'doing',
+  'onHold',
+  'dropped',
+];
 
 function parseCollectionStatus(value?: string) {
   return value && COLLECTION_STATUSES.has(value as CollectionStatus)
@@ -54,12 +58,15 @@ export default function PublicUserCollectionsScreen() {
     username: string;
   }>();
   const { session } = useAuth();
+  const listRef = useRef<FlatList<PublicUserCollection>>(null);
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
   );
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
-  const collectionStatus = parseCollectionStatus(status);
+  const [collectionStatus, setCollectionStatus] = useState(() =>
+    parseCollectionStatus(status),
+  );
   const collectionStatusLabel = collectionStatus
     ? getCollectionStatusLabel(subjectType, collectionStatus)
     : undefined;
@@ -89,6 +96,7 @@ export default function PublicUserCollectionsScreen() {
         }}
       />
       <FlatList
+        ref={listRef}
         contentContainerStyle={styles.content}
         data={collections}
         initialNumToRender={12}
@@ -142,7 +150,14 @@ export default function PublicUserCollectionsScreen() {
               contentContainerStyle={styles.subjectTypeTabs}
               onChange={setSubjectType}
               selectedType={subjectType}
-              types={isTrackingPage ? TRACKING_TYPES : undefined}
+            />
+            <CollectionStatusTabs
+              onChange={(nextStatus) => {
+                setCollectionStatus(nextStatus);
+                listRef.current?.scrollToOffset({ animated: false, offset: 0 });
+              }}
+              selectedStatus={collectionStatus}
+              subjectType={subjectType}
             />
           </>
         }
@@ -186,6 +201,54 @@ export default function PublicUserCollectionsScreen() {
         windowSize={7}
       />
     </SafeAreaView>
+  );
+}
+
+function CollectionStatusTabs({
+  onChange,
+  selectedStatus,
+  subjectType,
+}: {
+  onChange: (status: CollectionStatus | undefined) => void;
+  selectedStatus?: CollectionStatus;
+  subjectType: number;
+}) {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.statusTabs}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+    >
+      {COLLECTION_STATUS_OPTIONS.map((status) => {
+        const selected = status === selectedStatus;
+        const label = status
+          ? getCollectionStatusLabel(subjectType, status)
+          : '全部';
+
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            key={status ?? 'all'}
+            onPress={() => onChange(status)}
+            style={({ pressed }) => [
+              styles.statusTab,
+              selected && styles.statusTabSelected,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusTabText,
+                selected && styles.statusTabTextSelected,
+              ]}
+            >
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -274,6 +337,20 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   subjectTypeTabs: { paddingBottom: 14 },
+  statusTabs: { gap: 8, paddingBottom: 18, paddingRight: 20 },
+  statusTab: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderCurve: 'continuous',
+    borderRadius: 13,
+    justifyContent: 'center',
+    minHeight: 38,
+    minWidth: 58,
+    paddingHorizontal: 14,
+  },
+  statusTabSelected: { backgroundColor: COLORS.ink },
+  statusTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  statusTabTextSelected: { color: COLORS.surface },
   item: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',
