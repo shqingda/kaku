@@ -175,7 +175,9 @@ test('entity collection reads missing state and writes official methods', async 
         ? new Response(null, { status: 404 })
         : Response.json({ id: 1, name: '角色' });
     }
-    return new Response(null, { status: 204 });
+    return new Response(null, {
+      status: init.method === 'DELETE' ? 404 : 204,
+    });
   };
 
   assert.equal(

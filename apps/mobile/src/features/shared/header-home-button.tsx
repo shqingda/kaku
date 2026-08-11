@@ -15,7 +15,7 @@ export function HeaderHomeButton() {
     >
       <SymbolView
         name={{ android: 'home', ios: 'house.fill', web: 'home' }}
-        size={15}
+        size={21}
         tintColor={COLORS.ink}
         weight="semibold"
       />
@@ -26,12 +26,9 @@ export function HeaderHomeButton() {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
-    borderCurve: 'continuous',
-    borderRadius: 17,
-    height: 34,
+    height: 44,
     justifyContent: 'center',
-    width: 34,
+    width: 44,
   },
   pressed: { opacity: 0.56 },
 });

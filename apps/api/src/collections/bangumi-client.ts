@@ -141,6 +141,10 @@ export async function setBangumiEntityCollection({
     },
   );
 
+  if (!collected && response.status === 404) {
+    return;
+  }
+
   if (!response.ok) {
     throw new BangumiApiError(
       `Bangumi ${collected ? '收藏' : '取消收藏'}失败（${response.status}）`,

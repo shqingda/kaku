@@ -52,7 +52,7 @@ export function ScrollToTopButton({
         <SymbolView
           name={{ android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }}
           size={18}
-          tintColor={Platform.OS === 'android' ? COLORS.surface : COLORS.ink}
+          tintColor={COLORS.ink}
           weight="semibold"
         />
       </Pressable>
@@ -69,14 +69,16 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    backgroundColor:
-      Platform.OS === 'android' ? COLORS.ink : 'rgba(255, 255, 255, 0.96)',
-    borderColor: 'rgba(29, 29, 31, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderColor:
+      Platform.OS === 'android'
+        ? 'rgba(29, 29, 31, 0.14)'
+        : 'rgba(29, 29, 31, 0.08)',
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     height: 44,
     justifyContent: 'center',
-    elevation: 6,
+    elevation: Platform.OS === 'android' ? 8 : 0,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,
