@@ -280,6 +280,12 @@ const bangumiTimelineSubjectSchema = z.object({
   type: z.number().default(0),
 });
 
+const bangumiTimelineEntitySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  nameCN: z.string().optional(),
+});
+
 export const bangumiUserTimelineSchema = z.array(
   z.object({
     batch: z.boolean().default(false),
@@ -289,7 +295,16 @@ export const bangumiUserTimelineSchema = z.array(
     memo: z
       .object({
         blog: z.object({ title: z.string() }).optional(),
+        daily: z
+          .object({ users: z.array(bangumiUserSchema).optional() })
+          .optional(),
         index: z.object({ title: z.string() }).optional(),
+        mono: z
+          .object({
+            characters: z.array(bangumiTimelineEntitySchema).default([]),
+            persons: z.array(bangumiTimelineEntitySchema).default([]),
+          })
+          .optional(),
         progress: z
           .object({
             batch: z

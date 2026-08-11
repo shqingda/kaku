@@ -7,6 +7,7 @@ import { AppState, Platform } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
+import { HeaderHomeButton } from '@/features/shared/header-home-button';
 import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
@@ -60,7 +61,12 @@ export default function RootLayout() {
       >
         <AuthProvider>
           <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack
+            screenOptions={{
+              headerRight: () => <HeaderHomeButton />,
+              headerShown: false,
+            }}
+          >
           <Stack.Screen name="index" />
           <Stack.Screen
             name="timeline"

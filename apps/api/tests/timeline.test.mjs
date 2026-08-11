@@ -181,6 +181,68 @@ test('Bangumi daily timeline keeps its real action', async () => {
   assert.equal(page.items[0]?.text, '加入了 Bangumi');
 });
 
+test('Bangumi friend event keeps the added friend name', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: false,
+        cat: 1,
+        createdAt: 1_785_940_000,
+        id: 47,
+        memo: {
+          daily: {
+            users: [
+              {
+                avatar: {},
+                id: 8,
+                nickname: '蓝与火',
+                username: 'blue-fire',
+              },
+            ],
+          },
+        },
+        replies: 0,
+        type: 2,
+        user: { avatar: {}, nickname: '魂', username: 'soul' },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.equal(page.items[0]?.text, '将 蓝与火 加为了好友');
+});
+
+test('Bangumi entity collection event keeps its person name', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: false,
+        cat: 8,
+        createdAt: 1_785_940_000,
+        id: 48,
+        memo: {
+          mono: {
+            characters: [],
+            persons: [{ id: 9, name: 'ゆたかめ' }],
+          },
+        },
+        replies: 0,
+        type: 1,
+        user: { avatar: {}, nickname: 'vxow', username: 'vxow' },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.equal(page.items[0]?.text, '收藏了人物 ゆたかめ');
+});
+
 test('Bangumi friend timeline uses the last raw id as its next cursor', async () => {
   const fetcher = async (input) => {
     assert.equal(

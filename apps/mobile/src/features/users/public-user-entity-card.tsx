@@ -23,7 +23,7 @@ export function PublicUserEntityCard({
         <Text style={styles.fallback}>{entity.name.slice(0, 1)}</Text>
         {entity.imageUrl ? (
           <Image
-            contentFit="contain"
+            contentFit="cover"
             contentPosition="top"
             source={entity.imageUrl}
             style={StyleSheet.absoluteFill}
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   portrait: {
     alignItems: 'center',
-    aspectRatio: 0.76,
+    aspectRatio: 112 / 154,
     backgroundColor: COLORS.track,
     borderRadius: 14,
     justifyContent: 'center',

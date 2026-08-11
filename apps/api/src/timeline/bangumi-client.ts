@@ -12,6 +12,19 @@ const subjectSchema = z.object({
   type: z.number().int().default(0),
 });
 
+const timelineUserSchema = z.object({
+  avatar: z.object({ small: z.string().optional() }).optional(),
+  id: z.number().int().positive().optional(),
+  nickname: z.string(),
+  username: z.string(),
+});
+
+const timelineEntitySchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  nameCN: z.string().optional(),
+});
+
 const timelineSchema = z.object({
   batch: z.boolean().default(false),
   cat: z.number().int(),
@@ -19,7 +32,16 @@ const timelineSchema = z.object({
   id: z.number().int().positive(),
   memo: z.object({
     blog: z.object({ title: z.string() }).optional(),
+    daily: z
+      .object({ users: z.array(timelineUserSchema).optional() })
+      .optional(),
     index: z.object({ title: z.string() }).optional(),
+    mono: z
+      .object({
+        characters: z.array(timelineEntitySchema).default([]),
+        persons: z.array(timelineEntitySchema).default([]),
+      })
+      .optional(),
     progress: z
       .object({
         batch: z
@@ -132,6 +154,11 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
 
   switch (item.cat) {
     case 1:
+      if (item.type === 2 && item.memo.daily?.users?.length) {
+        return {
+          text: `将 ${item.memo.daily.users.map((user) => user.nickname || user.username).join('、')} 加为了好友`,
+        };
+      }
       return {
         text:
           item.type === 1
@@ -199,6 +226,16 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
       return { text: item.memo.blog ? `发表了日志《${item.memo.blog.title}》` : '发表了日志' };
     case 7:
       return { text: item.memo.index ? `更新了目录《${item.memo.index.title}》` : '更新了目录' };
+    case 8: {
+      const character = item.memo.mono?.characters[0];
+      const person = item.memo.mono?.persons[0];
+      const entity = character ?? person;
+      if (!entity) return { text: '更新了人物收藏' };
+      const title = entity.nameCN?.trim() || entity.name;
+      return {
+        text: `${item.type === 1 ? '收藏了' : '创建了'}${character ? '角色' : '人物'} ${title}`,
+      };
+    }
     default:
       return { text: '更新了一条动态' };
   }

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
+import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
 import { playSuccessHaptic } from '@/lib/haptics';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -48,6 +49,7 @@ export function EntityDetailScreen({
 }) {
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [portraitVisible, setPortraitVisible] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
@@ -76,8 +78,26 @@ export function EntityDetailScreen({
       return;
     }
 
+    const nextCollected = !collectionQuery.data;
+
+    if (!nextCollected) {
+      Alert.alert(`取消收藏${kind}？`, `确认将“${data?.name ?? kind}”移出收藏？`, [
+        { style: 'cancel', text: '保留' },
+        {
+          onPress: () => void saveCollectionState(false),
+          style: 'destructive',
+          text: '取消收藏',
+        },
+      ]);
+      return;
+    }
+
+    await saveCollectionState(true);
+  }
+
+  async function saveCollectionState(collected: boolean) {
     try {
-      await saveCollection.mutateAsync(!collectionQuery.data);
+      await saveCollection.mutateAsync(collected);
       playSuccessHaptic();
     } catch (error) {
       Alert.alert(
@@ -106,7 +126,16 @@ export function EntityDetailScreen({
           ListHeaderComponent={
             <>
               <View style={styles.hero}>
-                <View style={styles.portrait}>
+                <Pressable
+                  accessibilityLabel={`全屏查看${data.name}图片`}
+                  accessibilityRole="button"
+                  disabled={!data.imageUrl}
+                  onPress={() => setPortraitVisible(true)}
+                  style={({ pressed }) => [
+                    styles.portrait,
+                    pressed && styles.pressed,
+                  ]}
+                >
                   <Text style={styles.fallback}>{data.name.slice(0, 1)}</Text>
                   {data.imageUrl ? (
                     <Image
@@ -117,7 +146,7 @@ export function EntityDetailScreen({
                       transition={140}
                     />
                   ) : null}
-                </View>
+                </Pressable>
                 <View style={styles.heroMain}>
                   <Text selectable style={styles.name}>
                     {data.name}
@@ -185,7 +214,7 @@ export function EntityDetailScreen({
                           : collectionQuery.isError
                             ? '重试'
                             : collectionQuery.data
-                              ? '已收藏'
+                              ? '取消收藏'
                               : '收藏'}
                     </Text>
                   </Pressable>
@@ -325,6 +354,12 @@ export function EntityDetailScreen({
           />
         </SafeAreaView>
       </Modal>
+      <FullscreenImageViewer
+        onClose={() => setPortraitVisible(false)}
+        title={data?.name ?? kind}
+        url={data?.imageUrl}
+        visible={portraitVisible}
+      />
     </SafeAreaView>
   );
 }

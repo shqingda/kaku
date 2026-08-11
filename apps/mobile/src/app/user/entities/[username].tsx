@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -11,7 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import type { PublicUserEntityKind } from '@/features/users/model';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import type {
+  PublicUserEntityCollection,
+  PublicUserEntityKind,
+} from '@/features/users/model';
 import { PublicUserEntityCard } from '@/features/users/public-user-entity-card';
 import { usePublicUserEntities } from '@/features/users/use-public-user';
 
@@ -23,6 +27,8 @@ const TABS: { kind: PublicUserEntityKind; label: string }[] = [
 export default function PublicUserEntitiesScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const [kind, setKind] = useState<PublicUserEntityKind>('character');
+  const listRef = useRef<FlatList<PublicUserEntityCollection>>(null);
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const entitiesQuery = usePublicUserEntities(username, kind);
   const entities = entitiesQuery.data?.items ?? [];
 
@@ -30,6 +36,7 @@ export default function PublicUserEntitiesScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '角色与人物' }} />
       <FlatList
+        ref={listRef}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
         data={entities}
@@ -88,6 +95,12 @@ export default function PublicUserEntitiesScreen() {
           </View>
         }
         numColumns={2}
+        onScroll={(event) => {
+          const shouldShow = event.nativeEvent.contentOffset.y > 720;
+          setShowsScrollToTop((current) =>
+            current === shouldShow ? current : shouldShow,
+          );
+        }}
         refreshControl={
           <RefreshControl
             colors={[COLORS.accent]}
@@ -111,7 +124,12 @@ export default function PublicUserEntitiesScreen() {
           />
         )}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={80}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={() => listRef.current?.scrollToOffset({ animated: true, offset: 0 })}
+        visible={showsScrollToTop}
       />
     </SafeAreaView>
   );

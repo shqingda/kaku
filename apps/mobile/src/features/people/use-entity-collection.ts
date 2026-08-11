@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import type { PublicUserEntityCollectionPage } from '@/features/users/model';
 import {
   getEntityCollection,
   saveEntityCollection,
@@ -58,8 +59,25 @@ export function useSaveEntityCollection(
             : queryKeys.person(entityId),
       });
       if (session) {
+        const collectionListKey = queryKeys.publicUserEntities(
+          session.user.username,
+          kind,
+        );
+        if (!collected) {
+          queryClient.setQueryData<PublicUserEntityCollectionPage>(
+            collectionListKey,
+            (current) =>
+              current
+                ? {
+                    ...current,
+                    items: current.items.filter((item) => item.id !== entityId),
+                    total: Math.max(0, current.total - 1),
+                  }
+                : current,
+          );
+        }
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.publicUserEntities(session.user.username, kind),
+          queryKey: collectionListKey,
         });
       }
     },

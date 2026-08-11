@@ -208,6 +208,12 @@ export function toPublicTimelineItem(
 
   switch (item.cat) {
     case 1:
+      if (item.type === 2 && item.memo.daily?.users?.length) {
+        text = `将 ${item.memo.daily.users
+          .map((user) => user.nickname || user.username)
+          .join('、')} 加为了好友`;
+        break;
+      }
       text =
         item.type === 1
           ? '加入了 Bangumi'
@@ -221,6 +227,15 @@ export function toPublicTimelineItem(
                   ? '加入了乐园'
                   : '完成了一项日常活动';
       break;
+    case 8: {
+      const character = item.memo.mono?.characters[0];
+      const person = item.memo.mono?.persons[0];
+      const entity = character ?? person;
+      text = entity
+        ? `${item.type === 1 ? '收藏了' : '创建了'}${character ? '角色' : '人物'} ${entity.nameCN?.trim() || entity.name}`
+        : '更新了人物收藏';
+      break;
+    }
     case 2:
       text = wikiSubject ? withSubject('编辑了条目 ') : '参与了条目编辑';
       break;

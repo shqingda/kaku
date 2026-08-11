@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { COLORS } from '@/constants/design';
@@ -52,7 +52,7 @@ export function ScrollToTopButton({
         <SymbolView
           name={{ android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }}
           size={18}
-          tintColor={COLORS.ink}
+          tintColor={Platform.OS === 'android' ? COLORS.surface : COLORS.ink}
           weight="semibold"
         />
       </Pressable>
@@ -69,12 +69,14 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    backgroundColor:
+      Platform.OS === 'android' ? COLORS.ink : 'rgba(255, 255, 255, 0.96)',
     borderColor: 'rgba(29, 29, 31, 0.08)',
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     height: 44,
     justifyContent: 'center',
+    elevation: 6,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,

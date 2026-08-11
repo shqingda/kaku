@@ -1,5 +1,5 @@
-import { useState, type ComponentProps } from 'react';
-import { Link, router } from 'expo-router';
+import { useEffect, useState, type ComponentProps } from 'react';
+import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -52,6 +52,13 @@ export default function HomeScreen() {
       query.isError ||
       (query.data?.pages[0]?.total ?? 0) > 0,
   );
+
+  useEffect(() => {
+    router.prefetch('/explore');
+    router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
+    router.prefetch('/rankings');
+    router.prefetch('/community');
+  }, []);
 
   function refreshHome() {
     void Promise.all([
@@ -296,22 +303,22 @@ function QuickActionRow({
   meta,
 }: {
   hasDivider?: boolean;
-  href: ComponentProps<typeof Link>['href'];
+  href: Href;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   meta: string;
 }) {
   return (
-    <Link asChild href={href} prefetch>
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.quickActionRow,
-          hasDivider && styles.quickDivider,
-          pressed && styles.pressed,
-        ]}
-      >
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={() => router.push(href)}
+      style={({ pressed }) => [
+        styles.quickActionRow,
+        hasDivider && styles.quickDivider,
+        pressed && styles.pressed,
+      ]}
+    >
         <View style={styles.quickIcon}>
           <SymbolView
             name={icon}
@@ -336,8 +343,7 @@ function QuickActionRow({
           tintColor={COLORS.subtle}
           weight="semibold"
         />
-      </Pressable>
-    </Link>
+    </Pressable>
   );
 }
 

@@ -94,3 +94,45 @@ test('public timeline explains a registration event', () => {
 
   assert.equal(page.items[0].text, '加入了 Bangumi');
 });
+
+test('public timeline keeps friend and person collection semantics', () => {
+  const timeline = bangumiUserTimelineSchema.parse([
+    {
+      batch: false,
+      cat: 1,
+      createdAt: 101,
+      id: 202,
+      memo: {
+        daily: {
+          users: [
+            {
+              avatar: {},
+              id: 1,
+              nickname: '蓝与火',
+              username: 'blue-fire',
+            },
+          ],
+        },
+      },
+      type: 2,
+    },
+    {
+      batch: false,
+      cat: 8,
+      createdAt: 100,
+      id: 201,
+      memo: {
+        mono: {
+          characters: [],
+          persons: [{ id: 2, name: 'ゆたかめ' }],
+        },
+      },
+      type: 1,
+    },
+  ]);
+
+  const page = toPublicTimelinePage(timeline, 10);
+
+  assert.equal(page.items[0].text, '将 蓝与火 加为了好友');
+  assert.equal(page.items[1].text, '收藏了人物 ゆたかめ');
+});
