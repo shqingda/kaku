@@ -23,6 +23,8 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
+import type { DiscoverSubjectPage } from '@/features/discover/model';
+import { readInfinitePages } from '@/lib/query-data';
 
 export default function RankingsScreen() {
   const { type } = useLocalSearchParams<{ type?: string }>();
@@ -32,15 +34,28 @@ export default function RankingsScreen() {
   );
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
-  const entranceOpacity = useRef(new Animated.Value(0)).current;
-  const entranceTranslateY = useRef(new Animated.Value(6)).current;
-  const subjects = useMemo(
-    () => rankingQuery.data?.pages.flatMap((page) => page.items) ?? [],
+  const entranceOpacity = useRef(
+    new Animated.Value(Platform.OS === 'ios' ? 0 : 1),
+  ).current;
+  const entranceTranslateY = useRef(
+    new Animated.Value(Platform.OS === 'ios' ? 6 : 0),
+  ).current;
+  const pages = useMemo(
+    () => readInfinitePages<DiscoverSubjectPage>(rankingQuery.data),
     [rankingQuery.data],
   );
-  const total = rankingQuery.data?.pages[0]?.total;
+  const subjects = useMemo(
+    () =>
+      pages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
+    [pages],
+  );
+  const total = pages[0]?.total;
 
   useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
     let active = true;
 
     void AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {

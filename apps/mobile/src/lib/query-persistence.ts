@@ -7,7 +7,9 @@ type PersistableQuery = {
 };
 
 export const QUERY_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
-export const QUERY_CACHE_BUSTER = 'public-catalog-v1';
+// Increment this when persisted public query shapes change. It prevents an
+// older native install from hydrating data that current screens cannot read.
+export const QUERY_CACHE_BUSTER = 'public-catalog-v2';
 
 export function isPrivateQuery(query: { meta?: Record<string, unknown> }) {
   return query.meta?.private === true;

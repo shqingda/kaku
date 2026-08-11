@@ -24,7 +24,11 @@ import {
   getSubjectTypeLabel,
   getSubjectTypeSlug,
 } from '@/features/catalog/subject-types';
-import type { DiscoverSubject } from '@/features/discover/model';
+import type {
+  CalendarDay,
+  DiscoverSubject,
+  DiscoverSubjectPage,
+} from '@/features/discover/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
@@ -48,6 +52,7 @@ import {
   useBangumiRankedSubjects,
   useBangumiSearch,
 } from '@/features/discover/use-discover';
+import { readInfinitePages, readQueryArray } from '@/lib/query-data';
 
 function currentWeekdayId() {
   const day = new Date().getDay();
@@ -66,16 +71,31 @@ export default function ExploreScreen() {
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
-  const searchSubjects = useMemo(
-    () => searchQuery.data?.pages.flatMap((page) => page.items) ?? [],
+  const calendarDays = useMemo(
+    () => readQueryArray<CalendarDay>(calendarQuery.data),
+    [calendarQuery.data],
+  );
+  const rankedPages = useMemo(
+    () => readInfinitePages<DiscoverSubjectPage>(rankedQuery.data),
+    [rankedQuery.data],
+  );
+  const searchPages = useMemo(
+    () => readInfinitePages<DiscoverSubjectPage>(searchQuery.data),
     [searchQuery.data],
   );
-  const searchTotal = searchQuery.data?.pages[0]?.total ?? 0;
+  const searchSubjects = useMemo(
+    () =>
+      searchPages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
+    [searchPages],
+  );
+  const searchTotal = searchPages[0]?.total ?? 0;
   const selectedCalendarDay = useMemo(
     () =>
-      calendarQuery.data?.find((day) => day.id === selectedDay) ??
-      calendarQuery.data?.[0],
-    [calendarQuery.data, selectedDay],
+      calendarDays.find((day) => day.id === selectedDay) ??
+      calendarDays[0],
+    [calendarDays, selectedDay],
   );
 
   useEffect(() => {
@@ -393,7 +413,7 @@ export default function ExploreScreen() {
                       horizontal
                       showsHorizontalScrollIndicator={false}
                     >
-                      {calendarQuery.data.map((day) => {
+                      {calendarDays.map((day) => {
                         const isSelected = day.id === selectedCalendarDay?.id;
 
                         return (
@@ -438,7 +458,11 @@ export default function ExploreScreen() {
               isError={rankedQuery.isError}
               isPending={rankedQuery.isPending}
               onRetry={() => void rankedQuery.refetch()}
-              subjects={rankedQuery.data?.pages[0]?.items ?? []}
+              subjects={
+                Array.isArray(rankedPages[0]?.items)
+                  ? rankedPages[0].items
+                  : []
+              }
               subjectType={selectedSearchType}
             />
           </View>
