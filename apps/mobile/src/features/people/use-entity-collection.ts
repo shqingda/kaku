@@ -76,9 +76,9 @@ export function useSaveEntityCollection(
                 : current,
           );
         }
-        void queryClient.invalidateQueries({
-          queryKey: collectionListKey,
-        });
+        if (collected) {
+          void queryClient.invalidateQueries({ queryKey: collectionListKey });
+        }
       }
     },
   });

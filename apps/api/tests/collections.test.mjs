@@ -171,7 +171,7 @@ test('entity collection reads missing state and writes official methods', async 
     requests.push({ method: init.method ?? 'GET', url: String(input) });
     if ((init.method ?? 'GET') === 'GET') {
       readCount += 1;
-      return readCount === 1
+      return readCount === 1 || readCount === 3
         ? new Response(null, { status: 404 })
         : Response.json({ id: 1, name: '角色' });
     }
@@ -206,6 +206,7 @@ test('entity collection reads missing state and writes official methods', async 
     entityId: 1,
     fetcher,
     kind: 'character',
+    username: 'kaku-user',
   });
   await setBangumiEntityCollection({
     accessToken,
@@ -213,6 +214,7 @@ test('entity collection reads missing state and writes official methods', async 
     entityId: 2,
     fetcher,
     kind: 'person',
+    username: 'kaku-user',
   });
 
   assert.deepEqual(
@@ -228,6 +230,10 @@ test('entity collection reads missing state and writes official methods', async 
       },
       { method: 'POST', path: '/v0/characters/1/collect' },
       { method: 'DELETE', path: '/v0/persons/2/collect' },
+      {
+        method: 'GET',
+        path: '/v0/users/kaku-user/collections/-/persons/2',
+      },
     ],
   );
 });

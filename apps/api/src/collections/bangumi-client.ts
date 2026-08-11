@@ -125,12 +125,14 @@ export async function setBangumiEntityCollection({
   entityId,
   fetcher,
   kind,
+  username,
 }: {
   accessToken: string;
   collected: boolean;
   entityId: number;
   fetcher: typeof fetch;
   kind: BangumiEntityKind;
+  username: string;
 }) {
   const response = await fetcher(
     `${BANGUMI_API_URL}/v0/${entityPath(kind)}/${entityId}/collect`,
@@ -142,7 +144,20 @@ export async function setBangumiEntityCollection({
   );
 
   if (!collected && response.status === 404) {
-    return;
+    const isStillCollected = await getBangumiEntityCollection({
+      accessToken,
+      entityId,
+      fetcher,
+      kind,
+      username,
+    });
+
+    if (!isStillCollected) return;
+
+    throw new BangumiApiError(
+      'Bangumi 返回的收藏状态不一致，请稍后重试。',
+      409,
+    );
   }
 
   if (!response.ok) {

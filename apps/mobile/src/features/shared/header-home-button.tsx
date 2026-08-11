@@ -14,10 +14,10 @@ export function HeaderHomeButton() {
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
     >
       <SymbolView
-        name={{ android: 'home', ios: 'house.fill', web: 'home' }}
-        size={21}
+        name={{ android: 'home', ios: 'house', web: 'home' }}
+        size={20}
         tintColor={COLORS.ink}
-        weight="semibold"
+        weight="regular"
       />
     </Pressable>
   );
