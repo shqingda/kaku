@@ -164,20 +164,18 @@ test('saving book progress maps chapters and volumes', async () => {
   });
 });
 
-test('entity collection reads missing state and writes official methods', async () => {
+test('entity collection reads v0 state and writes through P1 collection routes', async () => {
   const requests = [];
   let readCount = 0;
   const fetcher = async (input, init = {}) => {
     requests.push({ method: init.method ?? 'GET', url: String(input) });
     if ((init.method ?? 'GET') === 'GET') {
       readCount += 1;
-      return readCount === 1 || readCount === 3
+      return readCount === 1
         ? new Response(null, { status: 404 })
         : Response.json({ id: 1, name: '角色' });
     }
-    return new Response(null, {
-      status: init.method === 'DELETE' ? 404 : 204,
-    });
+    return Response.json({});
   };
 
   assert.equal(
@@ -206,7 +204,6 @@ test('entity collection reads missing state and writes official methods', async 
     entityId: 1,
     fetcher,
     kind: 'character',
-    username: 'kaku-user',
   });
   await setBangumiEntityCollection({
     accessToken,
@@ -214,7 +211,6 @@ test('entity collection reads missing state and writes official methods', async 
     entityId: 2,
     fetcher,
     kind: 'person',
-    username: 'kaku-user',
   });
 
   assert.deepEqual(
@@ -228,12 +224,11 @@ test('entity collection reads missing state and writes official methods', async 
         method: 'GET',
         path: '/v0/users/kaku-user/collections/-/characters/1',
       },
-      { method: 'POST', path: '/v0/characters/1/collect' },
-      { method: 'DELETE', path: '/v0/persons/2/collect' },
       {
-        method: 'GET',
-        path: '/v0/users/kaku-user/collections/-/persons/2',
+        method: 'PUT',
+        path: '/p1/collections/characters/1',
       },
+      { method: 'DELETE', path: '/p1/collections/persons/2' },
     ],
   );
 });

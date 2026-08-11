@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform } from 'react-native';
 
@@ -63,7 +63,19 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <Stack
             screenOptions={{
-              headerRight: () => <HeaderHomeButton />,
+              ...(Platform.OS === 'ios'
+                ? {
+                    unstable_headerRightItems: () => [
+                      {
+                        accessibilityLabel: '回到首页',
+                        icon: { name: 'house', type: 'sfSymbol' as const },
+                        label: '回到首页',
+                        onPress: () => router.dismissTo('/'),
+                        type: 'button' as const,
+                      },
+                    ],
+                  }
+                : { headerRight: () => <HeaderHomeButton /> }),
               headerShown: false,
             }}
           >

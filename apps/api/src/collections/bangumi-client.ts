@@ -10,6 +10,7 @@ import {
 } from './model.ts';
 
 const BANGUMI_API_URL = 'https://api.bgm.tv';
+const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 const PAGE_SIZE = 1000;
 
 const userCollectionSchema = z.object({
@@ -125,40 +126,22 @@ export async function setBangumiEntityCollection({
   entityId,
   fetcher,
   kind,
-  username,
 }: {
   accessToken: string;
   collected: boolean;
   entityId: number;
   fetcher: typeof fetch;
   kind: BangumiEntityKind;
-  username: string;
 }) {
+  const collectionPath = kind === 'character' ? 'characters' : 'persons';
   const response = await fetcher(
-    `${BANGUMI_API_URL}/v0/${entityPath(kind)}/${entityId}/collect`,
+    `${BANGUMI_PRIVATE_API_URL}/collections/${collectionPath}/${entityId}`,
     {
       headers: headers(accessToken),
-      method: collected ? 'POST' : 'DELETE',
+      method: collected ? 'PUT' : 'DELETE',
       signal: AbortSignal.timeout(12_000),
     },
   );
-
-  if (!collected && response.status === 404) {
-    const isStillCollected = await getBangumiEntityCollection({
-      accessToken,
-      entityId,
-      fetcher,
-      kind,
-      username,
-    });
-
-    if (!isStillCollected) return;
-
-    throw new BangumiApiError(
-      'Bangumi 返回的收藏状态不一致，请稍后重试。',
-      409,
-    );
-  }
 
   if (!response.ok) {
     throw new BangumiApiError(

@@ -166,14 +166,13 @@ export function registerCollectionRoutes(
 
     return withEntityCollection(
       context,
-      async ({ accessToken, entityId, kind, username }) => {
+      async ({ accessToken, entityId, kind }) => {
         await setBangumiEntityCollection({
           accessToken,
           collected: body.data.collected,
           entityId,
           fetcher,
           kind,
-          username,
         });
         return body.data.collected;
       },

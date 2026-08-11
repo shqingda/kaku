@@ -122,10 +122,10 @@ function FloatingHomeButton({
       ]}
     >
       <SymbolView
-        name={{ android: 'home', ios: 'house.fill', web: 'home' }}
-        size={17}
+        name={{ android: 'home', ios: 'house', web: 'home' }}
+        size={20}
         tintColor={COLORS.ink}
-        weight="semibold"
+        weight="regular"
       />
     </Pressable>
   );
