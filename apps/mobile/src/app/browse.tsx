@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -24,6 +24,7 @@ import type { DiscoverSubject } from '@/features/discover/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 
 const SORTS: Array<{ id: BrowseSort; label: string }> = [
   { id: 'rank', label: '排名' },
@@ -48,6 +49,8 @@ export default function BrowseScreen() {
   const [tag, setTag] = useState<string | undefined>(
     normalizedInitialTag || undefined,
   );
+  const listRef = useRef<FlatList<DiscoverSubject>>(null);
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const browseQuery = useBrowseSubjects({ sort, subjectType, tag, year });
   const items = useMemo(
     () => browseQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -65,6 +68,7 @@ export default function BrowseScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '分类浏览' }} />
       <FlatList
+        ref={listRef}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.content}
         data={items}
@@ -160,6 +164,13 @@ export default function BrowseScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onScroll={(event) => {
+          const nextVisible = event.nativeEvent.contentOffset.y > 720;
+          setShowsScrollToTop((current) =>
+            current === nextVisible ? current : nextVisible,
+          );
+        }}
+        scrollEventThrottle={80}
         refreshControl={
           <AppRefreshControl
             onRefresh={() => void browseQuery.refetch()}
@@ -168,6 +179,12 @@ export default function BrowseScreen() {
         }
         renderItem={({ item }) => <BrowseCard item={item} />}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={() =>
+          listRef.current?.scrollToOffset({ animated: true, offset: 0 })
+        }
+        visible={showsScrollToTop}
       />
     </SafeAreaView>
   );

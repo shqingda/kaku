@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   FlatList,
   Platform,
@@ -8,17 +8,14 @@ import {
   View,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
-import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 
 export default function FriendTimelineScreen() {
-  const [composerVisible, setComposerVisible] = useState(false);
   const timelineQuery = useFriendTimeline();
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -27,34 +24,7 @@ export default function FriendTimelineScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerRight: () => (
-            <Pressable
-              accessibilityLabel="发布动态"
-              accessibilityRole="button"
-              hitSlop={6}
-              onPress={() => setComposerVisible(true)}
-              style={({ pressed }) => [
-                styles.publishButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'edit',
-                  ios: 'square.and.pencil',
-                  web: 'edit',
-                }}
-                size={22}
-                tintColor={COLORS.ink}
-                weight="medium"
-              />
-            </Pressable>
-          ),
-          title: '好友动态',
-        }}
-      />
+      <Stack.Screen options={{ title: '好友动态' }} />
       <FlatList
         contentContainerStyle={styles.content}
         data={items}
@@ -97,10 +67,6 @@ export default function FriendTimelineScreen() {
         )}
         showsVerticalScrollIndicator={false}
       />
-      <TimelineComposer
-        onClose={() => setComposerVisible(false)}
-        visible={composerVisible}
-      />
     </SafeAreaView>
   );
 }
@@ -139,13 +105,6 @@ const styles = StyleSheet.create({
     margin: 20,
     overflow: 'hidden',
     paddingHorizontal: 18,
-  },
-  publishButton: {
-    alignItems: 'center',
-    borderRadius: 22,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
   },
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 42 },
   stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },

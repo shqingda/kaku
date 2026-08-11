@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
+import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 
 import {
   buildEntityListItems,
@@ -26,6 +29,7 @@ import {
   useEntityCollection,
   useSaveEntityCollection,
 } from './use-entity-collection';
+import { useEntityComments } from './use-public-entity';
 
 export function EntityDetailScreen({
   data,
@@ -43,10 +47,19 @@ export function EntityDetailScreen({
   onRetry: () => void;
 }) {
   const { isSigningIn, session, signIn } = useAuth();
+  const [commentsVisible, setCommentsVisible] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
+  const commentsQuery = useEntityComments(entityKind, entityId);
   const saveCollection = useSaveEntityCollection(entityKind, entityId);
+  const comments = commentsQuery.data ?? [];
+  const {
+    handleScrollToIndexFailed,
+    highlightedReplyId,
+    listRef: commentsListRef,
+    openReply,
+  } = useReplyNavigation(comments);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
@@ -207,6 +220,51 @@ export function EntityDetailScreen({
                   ))}
                 </View>
               ) : null}
+
+              <View style={styles.commentsSection}>
+                <View style={styles.commentsHeader}>
+                  <View>
+                    <Text style={styles.panelTitle}>评论</Text>
+                    <Text style={styles.commentsMeta}>
+                      {data.commentCount.toLocaleString('zh-CN')} 条公开评论
+                    </Text>
+                  </View>
+                  {comments.length > 0 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setCommentsVisible(true)}
+                      style={({ pressed }) => pressed && styles.pressed}
+                    >
+                      <Text style={styles.commentsAction}>查看全部</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+                {commentsQuery.isPending ? (
+                  <Text style={styles.commentsState}>正在读取评论…</Text>
+                ) : commentsQuery.isError ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => void commentsQuery.refetch()}
+                    style={({ pressed }) => pressed && styles.pressed}
+                  >
+                    <Text style={styles.commentsState}>评论读取失败，点此重试</Text>
+                  </Pressable>
+                ) : comments.length === 0 ? (
+                  <Text style={styles.commentsState}>还没有公开评论。</Text>
+                ) : (
+                  comments.slice(0, 3).map((reply, index) => (
+                    <ReplyListItem
+                      floor={index + 1}
+                      key={reply.id}
+                      onOpenReference={(replyId) => {
+                        setCommentsVisible(true);
+                        setTimeout(() => openReply(replyId), 220);
+                      }}
+                      reply={reply}
+                    />
+                  ))
+                )}
+              </View>
             </>
           }
           onRefresh={onRetry}
@@ -217,6 +275,56 @@ export function EntityDetailScreen({
           showsVerticalScrollIndicator={false}
         />
       )}
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setCommentsVisible(false)}
+        presentationStyle="pageSheet"
+        visible={commentsVisible}
+      >
+        <SafeAreaView edges={['bottom']} style={styles.commentsScreen}>
+          <View style={styles.commentsModalHeader}>
+            <View>
+              <Text style={styles.commentsModalTitle}>{kind}评论</Text>
+              <Text style={styles.commentsModalMeta}>{data?.name}</Text>
+            </View>
+            <Pressable
+              accessibilityLabel="关闭评论"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setCommentsVisible(false)}
+              style={({ pressed }) => [
+                styles.commentsClose,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{ android: 'close', ios: 'xmark', web: 'close' }}
+                size={17}
+                tintColor={COLORS.ink}
+                weight="semibold"
+              />
+            </Pressable>
+          </View>
+          <FlatList
+            ref={commentsListRef}
+            contentContainerStyle={styles.commentsContent}
+            data={comments}
+            keyExtractor={(reply) => reply.id}
+            onRefresh={() => void commentsQuery.refetch()}
+            onScrollToIndexFailed={handleScrollToIndexFailed}
+            refreshing={commentsQuery.isRefetching}
+            renderItem={({ index, item }) => (
+              <ReplyListItem
+                floor={index + 1}
+                isHighlighted={highlightedReplyId === item.id}
+                onOpenReference={openReply}
+                reply={item}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -301,6 +409,44 @@ const styles = StyleSheet.create({
     marginTop: 4,
     padding: 18,
   },
+  commentsSection: { marginTop: 10 },
+  commentsHeader: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+    paddingHorizontal: 4,
+    paddingTop: 12,
+  },
+  commentsMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
+  commentsAction: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  commentsState: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    color: COLORS.muted,
+    fontSize: 13,
+    padding: 18,
+  },
+  commentsScreen: { backgroundColor: COLORS.background, flex: 1 },
+  commentsModalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+  },
+  commentsModalTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '800' },
+  commentsModalMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
+  commentsClose: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  commentsContent: { paddingBottom: 36, paddingHorizontal: 20 },
   panelTitle: {
     color: COLORS.ink,
     fontSize: 17,

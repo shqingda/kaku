@@ -1,5 +1,5 @@
 import { useState, type ComponentProps } from 'react';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -296,47 +296,48 @@ function QuickActionRow({
   meta,
 }: {
   hasDivider?: boolean;
-  href: Parameters<typeof router.push>[0];
+  href: ComponentProps<typeof Link>['href'];
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   meta: string;
 }) {
   return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      onPress={() => router.push(href)}
-      style={({ pressed }) => [
-        styles.quickActionRow,
-        hasDivider && styles.quickDivider,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.quickIcon}>
+    <Link asChild href={href} prefetch>
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        style={({ pressed }) => [
+          styles.quickActionRow,
+          hasDivider && styles.quickDivider,
+          pressed && styles.pressed,
+        ]}
+      >
+        <View style={styles.quickIcon}>
+          <SymbolView
+            name={icon}
+            size={19}
+            tintColor={COLORS.accent}
+            weight="medium"
+          />
+        </View>
+        <View style={styles.quickCopy}>
+          <Text style={styles.quickLabel}>{label}</Text>
+          <Text numberOfLines={1} style={styles.quickMeta}>
+            {meta}
+          </Text>
+        </View>
         <SymbolView
-          name={icon}
-          size={19}
-          tintColor={COLORS.accent}
-          weight="medium"
+          name={{
+            android: 'chevron_right',
+            ios: 'chevron.right',
+            web: 'chevron_right',
+          }}
+          size={14}
+          tintColor={COLORS.subtle}
+          weight="semibold"
         />
-      </View>
-      <View style={styles.quickCopy}>
-        <Text style={styles.quickLabel}>{label}</Text>
-        <Text numberOfLines={1} style={styles.quickMeta}>
-          {meta}
-        </Text>
-      </View>
-      <SymbolView
-        name={{
-          android: 'chevron_right',
-          ios: 'chevron.right',
-          web: 'chevron_right',
-        }}
-        size={14}
-        tintColor={COLORS.subtle}
-        weight="semibold"
-      />
-    </Pressable>
+      </Pressable>
+    </Link>
   );
 }
 

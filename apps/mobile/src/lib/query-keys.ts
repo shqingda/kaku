@@ -62,6 +62,8 @@ export const queryKeys = {
     ['people', 'bangumi', 'character', characterId] as const,
   person: (personId: number) =>
     ['people', 'bangumi', 'person', personId] as const,
+  entityComments: (kind: string, entityId: number) =>
+    ['people', 'bangumi', kind, entityId, 'comments'] as const,
   entityCollection: (
     userId: number | undefined,
     kind: string,

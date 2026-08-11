@@ -2,6 +2,7 @@ import {
   bangumiBlogCommentsSchema,
   bangumiBlogSchema,
   bangumiEpisodeCommentsSchema,
+  bangumiEntityCommentsSchema,
   bangumiIndexPageSchema,
   bangumiIndexRelatedSchema,
   bangumiIndexSchema,
@@ -101,6 +102,18 @@ export async function getBangumiEpisodeComments(
     signal,
   });
   return bangumiEpisodeCommentsSchema.parse(json);
+}
+
+export async function getBangumiEntityComments(
+  kind: 'character' | 'person',
+  entityId: number,
+  signal?: AbortSignal,
+) {
+  const resource = kind === 'character' ? 'characters' : 'persons';
+  const json = await requestJson(`/p1/${resource}/${entityId}/comments`, {
+    signal,
+  });
+  return bangumiEntityCommentsSchema.parse(json);
 }
 
 export async function getBangumiSubjectComments(

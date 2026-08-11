@@ -39,7 +39,14 @@
           "imageWidth": 116
         }
       ],
-      "expo-sharing"
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "允许 Kaku 访问照片。",
+          "savePhotosPermission": "允许 Kaku 将封面保存到照片。",
+          "granularPermissions": ["photo"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

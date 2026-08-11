@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
+import { Asset, requestPermissionsAsync } from 'expo-media-library';
 import { Link } from 'expo-router';
-import * as Sharing from 'expo-sharing';
 import { SymbolView } from 'expo-symbols';
 import {
+  ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 
@@ -23,128 +26,155 @@ export function SubjectHero({
   title: string;
   year?: number;
 }) {
-  const [isSharing, setIsSharing] = useState(false);
+  const insets = useSafeAreaInsets();
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  async function shareCover() {
-    if (!coverUrl || isSharing) {
-      return;
-    }
+  async function saveCover() {
+    if (!coverUrl || isSaving) return;
 
-    setIsSharing(true);
+    setIsSaving(true);
 
     try {
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('暂时无法分享封面', '当前设备不支持系统分享。');
+      const permission = await requestPermissionsAsync(true, ['photo']);
+
+      if (!permission.granted) {
+        Alert.alert('无法保存封面', '请在系统设置中允许 Kaku 添加照片。');
         return;
       }
 
       const extension =
         coverUrl.match(/\.(png|webp|jpe?g)(?:\?|$)/i)?.[1]?.toLowerCase() ??
         'jpg';
-      const file = new File(Paths.cache, `kaku-cover.${extension}`);
-      const downloaded = await File.downloadFileAsync(coverUrl, file, {
-        idempotent: true,
-      });
-
-      await Sharing.shareAsync(downloaded.uri, {
-        dialogTitle: '保存或分享封面',
-        mimeType:
-          extension === 'png'
-            ? 'image/png'
-            : extension === 'webp'
-              ? 'image/webp'
-              : 'image/jpeg',
-        UTI: 'public.image',
-      });
-    } catch {
-      Alert.alert(
-        '封面下载失败',
-        'Bangumi 图片服务暂时没有响应，请稍后重试。',
+      const file = new File(
+        Paths.cache,
+        `kaku-cover-${Date.now()}.${extension}`,
       );
+      const downloaded = await File.downloadFileAsync(coverUrl, file);
+
+      await Asset.create(downloaded.uri);
+      Alert.alert('已保存', '封面已保存到系统相册。');
+    } catch {
+      Alert.alert('封面保存失败', '图片服务暂时没有响应，请稍后重试。');
     } finally {
-      setIsSharing(false);
+      setIsSaving(false);
     }
   }
 
   return (
-    <View style={styles.hero}>
-      <View style={styles.coverFrame}>
-        <View pointerEvents="none">
-          <Link.AppleZoomTarget>
-            <View style={styles.cover}>
-              <Text style={styles.coverFallback}>{title.slice(0, 1)}</Text>
-              <Image
-                contentFit="cover"
-                source={coverUrl}
-                style={StyleSheet.absoluteFill}
-                transition={180}
-              />
-            </View>
-          </Link.AppleZoomTarget>
-        </View>
-        {coverUrl ? (
+    <>
+      <View style={styles.hero}>
+        <Pressable
+          accessibilityLabel="全屏查看封面"
+          accessibilityRole="button"
+          disabled={!coverUrl}
+          onPress={() => setIsPreviewVisible(true)}
+          style={({ pressed }) => [
+            styles.coverFrame,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View pointerEvents="none">
+            <Link.AppleZoomTarget>
+              <View style={styles.cover}>
+                <Text style={styles.coverFallback}>{title.slice(0, 1)}</Text>
+                {coverUrl ? (
+                  <Image
+                    contentFit="cover"
+                    source={coverUrl}
+                    style={StyleSheet.absoluteFill}
+                    transition={180}
+                  />
+                ) : null}
+              </View>
+            </Link.AppleZoomTarget>
+          </View>
+        </Pressable>
+        <Text style={styles.year}>{year}</Text>
+        <Text selectable style={styles.title}>
+          {title}
+        </Text>
+      </View>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setIsPreviewVisible(false)}
+        statusBarTranslucent
+        visible={isPreviewVisible}
+      >
+        <View style={styles.preview}>
+          {coverUrl ? (
+            <Image
+              contentFit="contain"
+              source={coverUrl}
+              style={styles.previewImage}
+            />
+          ) : null}
           <Pressable
-            accessibilityLabel="保存、复制或分享封面"
+            accessibilityLabel="关闭封面预览"
             accessibilityRole="button"
-            disabled={isSharing}
             hitSlop={8}
-            onPress={() => void shareCover()}
+            onPress={() => setIsPreviewVisible(false)}
             style={({ pressed }) => [
-              styles.shareButton,
-              (pressed || isSharing) && styles.pressed,
+              styles.previewClose,
+              { top: insets.top + 10 },
+              pressed && styles.previewPressed,
             ]}
           >
             <SymbolView
-              name={{
-                android: 'share',
-                ios: 'square.and.arrow.up',
-                web: 'share',
-              }}
-              size={16}
-              tintColor={COLORS.ink}
+              name={{ android: 'close', ios: 'xmark', web: 'close' }}
+              size={17}
+              tintColor="#FFFFFF"
               weight="semibold"
             />
           </Pressable>
-        ) : null}
-      </View>
-      <Text style={styles.year}>{year}</Text>
-      <Text selectable style={styles.title}>
-        {title}
-      </Text>
-    </View>
+          <Pressable
+            accessibilityLabel="下载封面"
+            accessibilityRole="button"
+            disabled={isSaving}
+            onPress={() => void saveCover()}
+            style={({ pressed }) => [
+              styles.downloadButton,
+              { bottom: insets.bottom + 22 },
+              (pressed || isSaving) && styles.previewPressed,
+            ]}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <SymbolView
+                name={{
+                  android: 'download',
+                  ios: 'arrow.down.to.line',
+                  web: 'download',
+                }}
+                size={17}
+                tintColor="#FFFFFF"
+                weight="semibold"
+              />
+            )}
+            <Text style={styles.downloadText}>{isSaving ? '保存中' : '下载'}</Text>
+          </Pressable>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: 8 },
-  coverFrame: { position: 'relative' },
+  coverFrame: { borderCurve: 'continuous', borderRadius: 24 },
   cover: {
     alignItems: 'center',
     backgroundColor: COLORS.track,
+    borderCurve: 'continuous',
     borderRadius: 24,
     height: 238,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 170,
   },
-  shareButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderColor: 'rgba(29, 29, 31, 0.08)',
-    borderRadius: 17,
-    borderWidth: StyleSheet.hairlineWidth,
-    bottom: 10,
-    height: 34,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 10,
-    shadowColor: '#000000',
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.14,
-    shadowRadius: 7,
-    width: 34,
-  },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.78 },
   coverFallback: { color: COLORS.subtle, fontSize: 30, fontWeight: '700' },
   year: { color: COLORS.accent, fontSize: 13, fontWeight: '700', marginTop: 22 },
   title: {
@@ -155,4 +185,31 @@ const styles = StyleSheet.create({
     marginTop: 7,
     textAlign: 'center',
   },
+  preview: { backgroundColor: '#000000', flex: 1 },
+  previewImage: { flex: 1, marginHorizontal: 12, marginVertical: 72 },
+  previewClose: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(38, 38, 40, 0.78)',
+    borderCurve: 'continuous',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    width: 40,
+  },
+  downloadButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(38, 38, 40, 0.86)',
+    borderCurve: 'continuous',
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 44,
+    paddingHorizontal: 18,
+    position: 'absolute',
+  },
+  downloadText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  previewPressed: { opacity: 0.62 },
 });

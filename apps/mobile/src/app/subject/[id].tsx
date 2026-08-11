@@ -102,6 +102,35 @@ function FloatingBackButton({
   );
 }
 
+function FloatingHomeButton({
+  onPress,
+  top,
+}: {
+  onPress: () => void;
+  top: number;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel="回到首页"
+      accessibilityRole="button"
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.homeButton,
+        { top },
+        pressed && styles.pressed,
+      ]}
+    >
+      <SymbolView
+        name={{ android: 'home', ios: 'house.fill', web: 'home' }}
+        size={17}
+        tintColor={COLORS.ink}
+        weight="semibold"
+      />
+    </Pressable>
+  );
+}
+
 export default function SubjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -446,6 +475,10 @@ export default function SubjectScreen() {
         />
       </ScrollView>
       <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+      <FloatingHomeButton
+        onPress={() => router.dismissTo('/')}
+        top={insets.top + 8}
+      />
     </View>
   );
 }
@@ -463,6 +496,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     left: 16,
     position: 'absolute',
+    shadowColor: '#000000',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    width: 40,
+    zIndex: 10,
+  },
+  homeButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderColor: 'rgba(29, 29, 31, 0.06)',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 16,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,

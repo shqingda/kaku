@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
+  FlatList,
   Platform,
   Pressable,
   StyleSheet,
@@ -21,6 +19,7 @@ import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import type { DiscoverSubjectPage } from '@/features/discover/model';
@@ -34,12 +33,8 @@ export default function RankingsScreen() {
   );
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
-  const entranceOpacity = useRef(
-    new Animated.Value(Platform.OS === 'ios' ? 0 : 1),
-  ).current;
-  const entranceTranslateY = useRef(
-    new Animated.Value(Platform.OS === 'ios' ? 6 : 0),
-  ).current;
+  const listRef = useRef<FlatList>(null);
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const pages = useMemo(
     () => readInfinitePages<DiscoverSubjectPage>(rankingQuery.data),
     [rankingQuery.data],
@@ -53,43 +48,6 @@ export default function RankingsScreen() {
   );
   const total = pages[0]?.total;
 
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    let active = true;
-
-    void AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
-      if (!active) return;
-
-      if (reduceMotion) {
-        entranceOpacity.setValue(1);
-        entranceTranslateY.setValue(0);
-        return;
-      }
-
-      Animated.parallel([
-        Animated.timing(entranceOpacity, {
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
-          toValue: 1,
-          useNativeDriver: true,
-        }),
-        Animated.timing(entranceTranslateY, {
-          duration: 220,
-          easing: Easing.out(Easing.cubic),
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-
-    return () => {
-      active = false;
-      entranceOpacity.stopAnimation();
-      entranceTranslateY.stopAnimation();
-    };
-  }, [entranceOpacity, entranceTranslateY]);
-
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
@@ -99,7 +57,8 @@ export default function RankingsScreen() {
           title: `${subjectTypeLabel}排行榜`,
         }}
       />
-      <Animated.FlatList
+      <FlatList
+        ref={listRef}
         contentContainerStyle={styles.content}
         data={subjects}
         initialNumToRender={Platform.OS === 'android' ? 6 : 12}
@@ -164,6 +123,13 @@ export default function RankingsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        onScroll={(event) => {
+          const nextVisible = event.nativeEvent.contentOffset.y > 720;
+          setShowsScrollToTop((current) =>
+            current === nextVisible ? current : nextVisible,
+          );
+        }}
+        scrollEventThrottle={80}
         removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={
           <AppRefreshControl
@@ -193,12 +159,14 @@ export default function RankingsScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
-        style={{
-          opacity: entranceOpacity,
-          transform: [{ translateY: entranceTranslateY }],
-        }}
         updateCellsBatchingPeriod={Platform.OS === 'android' ? 60 : 40}
         windowSize={Platform.OS === 'android' ? 5 : 7}
+      />
+      <ScrollToTopButton
+        onPress={() =>
+          listRef.current?.scrollToOffset({ animated: true, offset: 0 })
+        }
+        visible={showsScrollToTop}
       />
     </SafeAreaView>
   );

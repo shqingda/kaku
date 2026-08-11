@@ -1,3 +1,5 @@
+import type { DiscussionReply } from '@/features/discussions/model';
+
 export type EntityMetadata = {
   label: string;
   value: string;
@@ -38,6 +40,11 @@ export type PublicEntityDetail = {
 };
 
 export type PeopleProvider = {
+  getComments: (
+    kind: 'character' | 'person',
+    entityId: number,
+    signal?: AbortSignal,
+  ) => Promise<DiscussionReply[]>;
   getCharacter: (
     characterId: number,
     signal?: AbortSignal,

@@ -24,3 +24,17 @@ export function usePerson(personId: number) {
     staleTime: 30 * 60 * 1000,
   });
 }
+
+export function useEntityComments(
+  kind: 'character' | 'person',
+  entityId: number,
+) {
+  return useQuery({
+    enabled: Number.isInteger(entityId) && entityId > 0,
+    queryFn: ({ signal }) =>
+      bangumiPeopleProvider.getComments(kind, entityId, signal),
+    queryKey: queryKeys.entityComments(kind, entityId),
+    retry: shouldRetryBangumiQuery,
+    staleTime: 10 * 60 * 1000,
+  });
+}

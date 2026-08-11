@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+} from 'react';
 import { Image } from 'expo-image';
 import {
   router,
@@ -243,129 +249,47 @@ export default function ExploreScreen() {
             selectedType={selectedSearchType}
           />
           <View>
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: '/channel/[type]',
-                  params: { type: getSubjectTypeSlug(selectedSearchType) },
-                })
-              }
-              style={({ pressed }) => [
-                styles.communityEntry,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.communityCopy}>
-                <View style={styles.communityIcon}>
-                  <SymbolView
-                    name={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
-                    size={18}
-                    tintColor={COLORS.accent}
-                  />
-                </View>
-                <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>
-                    频道
-                  </Text>
-                  <Text numberOfLines={1} style={styles.communityMeta}>
-                    {selectedSearchType === 1 ? '阅读' : getSubjectTypeLabel(selectedSearchType)}频道 · 近期热门与高分精选
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/community')}
-              style={({ pressed }) => [
-                styles.communityEntry,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.communityCopy}>
-                <View style={styles.communityIcon}>
-                  <SymbolView
-                    name={{
-                      android: 'forum',
-                      ios: 'bubble.left.and.bubble.right',
-                      web: 'forum',
-                    }}
-                    size={19}
-                    tintColor={COLORS.accent}
-                  />
-                </View>
-                <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>社区</Text>
-                  <Text style={styles.communityMeta}>公开小组与最新话题</Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/blogs')}
-              style={({ pressed }) => [
-                styles.communityEntry,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.communityCopy}>
-                <View style={styles.communityIcon}>
-                  <SymbolView
-                    name={{ android: 'article', ios: 'doc.text', web: 'article' }}
-                    size={18}
-                    tintColor={COLORS.accent}
-                  />
-                </View>
-                <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>日志</Text>
-                  <Text style={styles.communityMeta}>最新公开长文与用户评论</Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/directories')}
-              style={({ pressed }) => [
-                styles.communityEntry,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.communityCopy}>
-                <View style={styles.communityIcon}>
-                  <SymbolView
-                    name={{ android: 'list_alt', ios: 'list.bullet.rectangle', web: 'list_alt' }}
-                    size={18}
-                    tintColor={COLORS.accent}
-                  />
-                </View>
-                <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>目录</Text>
-                  <Text style={styles.communityMeta}>用户整理的主题收藏与推荐</Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/people')}
-              style={({ pressed }) => [
-                styles.communityEntry,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.communityCopy}>
-                <View style={styles.communityIcon}>
-                  <SymbolView
-                    name={{ android: 'people_outline', ios: 'person.2', web: 'people_outline' }}
-                    size={19}
-                    tintColor={COLORS.accent}
-                  />
-                </View>
-                <View style={styles.communityText}>
-                  <Text style={styles.communityTitle}>人物</Text>
-                  <Text style={styles.communityMeta}>虚构角色与现实人物</Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
+            <View style={styles.exploreEntries}>
+              <ExploreEntry
+                icon={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
+                meta={`${selectedSearchType === 1 ? '阅读' : getSubjectTypeLabel(selectedSearchType)}频道 · 热门与高分精选`}
+                onPress={() =>
+                  router.push({
+                    pathname: '/channel/[type]',
+                    params: { type: getSubjectTypeSlug(selectedSearchType) },
+                  })
+                }
+                title="频道"
+              />
+              <ExploreEntry
+                hasDivider
+                icon={{ android: 'forum', ios: 'bubble.left.and.bubble.right', web: 'forum' }}
+                meta="公开小组与最新话题"
+                onPress={() => router.push('/community')}
+                title="社区"
+              />
+              <ExploreEntry
+                hasDivider
+                icon={{ android: 'article', ios: 'doc.text', web: 'article' }}
+                meta="最新公开长文与用户评论"
+                onPress={() => router.push('/blogs')}
+                title="日志"
+              />
+              <ExploreEntry
+                hasDivider
+                icon={{ android: 'list_alt', ios: 'list.bullet.rectangle', web: 'list_alt' }}
+                meta="用户整理的主题收藏与推荐"
+                onPress={() => router.push('/directories')}
+                title="目录"
+              />
+              <ExploreEntry
+                hasDivider
+                icon={{ android: 'people_outline', ios: 'person.2', web: 'people_outline' }}
+                meta="虚构角色与现实人物"
+                onPress={() => router.push('/people')}
+                title="人物"
+              />
+            </View>
             {selectedSearchType === 2 ? (
               <>
                 <View style={styles.sectionHeader}>
@@ -491,6 +415,46 @@ function SearchField({
   );
 }
 
+function ExploreEntry({
+  hasDivider = false,
+  icon,
+  meta,
+  onPress,
+  title,
+}: {
+  hasDivider?: boolean;
+  icon: ComponentProps<typeof SymbolView>['name'];
+  meta: string;
+  onPress: () => void;
+  title: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.exploreEntry,
+        hasDivider && styles.exploreEntryDivider,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={styles.exploreEntryIcon}>
+        <SymbolView name={icon} size={17} tintColor={COLORS.accent} />
+      </View>
+      <View style={styles.exploreEntryText}>
+        <Text style={styles.exploreEntryTitle}>{title}</Text>
+        <Text numberOfLines={1} style={styles.exploreEntryMeta}>{meta}</Text>
+      </View>
+      <SymbolView
+        name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
+        size={13}
+        tintColor={COLORS.subtle}
+        weight="semibold"
+      />
+    </Pressable>
+  );
+}
+
 function RankingSection({
   isError,
   isPending,
@@ -551,7 +515,7 @@ function RankingSection({
         <State action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
       ) : (
         <View style={styles.rankingList}>
-          {subjects.slice(0, 10).map((item, index) => (
+          {subjects.slice(0, 6).map((item, index) => (
             <RankedSubjectRow
               hasDivider={index > 0}
               item={item}
@@ -794,27 +758,34 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   searchList: { flex: 1 },
   searchContent: { paddingBottom: 48, paddingHorizontal: 20 },
-  communityEntry: {
-    alignItems: 'center',
+  exploreEntries: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderCurve: 'continuous',
+    borderRadius: 22,
     marginTop: 18,
-    padding: 18,
+    overflow: 'hidden',
+    paddingHorizontal: 16,
   },
-  communityTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  communityMeta: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
-  communityCopy: { alignItems: 'center', flex: 1, flexDirection: 'row' },
-  communityIcon: {
+  exploreEntry: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 66,
+  },
+  exploreEntryDivider: {
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  exploreEntryIcon: {
     alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    height: 42,
+    borderRadius: 11,
+    height: 34,
     justifyContent: 'center',
-    width: 42,
+    width: 34,
   },
-  communityText: { flex: 1, marginLeft: 13, paddingRight: 10 },
+  exploreEntryText: { flex: 1, marginLeft: 12, paddingRight: 10 },
+  exploreEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  exploreEntryMeta: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
   searchBar: {
     marginTop: 14,
   },

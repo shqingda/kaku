@@ -52,6 +52,10 @@ export const bangumiEpisodeCommentsSchema = z.array(
   bangumiDiscussionReplySchema,
 );
 
+export const bangumiEntityCommentsSchema = z.array(
+  bangumiDiscussionReplySchema,
+);
+
 export const bangumiSubjectCommentsSchema = z.object({
   data: z.array(
     z.object({

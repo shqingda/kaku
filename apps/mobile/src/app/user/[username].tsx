@@ -14,12 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
+import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import {
   usePublicUser,
   usePublicUserBlogs,
@@ -30,6 +32,8 @@ import {
 
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
+  const { session } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
   const userQuery = usePublicUser(username);
   const blogsQuery = usePublicUserBlogs(username);
   const [collectionSubjectType, setCollectionSubjectType] = useState(2);
@@ -43,6 +47,7 @@ export default function PublicUserScreen() {
   const friendsQuery = usePublicUserFriends(username);
   const timelineQuery = usePublicUserTimeline(username);
   const user = userQuery.data;
+  const isOwnProfile = Boolean(user && session?.user.username === user.username);
   const blogsPage = blogsQuery.data?.pages[0];
   const collectionsPage = collectionsQuery.data?.pages[0];
   const friendsPage = friendsQuery.data?.pages[0];
@@ -234,40 +239,37 @@ export default function PublicUserScreen() {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>时间线</Text>
                 <View style={styles.sectionRight}>
-                  <Text style={styles.sectionMeta}>
-                    {timelineQuery.isPending
-                      ? '读取中'
-                      : timelineQuery.isError
-                        ? '暂不可用'
-                        : `最近 ${timeline.length} 条`}
-                  </Text>
-                  {timelineQuery.hasNextPage ? (
+                  {isOwnProfile ? (
                     <Pressable
+                      accessibilityLabel="发布动态"
                       accessibilityRole="button"
-                      onPress={() =>
-                        router.push({
-                          pathname: '/user/timeline/[username]',
-                          params: { username: user.username },
-                        })
-                      }
+                      onPress={() => setComposerVisible(true)}
                       style={({ pressed }) => [
-                        styles.sectionAction,
+                        styles.timelinePublishButton,
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text style={styles.sectionActionText}>查看全部</Text>
                       <SymbolView
                         name={{
-                          android: 'chevron_right',
-                          ios: 'chevron.right',
-                          web: 'chevron_right',
+                          android: 'edit',
+                          ios: 'square.and.pencil',
+                          web: 'edit',
                         }}
-                        size={11}
-                        tintColor={COLORS.accent}
+                        size={15}
+                        tintColor={COLORS.ink}
                         weight="semibold"
                       />
+                      <Text style={styles.timelinePublishText}>发布</Text>
                     </Pressable>
-                  ) : null}
+                  ) : (
+                    <Text style={styles.sectionMeta}>
+                      {timelineQuery.isPending
+                        ? '读取中'
+                        : timelineQuery.isError
+                          ? '暂不可用'
+                          : `最近 ${timeline.length} 条`}
+                    </Text>
+                  )}
                 </View>
               </View>
               <View style={styles.timelineList}>
@@ -295,6 +297,34 @@ export default function PublicUserScreen() {
                     }
                   />
                 ))}
+                {timeline.length > 0 ? (
+                  <Pressable
+                    accessibilityLabel="查看全部动态"
+                    accessibilityRole="button"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/user/timeline/[username]',
+                        params: { username: user.username },
+                      })
+                    }
+                    style={({ pressed }) => [
+                      styles.timelineAllButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.timelineAllText}>全部动态</Text>
+                    <SymbolView
+                      name={{
+                        android: 'chevron_right',
+                        ios: 'chevron.right',
+                        web: 'chevron_right',
+                      }}
+                      size={12}
+                      tintColor={COLORS.accent}
+                      weight="semibold"
+                    />
+                  </Pressable>
+                ) : null}
               </View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>日志</Text>
@@ -436,6 +466,10 @@ export default function PublicUserScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <TimelineComposer
+        onClose={() => setComposerVisible(false)}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -596,6 +630,34 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
+  timelinePublishButton: {
+    alignItems: 'center',
+    backgroundColor: '#EFEEEA',
+    borderCurve: 'continuous',
+    borderRadius: 11,
+    flexDirection: 'row',
+    gap: 5,
+    height: 32,
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+  },
+  timelinePublishText: {
+    color: COLORS.ink,
+    fontSize: 13,
+    fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 17,
+  },
+  timelineAllButton: {
+    alignItems: 'center',
+    borderTopColor: COLORS.track,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 50,
+    paddingHorizontal: 2,
+  },
+  timelineAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   inlineEmpty: {
     color: COLORS.muted,
     fontSize: 13,
