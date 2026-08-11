@@ -1,19 +1,17 @@
-import { Platform, RefreshControl } from 'react-native';
+import type { ReactNode } from 'react';
+import { RefreshControl } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
 export function AppRefreshControl({
+  children,
   onRefresh,
   refreshing,
 }: {
+  children?: ReactNode;
   onRefresh: () => void;
   refreshing: boolean;
 }) {
-  // RN 0.86 + Fabric can leave Android native-stack screens blank when a
-  // custom RefreshControl is mounted during the push transition. Keep the
-  // iOS interaction and prefer a visible Android screen over pull-to-refresh.
-  if (Platform.OS === 'android') return null;
-
   return (
     <RefreshControl
       colors={[COLORS.accent]}
@@ -21,6 +19,8 @@ export function AppRefreshControl({
       progressBackgroundColor={COLORS.surface}
       refreshing={refreshing}
       tintColor={COLORS.accent}
-    />
+    >
+      {children}
+    </RefreshControl>
   );
 }
