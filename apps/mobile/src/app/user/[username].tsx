@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   entityEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
   entityEntryHint: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
   sectionHeader: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: 10,
