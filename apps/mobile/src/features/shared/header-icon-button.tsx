@@ -1,17 +1,22 @@
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { COLORS, HIT_SLOP } from '@/constants/design';
+
+// Material Symbols glyphs keep ~17% padding inside the font em box, so the
+// same point size renders visibly smaller on Android than on iOS.
+const DEFAULT_ICON_SIZE = Platform.OS === 'android' ? 22 : 19;
 
 export function HeaderIconButton({
   accessibilityHint,
   accessibilityLabel,
   icon,
   iconOffset,
-  iconSize = 19,
+  iconSize = DEFAULT_ICON_SIZE,
   iconWeight = 'semibold',
   onPress,
+  variant = 'inline',
 }: {
   accessibilityHint: string;
   accessibilityLabel: string;
@@ -20,6 +25,7 @@ export function HeaderIconButton({
   iconSize?: number;
   iconWeight?: ComponentProps<typeof SymbolView>['weight'];
   onPress: () => void;
+  variant?: 'inline' | 'floating';
 }) {
   return (
     <Pressable
@@ -28,7 +34,16 @@ export function HeaderIconButton({
       accessibilityRole="button"
       hitSlop={HIT_SLOP}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        // Android's boxShadow paints via BlurMaskFilter, which hardware
+        // acceleration may silently drop into a hard blob. It reads fine
+        // over busy cover art, so floating pills keep it; nav-bar pills on
+        // Android stay flat instead. iOS and web always get the chrome.
+        (variant === 'floating' || Platform.OS !== 'android') &&
+          styles.chrome,
+        pressed && styles.pressed,
+      ]}
     >
       <View
         style={
@@ -56,18 +71,18 @@ export function HeaderIconButton({
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderColor: 'rgba(29, 29, 31, 0.06)',
+    // Opaque white: a translucent fill lets the shadow bleed through and
+    // tint the pill edges darker than its center.
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    elevation: 3,
     height: 40,
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
     width: 40,
+  },
+  chrome: {
+    borderColor: 'rgba(29, 29, 31, 0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
   },
   pressed: { opacity: 0.62, transform: [{ scale: 0.96 }] },
 });

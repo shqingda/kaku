@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -93,6 +94,7 @@ function FloatingBackButton({
           web: 'arrow_back',
         }}
         onPress={onPress}
+        variant="floating"
       />
     </View>
   );
@@ -110,11 +112,11 @@ function FloatingHomeButton({
       <HeaderIconButton
         accessibilityHint="返回 Kaku 首页"
         accessibilityLabel="回到首页"
-        icon={{ android: 'home', ios: 'house', web: 'home' }}
-        iconOffset={{ y: 0.5 }}
-        iconSize={18}
-        iconWeight="regular"
+        icon={{ android: 'home_filled', ios: 'house', web: 'home' }}
+        // Same iOS-only optical nudge as HeaderHomeButton.
+        iconOffset={Platform.OS === 'ios' ? { y: 0.5 } : undefined}
         onPress={onPress}
+        variant="floating"
       />
     </View>
   );

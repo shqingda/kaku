@@ -81,7 +81,13 @@ export default function RootLayout() {
                       },
                     ],
                   }
-                : { headerRight: () => <HeaderHomeButton /> }),
+                : {
+                    // Android/web: without a custom headerLeft the native
+                    // stack draws its own ~24dp back arrow, which dwarfs the
+                    // 19pt SymbolView used everywhere else.
+                    headerLeft: () => <HeaderBackButton />,
+                    headerRight: () => <HeaderHomeButton />,
+                  }),
               headerShown: false,
             }}
           >
