@@ -48,7 +48,7 @@ test('Bangumi notifications map private API types into Kaku models', async () =>
           nickname: '好友 A',
           username: 'friend-a',
         },
-        target: { id: 22447, kind: 'subject-topic' },
+        target: { id: 22447, kind: 'subject-topic', replyId: 99 },
         title: '9.2 达成，现在应该稳了',
         unread: true,
       },

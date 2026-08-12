@@ -4,8 +4,16 @@ import type { NotificationList } from '@/features/notifications/model';
 import { readErrorMessage } from './auth-client';
 
 const targetSchema = z.discriminatedUnion('kind', [
-  z.object({ id: z.number().int().positive(), kind: z.literal('group-topic') }),
-  z.object({ id: z.number().int().positive(), kind: z.literal('subject-topic') }),
+  z.object({
+    id: z.number().int().positive(),
+    kind: z.literal('group-topic'),
+    replyId: z.number().int().positive().optional(),
+  }),
+  z.object({
+    id: z.number().int().positive(),
+    kind: z.literal('subject-topic'),
+    replyId: z.number().int().positive().optional(),
+  }),
   z.object({ kind: z.literal('user'), username: z.string() }),
 ]);
 

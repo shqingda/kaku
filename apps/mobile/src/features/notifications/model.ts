@@ -1,6 +1,6 @@
 export type NotificationTarget =
-  | { id: number; kind: 'group-topic' }
-  | { id: number; kind: 'subject-topic' }
+  | { id: number; kind: 'group-topic'; replyId?: number }
+  | { id: number; kind: 'subject-topic'; replyId?: number }
   | { kind: 'user'; username: string };
 
 export type UserNotification = {

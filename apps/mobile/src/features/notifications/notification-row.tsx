@@ -12,7 +12,12 @@ function openTarget(target: NotificationTarget | undefined) {
   if (target.kind === 'group-topic') {
     router.push({
       pathname: '/group/topic/[id]',
-      params: { id: String(target.id) },
+      params: {
+        id: String(target.id),
+        ...(target.replyId
+          ? { replyId: String(target.replyId) }
+          : {}),
+      },
     });
     return;
   }
@@ -20,7 +25,13 @@ function openTarget(target: NotificationTarget | undefined) {
   if (target.kind === 'subject-topic') {
     router.push({
       pathname: '/subject/[id]/topic/[topicId]',
-      params: { id: '0', topicId: String(target.id) },
+      params: {
+        id: '0',
+        topicId: String(target.id),
+        ...(target.replyId
+          ? { replyId: String(target.replyId) }
+          : {}),
+      },
     });
     return;
   }

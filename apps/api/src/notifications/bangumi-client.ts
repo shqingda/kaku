@@ -76,11 +76,19 @@ function notificationTarget(
   notification: z.infer<typeof notificationSchema>,
 ): NotificationTarget | undefined {
   if (notification.type === 1 || notification.type === 2) {
-    return { id: notification.mainID, kind: 'group-topic' };
+    return {
+      id: notification.mainID,
+      kind: 'group-topic',
+      replyId: notification.relatedID || undefined,
+    };
   }
 
   if (notification.type === 7 || notification.type === 8) {
-    return { id: notification.mainID, kind: 'subject-topic' };
+    return {
+      id: notification.mainID,
+      kind: 'subject-topic',
+      replyId: notification.relatedID || undefined,
+    };
   }
 
   if (notification.type === 14 || notification.type === 15) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -27,8 +27,9 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function GroupTopicScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, replyId } = useLocalSearchParams<{ id: string; replyId?: string }>();
   const numericTopicId = parsePositiveIntegerRouteParam(id);
+  const numericReplyId = parsePositiveIntegerRouteParam(replyId);
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
@@ -36,6 +37,20 @@ export default function GroupTopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const appliedReplyRef = useRef(false);
+
+  useEffect(() => {
+    if (appliedReplyRef.current) {
+      return;
+    }
+
+    if (!numericReplyId || replies.length === 0) {
+      return;
+    }
+
+    appliedReplyRef.current = true;
+    replyNavigation.openReply(String(numericReplyId));
+  }, [numericReplyId, replies.length, replyNavigation]);
 
   async function openComposer(reply?: DiscussionReply) {
     if (!session) {
