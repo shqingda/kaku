@@ -127,7 +127,7 @@ function TimelineBoundary({
   return (
     <View style={styles.timelineSection}>
       <View style={styles.timelineHeading}>
-        <Text style={styles.quickTitle}>好友动态</Text>
+        <Text accessibilityRole="header" style={styles.quickTitle}>好友动态</Text>
         <Pressable
           accessibilityLabel="发布动态"
           accessibilityRole="button"
@@ -253,7 +253,7 @@ function SignedOutHome() {
 function QuickActions() {
   return (
     <View style={styles.quickSection}>
-      <Text style={styles.quickTitle}>发现</Text>
+      <Text accessibilityRole="header" style={styles.quickTitle}>发现</Text>
       <View style={styles.quickCard}>
         <QuickActionRow
           href="/explore"
@@ -312,6 +312,7 @@ function QuickActionRow({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityHint={meta}
       onPress={() => router.push(href)}
       style={({ pressed }) => [
         styles.quickActionRow,

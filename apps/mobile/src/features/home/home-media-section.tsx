@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,6 +12,7 @@ import {
 import { COLORS } from '@/constants/design';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
+import { SectionAction } from '@/features/shared/section-action';
 import type { PublicUserCollection } from '@/features/users/model';
 
 const HOME_TRACKING_TYPES = [
@@ -57,31 +57,19 @@ export function HomeMediaSection({
     <View style={styles.section}>
       <View style={styles.heading}>
         <View style={styles.headingCopy}>
-          <Text style={styles.title}>{title}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           {!loading && !error && total > 0 ? (
             <Text style={styles.count}>{total}</Text>
           ) : null}
         </View>
         {total > 0 ? (
-          <Pressable
+          <SectionAction
+            accessibilityHint="打开完整收藏列表"
             accessibilityLabel={`查看全部${title}`}
-            accessibilityRole="button"
-            hitSlop={6}
+            color={COLORS.muted}
+            label="全部"
             onPress={openAll}
-            style={({ pressed }) => [styles.more, pressed && styles.pressed]}
-          >
-            <Text style={styles.moreText}>全部</Text>
-            <SymbolView
-              name={{
-                android: 'chevron_right',
-                ios: 'chevron.right',
-                web: 'chevron_right',
-              }}
-              size={12}
-              tintColor={COLORS.muted}
-              weight="semibold"
-            />
-          </Pressable>
+          />
         ) : null}
       </View>
 
@@ -111,6 +99,7 @@ export function HomeMediaSection({
         </View>
       ) : (
         <ScrollView
+          accessibilityLabel={title}
           contentContainerStyle={styles.list}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -142,6 +131,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
         <Pressable
           accessibilityLabel={`打开${item.title}`}
           accessibilityRole="button"
+          accessibilityHint="进入条目详情"
           style={({ pressed }) => [
             styles.cardButton,
             pressed && styles.pressed,
@@ -162,6 +152,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           </Link.AppleZoom>
           <Text
             ellipsizeMode="tail"
+            maxFontSizeMultiplier={1.2}
             numberOfLines={2}
             style={styles.cardTitle}
           >
@@ -193,8 +184,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.35,
   },
   count: { color: COLORS.subtle, fontSize: 12, fontWeight: '700' },
-  more: { alignItems: 'center', flexDirection: 'row', gap: 3, minHeight: 44 },
-  moreText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
   typeTabs: { paddingBottom: 2, paddingTop: 4 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
   card: { width: 104 },

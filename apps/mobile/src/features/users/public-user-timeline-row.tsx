@@ -16,6 +16,8 @@ export function PublicUserTimelineRow({
 }) {
   return (
     <Pressable
+      accessibilityHint={onPress ? '进入相关条目详情' : undefined}
+      accessibilityLabel={item.text}
       accessibilityRole={onPress ? 'button' : undefined}
       disabled={!onPress}
       onPress={onPress}
@@ -25,7 +27,17 @@ export function PublicUserTimelineRow({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={styles.text}>{item.text}</Text>
+      <Text style={styles.text}>
+        {item.subjectTitle ? (
+          <>
+            {item.leadingText}
+            <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
+            {item.trailingText}
+          </>
+        ) : (
+          item.text
+        )}
+      </Text>
       <Text style={styles.meta}>{formatActivityTime(item.createdAt)}</Text>
     </Pressable>
   );
@@ -38,6 +50,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   text: { color: COLORS.ink, fontSize: 14, lineHeight: 20 },
+  subjectTitle: { color: COLORS.accentRich, fontWeight: '700' },
   meta: { color: COLORS.subtle, fontSize: 11, marginTop: 8 },
   pressed: { opacity: 0.62 },
 });

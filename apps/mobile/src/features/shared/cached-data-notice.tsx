@@ -10,6 +10,7 @@ export function CachedDataNotice({ onRetry }: { onRetry: () => void }) {
         <Text style={styles.detail}>网络恢复后可重新读取最新数据。</Text>
       </View>
       <Pressable
+        accessibilityLabel="重新获取最新内容"
         accessibilityRole="button"
         onPress={onRetry}
         style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     justifyContent: 'center',
     marginLeft: 12,
-    minHeight: 34,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   retryText: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },

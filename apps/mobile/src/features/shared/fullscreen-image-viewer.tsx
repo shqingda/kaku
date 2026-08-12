@@ -61,12 +61,17 @@ export function FullscreenImageViewer({
 
   return (
     <Modal
+      accessibilityViewIsModal
       animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent
       visible={visible}
     >
-      <View style={styles.screen}>
+      <View
+        accessibilityViewIsModal
+        onAccessibilityEscape={onClose}
+        style={styles.screen}
+      >
         {url ? (
           <Image
             accessibilityLabel={`${title}图片`}

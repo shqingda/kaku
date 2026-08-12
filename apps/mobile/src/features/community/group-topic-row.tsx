@@ -30,6 +30,7 @@ export function GroupTopicRow({
     <Pressable
       accessibilityLabel={`打开小组话题：${topic.title}`}
       accessibilityRole="button"
+      accessibilityHint="进入话题并查看回复"
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
@@ -59,6 +60,7 @@ export function GroupTopicRow({
       </View>
       <View
         accessibilityLabel={`${topic.replyCount} 条回复`}
+        accessible
         style={styles.reply}
       >
         <SymbolView

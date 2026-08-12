@@ -42,7 +42,8 @@ export function NotificationRow({
 }) {
   return (
     <Pressable
-      accessibilityLabel={`${item.sender.nickname}${item.action}：${item.title}`}
+      accessibilityLabel={`${item.unread ? '未读，' : ''}${item.sender.nickname}${item.action}：${item.title}`}
+      accessibilityHint={item.unread ? '未读，打开后标记为已读。' : '打开相关内容'}
       accessibilityRole="button"
       onPress={() => {
         if (item.unread) onRead(item.id);

@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
+  InteractionManager,
   Modal,
   Platform,
   Pressable,
@@ -39,7 +40,7 @@ export function TimelineComposer({
   }, [visible]);
 
   function focusInput() {
-    requestAnimationFrame(() => inputRef.current?.focus());
+    InteractionManager.runAfterInteractions(() => inputRef.current?.focus());
   }
 
   function close() {
@@ -58,9 +59,9 @@ export function TimelineComposer({
       return;
     }
 
-    Keyboard.dismiss();
     createTimeline.mutate(nextContent, {
       onSuccess: () => {
+        Keyboard.dismiss();
         setContent('');
         onClose();
       },
@@ -69,6 +70,7 @@ export function TimelineComposer({
 
   return (
     <Modal
+      accessibilityViewIsModal
       animationType="fade"
       onShow={focusInput}
       onRequestClose={close}
@@ -86,6 +88,8 @@ export function TimelineComposer({
           style={StyleSheet.absoluteFill}
         />
         <View
+          accessibilityViewIsModal
+          onAccessibilityEscape={close}
           style={[
             styles.sheet,
             { paddingBottom: Math.max(insets.bottom, 16) },
@@ -111,10 +115,13 @@ export function TimelineComposer({
                 weight="semibold"
               />
             </Pressable>
-            <Text style={styles.title}>发布动态</Text>
+            <Text accessibilityRole="header" style={styles.title}>发布动态</Text>
             <Pressable
+              accessibilityLabel="发布动态"
               accessibilityRole="button"
+              accessibilityState={{ disabled: !canSend }}
               disabled={!canSend}
+              hitSlop={5}
               onPress={send}
               style={({ pressed }) => [
                 styles.sendButton,
@@ -132,6 +139,8 @@ export function TimelineComposer({
 
           <TextInput
             accessibilityLabel="动态内容"
+            accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
+            autoFocus
             maxLength={MAX_CONTENT_LENGTH}
             multiline
             onChangeText={setContent}

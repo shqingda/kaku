@@ -29,6 +29,7 @@ export type PublicGroupDetail = PublicGroup & {
 };
 
 export type PublicGroupTopic = PublicGroupTopicSummary & {
+  body?: string;
   replies: DiscussionReply[];
 };
 

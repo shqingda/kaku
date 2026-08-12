@@ -81,7 +81,11 @@ function TimelineState({
   onRetry: () => void;
 }) {
   return (
-    <View style={styles.state}>
+    <View
+      accessibilityLiveRegion={error ? 'assertive' : 'polite'}
+      accessibilityRole={error ? 'alert' : undefined}
+      style={styles.state}
+    >
       <Text style={styles.stateTitle}>
         {loading ? '正在读取好友动态' : error ? '好友动态读取失败' : '还没有好友动态'}
       </Text>
@@ -89,7 +93,12 @@ function TimelineState({
         {error ? 'Bangumi 偶尔会响应较慢，稍后重试即可。' : '新的好友活动会显示在这里。'}
       </Text>
       {error ? (
-        <Pressable onPress={onRetry} style={styles.retryButton}>
+        <Pressable
+          accessibilityLabel="重试加载好友动态"
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={styles.retryButton}
+        >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>
       ) : null}
@@ -109,7 +118,7 @@ const styles = StyleSheet.create({
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 42 },
   stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
   stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retryButton: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 9 },
+  retryButton: { alignItems: 'center', justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 16 },
   retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

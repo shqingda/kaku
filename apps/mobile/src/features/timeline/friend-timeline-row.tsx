@@ -17,6 +17,7 @@ export function FriendTimelineRow({
     <Pressable
       accessibilityLabel={`${item.user.nickname}：${item.text}`}
       accessibilityRole={item.subjectId ? 'button' : undefined}
+      accessibilityHint={item.subjectId ? '进入相关条目详情' : undefined}
       onPress={() =>
         item.subjectId
           ? router.push({
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
   copy: { flex: 1, marginLeft: 12 },
   metaRow: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
   nickname: { color: COLORS.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
-  time: { color: COLORS.subtle, fontSize: 10 },
+  time: { color: COLORS.subtle, fontSize: 11 },
   text: { color: COLORS.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
   subjectTitle: { color: COLORS.accentRich, fontWeight: '700' },
   replies: { color: COLORS.muted, fontSize: 11, marginTop: 7 },

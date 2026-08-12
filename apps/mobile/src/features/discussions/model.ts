@@ -21,6 +21,7 @@ export type DiscussionTopic = {
   title: string;
   author: string;
   authorUsername?: string;
+  body?: string;
   createdAt: string;
   updatedAt: string;
   replies: DiscussionReply[];

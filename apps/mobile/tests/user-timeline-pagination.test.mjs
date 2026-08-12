@@ -43,6 +43,9 @@ test('public timeline uses the last item as its next cursor', () => {
   assert.equal(fullPage.nextCursor, '91');
   assert.equal(fullPage.items[0].subjectId, 1100);
   assert.equal(fullPage.items[0].text, '在看 《条目 100》');
+  assert.equal(fullPage.items[0].leadingText, '在看 ');
+  assert.equal(fullPage.items[0].subjectTitle, '条目 100');
+  assert.equal(fullPage.items[0].trailingText, '');
   assert.equal(finalPage.nextCursor, undefined);
 });
 
@@ -76,6 +79,9 @@ test('public timeline keeps episode progress semantics', () => {
 
   assert.equal(page.items[0].subjectId, 300);
   assert.equal(page.items[0].text, '完成了 《示例动画》 5 of 12 话');
+  assert.equal(page.items[0].leadingText, '完成了 ');
+  assert.equal(page.items[0].subjectTitle, '示例动画');
+  assert.equal(page.items[0].trailingText, ' 5 of 12 话');
 });
 
 test('public timeline explains a registration event', () => {
@@ -93,6 +99,7 @@ test('public timeline explains a registration event', () => {
   const page = toPublicTimelinePage(timeline, 10);
 
   assert.equal(page.items[0].text, '加入了 Bangumi');
+  assert.equal(page.items[0].subjectTitle, undefined);
 });
 
 test('public timeline keeps friend and person collection semantics', () => {

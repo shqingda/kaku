@@ -22,6 +22,8 @@ export function SubjectSearchField({
   return (
     <View style={[styles.searchBox, style]}>
       <SymbolView
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         name={{ android: 'search', ios: 'magnifyingglass', web: 'search' }}
         size={19}
         tintColor={COLORS.muted}
@@ -29,7 +31,11 @@ export function SubjectSearchField({
       />
       <TextInput
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint="输入关键词后搜索 Bangumi 条目"
+        autoCapitalize="none"
+        autoCorrect={false}
         clearButtonMode="while-editing"
+        maxFontSizeMultiplier={1.35}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         placeholder={placeholder}
@@ -50,14 +56,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     flexDirection: 'row',
     gap: 10,
-    height: 50,
+    minHeight: 50,
     paddingHorizontal: 16,
   },
   searchInput: {
     color: COLORS.ink,
     flex: 1,
     fontSize: 16,
-    height: 24,
+    minHeight: 24,
     includeFontPadding: false,
     lineHeight: 22,
     paddingVertical: 0,

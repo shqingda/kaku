@@ -4,7 +4,7 @@ import type {
   PublicGroupTopic,
   PublicGroupTopicPage,
 } from '@/features/community/model';
-import { mapBangumiReplies } from '../discussions/adapter';
+import { mapBangumiTopicContent } from '../discussions/adapter';
 
 import {
   toPublicGroup,
@@ -86,9 +86,9 @@ export async function getPublicGroupTopic(
 
     return {
       ...toPublicGroupTopic(topic),
+      ...mapBangumiTopicContent(topic),
       groupName: topic.group.name,
       groupTitle: topic.group.title,
-      replies: mapBangumiReplies(topic.replies),
     };
   } catch (error) {
     if (error instanceof BangumiRequestError && error.status === 404) {

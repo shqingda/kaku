@@ -18,12 +18,13 @@ export function InvalidRouteState({
         <View style={styles.mark}>
           <Text style={styles.markText}>?</Text>
         </View>
-        <Text style={styles.title}>{title}</Text>
+        <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
         <View style={styles.actions}>
           {router.canGoBack() ? (
             <Pressable
               accessibilityRole="button"
+              accessibilityHint="返回上一个页面"
               onPress={() => router.back()}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -35,6 +36,7 @@ export function InvalidRouteState({
           ) : null}
           <Pressable
             accessibilityRole="button"
+            accessibilityHint="返回 Kaku 首页"
             onPress={() => router.replace('/')}
             style={({ pressed }) => [
               styles.primaryButton,

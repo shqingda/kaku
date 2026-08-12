@@ -6,7 +6,8 @@ const shows = [
 
 export function ProductPreview() {
   return (
-    <div aria-label="Kaku 应用界面预览" className="product-stage">
+    <div aria-label="Kaku 应用首页与条目详情界面预览" className="product-stage" role="img">
+      <div aria-hidden="true">
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
       <section className="phone phone-main">
@@ -38,6 +39,7 @@ export function ProductPreview() {
         </div>
         <div className="score-card"><b>9.4</b><span>#12</span><span>2.1 万人评分</span></div>
       </section>
+      </div>
     </div>
   );
 }

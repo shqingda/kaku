@@ -20,7 +20,7 @@ export function PagedListFooter({
 }) {
   if (isFetching) {
     return (
-      <View style={styles.footer}>
+      <View accessibilityLiveRegion="polite" style={styles.footer}>
         <ActivityIndicator color={COLORS.accent} size="small" />
         <Text style={styles.text}>正在加载更多结果</Text>
       </View>
@@ -29,7 +29,7 @@ export function PagedListFooter({
 
   if (isError) {
     return (
-      <View style={styles.footer}>
+      <View accessibilityRole="alert" style={styles.footer}>
         <Text style={styles.text}>后续结果加载失败</Text>
         <Pressable
           accessibilityRole="button"
@@ -46,7 +46,7 @@ export function PagedListFooter({
   }
 
   return (
-    <View style={styles.footer}>
+    <View accessibilityLiveRegion="polite" style={styles.footer}>
       <Text style={styles.text}>
         {hasNextPage
           ? total === undefined
@@ -75,8 +75,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retry: {
+    alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
     borderRadius: 11,
+    justifyContent: 'center',
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },

@@ -1,9 +1,10 @@
-import { type ComponentProps, useRef, useState } from 'react';
+import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Animated,
+  AccessibilityInfo,
   Dimensions,
   Modal,
   Platform,
@@ -27,12 +28,23 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
   const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
   const triggerRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [anchor, setAnchor] = useState({
     right: 0,
     top: 0,
   });
   const progress = useRef(new Animated.Value(0)).current;
   const useNativeDriver = Platform.OS !== 'web';
+
+  useEffect(() => {
+    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion,
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   function openMenu() {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
@@ -42,7 +54,12 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
         top: y + height + 8,
       });
       setVisible(true);
+      progress.stopAnimation();
       progress.setValue(0);
+      if (reduceMotion) {
+        progress.setValue(1);
+        return;
+      }
       Animated.spring(progress, {
         damping: 24,
         mass: 0.9,
@@ -54,6 +71,12 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
   }
 
   function closeMenu() {
+    progress.stopAnimation();
+    if (reduceMotion) {
+      progress.setValue(0);
+      setVisible(false);
+      return;
+    }
     Animated.timing(progress, {
       duration: 110,
       toValue: 0,
@@ -130,11 +153,17 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
         transparent
         visible={visible}
       >
-        <Pressable
-          accessibilityLabel="关闭账户菜单"
-          onPress={closeMenu}
+        <View
+          accessibilityViewIsModal
+          onAccessibilityEscape={closeMenu}
           style={styles.backdrop}
         >
+          <Pressable
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            onPress={closeMenu}
+            style={StyleSheet.absoluteFill}
+          />
           <Animated.View
             style={[
               styles.card,
@@ -235,7 +264,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
               onPress={() => void handleSignOut()}
             />
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
     </>
   );
@@ -254,6 +283,7 @@ function MenuItem({
 }) {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="menuitem"
       onPress={onPress}
       style={({ pressed }) => [
@@ -353,7 +383,7 @@ const styles = StyleSheet.create({
   item: {
     alignItems: 'center',
     flexDirection: 'row',
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 14,
   },
   itemIcon: {

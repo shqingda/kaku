@@ -34,7 +34,7 @@ export function PricingPage() {
           <ul>
             {freeFeatures.map((feature) => (
               <li key={feature}>
-                <span>✓</span>
+                <span aria-hidden="true">✓</span>
                 {feature}
               </li>
             ))}

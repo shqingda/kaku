@@ -4,6 +4,7 @@ import { SiteFooter } from './components/site-footer';
 import { SiteHeader } from './components/site-header';
 import { HomePage } from './pages/home-page';
 import { LegalPage } from './pages/legal-page';
+import { NotFoundPage } from './pages/not-found-page';
 import { PricingPage } from './pages/pricing-page';
 import { SupportPage } from './pages/support-page';
 
@@ -17,9 +18,17 @@ export function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const titles: Record<string, string> = {
+      '/': 'Kaku · 你的动画与兴趣收藏盒',
+      '/pricing': '免费使用 · Kaku',
+      '/privacy': '隐私政策 · Kaku',
+      '/support': '支持 · Kaku',
+      '/terms': '服务条款 · Kaku',
+    };
+    document.title = titles[path] ?? '页面未找到 · Kaku';
   }, [path]);
 
-  let page = <HomePage />;
+  let page = path === '/' ? <HomePage /> : <NotFoundPage />;
 
   if (path === '/pricing') {
     page = <PricingPage />;
@@ -31,8 +40,9 @@ export function App() {
 
   return (
     <div className="site-shell">
+      <a className="skip-link" href="#main-content">跳到主要内容</a>
       <SiteHeader />
-      <main>{page}</main>
+      <main id="main-content" tabIndex={-1}>{page}</main>
       <SiteFooter />
     </div>
   );

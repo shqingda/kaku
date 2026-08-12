@@ -17,6 +17,7 @@ import { usePublicGroupTopic } from '@/features/community/use-community';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-body';
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
@@ -86,27 +87,35 @@ export default function GroupTopicScreen() {
                 onRetry={() => void topicQuery.refetch()}
               />
               {topic ? (
-                <View style={styles.topicHeader}>
-                  <Text style={styles.topicTitle}>{topic.title}</Text>
-                  {topic.groupName ? (
-                    <Link
-                      asChild
-                      href={{
-                        pathname: '/group/[name]',
-                        params: { name: topic.groupName },
-                      }}
-                    >
-                      <Pressable>
-                        <Text style={styles.groupName}>
-                          {topic.groupTitle}
-                        </Text>
-                      </Pressable>
-                    </Link>
-                  ) : null}
-                  <Text style={styles.topicMeta}>
-                    {topic.author} · {formatActivityTime(topic.updatedAt)}
-                  </Text>
-                </View>
+                <>
+                  <View
+                    style={[
+                      styles.topicHeader,
+                      topic.body && styles.topicHeaderWithBody,
+                    ]}
+                  >
+                    <Text style={styles.topicTitle}>{topic.title}</Text>
+                    {topic.groupName ? (
+                      <Link
+                        asChild
+                        href={{
+                          pathname: '/group/[name]',
+                          params: { name: topic.groupName },
+                        }}
+                      >
+                        <Pressable>
+                          <Text style={styles.groupName}>
+                            {topic.groupTitle}
+                          </Text>
+                        </Pressable>
+                      </Link>
+                    ) : null}
+                    <Text style={styles.topicMeta}>
+                      {topic.author} · {formatActivityTime(topic.updatedAt)}
+                    </Text>
+                  </View>
+                  <DiscussionTopicBody body={topic.body} />
+                </>
               ) : null}
             </>
           }
@@ -121,7 +130,7 @@ export default function GroupTopicScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={session ? openComposer : undefined}
+              onReply={openComposer}
               reply={item}
             />
           )}
@@ -181,6 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 20,
   },
+  topicHeaderWithBody: { marginBottom: 10 },
   topicTitle: {
     color: COLORS.ink,
     fontSize: 22,

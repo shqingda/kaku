@@ -1,5 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { COLORS } from '@/constants/design';
@@ -12,14 +18,32 @@ export function ScrollToTopButton({
   visible: boolean;
 }) {
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (active) setReduceMotion(enabled);
+    });
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion,
+    );
+
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(progress, {
-      duration: visible ? 160 : 120,
+      duration: reduceMotion ? 0 : visible ? 160 : 120,
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
     }).start();
-  }, [progress, visible]);
+  }, [progress, reduceMotion, visible]);
 
   return (
     <Animated.View
@@ -42,6 +66,7 @@ export function ScrollToTopButton({
       <Pressable
         accessibilityLabel="回到顶部"
         accessibilityRole="button"
+        accessibilityHint="滚动到当前列表顶部"
         hitSlop={8}
         onPress={onPress}
         style={({ pressed }) => [

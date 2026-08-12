@@ -39,6 +39,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { SectionAction } from '@/features/shared/section-action';
 import { RecentSearches } from '@/features/search/recent-searches';
 import {
   addRecentSearch,
@@ -251,6 +252,7 @@ export default function ExploreScreen() {
           <View>
             <View style={styles.exploreEntries}>
               <ExploreEntry
+                featured
                 icon={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
                 meta={`${selectedSearchType === 1 ? '阅读' : getSubjectTypeLabel(selectedSearchType)}频道 · 热门与高分精选`}
                 onPress={() =>
@@ -262,28 +264,24 @@ export default function ExploreScreen() {
                 title="频道"
               />
               <ExploreEntry
-                hasDivider
                 icon={{ android: 'forum', ios: 'bubble.left.and.bubble.right', web: 'forum' }}
                 meta="公开小组与最新话题"
                 onPress={() => router.push('/community')}
                 title="社区"
               />
               <ExploreEntry
-                hasDivider
                 icon={{ android: 'article', ios: 'doc.text', web: 'article' }}
                 meta="最新公开长文与用户评论"
                 onPress={() => router.push('/blogs')}
                 title="日志"
               />
               <ExploreEntry
-                hasDivider
                 icon={{ android: 'list_alt', ios: 'list.bullet.rectangle', web: 'list_alt' }}
                 meta="用户整理的主题收藏与推荐"
                 onPress={() => router.push('/directories')}
                 title="目录"
               />
               <ExploreEntry
-                hasDivider
                 icon={{ android: 'people_outline', ios: 'person.2', web: 'people_outline' }}
                 meta="虚构角色与现实人物"
                 onPress={() => router.push('/people')}
@@ -297,27 +295,11 @@ export default function ExploreScreen() {
                     <Text style={styles.sectionTitle}>每日放送</Text>
                     <Text style={styles.sectionMeta}>看看今天有哪些新节目</Text>
                   </View>
-                  <Pressable
+                  <SectionAction
                     accessibilityLabel="查看全部每日放送"
-                    accessibilityRole="button"
+                    label="查看全部"
                     onPress={() => router.push('/calendar')}
-                    style={({ pressed }) => [
-                      styles.sectionAction,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.sectionActionText}>查看全部</Text>
-                    <SymbolView
-                      name={{
-                        android: 'chevron_right',
-                        ios: 'chevron.right',
-                        web: 'chevron_right',
-                      }}
-                      size={12}
-                      tintColor={COLORS.accent}
-                      weight="semibold"
-                    />
-                  </Pressable>
+                  />
                 </View>
                 {calendarQuery.data && calendarQuery.isError ? (
                   <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
@@ -416,13 +398,13 @@ function SearchField({
 }
 
 function ExploreEntry({
-  hasDivider = false,
+  featured = false,
   icon,
   meta,
   onPress,
   title,
 }: {
-  hasDivider?: boolean;
+  featured?: boolean;
   icon: ComponentProps<typeof SymbolView>['name'];
   meta: string;
   onPress: () => void;
@@ -430,11 +412,13 @@ function ExploreEntry({
 }) {
   return (
     <Pressable
+      accessibilityHint={`打开${title}`}
+      accessibilityLabel={title}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
         styles.exploreEntry,
-        hasDivider && styles.exploreEntryDivider,
+        featured && styles.exploreEntryFeatured,
         pressed && styles.pressed,
       ]}
     >
@@ -443,7 +427,9 @@ function ExploreEntry({
       </View>
       <View style={styles.exploreEntryText}>
         <Text style={styles.exploreEntryTitle}>{title}</Text>
-        <Text numberOfLines={1} style={styles.exploreEntryMeta}>{meta}</Text>
+        {featured ? (
+          <Text numberOfLines={1} style={styles.exploreEntryMeta}>{meta}</Text>
+        ) : null}
       </View>
       <SymbolView
         name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
@@ -477,31 +463,16 @@ function RankingSection({
           <Text style={styles.sectionTitle}>{subjectTypeLabel}排行榜</Text>
           <Text style={styles.sectionMeta}>Bangumi 综合排名</Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
+        <SectionAction
+          accessibilityLabel={`查看全部${subjectTypeLabel}排行榜`}
+          label="查看全部"
           onPress={() =>
             router.push({
               pathname: '/rankings',
               params: { type: String(subjectType) },
             })
           }
-          style={({ pressed }) => [
-            styles.sectionAction,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.sectionActionText}>查看全部</Text>
-          <SymbolView
-            name={{
-              android: 'chevron_right',
-              ios: 'chevron.right',
-              web: 'chevron_right',
-            }}
-            size={12}
-            tintColor={COLORS.accent}
-            weight="semibold"
-          />
-        </Pressable>
+        />
       </View>
       {subjects.length > 0 && isError ? (
         <CachedDataNotice onRetry={onRetry} />
@@ -538,6 +509,9 @@ function RankingSection({
 function CalendarCard({ item }: { item: DiscoverSubject }) {
   return (
     <Pressable
+      accessibilityHint="打开条目详情"
+      accessibilityLabel={`${item.title}，${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`}
+      accessibilityRole="button"
       onPress={() =>
         router.push({
           pathname: '/subject/[id]',
@@ -560,7 +534,12 @@ function CalendarCard({ item }: { item: DiscoverSubject }) {
           />
         ) : null}
       </View>
-      <Text ellipsizeMode="tail" numberOfLines={2} style={styles.calendarTitle}>
+      <Text
+        ellipsizeMode="tail"
+        maxFontSizeMultiplier={1.35}
+        numberOfLines={2}
+        style={styles.calendarTitle}
+      >
         {item.title}
       </Text>
       <Text style={styles.calendarMeta}>
@@ -687,6 +666,9 @@ function SearchResults({
           ]}
         >
             <Pressable
+              accessibilityHint="打开条目详情"
+              accessibilityLabel={`${item.title}，${item.date?.slice(0, 4) ?? '时间待定'}${item.score ? `，${item.score.toFixed(1)} 分` : ''}`}
+              accessibilityRole="button"
               onPress={() =>
                 router.push({
                   pathname: '/subject/[id]',
@@ -741,11 +723,20 @@ function State({
   title: string;
 }) {
   return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
+    <View
+      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
+      accessibilityRole={action ? 'alert' : undefined}
+      style={styles.state}
+    >
+      <Text accessibilityRole="header" style={styles.stateTitle}>{title}</Text>
       <Text style={styles.stateText}>{text}</Text>
       {action ? (
-        <Pressable onPress={action} style={styles.retry}>
+        <Pressable
+          accessibilityLabel={`重试${title}`}
+          accessibilityRole="button"
+          onPress={action}
+          style={styles.retry}
+        >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>
       ) : null}
@@ -759,22 +750,23 @@ const styles = StyleSheet.create({
   searchList: { flex: 1 },
   searchContent: { paddingBottom: 48, paddingHorizontal: 20 },
   exploreEntries: {
-    backgroundColor: COLORS.surface,
-    borderCurve: 'continuous',
-    borderRadius: 22,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
     marginTop: 18,
-    overflow: 'hidden',
-    paddingHorizontal: 16,
   },
   exploreEntry: {
     alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderCurve: 'continuous',
+    borderRadius: 18,
+    flexBasis: '47%',
+    flexGrow: 1,
     flexDirection: 'row',
-    minHeight: 66,
+    minHeight: 58,
+    paddingHorizontal: 13,
   },
-  exploreEntryDivider: {
-    borderTopColor: COLORS.track,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  exploreEntryFeatured: { flexBasis: '100%', minHeight: 68, paddingHorizontal: 16 },
   exploreEntryIcon: {
     alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
@@ -783,7 +775,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 34,
   },
-  exploreEntryText: { flex: 1, marginLeft: 12, paddingRight: 10 },
+  exploreEntryText: { flex: 1, marginLeft: 10, minWidth: 0, paddingRight: 5 },
   exploreEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
   exploreEntryMeta: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
   searchBar: {
@@ -804,18 +796,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.6,
   },
   sectionMeta: { color: COLORS.muted, fontSize: 13, marginTop: 5 },
-  sectionAction: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 3,
-    minHeight: 44,
-    paddingLeft: 12,
-  },
-  sectionActionText: {
-    color: COLORS.accent,
-    fontSize: 13,
-    fontWeight: '700',
-  },
   dayTabs: { gap: 8, paddingBottom: 18 },
   dayTab: {
     backgroundColor: COLORS.surface,
@@ -842,7 +822,7 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     fontSize: 14,
     fontWeight: '700',
-    height: 38,
+    minHeight: 38,
     lineHeight: 19,
     marginTop: 9,
   },
@@ -910,11 +890,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retry: {
+    alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
     borderRadius: 13,
+    justifyContent: 'center',
     marginTop: 15,
+    minHeight: 44,
     paddingHorizontal: 17,
-    paddingVertical: 9,
   },
   retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },

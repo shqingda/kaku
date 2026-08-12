@@ -64,8 +64,11 @@ export type PublicUserEntityCollectionPage = {
 export type PublicTimelineItem = {
   createdAt: number;
   id: number;
+  leadingText?: string;
   subjectId?: number;
+  subjectTitle?: string;
   text: string;
+  trailingText?: string;
 };
 
 export type PublicTimelinePage = {

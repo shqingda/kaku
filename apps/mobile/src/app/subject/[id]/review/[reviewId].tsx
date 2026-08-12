@@ -126,7 +126,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={session ? openComposer : undefined}
+              onReply={openComposer}
               reply={item}
             />
           )}

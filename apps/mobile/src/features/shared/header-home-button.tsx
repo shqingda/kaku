@@ -1,50 +1,17 @@
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, StyleSheet } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import { HeaderIconButton } from '@/features/shared/header-icon-button';
 
 export function HeaderHomeButton() {
   return (
-    <Pressable
+    <HeaderIconButton
+      accessibilityHint="返回 Kaku 首页"
       accessibilityLabel="回到首页"
-      accessibilityRole="button"
-      hitSlop={8}
+      icon={{ android: 'home', ios: 'house', web: 'home' }}
+      iconOffset={{ y: 0.5 }}
+      iconSize={18}
+      iconWeight="regular"
       onPress={() => router.dismissTo('/')}
-      style={({ pressed }) => [
-        styles.button,
-        Platform.OS === 'ios' && styles.iosButton,
-        pressed && styles.pressed,
-      ]}
-    >
-      <SymbolView
-        name={{ android: 'home', ios: 'house', web: 'home' }}
-        size={20}
-        tintColor={COLORS.ink}
-        weight="regular"
-      />
-    </Pressable>
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  iosButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderColor: 'rgba(29, 29, 31, 0.06)',
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 40,
-    shadowColor: '#000000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    width: 40,
-  },
-  pressed: { opacity: 0.56 },
-});

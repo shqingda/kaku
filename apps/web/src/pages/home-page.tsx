@@ -23,22 +23,22 @@ export function HomePage() {
     <>
       <section className="hero section-pad">
         <div className="hero-copy">
-          <div className="pill"><span /> iOS 与 Android 测试中</div>
+          <div className="pill"><span aria-hidden="true" /> iOS 与 Android 测试中</div>
           <h1>把每一部喜欢，<br /><em>留在一个安静的地方。</em></h1>
           <p>Kaku 是一个为移动端重新设计的 Bangumi 第三方客户端。收藏、追踪、评分与讨论，都更轻、更快，也更像原生 App。</p>
           <div className="hero-actions">
             <a className="button primary" href="/pricing">免费测试</a>
-            <a className="button secondary" href="#features">了解 Kaku <span>↓</span></a>
+            <a className="button secondary" href="#features">了解 Kaku <span aria-hidden="true">↓</span></a>
           </div>
-          <div className="platform-note"><span>●</span> iPhone · Android · macOS 计划中</div>
+          <div className="platform-note"><span aria-hidden="true">●</span> iPhone · Android · macOS 计划中</div>
         </div>
         <ProductPreview />
       </section>
 
       <section className="trust-strip" aria-label="产品特点">
-        <span>真实 Bangumi 数据</span><i />
-        <span>系统浏览器授权</span><i />
-        <span>跨设备登录</span><i />
+        <span>真实 Bangumi 数据</span><i aria-hidden="true" />
+        <span>系统浏览器授权</span><i aria-hidden="true" />
+        <span>跨设备登录</span><i aria-hidden="true" />
         <span>独立开发</span>
       </section>
 
@@ -51,7 +51,7 @@ export function HomePage() {
         <div className="feature-grid">
           {features.map((feature) => (
             <article className="feature-card" key={feature.title}>
-              <span className="feature-icon">{feature.icon}</span>
+              <span aria-hidden="true" className="feature-icon">{feature.icon}</span>
               <h3>{feature.title}</h3>
               <p>{feature.copy}</p>
             </article>
@@ -65,7 +65,7 @@ export function HomePage() {
             <span className="eyebrow">一个账户，多台设备</span>
             <h2>换一块屏幕，<br />不用重新开始。</h2>
             <p>使用 Bangumi 官方授权登录。密码不会经过 Kaku；收藏、进度与评分直接同步到你的 Bangumi 账户。</p>
-            <a className="text-link" href="/privacy">了解隐私设计 <span>→</span></a>
+            <a className="text-link" href="/privacy">了解隐私设计 <span aria-hidden="true">→</span></a>
           </div>
           <div className="sync-visual" aria-hidden="true">
             <div className="device-card device-ios"><b>iPhone</b><span>刚刚同步</span><i>17 / 28</i></div>
@@ -76,7 +76,7 @@ export function HomePage() {
       </section>
 
       <section className="privacy-section section-pad" id="privacy">
-        <div className="privacy-mark">⌁</div>
+        <div aria-hidden="true" className="privacy-mark">⌁</div>
         <span className="eyebrow">隐私不是附加功能</span>
         <h2>你的密码，从不交给 Kaku。</h2>
         <p>登录在系统浏览器与 Bangumi 官方页面完成。Kaku 只保存完成同步所需的加密授权凭据，并允许你随时断开全部设备。</p>

@@ -17,6 +17,7 @@ import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-body';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
@@ -85,27 +86,37 @@ export default function TopicScreen() {
                 onRetry={() => void topicQuery.refetch()}
               />
               {topic ? (
-                <View style={styles.topicHeader}>
-                  <Text style={styles.topicTitle}>{topic.title}</Text>
-                  <View style={styles.topicMetaRow}>
-                    {topic.authorUsername ? (
-                      <Link
-                        asChild
-                        href={{
-                          pathname: '/user/[username]',
-                          params: { username: topic.authorUsername },
-                        }}
-                      >
-                        <Pressable>
-                          <Text style={styles.topicAuthor}>{topic.author}</Text>
-                        </Pressable>
-                      </Link>
-                    ) : (
-                      <Text style={styles.topicAuthor}>{topic.author}</Text>
-                    )}
-                    <Text style={styles.topicMeta}> · {topic.createdAt}</Text>
+                <>
+                  <View
+                    style={[
+                      styles.topicHeader,
+                      topic.body && styles.topicHeaderWithBody,
+                    ]}
+                  >
+                    <Text style={styles.topicTitle}>{topic.title}</Text>
+                    <View style={styles.topicMetaRow}>
+                      {topic.authorUsername ? (
+                        <Link
+                          asChild
+                          href={{
+                            pathname: '/user/[username]',
+                            params: { username: topic.authorUsername },
+                          }}
+                        >
+                          <Pressable>
+                            <Text style={styles.topicAuthor}>
+                              {topic.author}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      ) : (
+                        <Text style={styles.topicAuthor}>{topic.author}</Text>
+                      )}
+                      <Text style={styles.topicMeta}> · {topic.createdAt}</Text>
+                    </View>
                   </View>
-                </View>
+                  <DiscussionTopicBody body={topic.body} />
+                </>
               ) : null}
             </>
           }
@@ -120,7 +131,7 @@ export default function TopicScreen() {
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onOpenReference={replyNavigation.openReply}
-              onReply={session ? openComposer : undefined}
+              onReply={openComposer}
               reply={item}
             />
           )}
@@ -180,6 +191,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 20,
   },
+  topicHeaderWithBody: { marginBottom: 10 },
   topicTitle: {
     color: COLORS.ink,
     fontSize: 22,

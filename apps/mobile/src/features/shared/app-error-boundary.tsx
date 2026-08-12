@@ -42,7 +42,7 @@ export class AppErrorBoundary extends Component<
     }
 
     return (
-      <View style={styles.screen}>
+      <View accessibilityRole="alert" style={styles.screen}>
         <View style={styles.card}>
           <View style={styles.icon}>
             <SymbolView
@@ -61,6 +61,7 @@ export class AppErrorBoundary extends Component<
             你的收藏和登录数据没有被删除。可以先尝试重新显示页面。
           </Text>
           <Pressable
+            accessibilityLabel="重新显示页面"
             accessibilityRole="button"
             onPress={this.retry}
             style={({ pressed }) => [
@@ -71,6 +72,7 @@ export class AppErrorBoundary extends Component<
             <Text style={styles.primaryButtonText}>重新显示</Text>
           </Pressable>
           <Pressable
+            accessibilityLabel="在 GitHub 反馈问题"
             accessibilityRole="link"
             onPress={this.report}
             style={({ pressed }) => [
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
     marginTop: 20,
+    textAlign: 'center',
   },
   message: {
     color: COLORS.muted,

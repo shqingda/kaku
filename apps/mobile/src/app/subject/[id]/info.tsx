@@ -190,11 +190,20 @@ function State({
   title: string;
 }) {
   return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
+    <View
+      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
+      accessibilityRole={action ? 'alert' : undefined}
+      style={styles.state}
+    >
+      <Text accessibilityRole="header" style={styles.stateTitle}>{title}</Text>
       <Text style={styles.stateText}>{text}</Text>
       {action ? (
-        <Pressable onPress={action} style={styles.retry}>
+        <Pressable
+          accessibilityLabel="重试加载条目资料"
+          accessibilityRole="button"
+          onPress={action}
+          style={styles.retry}
+        >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>
       ) : null}
@@ -312,11 +321,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retry: {
+    alignItems: 'center',
     backgroundColor: COLORS.accentSoft,
     borderRadius: 14,
-    marginTop: 16,
+    justifyContent: 'center',
+    marginTop: 12,
+    minHeight: 44,
     paddingHorizontal: 18,
-    paddingVertical: 10,
   },
   retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

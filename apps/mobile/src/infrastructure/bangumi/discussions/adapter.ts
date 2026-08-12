@@ -9,8 +9,8 @@ import type {
   DiscussionTopic,
   DiscussionTopicPage,
 } from '../../../features/discussions/model.ts';
-import { getNextTopicOffset } from '../../../features/discussions/topic-pagination';
-import { formatActivityTime } from '../../../lib/format-activity-time';
+import { getNextTopicOffset } from '../../../features/discussions/topic-pagination.ts';
+import { formatActivityTime } from '../../../lib/format-activity-time.ts';
 
 function authorName(reply: BangumiDiscussionReply) {
   return (
@@ -86,6 +86,44 @@ export function mapBangumiReplies(
   return replies.flatMap((reply) => visit(reply));
 }
 
+function countBangumiReplies(replies: BangumiDiscussionReply[]): number {
+  return replies.reduce(
+    (total, reply) =>
+      total + 1 + countBangumiReplies(reply.replies ?? []),
+    0,
+  );
+}
+
+type BangumiTopicWithReplies = Pick<
+  BangumiSubjectTopicSummary,
+  'createdAt' | 'creatorID' | 'replyCount'
+> & {
+  replies: BangumiDiscussionReply[];
+};
+
+export function mapBangumiTopicContent(
+  topic: BangumiTopicWithReplies,
+): Pick<DiscussionTopic, 'body' | 'replies'> {
+  const replies = mapBangumiReplies(topic.replies);
+  const firstReply = topic.replies[0];
+  const body = firstReply ? cleanBangumiContent(firstReply.content) : '';
+  const isTopicBody =
+    body.length > 0 &&
+    firstReply?.creatorID === topic.creatorID &&
+    firstReply.createdAt === topic.createdAt &&
+    !firstReply.relatedID &&
+    countBangumiReplies(topic.replies) === topic.replyCount + 1;
+
+  if (!isTopicBody) {
+    return { replies };
+  }
+
+  return {
+    body,
+    replies: replies.filter((reply) => reply.id !== String(firstReply.id)),
+  };
+}
+
 function topicAuthor(topic: BangumiSubjectTopicSummary) {
   return (
     topic.creator?.nickname ||
@@ -126,7 +164,7 @@ export function mapBangumiTopic(
 ): DiscussionTopic {
   return {
     ...mapBangumiTopicSummary(topic),
-    replies: mapBangumiReplies(topic.replies),
+    ...mapBangumiTopicContent(topic),
   };
 }
 

@@ -40,7 +40,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
   return (
     <View style={styles.area}>
       <View style={styles.header}>
-        <Text style={styles.brand}>Kaku</Text>
+        <Text accessibilityRole="header" style={styles.brand}>Kaku</Text>
         {session ? (
           <ProfileMenu session={session} />
         ) : (

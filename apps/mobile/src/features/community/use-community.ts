@@ -6,7 +6,7 @@ import {
 
 import type { PublicGroupTopicPage } from './model';
 import { useAuth } from '@/features/auth/auth-provider';
-import { mapBangumiReplies } from '@/infrastructure/bangumi/discussions/adapter';
+import { mapBangumiTopicContent } from '@/infrastructure/bangumi/discussions/adapter';
 import {
   getPublicCommunity,
   getPublicCommunityTopics,
@@ -94,9 +94,9 @@ export function usePublicGroupTopic(topicId: number) {
 
       return {
         ...toPublicGroupTopic(topic),
+        ...mapBangumiTopicContent(topic),
         groupName: topic.group.name,
         groupTitle: topic.group.title,
-        replies: mapBangumiReplies(topic.replies),
       };
     },
     queryKey: [

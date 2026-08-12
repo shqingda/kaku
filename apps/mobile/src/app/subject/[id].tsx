@@ -30,6 +30,7 @@ import {
 } from '@/features/reviews/use-subject-reviews';
 import { rememberRecentSubject } from '@/features/history/recent-subjects';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { HeaderIconButton } from '@/features/shared/header-icon-button';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
@@ -60,11 +61,16 @@ function DetailEntry({
         pressed && styles.pressed,
       ]}
     >
-      <View>
+      <View style={styles.detailEntryCopy}>
         <Text style={styles.detailEntryTitle}>{label}</Text>
-        <Text style={styles.detailEntryHint}>{hint}</Text>
+        <Text numberOfLines={2} style={styles.detailEntryHint}>{hint}</Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <SymbolView
+        name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
+        size={13}
+        tintColor={COLORS.subtle}
+        weight="semibold"
+      />
     </Pressable>
   );
 }
@@ -77,28 +83,18 @@ function FloatingBackButton({
   top: number;
 }) {
   return (
-    <Pressable
-      accessibilityLabel="返回"
-      accessibilityRole="button"
-      hitSlop={8}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.backButton,
-        { top },
-        pressed && styles.pressed,
-      ]}
-    >
-      <SymbolView
-        name={{
+    <View style={[styles.backButton, { top }]}>
+      <HeaderIconButton
+        accessibilityHint="返回上一个页面"
+        accessibilityLabel="返回"
+        icon={{
           android: 'arrow_back',
           ios: 'chevron.left',
           web: 'arrow_back',
         }}
-        size={19}
-        tintColor={COLORS.ink}
-        weight="semibold"
+        onPress={onPress}
       />
-    </Pressable>
+    </View>
   );
 }
 
@@ -110,24 +106,17 @@ function FloatingHomeButton({
   top: number;
 }) {
   return (
-    <Pressable
-      accessibilityLabel="回到首页"
-      accessibilityRole="button"
-      hitSlop={8}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.homeButton,
-        { top },
-        pressed && styles.pressed,
-      ]}
-    >
-      <SymbolView
-        name={{ android: 'home', ios: 'house', web: 'home' }}
-        size={20}
-        tintColor={COLORS.ink}
-        weight="regular"
+    <View style={[styles.homeButton, { top }]}>
+      <HeaderIconButton
+        accessibilityHint="返回 Kaku 首页"
+        accessibilityLabel="回到首页"
+        icon={{ android: 'home', ios: 'house', web: 'home' }}
+        iconOffset={{ y: 0.5 }}
+        iconSize={18}
+        iconWeight="regular"
+        onPress={onPress}
       />
-    </Pressable>
+    </View>
   );
 }
 
@@ -182,6 +171,10 @@ export default function SubjectScreen() {
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
         <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+        <FloatingHomeButton
+          onPress={() => router.dismissTo('/')}
+          top={insets.top + 8}
+        />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>正在读取条目</Text>
           <Text style={styles.errorText}>正在从 Bangumi 获取公开资料。</Text>
@@ -195,6 +188,10 @@ export default function SubjectScreen() {
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
         <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+        <FloatingHomeButton
+          onPress={() => router.dismissTo('/')}
+          top={insets.top + 8}
+        />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>条目读取失败</Text>
           <Text style={styles.errorText}>请检查网络后重试。</Text>
@@ -487,37 +484,13 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   backButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderColor: 'rgba(29, 29, 31, 0.06)',
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 40,
-    justifyContent: 'center',
     left: 16,
     position: 'absolute',
-    shadowColor: '#000000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    width: 40,
     zIndex: 10,
   },
   homeButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderColor: 'rgba(29, 29, 31, 0.06)',
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 40,
-    justifyContent: 'center',
     position: 'absolute',
     right: 16,
-    shadowColor: '#000000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    width: 40,
     zIndex: 10,
   },
   heroSpacing: { height: 20 },
@@ -559,6 +532,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
   },
+  detailEntryCopy: { flex: 1, minWidth: 0, paddingRight: 12 },
   detailEntryBorder: {
     borderTopColor: COLORS.track,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -574,7 +548,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 9,
   },
-  chevron: { color: COLORS.subtle, fontSize: 25, fontWeight: '300' },
   pressed: { opacity: 0.62 },
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
   errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },

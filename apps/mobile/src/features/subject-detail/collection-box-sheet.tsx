@@ -174,16 +174,20 @@ export function CollectionBoxSheet({
       visible={visible}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'height' : undefined}
+        accessibilityViewIsModal
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        onAccessibilityEscape={onClose}
         style={styles.backdrop}
       >
         <Pressable
-          accessibilityLabel="关闭收藏盒"
-          accessibilityRole="button"
+          accessibilityElementsHidden
+          importantForAccessibility="no"
           onPress={onClose}
           style={StyleSheet.absoluteFill}
         />
         <View
+          accessibilityViewIsModal
+          onAccessibilityEscape={onClose}
           style={[
             styles.sheet,
             { paddingBottom: Math.max(insets.bottom, 18) },
@@ -191,7 +195,9 @@ export function CollectionBoxSheet({
         >
           <View style={styles.handle} />
           <View style={styles.heading}>
-            <Text style={styles.title}>收藏盒</Text>
+            <Text accessibilityRole="header" style={styles.title}>
+              收藏盒
+            </Text>
             <Pressable
               accessibilityLabel="关闭收藏盒"
               accessibilityRole="button"
@@ -223,13 +229,21 @@ export function CollectionBoxSheet({
           >
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>收藏状态</Text>
-              <View style={styles.statusOptions}>
+              <View
+                accessibilityLabel="收藏状态"
+                accessibilityRole="radiogroup"
+                style={styles.statusOptions}
+              >
                 {STATUS_OPTIONS.map((option) => {
                   const isSelected = status === option;
 
                   return (
                     <Pressable
-                      accessibilityRole="button"
+                      accessibilityLabel={getCollectionStatusLabel(
+                        item.type ?? 2,
+                        option,
+                      )}
+                      accessibilityRole="radio"
                       accessibilityState={{ selected: isSelected }}
                       key={option}
                       onPress={() => setStatus(option)}
@@ -529,6 +543,7 @@ export function CollectionBoxSheet({
                 <Pressable
                   accessibilityLabel="取消收藏"
                   accessibilityRole="button"
+                  accessibilityState={{ disabled: isSaving }}
                   disabled={isSaving}
                   onPress={onRemove}
                   style={({ pressed }) => [
@@ -541,6 +556,7 @@ export function CollectionBoxSheet({
                 </Pressable>
               ) : null}
               <Pressable
+                accessibilityLabel={status ? '保存收藏' : '请先选择收藏状态'}
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !status || isSaving }}
                 disabled={!status || isSaving}
@@ -623,7 +639,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 43,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   selectedStatusOption: { backgroundColor: COLORS.surface },
@@ -761,7 +777,7 @@ const styles = StyleSheet.create({
     flexBasis: '17%',
     flexGrow: 1,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
   },
   selectedRatingOption: {
     backgroundColor: COLORS.accentSoft,

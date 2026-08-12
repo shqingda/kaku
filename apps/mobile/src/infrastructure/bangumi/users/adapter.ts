@@ -199,10 +199,17 @@ export function toPublicTimelineItem(
   const subjectTitle = subject
     ? subject.nameCN?.trim() || subject.name
     : undefined;
-  const withSubject = (leading: string, trailing = '') =>
-    subjectTitle
-      ? `${leading}《${subjectTitle}》${trailing}`
-      : leading.trim();
+  let leadingText: string | undefined;
+  let trailingText: string | undefined;
+  const withSubject = (leading: string, trailing = '') => {
+    if (!subjectTitle) {
+      return leading.trim();
+    }
+
+    leadingText = leading;
+    trailingText = trailing;
+    return `${leading}《${subjectTitle}》${trailing}`;
+  };
 
   let text = '更新了一条动态';
 
@@ -290,8 +297,11 @@ export function toPublicTimelineItem(
   return {
     createdAt: item.createdAt,
     id: item.id,
+    leadingText,
     subjectId: subject?.id,
+    subjectTitle: leadingText !== undefined ? subjectTitle : undefined,
     text,
+    trailingText,
   };
 }
 

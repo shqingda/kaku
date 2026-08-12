@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
+  InteractionManager,
   Modal,
   Platform,
   Pressable,
@@ -63,7 +64,6 @@ export function DiscussionReplyComposer({
       return;
     }
 
-    Keyboard.dismiss();
     createReply.mutate(
       {
         content: nextContent,
@@ -71,6 +71,7 @@ export function DiscussionReplyComposer({
       },
       {
         onSuccess: () => {
+          Keyboard.dismiss();
           setContent('');
           onClose();
         },
@@ -80,9 +81,12 @@ export function DiscussionReplyComposer({
 
   return (
     <Modal
+      accessibilityViewIsModal
       animationType="fade"
       onRequestClose={close}
-      onShow={() => requestAnimationFrame(() => inputRef.current?.focus())}
+      onShow={() =>
+        InteractionManager.runAfterInteractions(() => inputRef.current?.focus())
+      }
       transparent
       visible={visible}
     >
@@ -97,6 +101,8 @@ export function DiscussionReplyComposer({
           style={StyleSheet.absoluteFill}
         />
         <View
+          accessibilityViewIsModal
+          onAccessibilityEscape={close}
           style={[
             styles.sheet,
             { paddingBottom: Math.max(insets.bottom, 16) },
@@ -122,12 +128,15 @@ export function DiscussionReplyComposer({
                 weight="semibold"
               />
             </Pressable>
-            <Text style={styles.title}>
+            <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
               {replyingTo ? `回复 ${replyingTo.author}` : '参与讨论'}
             </Text>
             <Pressable
+              accessibilityLabel="发送回复"
               accessibilityRole="button"
+              accessibilityState={{ disabled: !canSend }}
               disabled={!canSend}
+              hitSlop={5}
               onPress={send}
               style={({ pressed }) => [
                 styles.sendButton,
@@ -154,6 +163,8 @@ export function DiscussionReplyComposer({
 
           <TextInput
             accessibilityLabel="回复内容"
+            accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
+            autoFocus
             maxLength={MAX_CONTENT_LENGTH}
             multiline
             onChangeText={setContent}
@@ -216,7 +227,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 34,
   },
-  title: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  title: {
+    color: COLORS.ink,
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '800',
+    marginHorizontal: 12,
+    textAlign: 'center',
+  },
   sendButton: {
     alignItems: 'center',
     backgroundColor: COLORS.accent,

@@ -31,12 +31,13 @@ export default function NotFoundScreen() {
             weight="medium"
           />
         </View>
-        <Text style={styles.title}>这个页面暂时找不到</Text>
+        <Text accessibilityRole="header" style={styles.title}>这个页面暂时找不到</Text>
         <Text style={styles.description}>
           链接可能已经失效，或当前版本还没有对应页面。你的账户和收藏数据不会受到影响。
         </Text>
         <View style={styles.actions}>
           <Pressable
+            accessibilityHint="返回上一个可用页面"
             accessibilityRole="button"
             onPress={goBack}
             style={({ pressed }) => [
@@ -47,6 +48,7 @@ export default function NotFoundScreen() {
             <Text style={styles.secondaryButtonText}>返回</Text>
           </Pressable>
           <Pressable
+            accessibilityHint="返回 Kaku 首页"
             accessibilityRole="button"
             onPress={() => router.replace('/')}
             style={({ pressed }) => [

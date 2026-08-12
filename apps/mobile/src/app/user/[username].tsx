@@ -22,6 +22,7 @@ import { PublicUserCollectionRow } from '@/features/users/public-user-collection
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
+import { SectionAction } from '@/features/shared/section-action';
 import {
   usePublicUser,
   usePublicUserBlogs,
@@ -182,31 +183,17 @@ export default function PublicUserScreen() {
                     )}
                   </Text>
                   {friendsQuery.hasNextPage ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <SectionAction
+                      accessibilityHint="打开完整好友列表"
+                      label="查看全部"
                       onPress={() =>
                         router.push({
                           pathname: '/user/friends/[username]',
                           params: { username: user.username },
                         })
                       }
-                      style={({ pressed }) => [
-                        styles.sectionAction,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.sectionActionText}>查看全部</Text>
-                      <SymbolView
-                        name={{
-                          android: 'chevron_right',
-                          ios: 'chevron.right',
-                          web: 'chevron_right',
-                        }}
-                        size={11}
-                        tintColor={COLORS.accent}
-                        weight="semibold"
-                      />
-                    </Pressable>
+                      style={styles.sectionAction}
+                    />
                   ) : null}
                 </View>
               </View>
@@ -300,32 +287,17 @@ export default function PublicUserScreen() {
                   />
                 ))}
                 {timeline.length > 0 ? (
-                  <Pressable
+                  <SectionAction
                     accessibilityLabel="查看全部动态"
-                    accessibilityRole="button"
+                    label="全部动态"
                     onPress={() =>
                       router.push({
                         pathname: '/user/timeline/[username]',
                         params: { username: user.username },
                       })
                     }
-                    style={({ pressed }) => [
-                      styles.timelineAllButton,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.timelineAllText}>全部动态</Text>
-                    <SymbolView
-                      name={{
-                        android: 'chevron_right',
-                        ios: 'chevron.right',
-                        web: 'chevron_right',
-                      }}
-                      size={12}
-                      tintColor={COLORS.accent}
-                      weight="semibold"
-                    />
-                  </Pressable>
+                    style={styles.timelineAllButton}
+                  />
                 ) : null}
               </View>
               <View style={styles.sectionHeader}>
@@ -341,31 +313,17 @@ export default function PublicUserScreen() {
                     )}
                   </Text>
                   {blogsQuery.hasNextPage ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <SectionAction
+                      accessibilityHint="打开完整日志列表"
+                      label="查看全部"
                       onPress={() =>
                         router.push({
                           pathname: '/user/blogs/[username]',
                           params: { username: user.username },
                         })
                       }
-                      style={({ pressed }) => [
-                        styles.sectionAction,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.sectionActionText}>查看全部</Text>
-                      <SymbolView
-                        name={{
-                          android: 'chevron_right',
-                          ios: 'chevron.right',
-                          web: 'chevron_right',
-                        }}
-                        size={11}
-                        tintColor={COLORS.accent}
-                        weight="semibold"
-                      />
-                    </Pressable>
+                      style={styles.sectionAction}
+                    />
                   ) : null}
                 </View>
               </View>
@@ -406,8 +364,9 @@ export default function PublicUserScreen() {
                     )}
                   </Text>
                   {collectionsQuery.hasNextPage ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <SectionAction
+                      accessibilityHint={`打开完整${collectionSubjectTypeLabel}收藏列表`}
+                      label="查看全部"
                       onPress={() =>
                         router.push({
                           pathname: '/user/collections/[username]',
@@ -417,23 +376,8 @@ export default function PublicUserScreen() {
                           },
                         })
                       }
-                      style={({ pressed }) => [
-                        styles.sectionAction,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.sectionActionText}>查看全部</Text>
-                      <SymbolView
-                        name={{
-                          android: 'chevron_right',
-                          ios: 'chevron.right',
-                          web: 'chevron_right',
-                        }}
-                        size={11}
-                        tintColor={COLORS.accent}
-                        weight="semibold"
-                      />
-                    </Pressable>
+                      style={styles.sectionAction}
+                    />
                   ) : null}
                 </View>
               </View>
@@ -611,19 +555,7 @@ const styles = StyleSheet.create({
   sectionMeta: { color: COLORS.subtle, fontSize: 12 },
   sectionRight: { alignItems: 'center', flexDirection: 'row' },
   sectionAction: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
     marginLeft: 10,
-    paddingVertical: 4,
-  },
-  sectionActionText: {
-    color: COLORS.accent,
-    fontSize: 12,
-    fontWeight: '700',
-    includeFontPadding: false,
-    lineHeight: 16,
-    textAlignVertical: 'center',
   },
   friendList: { gap: 14, paddingBottom: 8 },
   timelineList: {
@@ -651,15 +583,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   timelineAllButton: {
-    alignItems: 'center',
     borderTopColor: COLORS.track,
     borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 50,
     paddingHorizontal: 2,
   },
-  timelineAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   inlineEmpty: {
     color: COLORS.muted,
     fontSize: 13,

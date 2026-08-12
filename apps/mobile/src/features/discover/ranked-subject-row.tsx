@@ -26,6 +26,7 @@ export function RankedSubjectRow({
     <Pressable
       accessibilityLabel={`排行榜第 ${position} 名：${item.title}`}
       accessibilityRole="button"
+      accessibilityHint="进入条目详情"
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,

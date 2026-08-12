@@ -22,12 +22,21 @@ export function DiscussionStatus({
   }
 
   return (
-    <View style={[styles.box, isError && styles.errorBox]}>
+    <View
+      accessibilityLiveRegion={isError ? 'assertive' : 'polite'}
+      accessibilityRole={isError ? 'alert' : undefined}
+      style={[styles.box, isError && styles.errorBox]}
+    >
       <Text style={styles.text}>
         {isError ? errorText : loadingText}
       </Text>
       {isError ? (
-        <Pressable onPress={onRetry}>
+        <Pressable
+          accessibilityLabel="重试加载讨论"
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={styles.retryButton}
+        >
           <Text style={styles.retry}>重试</Text>
         </Pressable>
       ) : null}
@@ -47,5 +56,6 @@ const styles = StyleSheet.create({
   },
   errorBox: { backgroundColor: COLORS.accentSoft },
   text: { color: COLORS.muted, flex: 1, fontSize: 13 },
+  retryButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 56 },
   retry: { color: COLORS.accent, fontSize: 13, fontWeight: '700', marginLeft: 12 },
 });

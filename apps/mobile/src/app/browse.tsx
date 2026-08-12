@@ -103,6 +103,9 @@ export default function BrowseScreen() {
             <View style={styles.sorts}>
               {SORTS.map((item) => (
                 <Pressable
+                  accessibilityLabel={`按${item.label}排序`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: sort === item.id }}
                   key={item.id}
                   onPress={() => setSort(item.id)}
                   style={[styles.sort, sort === item.id && styles.sortSelected]}
@@ -115,36 +118,38 @@ export default function BrowseScreen() {
             </View>
             <View style={styles.filterCard}>
               <TextInput
+                accessibilityLabel="筛选年份"
+                accessibilityHint="输入四位年份，例如 2026"
                 keyboardType="number-pad"
                 maxLength={4}
                 onChangeText={setYearDraft}
                 placeholder="年份，如 2026"
                 placeholderTextColor={COLORS.subtle}
-                style={[
-                  styles.filterInput,
-                  yearDraft && process.env.EXPO_OS === 'ios'
-                    ? styles.filterInputValueIos
-                    : null,
-                ]}
+                style={styles.filterInput}
                 value={yearDraft}
               />
               <View style={styles.filterDivider} />
               <TextInput
+                accessibilityLabel="筛选标签"
+                accessibilityHint="输入 Bangumi 标签，例如 TV 或科幻"
                 maxLength={30}
                 onChangeText={setTagDraft}
                 onSubmitEditing={applyFilters}
                 placeholder="标签，如 TV、科幻"
                 placeholderTextColor={COLORS.subtle}
                 returnKeyType="search"
-                style={[
-                  styles.filterInput,
-                  tagDraft && process.env.EXPO_OS === 'ios'
-                    ? styles.filterInputValueIos
-                    : null,
-                ]}
+                style={styles.filterInput}
                 value={tagDraft}
               />
-              <Pressable onPress={applyFilters} style={styles.applyButton}>
+              <Pressable
+                accessibilityLabel="应用筛选条件"
+                accessibilityRole="button"
+                onPress={applyFilters}
+                style={({ pressed }) => [
+                  styles.applyButton,
+                  pressed && styles.pressed,
+                ]}
+              >
                 <Text style={styles.applyText}>应用</Text>
               </Pressable>
             </View>
@@ -193,6 +198,9 @@ export default function BrowseScreen() {
 function BrowseCard({ item }: { item: DiscoverSubject }) {
   return (
     <Pressable
+      accessibilityLabel={`打开${item.title}`}
+      accessibilityRole="button"
+      accessibilityHint="进入条目详情"
       onPress={() => router.push({ pathname: '/subject/[id]', params: { id: String(item.id) } })}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
@@ -202,7 +210,7 @@ function BrowseCard({ item }: { item: DiscoverSubject }) {
           <Image contentFit="cover" source={item.coverUrl} style={StyleSheet.absoluteFill} transition={120} />
         ) : null}
       </View>
-      <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
+      <Text maxFontSizeMultiplier={1.35} numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
       <Text style={styles.cardMeta}>{item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}</Text>
     </Pressable>
   );
@@ -213,7 +221,16 @@ function BrowseState({ error, loading, onRetry }: { error: boolean; loading: boo
     <View style={styles.state}>
       <Text style={styles.stateTitle}>{loading ? '正在筛选条目' : error ? '分类浏览失败' : '没有匹配条目'}</Text>
       <Text style={styles.stateText}>{error ? '请检查网络后重试。' : '可以减少筛选条件再试。'}</Text>
-      {error ? <Pressable onPress={onRetry}><Text style={styles.retryText}>重试</Text></Pressable> : null}
+      {error ? (
+        <Pressable
+          accessibilityLabel="重试分类浏览"
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
+        >
+          <Text style={styles.retryText}>重试</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -227,25 +244,25 @@ const styles = StyleSheet.create({
   subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 7 },
   typeTabs: { paddingBottom: 2, paddingTop: 20 },
   sorts: { flexDirection: 'row', gap: 8, paddingTop: 12 },
-  sort: { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },
+  sort: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, justifyContent: 'center', minHeight: 44, paddingHorizontal: 14 },
   sortSelected: { backgroundColor: COLORS.accentSoft },
   sortText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
   sortTextSelected: { color: COLORS.accent },
   filterCard: { alignItems: 'center', backgroundColor: COLORS.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
   filterInput: { color: COLORS.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
-  filterInputValueIos: { height: 24, transform: [{ translateY: -1 }] },
   filterDivider: { backgroundColor: COLORS.track, height: 24, width: StyleSheet.hairlineWidth },
-  applyButton: { alignItems: 'center', backgroundColor: COLORS.ink, borderRadius: 13, height: 40, justifyContent: 'center', paddingHorizontal: 14 },
+  applyButton: { alignItems: 'center', backgroundColor: COLORS.ink, borderRadius: 13, height: 44, justifyContent: 'center', paddingHorizontal: 14 },
   applyText: { color: COLORS.surface, fontSize: 12, fontWeight: '800' },
   resultTitle: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginBottom: 15, marginTop: 28 },
   card: { flex: 1, marginBottom: 22, maxWidth: '48%' },
   cover: { alignItems: 'center', backgroundColor: COLORS.track, borderRadius: 18, height: 218, justifyContent: 'center', overflow: 'hidden', width: '100%' },
   coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
-  cardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700', height: 40, lineHeight: 19, marginTop: 9 },
+  cardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
   cardMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
   state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 34, width: '100%' },
   stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
   stateText: { color: COLORS.muted, fontSize: 13, marginTop: 7 },
   retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800', marginTop: 14 },
+  retry: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 72 },
   pressed: { opacity: 0.62 },
 });

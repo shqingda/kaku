@@ -33,7 +33,12 @@ export const ReplyListItem = memo(function ReplyListItem({
               params: { username: reply.authorUsername },
             }}
           >
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
+            <Pressable
+              accessibilityLabel={`打开 ${reply.author} 的公开主页`}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={({ pressed }) => pressed && styles.pressed}
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
                   {reply.author.slice(0, 1)}
@@ -62,7 +67,12 @@ export const ReplyListItem = memo(function ReplyListItem({
                 params: { username: reply.authorUsername },
               }}
             >
-              <Pressable style={({ pressed }) => pressed && styles.pressed}>
+              <Pressable
+                accessibilityLabel={`打开 ${reply.author} 的公开主页`}
+                accessibilityRole="button"
+                hitSlop={8}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
                 <Text style={styles.author}>{reply.author}</Text>
               </Pressable>
             </Link>
@@ -98,7 +108,10 @@ export const ReplyListItem = memo(function ReplyListItem({
           accessibilityRole="button"
           hitSlop={8}
           onPress={() => onReply(reply)}
-          style={({ pressed }) => pressed && styles.pressed}
+          style={({ pressed }) => [
+            styles.replyButton,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.replyAction}>回复</Text>
         </Pressable>
@@ -157,11 +170,17 @@ const styles = StyleSheet.create({
   },
   body: { color: COLORS.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
   replyAction: {
-    alignSelf: 'flex-start',
     color: COLORS.muted,
     fontSize: 12,
     fontWeight: '700',
-    marginTop: 12,
+  },
+  replyButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    marginTop: 4,
+    minHeight: 44,
+    minWidth: 44,
   },
   pressed: { opacity: 0.5 },
 });
