@@ -31,6 +31,10 @@ import {
   usePublicUserTimeline,
 } from '@/features/users/use-public-user';
 
+// Bangumi P1 的角色/人物收藏接口仍不稳定，暂时隐藏所有人的角色与人物
+// 收藏入口。相关页面、查询和接口均保留，待上游恢复后重新打开。
+const SHOW_ENTITY_ENTRY = false;
+
 export default function PublicUserScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const { session } = useAuth();
@@ -128,7 +132,7 @@ export default function PublicUserScreen() {
                   ) : null}
                 </View>
               </View>
-              {!isOwnProfile ? (
+              {SHOW_ENTITY_ENTRY ? (
                 <Pressable
                   accessibilityLabel="查看角色与人物收藏"
                   accessibilityRole="button"
