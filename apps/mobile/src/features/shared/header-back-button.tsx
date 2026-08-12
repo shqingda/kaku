@@ -1,27 +1,32 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { COLORS } from '@/constants/design';
 
-export function HeaderHomeButton() {
+export function HeaderBackButton() {
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.dismissTo('/');
+  }
+
   return (
     <Pressable
-      accessibilityLabel="回到首页"
+      accessibilityLabel="返回"
       accessibilityRole="button"
       hitSlop={8}
-      onPress={() => router.dismissTo('/')}
-      style={({ pressed }) => [
-        styles.button,
-        Platform.OS === 'ios' && styles.iosButton,
-        pressed && styles.pressed,
-      ]}
+      onPress={goBack}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
     >
       <SymbolView
-        name={{ android: 'home', ios: 'house', web: 'home' }}
-        size={20}
+        name={{ android: 'arrow_back', ios: 'chevron.left', web: 'arrow_back' }}
+        size={19}
         tintColor={COLORS.ink}
-        weight="regular"
+        weight="semibold"
       />
     </Pressable>
   );
@@ -30,16 +35,12 @@ export function HeaderHomeButton() {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  iosButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderColor: 'rgba(29, 29, 31, 0.06)',
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     height: 40,
+    justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,

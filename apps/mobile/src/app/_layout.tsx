@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
+import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
 import {
   bangumiRetryDelay,
@@ -65,13 +66,18 @@ export default function RootLayout() {
             screenOptions={{
               ...(Platform.OS === 'ios'
                 ? {
+                    unstable_headerLeftItems: () => [
+                      {
+                        element: <HeaderBackButton />,
+                        hidesSharedBackground: true,
+                        type: 'custom' as const,
+                      },
+                    ],
                     unstable_headerRightItems: () => [
                       {
-                        accessibilityLabel: '回到首页',
-                        icon: { name: 'house', type: 'sfSymbol' as const },
-                        label: '回到首页',
-                        onPress: () => router.dismissTo('/'),
-                        type: 'button' as const,
+                        element: <HeaderHomeButton />,
+                        hidesSharedBackground: true,
+                        type: 'custom' as const,
                       },
                     ],
                   }

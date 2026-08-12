@@ -109,6 +109,14 @@ export function registerCollectionRoutes(
       }
 
       if (error instanceof BangumiApiError) {
+        console.error('Bangumi entity collection request failed', {
+          entityId,
+          kind: parsedKind.data,
+          status: error.status,
+          upstreamBody: error.upstreamBody,
+          upstreamRequestId: error.upstreamRequestId,
+        });
+
         if (error.status === 401) {
           await store.deleteBangumiCredential(authentication.userId);
           return context.json(

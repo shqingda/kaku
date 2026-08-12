@@ -56,12 +56,21 @@ const episodeCollectionPageSchema = z.object({
 });
 
 export class BangumiApiError extends Error {
+  readonly upstreamBody?: string;
+  readonly upstreamRequestId?: string;
   readonly status: number;
 
-  constructor(message: string, status: number) {
+  constructor(
+    message: string,
+    status: number,
+    upstreamBody?: string,
+    upstreamRequestId?: string,
+  ) {
     super(message);
     this.name = 'BangumiApiError';
     this.status = status;
+    this.upstreamBody = upstreamBody;
+    this.upstreamRequestId = upstreamRequestId;
   }
 }
 
@@ -144,9 +153,13 @@ export async function setBangumiEntityCollection({
   );
 
   if (!response.ok) {
+    const upstreamBody = (await response.text()).slice(0, 500);
+    const upstreamRequestId = response.headers.get('x-request-id') ?? undefined;
     throw new BangumiApiError(
       `Bangumi ${collected ? '收藏' : '取消收藏'}失败（${response.status}）`,
       response.status,
+      upstreamBody,
+      upstreamRequestId,
     );
   }
 }
