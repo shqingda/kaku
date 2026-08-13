@@ -7,7 +7,6 @@ import {
   Alert,
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -19,7 +18,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
-import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
@@ -27,6 +25,7 @@ import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 
 import {
   buildEntityListItems,
@@ -77,12 +76,13 @@ export function EntityDetailScreen({
   const commentsQuery = useEntityComments(entityKind, entityId);
   const saveCollection = useSaveEntityCollection(entityKind, entityId);
   const comments = commentsQuery.data ?? [];
-  // 评论用非虚拟化 ScrollView：几百条一次性渲染，scrollToEnd 精确、滚动无
-  // 按需渲染卡顿。偏移量在 onLayout 时记录，供"跳转到某条回复"使用。
-  const commentsScrollRef = useRef<ScrollView>(null);
-  const replyOffsetsRef = useRef<Record<string, number>>({});
-  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [highlightedReplyId, setHighlightedReplyId] = useState<string>();
+  const {
+    handleScrollToIndexFailed,
+    highlightedReplyId,
+    listRef: commentsListRef,
+    openReply,
+  } = useReplyNavigation(comments);
+  const scrollToBottomPendingRef = useRef(false);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
@@ -122,30 +122,27 @@ export function EntityDetailScreen({
   }
 
   function scrollCommentsToTop() {
-    commentsScrollRef.current?.scrollTo({ animated: true, y: 0 });
+    scrollToBottomPendingRef.current = false;
+    commentsListRef.current?.scrollToOffset({ animated: true, offset: 0 });
   }
 
   function scrollCommentsToBottom() {
-    // 非虚拟化 ScrollView 全部条目已渲染，scrollToEnd 一次精确到底。
-    commentsScrollRef.current?.scrollToEnd({ animated: true });
+    scrollToBottomPendingRef.current = true;
+    commentsListRef.current?.scrollToEnd({ animated: true });
   }
 
-  function scrollToReply(replyId: string) {
-    const offset = replyOffsetsRef.current[replyId];
-    if (offset !== undefined) {
-      commentsScrollRef.current?.scrollTo({
-        animated: true,
-        y: Math.max(0, offset - 12),
-      });
+  // 虚拟化下 scrollToEnd 按已渲染条目的平均高度估算，可能停在中间；
+  // 接近估算底部时 onEndReached 触发，再滚一次直到真正到底（平滑、无停顿）。
+  function handleCommentsEndReached() {
+    if (!scrollToBottomPendingRef.current) return;
+    const { content, scrollY, viewport } = scrollMetricsRef.current;
+    const reached =
+      content > 0 && viewport > 0 && scrollY + viewport >= content - 4;
+    if (reached) {
+      scrollToBottomPendingRef.current = false;
+    } else {
+      commentsListRef.current?.scrollToEnd({ animated: true });
     }
-    setHighlightedReplyId(replyId);
-    if (highlightTimerRef.current) {
-      clearTimeout(highlightTimerRef.current);
-    }
-    highlightTimerRef.current = setTimeout(
-      () => setHighlightedReplyId(undefined),
-      1600,
-    );
   }
 
   async function toggleCollection() {
@@ -368,7 +365,7 @@ export function EntityDetailScreen({
                       key={reply.id}
                       onOpenReference={(replyId) => {
                         setCommentsVisible(true);
-                        setTimeout(() => scrollToReply(replyId), 220);
+                        setTimeout(() => openReply(replyId), 220);
                       }}
                       reply={reply}
                     />
@@ -426,41 +423,40 @@ export function EntityDetailScreen({
               />
             </Pressable>
           </View>
-          <ScrollView
-            ref={commentsScrollRef}
+          <FlatList
+            ref={commentsListRef}
             contentContainerStyle={[
               styles.commentsContent,
               { paddingBottom: Math.max(insets.bottom, 16) },
             ]}
+            data={comments}
+            initialNumToRender={18}
+            keyExtractor={(reply) => reply.id}
+            maxToRenderPerBatch={18}
             onContentSizeChange={handleCommentsContentSizeChange}
+            onEndReached={handleCommentsEndReached}
+            onEndReachedThreshold={0.2}
+            onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
-            refreshControl={
-              <AppRefreshControl
-                onRefresh={() => void commentsQuery.refetch()}
-                refreshing={commentsQuery.isRefetching}
+            onScrollBeginDrag={() => {
+              scrollToBottomPendingRef.current = false;
+            }}
+            onScrollToIndexFailed={handleScrollToIndexFailed}
+            refreshing={commentsQuery.isRefetching}
+            renderItem={({ index, item }) => (
+              <ReplyListItem
+                floor={index + 1}
+                isHighlighted={highlightedReplyId === item.id}
+                onOpenReference={openReply}
+                reply={item}
               />
-            }
+            )}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
-          >
-            {comments.map((reply, index) => (
-              <View
-                key={reply.id}
-                onLayout={(event) => {
-                  replyOffsetsRef.current[reply.id] =
-                    event.nativeEvent.layout.y;
-                }}
-              >
-                <ReplyListItem
-                  floor={index + 1}
-                  isHighlighted={highlightedReplyId === reply.id}
-                  onOpenReference={scrollToReply}
-                  reply={reply}
-                />
-              </View>
-            ))}
-          </ScrollView>
+            updateCellsBatchingPeriod={40}
+            windowSize={15}
+          />
           <ScrollNavButton
             direction={scrollMode === 'top' ? 'down' : 'up'}
             onPress={
