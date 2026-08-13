@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import { useCreateReport } from './use-create-report';
@@ -42,6 +43,8 @@ export function ReportSheet({
   target: { id: number; label: string; type: number };
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const [reason, setReason] = useState<number>();
   const [comment, setComment] = useState('');
@@ -101,7 +104,7 @@ export function ReportSheet({
             <SymbolView
               name={{ android: 'close', ios: 'xmark', web: 'close' }}
               size={17}
-              tintColor={COLORS.muted}
+              tintColor={colors.muted}
               weight="semibold"
             />
           </Pressable>
@@ -151,7 +154,7 @@ export function ReportSheet({
                         web: 'check',
                       }}
                       size={12}
-                      tintColor={COLORS.surface}
+                      tintColor={colors.surface}
                       weight="bold"
                     />
                   ) : null}
@@ -167,7 +170,7 @@ export function ReportSheet({
           multiline
           onChangeText={setComment}
           placeholder="补充说明（可选）"
-          placeholderTextColor={COLORS.subtle}
+          placeholderTextColor={colors.subtle}
           style={styles.comment}
           textAlignVertical="top"
           value={comment}
@@ -186,7 +189,7 @@ export function ReportSheet({
           ]}
         >
           {createReport.isPending ? (
-            <ActivityIndicator color={COLORS.surface} />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.submitText}>提交举报</Text>
           )}
@@ -201,7 +204,7 @@ export function ReportSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {},
   heading: {
     alignItems: 'center',
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
@@ -218,16 +221,16 @@ const styles = StyleSheet.create({
   },
   closeButtonSpacer: { height: 32, width: 32 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 18,
     fontWeight: '800',
     marginHorizontal: 12,
     textAlign: 'center',
   },
-  intro: { color: COLORS.muted, fontSize: 13, marginTop: 14 },
+  intro: { color: colors.muted, fontSize: 13, marginTop: 14 },
   reasons: {
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     marginTop: 10,
     padding: 4,
@@ -240,12 +243,12 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 12,
   },
-  selectedReasonRow: { backgroundColor: COLORS.surface },
-  reasonText: { color: COLORS.ink, fontSize: 14, fontWeight: '600' },
-  selectedReasonText: { color: COLORS.accent, fontWeight: '800' },
+  selectedReasonRow: { backgroundColor: colors.surface },
+  reasonText: { color: colors.ink, fontSize: 14, fontWeight: '600' },
+  selectedReasonText: { color: colors.accent, fontWeight: '800' },
   reasonIndicator: {
     alignItems: 'center',
-    borderColor: COLORS.track,
+    borderColor: colors.track,
     borderRadius: 9,
     borderWidth: 1,
     height: 18,
@@ -253,13 +256,13 @@ const styles = StyleSheet.create({
     width: 18,
   },
   selectedIndicator: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   comment: {
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 12,
@@ -269,16 +272,16 @@ const styles = StyleSheet.create({
   },
   submit: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     justifyContent: 'center',
     marginTop: 14,
     minHeight: 48,
   },
   submitDisabled: { opacity: 0.46 },
-  submitText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
+  submitText: { color: colors.surface, fontSize: 15, fontWeight: '800' },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 8,

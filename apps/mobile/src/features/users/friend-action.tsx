@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -8,7 +9,9 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS, HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import { useSetUserFriend, useUserFriendship } from './use-friendship';
@@ -22,6 +25,8 @@ export function FriendAction({
   nickname: string;
   username: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const friendshipQuery = useUserFriendship(username);
   const setFriend = useSetUserFriend(username);
   const isFriend = friendshipQuery.data === true;
@@ -70,7 +75,7 @@ export function FriendAction({
   if (friendshipQuery.isPending) {
     return (
       <View style={[styles.button, styles.pendingButton]}>
-        <ActivityIndicator color={COLORS.muted} size="small" />
+        <ActivityIndicator color={colors.muted} size="small" />
       </View>
     );
   }
@@ -92,7 +97,7 @@ export function FriendAction({
     >
       {busy ? (
         <ActivityIndicator
-          color={isFriend ? COLORS.muted : COLORS.surface}
+          color={isFriend ? colors.muted : colors.surface}
           size="small"
         />
       ) : (
@@ -108,7 +113,7 @@ export function FriendAction({
                   }
             }
             size={13}
-            tintColor={isFriend ? COLORS.muted : COLORS.surface}
+            tintColor={isFriend ? colors.muted : colors.surface}
             weight="semibold"
           />
           <Text style={[styles.label, isFriend && styles.friendLabel]}>
@@ -120,7 +125,7 @@ export function FriendAction({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   button: {
     alignItems: 'center',
     borderRadius: 17,
@@ -130,20 +135,20 @@ const styles = StyleSheet.create({
     minHeight: 34,
     paddingHorizontal: 13,
   },
-  addButton: { backgroundColor: COLORS.accent },
+  addButton: { backgroundColor: colors.accent },
   friendButton: {
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderWidth: StyleSheet.hairlineWidth,
   },
   pendingButton: {
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderWidth: StyleSheet.hairlineWidth,
     minWidth: 34,
     paddingHorizontal: 0,
   },
-  label: { color: COLORS.surface, fontSize: 13, fontWeight: '700' },
-  friendLabel: { color: COLORS.muted },
+  label: { color: colors.surface, fontSize: 13, fontWeight: '700' },
+  friendLabel: { color: colors.muted },
   pressed: { opacity: 0.62 },
 });

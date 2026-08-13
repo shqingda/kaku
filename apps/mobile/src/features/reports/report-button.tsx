@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
-import { COLORS, HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import { ReportSheet } from './report-sheet';
 
 // 通用"举报"入口：一个"⋯"按钮 + 举报弹层，可挂在话题头、回复卡片等位置。
@@ -17,6 +19,8 @@ export function ReportButton({
   targetId: number;
   type: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [visible, setVisible] = useState(false);
 
   return (
@@ -31,7 +35,7 @@ export function ReportButton({
         <SymbolView
           name={{ android: 'more_horiz', ios: 'ellipsis', web: 'more_horiz' }}
           size={17}
-          tintColor={COLORS.muted}
+          tintColor={colors.muted}
           weight="semibold"
         />
       </Pressable>
@@ -47,11 +51,11 @@ export function ReportButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     height: 32,

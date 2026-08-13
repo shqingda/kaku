@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
-import { COLORS, HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { ReportSheet } from '@/features/reports/report-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import { useBlocklist, useSetUserBlocked } from './use-blocklist';
 
@@ -18,6 +20,8 @@ export function ProfileOverflow({
   userId: number;
   username: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const blocklistQuery = useBlocklist();
   const setBlocked = useSetUserBlocked(username);
   const [reportVisible, setReportVisible] = useState(false);
@@ -76,7 +80,7 @@ export function ProfileOverflow({
         <SymbolView
           name={{ android: 'more_horiz', ios: 'ellipsis', web: 'more_horiz' }}
           size={17}
-          tintColor={COLORS.muted}
+          tintColor={colors.muted}
           weight="semibold"
         />
       </Pressable>
@@ -92,11 +96,11 @@ export function ProfileOverflow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderRadius: 17,
     borderWidth: StyleSheet.hairlineWidth,
     height: 34,
