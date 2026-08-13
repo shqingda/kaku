@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import {
   CHARACTER_TYPES,
@@ -30,8 +31,11 @@ import { useGlobalPeople } from '@/features/people-browser/use-global-people';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { usePeopleSearch } from '@/features/people-browser/use-people-search';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function PeopleScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [kind, setKind] = useState<PeopleKind>('character');
   const [sort, setSort] = useState<PeopleSort>('collects');
   const [type, setType] = useState<number>();
@@ -204,8 +208,12 @@ export default function PeopleScreen() {
         onEndReachedThreshold={0.45}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
-        onRefresh={() => void activeQuery.refetch()}
-        refreshing={activeQuery.isRefetching && !activeQuery.isPending}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void activeQuery.refetch()}
+            refreshing={activeQuery.isRefetching && !activeQuery.isPending}
+          />
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <PersonRow
@@ -223,6 +231,9 @@ export default function PeopleScreen() {
 }
 
 function FilterRow({ children, label }: { children: React.ReactNode; label: string }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>{label}</Text>
@@ -243,6 +254,9 @@ function FilterButton({ label, onPress, selected, wide = false }: {
   selected: boolean;
   wide?: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -267,6 +281,8 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
   isLast: boolean;
   item: PublicPersonSummary;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const pathname = item.kind === 'character' ? '/character/[id]' : '/person/[id]';
   return (
     <View style={[
@@ -276,7 +292,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
     ]}>
       <Link asChild href={{ pathname, params: { id: String(item.id) } }}>
         <Pressable
-          android_ripple={{ color: COLORS.track }}
+          android_ripple={{ color: colors.track }}
           style={StyleSheet.flatten([
             styles.row,
             hasDivider && styles.rowDivider,
@@ -310,7 +326,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
                 <SymbolView
                   name={{ android: 'chat_bubble_outline', ios: 'bubble.left', web: 'chat_bubble_outline' }}
                   size={11}
-                  tintColor={COLORS.subtle}
+                  tintColor={colors.subtle}
                 />
                 <Text style={styles.commentText}>{item.commentCount}</Text>
               </View>
@@ -324,29 +340,29 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   searchField: { marginTop: 20 },
   kindTabs: { flexDirection: 'row', gap: 8, marginTop: 12 },
   kindTab: { flex: 1, minHeight: 44 },
   filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
-  filterLabel: { color: COLORS.subtle, fontSize: 11, fontWeight: '700', width: 40 },
+  filterLabel: { color: colors.subtle, fontSize: 11, fontWeight: '700', width: 40 },
   filterOptions: { gap: 8, paddingRight: 12 },
   filter: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 15,
   },
-  filterSelected: { backgroundColor: COLORS.ink },
-  filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  filterTextSelected: { color: COLORS.surface },
+  filterSelected: { backgroundColor: colors.ink },
+  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterTextSelected: { color: colors.surface },
   searchSummary: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -354,30 +370,30 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 4,
   },
-  searchSummaryText: { color: COLORS.muted, flex: 1, fontSize: 13 },
-  clearSearch: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
-  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  searchSummaryText: { color: colors.muted, flex: 1, fontSize: 13 },
+  clearSearch: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   row: { alignItems: 'center', flexDirection: 'row', minHeight: 122, paddingVertical: 16 },
-  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
+  rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 18,
     height: 86,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 70,
   },
-  avatarFallback: { color: COLORS.accent, fontSize: 20, fontWeight: '800' },
+  avatarFallback: { color: colors.accent, fontSize: 20, fontWeight: '800' },
   rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
-  rowTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  categories: { color: COLORS.accentRich, fontSize: 12, fontWeight: '700', marginTop: 7 },
-  rowMeta: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  categories: { color: colors.accentRich, fontSize: 12, fontWeight: '700', marginTop: 7 },
+  rowMeta: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   trailing: { alignItems: 'flex-end', alignSelf: 'stretch', justifyContent: 'space-between', marginLeft: 8, paddingVertical: 5 },
   commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  commentText: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
-  chevron: { color: COLORS.subtle, fontSize: 26, fontWeight: '300' },
+  commentText: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
+  chevron: { color: colors.subtle, fontSize: 26, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });
