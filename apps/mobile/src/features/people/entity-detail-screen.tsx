@@ -125,15 +125,27 @@ export function EntityDetailScreen({
   }
 
   function scrollCommentsToBottom() {
-    // 虚拟化下 scrollToEnd 的偏移按已渲染条目的平均高度估算，首次会停在
-    // 中间；滚动途中渲染出更多条目后再滚几次，逐步修正到真正底部。
-    const delays = [0, 350, 750];
+    if (!commentsListRef.current) return;
 
-    for (const delay of delays) {
+    // 虚拟化下 scrollToEnd 按已渲染条目的平均高度估算偏移，条目高度不一
+    // 时会停在中间；滚动途中渲染出更多条目后反复修正，直到真正到底。
+    let attempts = 0;
+    const maxAttempts = 40;
+
+    function step() {
+      if (attempts >= maxAttempts) return;
+      attempts += 1;
+      commentsListRef.current?.scrollToEnd({ animated: true });
+
       setTimeout(() => {
-        commentsListRef.current?.scrollToEnd({ animated: true });
-      }, delay);
+        const { content, scrollY, viewport } = scrollMetricsRef.current;
+        const reached =
+          content > 0 && viewport > 0 && scrollY + viewport >= content - 4;
+        if (!reached) step();
+      }, 360);
     }
+
+    step();
   }
 
   async function toggleCollection() {
@@ -384,10 +396,18 @@ export function EntityDetailScreen({
           ]}
         >
           <View style={styles.commentsModalHeader}>
-            <View>
+            <Pressable
+              accessibilityLabel="回到评论顶部"
+              accessibilityRole="button"
+              onPress={scrollCommentsToTop}
+              style={({ pressed }) => [
+                styles.commentsHeaderTapTarget,
+                pressed && styles.pressed,
+              ]}
+            >
               <Text style={styles.commentsModalTitle}>{kind}评论</Text>
               <Text style={styles.commentsModalMeta}>{data?.name}</Text>
-            </View>
+            </Pressable>
             <Pressable
               accessibilityLabel="关闭评论"
               accessibilityRole="button"
@@ -413,7 +433,9 @@ export function EntityDetailScreen({
               { paddingBottom: Math.max(insets.bottom, 16) },
             ]}
             data={comments}
+            initialNumToRender={14}
             keyExtractor={(reply) => reply.id}
+            maxToRenderPerBatch={14}
             onContentSizeChange={handleCommentsContentSizeChange}
             onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
@@ -430,6 +452,8 @@ export function EntityDetailScreen({
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
+            updateCellsBatchingPeriod={40}
+            windowSize={13}
           />
           <ScrollNavButton
             direction={scrollMode === 'top' ? 'down' : 'up'}
@@ -546,6 +570,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 14,
     paddingTop: 12,
+  },
+  commentsHeaderTapTarget: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingRight: 12,
   },
   commentsModalTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' },
   commentsModalMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
