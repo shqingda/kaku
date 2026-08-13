@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 // Shared by offset- and cursor-based public lists.
 export function PagedListFooter({
@@ -18,10 +20,13 @@ export function PagedListFooter({
   onRetry: () => void;
   total?: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (isFetching) {
     return (
       <View accessibilityLiveRegion="polite" style={styles.footer}>
-        <ActivityIndicator color={COLORS.accent} size="small" />
+        <ActivityIndicator color={colors.accent} size="small" />
         <Text style={styles.text}>正在加载更多结果</Text>
       </View>
     );
@@ -60,33 +65,34 @@ export function PagedListFooter({
   );
 }
 
-const styles = StyleSheet.create({
-  footer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 9,
-    justifyContent: 'center',
-    minHeight: 58,
-    paddingHorizontal: 16,
-  },
-  text: {
-    color: COLORS.subtle,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  retry: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 11,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  retryText: {
-    color: COLORS.accent,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  pressed: { opacity: 0.62 },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    footer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 9,
+      justifyContent: 'center',
+      minHeight: 58,
+      paddingHorizontal: 16,
+    },
+    text: {
+      color: colors.subtle,
+      fontSize: 12,
+      textAlign: 'center',
+    },
+    retry: {
+      alignItems: 'center',
+      backgroundColor: colors.accentSoft,
+      borderRadius: 11,
+      justifyContent: 'center',
+      minHeight: 44,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+    },
+    retryText: {
+      color: colors.accent,
+      fontSize: 12,
+      fontWeight: '800',
+    },
+    pressed: { opacity: 0.62 },
+  });

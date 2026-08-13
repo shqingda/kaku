@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { router, Stack } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function InvalidRouteState({
   message = '这个链接不完整或已经失效。',
@@ -11,6 +13,9 @@ export function InvalidRouteState({
   message?: string;
   title?: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ headerShown: true, title }} />
@@ -51,56 +56,57 @@ export function InvalidRouteState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
-  content: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  mark: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 22,
-    height: 72,
-    justifyContent: 'center',
-    width: 72,
-  },
-  markText: { color: COLORS.accent, fontSize: 30, fontWeight: '800' },
-  title: {
-    color: COLORS.ink,
-    fontSize: 25,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    marginTop: 24,
-  },
-  message: {
-    color: COLORS.muted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 10,
-    maxWidth: 310,
-    textAlign: 'center',
-  },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 28 },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.ink,
-    borderRadius: 16,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: 22,
-  },
-  primaryButtonText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: 22,
-  },
-  secondaryButtonText: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  pressed: { opacity: 0.62, transform: [{ scale: 0.98 }] },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: { backgroundColor: colors.background, flex: 1 },
+    content: {
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+      padding: 32,
+    },
+    mark: {
+      alignItems: 'center',
+      backgroundColor: colors.accentSoft,
+      borderRadius: 22,
+      height: 72,
+      justifyContent: 'center',
+      width: 72,
+    },
+    markText: { color: colors.accent, fontSize: 30, fontWeight: '800' },
+    title: {
+      color: colors.ink,
+      fontSize: 25,
+      fontWeight: '800',
+      letterSpacing: -0.5,
+      marginTop: 24,
+    },
+    message: {
+      color: colors.muted,
+      fontSize: 15,
+      lineHeight: 23,
+      marginTop: 10,
+      maxWidth: 310,
+      textAlign: 'center',
+    },
+    actions: { flexDirection: 'row', gap: 10, marginTop: 28 },
+    primaryButton: {
+      alignItems: 'center',
+      backgroundColor: colors.ink,
+      borderRadius: 16,
+      justifyContent: 'center',
+      minHeight: 48,
+      paddingHorizontal: 22,
+    },
+    primaryButtonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+    secondaryButton: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      justifyContent: 'center',
+      minHeight: 48,
+      paddingHorizontal: 22,
+    },
+    secondaryButtonText: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+    pressed: { opacity: 0.62, transform: [{ scale: 0.98 }] },
+  });

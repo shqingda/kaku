@@ -2,12 +2,13 @@ import { SymbolView } from 'expo-symbols';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { COLORS, HIT_SLOP, TYPE } from '@/constants/design';
+import { HIT_SLOP, TYPE } from '@/constants/design';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function SectionAction({
   accessibilityHint,
   accessibilityLabel,
-  color = COLORS.accent,
+  color,
   label,
   onPress,
   style,
@@ -19,6 +20,9 @@ export function SectionAction({
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  const colors = useTheme();
+  const resolvedColor = color ?? colors.accent;
+
   return (
     <Pressable
       accessibilityHint={accessibilityHint}
@@ -32,7 +36,7 @@ export function SectionAction({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[styles.label, { color }]}>{label}</Text>
+      <Text style={[styles.label, { color: resolvedColor }]}>{label}</Text>
       <SymbolView
         name={{
           android: 'chevron_right',
@@ -40,7 +44,7 @@ export function SectionAction({
           web: 'chevron_right',
         }}
         size={12}
-        tintColor={color}
+        tintColor={resolvedColor}
         weight="semibold"
       />
     </Pressable>

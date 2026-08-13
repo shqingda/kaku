@@ -1,8 +1,11 @@
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
+import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
-import { COLORS, HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 // Material Symbols glyphs keep ~17% padding inside the font em box, so the
 // same point size renders visibly smaller on Android than on iOS.
@@ -27,6 +30,9 @@ export function HeaderIconButton({
   onPress: () => void;
   variant?: 'inline' | 'floating';
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityHint={accessibilityHint}
@@ -60,7 +66,7 @@ export function HeaderIconButton({
         <SymbolView
           name={icon}
           size={iconSize}
-          tintColor={COLORS.ink}
+          tintColor={colors.ink}
           weight={iconWeight}
         />
       </View>
@@ -68,21 +74,22 @@ export function HeaderIconButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    // Opaque white: a translucent fill lets the shadow bleed through and
-    // tint the pill edges darker than its center.
-    backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  chrome: {
-    borderColor: 'rgba(29, 29, 31, 0.06)',
-    borderWidth: StyleSheet.hairlineWidth,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
-  },
-  pressed: { opacity: 0.62, transform: [{ scale: 0.96 }] },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    button: {
+      alignItems: 'center',
+      // Opaque surface: a translucent fill lets the shadow bleed through and
+      // tint the pill edges darker than its center.
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      height: 40,
+      justifyContent: 'center',
+      width: 40,
+    },
+    chrome: {
+      borderColor: 'rgba(29, 29, 31, 0.06)',
+      borderWidth: StyleSheet.hairlineWidth,
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+    },
+    pressed: { opacity: 0.62, transform: [{ scale: 0.96 }] },
+  });

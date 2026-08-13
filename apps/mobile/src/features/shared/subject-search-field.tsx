@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function SubjectSearchField({
   accessibilityLabel = '搜索条目',
@@ -19,6 +21,9 @@ export function SubjectSearchField({
   style?: StyleProp<ViewStyle>;
   value: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.searchBox, style]}>
       <SymbolView
@@ -26,7 +31,7 @@ export function SubjectSearchField({
         importantForAccessibility="no-hide-descendants"
         name={{ android: 'search', ios: 'magnifyingglass', web: 'search' }}
         size={19}
-        tintColor={COLORS.muted}
+        tintColor={colors.muted}
         weight="medium"
       />
       <TextInput
@@ -39,7 +44,7 @@ export function SubjectSearchField({
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.muted}
+        placeholderTextColor={colors.muted}
         returnKeyType="search"
         style={styles.searchInput}
         value={value}
@@ -48,26 +53,27 @@ export function SubjectSearchField({
   );
 }
 
-const styles = StyleSheet.create({
-  searchBox: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderCurve: 'continuous',
-    borderRadius: 15,
-    flexDirection: 'row',
-    gap: 10,
-    minHeight: 50,
-    paddingHorizontal: 16,
-  },
-  searchInput: {
-    color: COLORS.ink,
-    flex: 1,
-    fontSize: 16,
-    minHeight: 24,
-    includeFontPadding: false,
-    lineHeight: 22,
-    paddingVertical: 0,
-    textAlignVertical: 'center',
-    transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }],
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    searchBox: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderCurve: 'continuous',
+      borderRadius: 15,
+      flexDirection: 'row',
+      gap: 10,
+      minHeight: 50,
+      paddingHorizontal: 16,
+    },
+    searchInput: {
+      color: colors.ink,
+      flex: 1,
+      fontSize: 16,
+      minHeight: 24,
+      includeFontPadding: false,
+      lineHeight: 22,
+      paddingVertical: 0,
+      textAlignVertical: 'center',
+      transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }],
+    },
+  });

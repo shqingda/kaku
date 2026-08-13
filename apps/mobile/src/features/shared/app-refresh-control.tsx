@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { RefreshControl } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function AppRefreshControl({
   children,
@@ -12,13 +12,15 @@ export function AppRefreshControl({
   onRefresh: () => void;
   refreshing: boolean;
 }) {
+  const colors = useTheme();
+
   return (
     <RefreshControl
-      colors={[COLORS.accent]}
+      colors={[colors.accent]}
       onRefresh={onRefresh}
-      progressBackgroundColor={COLORS.surface}
+      progressBackgroundColor={colors.surface}
       refreshing={refreshing}
-      tintColor={COLORS.accent}
+      tintColor={colors.accent}
     >
       {children}
     </RefreshControl>

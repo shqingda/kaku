@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { COLORS } from '@/constants/design';
+import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 export function ScrollToTopButton({
@@ -18,6 +18,7 @@ export function ScrollToTopButton({
   visible: boolean;
 }) {
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const colors = useTheme();
   const reduceMotion = useReduceMotion();
 
   useEffect(() => {
@@ -54,13 +55,14 @@ export function ScrollToTopButton({
         onPress={onPress}
         style={({ pressed }) => [
           styles.button,
+          { backgroundColor: colors.surface },
           pressed && styles.pressed,
         ]}
       >
         <SymbolView
           name={{ android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }}
           size={18}
-          tintColor={COLORS.ink}
+          tintColor={colors.ink}
           weight="semibold"
         />
       </Pressable>
@@ -77,7 +79,6 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderColor:
       Platform.OS === 'android'
         ? 'rgba(29, 29, 31, 0.14)'
