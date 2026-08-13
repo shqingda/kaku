@@ -28,6 +28,10 @@ import {
   usePublicIndexItems,
 } from '@/features/indexes/use-indexes';
 import { useDeleteIndex } from '@/features/indexes/use-create-index';
+import {
+  useIndexCollection,
+  useSetIndexCollection,
+} from '@/features/indexes/use-index-collection';
 import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -41,6 +45,8 @@ export default function PublicIndexScreen() {
   const indexQuery = usePublicIndex(indexId ?? 0);
   const itemsQuery = usePublicIndexItems(indexId ?? 0);
   const deleteIndex = useDeleteIndex();
+  const collectionQuery = useIndexCollection(indexId ?? 0);
+  const setCollection = useSetIndexCollection(indexId ?? 0);
   const index = indexQuery.data;
   const items = useMemo(
     () => itemsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -91,6 +97,29 @@ export default function PublicIndexScreen() {
         },
       ],
     );
+  }
+
+  function toggleCollection() {
+    if (!indexId) {
+      return;
+    }
+
+    if (!session) {
+      Alert.alert(
+        '登录后收藏目录',
+        '收藏会保存到你的 Bangumi 账户。',
+        [
+          { style: 'cancel', text: '取消' },
+          { onPress: () => router.push('/account'), text: '去登录' },
+        ],
+      );
+      return;
+    }
+
+    const collected = collectionQuery.data === true;
+    setCollection.mutate(!collected, {
+      onError: (error) => Alert.alert('收藏没有保存', error.message),
+    });
   }
 
   if (!indexId) {
@@ -199,6 +228,41 @@ export default function PublicIndexScreen() {
                   {index.itemCount} 项 · {index.collects} 收藏 ·{' '}
                   {index.replyCount} 回复
                 </Text>
+                <Pressable
+                  accessibilityLabel={
+                    collectionQuery.data ? '取消收藏目录' : '收藏目录'
+                  }
+                  accessibilityRole="button"
+                  accessibilityState={{ busy: setCollection.isPending }}
+                  disabled={setCollection.isPending}
+                  onPress={toggleCollection}
+                  style={({ pressed }) => [
+                    styles.collectButton,
+                    collectionQuery.data && styles.collectedButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <SymbolView
+                    name={
+                      collectionQuery.data
+                        ? { android: 'star', ios: 'star.fill', web: 'star' }
+                        : { android: 'star_outline', ios: 'star', web: 'star_outline' }
+                    }
+                    size={14}
+                    tintColor={
+                      collectionQuery.data ? COLORS.surface : COLORS.accent
+                    }
+                    weight="semibold"
+                  />
+                  <Text
+                    style={[
+                      styles.collectText,
+                      collectionQuery.data && styles.collectedText,
+                    ]}
+                  >
+                    {collectionQuery.data ? '已收藏' : '收藏目录'}
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
             {index ? (
@@ -407,6 +471,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   stats: { color: COLORS.subtle, fontSize: 12, marginTop: 14 },
+  collectButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    marginTop: 16,
+    minHeight: 40,
+    paddingHorizontal: 16,
+  },
+  collectedButton: { backgroundColor: COLORS.accent },
+  collectText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  collectedText: { color: COLORS.surface },
   sectionTitle: {
     color: COLORS.ink,
     fontSize: 19,

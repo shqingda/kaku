@@ -92,3 +92,37 @@ export async function deleteIndex(
     throw new Error(await readErrorMessage(response));
   }
 }
+
+const indexCollectionSchema = z.object({ collected: z.boolean() });
+
+export async function getIndexCollection(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  indexId: number,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const response = await request(`/me/indexes/${indexId}/collection`, {
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return indexCollectionSchema.parse(await response.json()).collected;
+}
+
+export async function setIndexCollection(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  indexId: number,
+  shouldCollect: boolean,
+): Promise<boolean> {
+  const response = await request(`/me/indexes/${indexId}/collect`, {
+    method: shouldCollect ? 'POST' : 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return indexCollectionSchema.parse(await response.json()).collected;
+}

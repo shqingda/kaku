@@ -186,3 +186,70 @@ test('deleting a missing index maps to a not-found message', async () => {
     },
   );
 });
+
+test('reading an index collection reflects the collectedAt field', async () => {
+  const { getBangumiIndexCollection } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/indexes/20201');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return Response.json({ collectedAt: 1_785_940_000 });
+  };
+
+  const collected = await getBangumiIndexCollection({
+    accessToken: 'access-token',
+    fetcher,
+    indexId: 20201,
+  });
+
+  assert.equal(collected, true);
+});
+
+test('an uncollected index has no collectedAt', async () => {
+  const { getBangumiIndexCollection } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async () => Response.json({});
+
+  const collected = await getBangumiIndexCollection({
+    accessToken: 'access-token',
+    fetcher,
+    indexId: 20201,
+  });
+
+  assert.equal(collected, false);
+});
+
+test('collecting an index POSTs to the v0 collect endpoint', async () => {
+  const { setBangumiIndexCollection } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://api.bgm.tv/v0/indices/20201/collect');
+    assert.equal(init.method, 'POST');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return new Response(null, { status: 204 });
+  };
+
+  const collected = await setBangumiIndexCollection({
+    accessToken: 'access-token',
+    fetcher,
+    indexId: 20201,
+    shouldCollect: true,
+  });
+
+  assert.equal(collected, true);
+});
+
+test('uncollecting an index DELETEs the v0 collect endpoint', async () => {
+  const { setBangumiIndexCollection } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://api.bgm.tv/v0/indices/20201/collect');
+    assert.equal(init.method, 'DELETE');
+    return new Response(null, { status: 204 });
+  };
+
+  const collected = await setBangumiIndexCollection({
+    accessToken: 'access-token',
+    fetcher,
+    indexId: 20201,
+    shouldCollect: false,
+  });
+
+  assert.equal(collected, false);
+});

@@ -4,6 +4,7 @@ import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { PublicIndexPage } from './model.ts';
 
 const BANGUMI_INDEX_URL = 'https://bgm.tv/index/browser';
+const BANGUMI_API_URL = 'https://api.bgm.tv';
 const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 const MAX_HTML_LENGTH = 1_000_000;
 
@@ -143,6 +144,86 @@ export async function deleteBangumiIndex({
             : '目录没有删除成功，请稍后重试。',
     );
   }
+}
+
+const indexCollectionSchema = z.object({
+  collectedAt: z.number().int().optional(),
+});
+
+export async function getBangumiIndexCollection({
+  accessToken,
+  fetcher = fetch,
+  indexId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  indexId: number;
+}): Promise<boolean> {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/indexes/${indexId}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiIndexWriteError(
+      response.status,
+      response.status === 404
+        ? '这个目录已不存在。'
+        : response.status >= 500
+          ? 'Bangumi 暂时不可用，请稍后重试。'
+          : '目录收藏状态读取失败。',
+    );
+  }
+
+  const detail = indexCollectionSchema.parse(await response.json());
+  return detail.collectedAt !== undefined;
+}
+
+export async function setBangumiIndexCollection({
+  accessToken,
+  fetcher = fetch,
+  indexId,
+  shouldCollect,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  indexId: number;
+  shouldCollect: boolean;
+}): Promise<boolean> {
+  const response = await fetcher(
+    `${BANGUMI_API_URL}/v0/indices/${indexId}/collect`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+      method: shouldCollect ? 'POST' : 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiIndexWriteError(
+      response.status,
+      response.status === 404
+        ? '这个目录已不存在。'
+        : response.status === 429
+          ? '操作得太频繁了，请稍后再试。'
+          : response.status >= 500
+            ? 'Bangumi 暂时不可用，请稍后重试。'
+            : shouldCollect
+              ? '目录没有收藏成功，请稍后重试。'
+              : '目录没有取消收藏，请稍后重试。',
+    );
+  }
+
+  return shouldCollect;
 }
 
 function decodeHtml(value: string) {

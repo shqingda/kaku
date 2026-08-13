@@ -18,8 +18,10 @@ import {
   BangumiIndexWriteError,
   createBangumiIndex,
   deleteBangumiIndex,
+  getBangumiIndexCollection,
   getBangumiIndexes,
   type IndexSort,
+  setBangumiIndexCollection,
   updateBangumiIndex,
 } from './bangumi-client.ts';
 
@@ -210,6 +212,77 @@ export function registerIndexRoutes(
 
     return withIndexWrite(context, 'bangumi_index_delete_failed', (accessToken) =>
       deleteBangumiIndex({ accessToken, fetcher, indexId }),
+    );
+  });
+
+  app.get('/me/indexes/:indexId/collection', async (context) => {
+    const indexId = getPositiveId(context.req.param('indexId'));
+
+    if (!indexId) {
+      return context.json(
+        { error: 'invalid_index_id', message: '目录编号格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(
+      context,
+      'bangumi_index_collection_failed',
+      async (accessToken) => ({
+        collected: await getBangumiIndexCollection({
+          accessToken,
+          fetcher,
+          indexId,
+        }),
+      }),
+    );
+  });
+
+  app.post('/me/indexes/:indexId/collect', async (context) => {
+    const indexId = getPositiveId(context.req.param('indexId'));
+
+    if (!indexId) {
+      return context.json(
+        { error: 'invalid_index_id', message: '目录编号格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(
+      context,
+      'bangumi_index_collect_failed',
+      async (accessToken) => ({
+        collected: await setBangumiIndexCollection({
+          accessToken,
+          fetcher,
+          indexId,
+          shouldCollect: true,
+        }),
+      }),
+    );
+  });
+
+  app.delete('/me/indexes/:indexId/collect', async (context) => {
+    const indexId = getPositiveId(context.req.param('indexId'));
+
+    if (!indexId) {
+      return context.json(
+        { error: 'invalid_index_id', message: '目录编号格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(
+      context,
+      'bangumi_index_uncollect_failed',
+      async (accessToken) => ({
+        collected: await setBangumiIndexCollection({
+          accessToken,
+          fetcher,
+          indexId,
+          shouldCollect: false,
+        }),
+      }),
     );
   });
 }
