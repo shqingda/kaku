@@ -21,7 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { COLORS } from '@/constants/design';
+import { useTheme } from '@/features/theme/theme-provider';
 import {
   DISMISS_HEIGHT_RATIO,
   RUBBERBAND_CONSTANT,
@@ -47,6 +47,7 @@ export function AppSheet({
   visible: boolean;
 }) {
   const { height: windowHeight } = useWindowDimensions();
+  const colors = useTheme();
   const reduceMotion = useReduceMotion();
   const translateY = useSharedValue(windowHeight);
   const backdropOpacity = useSharedValue(0);
@@ -220,10 +221,10 @@ export function AppSheet({
               }
             }}
             pointerEvents={visible ? 'auto' : 'none'}
-            style={[styles.sheet, sheetStyle]}
+            style={[styles.sheet, sheetStyle, { backgroundColor: colors.surface }]}
           >
             <View style={styles.dragZone}>
-              <View style={styles.handle} />
+              <View style={[styles.handle, { backgroundColor: colors.track }]} />
             </View>
             {children}
           </Animated.View>
@@ -244,7 +245,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.28)',
   },
   sheet: {
-    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '92%',
@@ -257,7 +257,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   handle: {
-    backgroundColor: COLORS.track,
     borderRadius: 2,
     height: 4,
     width: 36,

@@ -1,15 +1,8 @@
-export const COLORS = {
-  accent: '#C96878',
-  // Interactive text needs stronger contrast than decorative fills.
-  accentRich: '#B05064',
-  accentSoft: '#F6E7EA',
-  background: '#F5F4F0',
-  ink: '#1D1D1F',
-  muted: '#6E6E73',
-  subtle: '#73737A',
-  surface: '#FFFFFF',
-  track: '#E6E4DE',
-} as const;
+import { LIGHT_COLORS } from './theme';
+
+// 兼容旧引用：未迁移到 useTheme() 的组件仍使用浅色常量。
+// 新增 token 见 constants/theme.ts。
+export const COLORS = LIGHT_COLORS;
 
 // 间距阶梯：一致的呼吸感。页面级区块间距优先取 xl/xxl，卡片内取 md/lg。
 export const SPACING = {

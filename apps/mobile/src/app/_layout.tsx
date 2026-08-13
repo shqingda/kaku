@@ -10,6 +10,7 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
+import { ThemeProvider } from '@/features/theme/theme-provider';
 import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
@@ -64,6 +65,7 @@ export default function RootLayout() {
       >
         <AuthProvider>
           <StatusBar style="dark" />
+          <ThemeProvider>
           <Stack
             screenOptions={{
               ...(Platform.OS === 'ios'
@@ -445,6 +447,7 @@ export default function RootLayout() {
             }}
           />
           </Stack>
+        </ThemeProvider>
         </AuthProvider>
         </PersistQueryClientProvider>
       </GestureHandlerRootView>
