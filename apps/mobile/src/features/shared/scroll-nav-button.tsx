@@ -12,14 +12,11 @@ import { SymbolView } from 'expo-symbols';
 import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
-// 底部居中的胶囊导航按钮：根据 direction 显示"回到顶部"（上）或"拉到底部"（下），
-// 图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
+// 底部居中的"回到顶部"胶囊按钮：图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
 export function ScrollNavButton({
-  direction,
   onPress,
   visible,
 }: {
-  direction: 'down' | 'up';
   onPress: () => void;
   visible: boolean;
 }) {
@@ -35,8 +32,6 @@ export function ScrollNavButton({
       useNativeDriver: true,
     }).start();
   }, [progress, reduceMotion, visible]);
-
-  const isUp = direction === 'up';
 
   return (
     <Animated.View
@@ -57,7 +52,7 @@ export function ScrollNavButton({
       ]}
     >
       <Pressable
-        accessibilityLabel={isUp ? '回到顶部' : '拉到底部'}
+        accessibilityLabel="回到顶部"
         accessibilityRole="button"
         hitSlop={8}
         onPress={onPress}
@@ -68,22 +63,16 @@ export function ScrollNavButton({
         ]}
       >
         <SymbolView
-          name={
-            isUp
-              ? { android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }
-              : {
-                  android: 'arrow_downward',
-                  ios: 'arrow.down',
-                  web: 'arrow_downward',
-                }
-          }
+          name={{
+            android: 'arrow_upward',
+            ios: 'arrow.up',
+            web: 'arrow_upward',
+          }}
           size={15}
           tintColor={colors.ink}
           weight="semibold"
         />
-        <Text style={[styles.label, { color: colors.ink }]}>
-          {isUp ? '回到顶部' : '拉到底部'}
-        </Text>
+        <Text style={[styles.label, { color: colors.ink }]}>回到顶部</Text>
       </Pressable>
     </Animated.View>
   );

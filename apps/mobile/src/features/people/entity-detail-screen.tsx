@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -63,13 +63,8 @@ export function EntityDetailScreen({
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
-  // 'top' 显示"拉到底部"，'bottom' 显示"回到顶部"，'none' 隐藏。
-  const [scrollMode, setScrollMode] = useState<'bottom' | 'none' | 'top'>('none');
-  const scrollMetricsRef = useRef({
-    content: 0,
-    scrollY: 0,
-    viewport: 0,
-  });
+  // 与排行榜一致：往下滚动一段距离后显示"回到顶部"。
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
@@ -82,114 +77,21 @@ export function EntityDetailScreen({
     listRef: commentsListRef,
     openReply,
   } = useReplyNavigation(comments);
-  const scrollToBottomPendingRef = useRef(false);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
 
-  // 接近顶部/底部（冗余阈值）即出现对应按钮，中间隐藏。
-  const NEAR_EDGE_THRESHOLD = 240;
-
-  function updateScrollMode() {
-    const { content, scrollY, viewport } = scrollMetricsRef.current;
-    let mode: 'bottom' | 'none' | 'top' = 'none';
-
-    if (content > viewport + 8) {
-      if (scrollY <= NEAR_EDGE_THRESHOLD) {
-        mode = 'top';
-      } else if (content - (scrollY + viewport) <= NEAR_EDGE_THRESHOLD) {
-        mode = 'bottom';
-      }
-    }
-
-    setScrollMode((current) => (current === mode ? current : mode));
-  }
-
   function handleCommentsScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    scrollMetricsRef.current = {
-      content: contentSize.height,
-      scrollY: contentOffset.y,
-      viewport: layoutMeasurement.height,
-    };
-    updateScrollMode();
-  }
-
-  function handleCommentsContentSizeChange(_width: number, height: number) {
-    scrollMetricsRef.current.content = height;
-    updateScrollMode();
+    const nextVisible = event.nativeEvent.contentOffset.y > 720;
+    setShowsScrollToTop((current) =>
+      current === nextVisible ? current : nextVisible,
+    );
   }
 
   function scrollCommentsToTop() {
-    scrollToBottomPendingRef.current = false;
     commentsListRef.current?.scrollToOffset({ animated: true, offset: 0 });
   }
-
-  function scrollCommentsToBottom() {
-    scrollToBottomPendingRef.current = true;
-    commentsListRef.current?.scrollToEnd({ animated: true });
-  }
-
-  // 虚拟化下 scrollToEnd 按已渲染条目的平均高度估算，可能停在中间；
-  // 接近估算底部时 onEndReached 触发，再滚一次直到真正到底（平滑、无停顿）。
-  function handleCommentsEndReached() {
-    if (!scrollToBottomPendingRef.current) return;
-    const { content, scrollY, viewport } = scrollMetricsRef.current;
-    const reached =
-      content > 0 && viewport > 0 && scrollY + viewport >= content - 4;
-    if (reached) {
-      scrollToBottomPendingRef.current = false;
-    } else {
-      commentsListRef.current?.scrollToEnd({ animated: true });
-    }
-  }
-
-  // 打开抽屉后预热：瞬间滚到底再滚回顶，让 FlatList 渲染并缓存头部与尾部
-  // 条目的高度，使"拉到底部"的 scrollToEnd 估算更准、一次到位。全程
-  // animated:false，不会有可见的滚动动画。
-  useEffect(() => {
-    if (!commentsVisible || comments.length === 0) return;
-
-    const timer = setTimeout(() => {
-      if (!commentsListRef.current) return;
-
-      let attempts = 0;
-      const maxAttempts = 30;
-
-      function measureStep() {
-        if (attempts >= maxAttempts) {
-          commentsListRef.current?.scrollToOffset({
-            animated: false,
-            offset: 0,
-          });
-          return;
-        }
-        attempts += 1;
-        commentsListRef.current?.scrollToEnd({ animated: false });
-
-        requestAnimationFrame(() => {
-          const { content, scrollY, viewport } = scrollMetricsRef.current;
-          const reached =
-            content > 0 &&
-            viewport > 0 &&
-            scrollY + viewport >= content - 4;
-          if (reached) {
-            commentsListRef.current?.scrollToOffset({
-              animated: false,
-              offset: 0,
-            });
-          } else {
-            measureStep();
-          }
-        });
-      }
-
-      measureStep();
-    }, 160);
-
-    return () => clearTimeout(timer);
-  }, [commentsVisible, comments.length]);
 
   async function toggleCollection() {
     if (!session) {
@@ -479,14 +381,8 @@ export function EntityDetailScreen({
             initialNumToRender={18}
             keyExtractor={(reply) => reply.id}
             maxToRenderPerBatch={18}
-            onContentSizeChange={handleCommentsContentSizeChange}
-            onEndReached={handleCommentsEndReached}
-            onEndReachedThreshold={0.2}
             onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
-            onScrollBeginDrag={() => {
-              scrollToBottomPendingRef.current = false;
-            }}
             onScrollToIndexFailed={handleScrollToIndexFailed}
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
@@ -504,13 +400,8 @@ export function EntityDetailScreen({
             windowSize={15}
           />
           <ScrollNavButton
-            direction={scrollMode === 'top' ? 'down' : 'up'}
-            onPress={
-              scrollMode === 'top'
-                ? scrollCommentsToBottom
-                : scrollCommentsToTop
-            }
-            visible={scrollMode !== 'none'}
+            onPress={scrollCommentsToTop}
+            visible={showsScrollToTop}
           />
         </View>
       </AppSheet>
