@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { DiscussionTopic } from './model';
 
@@ -20,6 +21,9 @@ export function TopicList({
   onOpenTopic,
   topics,
 }: TopicListProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.list}>
       {topics.length === 0 ? (
@@ -73,51 +77,51 @@ export function TopicList({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   topicRow: { alignItems: 'center', flexDirection: 'row', paddingVertical: 16 },
   topicBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   pressed: { opacity: 0.56 },
   topicMain: { flex: 1, paddingRight: 14 },
   titleLine: { alignItems: 'center', flexDirection: 'row' },
   episodeBadge: {
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 7,
     marginRight: 7,
     paddingHorizontal: 6,
     paddingVertical: 3,
   },
-  episodeBadgeText: { color: COLORS.muted, fontSize: 10, fontWeight: '800' },
+  episodeBadgeText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
   topicTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 22,
   },
-  topicPreview: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
-  topicMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 8 },
+  topicPreview: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 8 },
   replyCount: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
     paddingHorizontal: 8,
   },
-  replyCountText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   emptyState: {
     alignItems: 'center',
     padding: 28,
   },
-  emptyText: { color: COLORS.muted, fontSize: 14, lineHeight: 21 },
+  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
 });

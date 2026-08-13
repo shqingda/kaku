@@ -1,10 +1,11 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { DiscussionReply } from './model';
 
@@ -29,6 +30,9 @@ export const ReplyListItem = memo(function ReplyListItem({
   onReport,
   reply,
 }: ReplyListItemProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.card, isHighlighted && styles.highlightedCard]}>
       <View style={styles.header}>
@@ -106,7 +110,7 @@ export const ReplyListItem = memo(function ReplyListItem({
                 web: 'reply',
               }}
               size={13}
-              tintColor={COLORS.muted}
+              tintColor={colors.muted}
               weight="semibold"
             />
           </Pressable>
@@ -182,9 +186,9 @@ export const ReplyListItem = memo(function ReplyListItem({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderColor: 'transparent',
     borderRadius: 20,
     borderWidth: 1,
@@ -192,26 +196,26 @@ const styles = StyleSheet.create({
     padding: 17,
   },
   highlightedCard: {
-    backgroundColor: COLORS.accentSoft,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
   },
   header: { alignItems: 'center', flexDirection: 'row' },
   avatar: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 18,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
-  avatarText: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
+  avatarText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
   identity: { flex: 1, marginLeft: 10 },
-  author: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
-  time: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
-  floor: { color: COLORS.subtle, fontSize: 12 },
+  author: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  time: { color: colors.subtle, fontSize: 11, marginTop: 3 },
+  floor: { color: colors.subtle, fontSize: 12 },
   replyReference: {
-    backgroundColor: '#F5F4F0',
-    borderLeftColor: COLORS.accent,
+    backgroundColor: colors.surfaceSoft,
+    borderLeftColor: colors.accent,
     borderLeftWidth: 3,
     borderRadius: 8,
     marginTop: 13,
@@ -220,17 +224,17 @@ const styles = StyleSheet.create({
   },
   pressedReference: { opacity: 0.62 },
   replyReferenceAuthor: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
   },
   replyReferenceBody: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 3,
   },
-  body: { color: COLORS.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  body: { color: colors.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
   replyIcon: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -245,12 +249,12 @@ const styles = StyleSheet.create({
     minHeight: 32,
   },
   editAction: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
   },
   deleteAction: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
   },
