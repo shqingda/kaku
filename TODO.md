@@ -11,4 +11,4 @@
 
 ## 深色模式（进行中）
 
-- [ ] 完成全站配色迁移：主题系统已就绪（`constants/theme.ts` 的 `LIGHT_COLORS`/`DARK_COLORS`、`features/theme/theme-provider.tsx` 的 `ThemeProvider`/`useTheme`，`COLORS` 已改为 `LIGHT_COLORS` 并新增 `surfaceSoft`/`surfaceAlt`/`divider`/`inputBorder` 语义 token）。共享组件 `AppState`、`AppSheet` 已改为按主题生成样式。剩余约 90 个文件（页面 + 特性组件）需把 `StyleSheet.create` 改为 `createStyles(colors)` + `useTheme()`；全部迁移完成后，将 `app.json` 的 `userInterfaceStyle` 改回 `automatic`、`_layout.tsx` 的 `StatusBar` 改为 `auto` 即启用深色模式。启用前保持浅色，避免半迁移导致的明暗混杂。
+- [ ] 完成全站配色迁移：主题系统已就绪（`constants/theme.ts` 的 `LIGHT_COLORS`/`DARK_COLORS`、`features/theme/theme-provider.tsx` 的 `ThemeProvider`/`useTheme`，`COLORS` 已改为 `LIGHT_COLORS` 并新增 `surfaceSoft`/`surfaceAlt`/`divider`/`inputBorder` 语义 token）。共享组件 `AppState`、`AppSheet` 已改为按主题生成样式，账户、通知、登录回调、关于与错误页也已迁移。剩余约 60 个页面或特性组件需要接入 `createStyles(colors)` + `useTheme()`；全部迁移完成后，将 `app.json` 的 `userInterfaceStyle` 改回 `automatic`、`_layout.tsx` 的 `StatusBar` 改为 `auto` 即启用深色模式。启用前保持浅色，避免半迁移导致的明暗混杂。

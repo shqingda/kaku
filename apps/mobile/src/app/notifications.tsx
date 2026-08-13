@@ -1,16 +1,20 @@
+import { useMemo } from 'react';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { NotificationRow } from '@/features/notifications/notification-row';
 import {
   useMarkNotificationsRead,
   useNotifications,
 } from '@/features/notifications/use-notifications';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function NotificationsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const notificationsQuery = useNotifications();
   const markRead = useMarkNotificationsRead();
   const notifications = notificationsQuery.data?.items ?? [];
@@ -36,7 +40,7 @@ export default function NotificationsScreen() {
                     web: 'done_all',
                   }}
                   size={21}
-                  tintColor={COLORS.ink}
+                  tintColor={colors.ink}
                 />
               </Pressable>
             ) : null,
@@ -49,6 +53,7 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           <NotificationState
+            colors={colors}
             error={notificationsQuery.isError}
             loading={notificationsQuery.isPending}
             onRetry={() => void notificationsQuery.refetch()}
@@ -59,6 +64,7 @@ export default function NotificationsScreen() {
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <NotificationRow
+            colors={colors}
             hasDivider={index > 0}
             item={item}
             onRead={(id) => markRead.mutate([id])}
@@ -71,14 +77,18 @@ export default function NotificationsScreen() {
 }
 
 function NotificationState({
+  colors,
   error,
   loading,
   onRetry,
 }: {
+  colors: ThemeColors;
   error: boolean;
   loading: boolean;
   onRetry: () => void;
 }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
       <Text style={styles.stateTitle}>
@@ -102,19 +112,19 @@ function NotificationState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     margin: 20,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 48 },
-  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
   retry: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 9 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

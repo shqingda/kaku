@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import type { NotificationTarget, UserNotification } from './model';
 
@@ -43,14 +44,18 @@ function openTarget(target: NotificationTarget | undefined) {
 }
 
 export function NotificationRow({
+  colors,
   hasDivider,
   item,
   onRead,
 }: {
+  colors: ThemeColors;
   hasDivider: boolean;
   item: UserNotification;
   onRead: (id: number) => void;
 }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`${item.unread ? '未读，' : ''}${item.sender.nickname}${item.action}：${item.title}`}
@@ -98,38 +103,38 @@ export function NotificationRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     paddingVertical: 16,
   },
   divider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 20,
     height: 40,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 40,
   },
-  avatarFallback: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
+  avatarFallback: { color: colors.muted, fontSize: 14, fontWeight: '700' },
   copy: { flex: 1, marginLeft: 13 },
   heading: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  sender: { color: COLORS.ink, flexShrink: 1, fontSize: 14, fontWeight: '700' },
-  time: { color: COLORS.subtle, fontSize: 11 },
+  sender: { color: colors.ink, flexShrink: 1, fontSize: 14, fontWeight: '700' },
+  time: { color: colors.subtle, fontSize: 11 },
   unreadDot: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 4,
     height: 7,
     marginLeft: 'auto',
     width: 7,
   },
-  action: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 4 },
-  title: { color: COLORS.ink, fontSize: 14, fontWeight: '600', lineHeight: 21, marginTop: 4 },
+  action: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 4 },
+  title: { color: colors.ink, fontSize: 14, fontWeight: '600', lineHeight: 21, marginTop: 4 },
   pressed: { opacity: 0.62 },
 });

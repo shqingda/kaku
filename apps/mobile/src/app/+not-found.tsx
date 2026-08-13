@@ -1,11 +1,15 @@
+import { useMemo } from 'react';
 import { router, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function NotFoundScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   function goBack() {
     if (router.canGoBack()) {
       router.back();
@@ -27,7 +31,7 @@ export default function NotFoundScreen() {
               web: 'explore_off',
             }}
             size={30}
-            tintColor={COLORS.accent}
+            tintColor={colors.accent}
             weight="medium"
           />
         </View>
@@ -64,9 +68,9 @@ export default function NotFoundScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     flex: 1,
   },
   content: {
@@ -78,14 +82,14 @@ const styles = StyleSheet.create({
   },
   iconFrame: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 24,
     height: 72,
     justifyContent: 'center',
     width: 72,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.4,
@@ -93,7 +97,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   description: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 22,
     marginTop: 10,
@@ -108,8 +112,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
@@ -117,20 +121,20 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   secondaryButtonText: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.ink,
+    backgroundColor: colors.ink,
     borderRadius: 16,
     flex: 1,
     justifyContent: 'center',
     minHeight: 50,
   },
   primaryButtonText: {
-    color: COLORS.surface,
+    color: colors.surface,
     fontSize: 15,
     fontWeight: '700',
   },

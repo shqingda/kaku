@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { useMemo, type ComponentProps } from 'react';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 const WEBSITE_URL = 'https://kaku-web.shqingda.workers.dev';
 
@@ -69,6 +70,8 @@ async function openExternalUrl(url: string) {
 }
 
 export default function AboutScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const version = Constants.expoConfig?.version ?? '开发版';
 
   return (
@@ -92,8 +95,8 @@ export default function AboutScreen() {
           </Text>
         </View>
 
-        <AboutLinkGroup links={productLinks} />
-        <AboutLinkGroup links={legalLinks} />
+        <AboutLinkGroup colors={colors} links={productLinks} />
+        <AboutLinkGroup colors={colors} links={legalLinks} />
 
         <Text style={styles.footer}>用心记录每一次观看与阅读。</Text>
       </ScrollView>
@@ -101,7 +104,9 @@ export default function AboutScreen() {
   );
 }
 
-function AboutLinkGroup({ links }: { links: AboutLink[] }) {
+function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLink[] }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.group}>
       {links.map((link, index) => (
@@ -120,7 +125,7 @@ function AboutLinkGroup({ links }: { links: AboutLink[] }) {
             <SymbolView
               name={link.icon}
               size={18}
-              tintColor={COLORS.accent}
+              tintColor={colors.accent}
               weight="medium"
             />
           </View>
@@ -132,7 +137,7 @@ function AboutLinkGroup({ links }: { links: AboutLink[] }) {
               web: 'open_in_new',
             }}
             size={13}
-            tintColor={COLORS.subtle}
+            tintColor={colors.subtle}
           />
         </Pressable>
       ))}
@@ -140,8 +145,8 @@ function AboutLinkGroup({ links }: { links: AboutLink[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { padding: 20, paddingBottom: 44 },
   hero: { alignItems: 'center', paddingBottom: 30, paddingTop: 20 },
   logo: {
@@ -150,22 +155,22 @@ const styles = StyleSheet.create({
     width: 80,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
     marginTop: 18,
   },
-  version: { color: COLORS.subtle, fontSize: 12, marginTop: 5 },
+  version: { color: colors.subtle, fontSize: 12, marginTop: 5 },
   summary: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 22,
     marginTop: 13,
     textAlign: 'center',
   },
   group: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     overflow: 'hidden',
@@ -177,26 +182,26 @@ const styles = StyleSheet.create({
     minHeight: 64,
   },
   rowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   rowIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 12,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
   rowLabel: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 15,
     fontWeight: '700',
     marginLeft: 13,
   },
   footer: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     marginTop: 12,
     textAlign: 'center',

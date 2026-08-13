@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from 'react';
+import { useMemo, useState, type ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   useDeviceSessions,
@@ -23,6 +23,7 @@ import {
 import { useNotifications } from '@/features/notifications/use-notifications';
 import { clearRecentSubjects } from '@/features/history/recent-subjects';
 import { clearRecentSearches } from '@/features/search/search-history';
+import { useTheme } from '@/features/theme/theme-provider';
 import { queryPersister } from '@/lib/query-persister';
 
 function formatSessionTime(timestamp: number) {
@@ -35,6 +36,8 @@ function formatSessionTime(timestamp: number) {
 }
 
 export default function AccountScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isClearingLocalData, setIsClearingLocalData] = useState(false);
   const queryClient = useQueryClient();
   const {
@@ -119,7 +122,7 @@ export default function AccountScreen() {
       >
         {isLoading ? (
           <View style={styles.centerState}>
-            <ActivityIndicator color={COLORS.accent} />
+            <ActivityIndicator color={colors.accent} />
             <Text style={styles.stateText}>正在读取登录状态</Text>
           </View>
         ) : session ? (
@@ -146,7 +149,7 @@ export default function AccountScreen() {
                     web: 'account_circle',
                   }}
                   size={72}
-                  tintColor={COLORS.subtle}
+                  tintColor={colors.subtle}
                 />
                 {session.user.avatarUrl ? (
                   <Image
@@ -171,13 +174,14 @@ export default function AccountScreen() {
                     web: 'chevron_right',
                   }}
                   size={13}
-                  tintColor={COLORS.subtle}
+                  tintColor={colors.subtle}
                 />
               </View>
             </Pressable>
             <Text style={styles.menuSectionTitle}>内容与互动</Text>
             <View style={styles.menuGroup}>
               <AccountMenuRow
+                colors={colors}
                 description="收藏与进度变化"
                 icon={{
                   android: 'history',
@@ -193,6 +197,7 @@ export default function AccountScreen() {
                 }
               />
               <AccountMenuRow
+                colors={colors}
                 description="公开发布的日志"
                 hasDivider
                 icon={{
@@ -209,6 +214,7 @@ export default function AccountScreen() {
                 }
               />
               <AccountMenuRow
+                colors={colors}
                 badge={notificationsQuery.data?.unreadCount}
                 description="回复、好友与修订消息"
                 hasDivider
@@ -221,6 +227,7 @@ export default function AccountScreen() {
                 onPress={() => router.push('/notifications')}
               />
               <AccountMenuRow
+                colors={colors}
                 description="版本、帮助与隐私"
                 hasDivider
                 icon={{
@@ -236,7 +243,7 @@ export default function AccountScreen() {
               <View style={styles.sessionsHeading}>
                 <Text style={styles.sessionsTitle}>登录设备</Text>
                 {sessionsQuery.isFetching ? (
-                  <ActivityIndicator color={COLORS.accent} size="small" />
+                  <ActivityIndicator color={colors.accent} size="small" />
                 ) : null}
               </View>
               {sessionsQuery.isError ? (
@@ -338,7 +345,7 @@ export default function AccountScreen() {
               ]}
             >
               {isSigningIn ? (
-                <ActivityIndicator color={COLORS.surface} />
+                <ActivityIndicator color={colors.surface} />
               ) : (
                 <Text style={styles.primaryButtonText}>使用 Bangumi 登录</Text>
               )}
@@ -363,6 +370,7 @@ export default function AccountScreen() {
             <Text style={styles.menuSectionTitle}>本地存储</Text>
             <View style={styles.menuGroup}>
               <AccountMenuRow
+                colors={colors}
                 description="公开缓存、图片与最近记录"
                 icon={{
                   android: 'delete_sweep',
@@ -382,6 +390,7 @@ export default function AccountScreen() {
 }
 
 function AccountMenuRow({
+  colors,
   badge,
   description,
   hasDivider = false,
@@ -391,6 +400,7 @@ function AccountMenuRow({
   onPress,
 }: {
   badge?: number;
+  colors: ThemeColors;
   description: string;
   hasDivider?: boolean;
   icon: ComponentProps<typeof SymbolView>['name'];
@@ -398,6 +408,8 @@ function AccountMenuRow({
   loading?: boolean;
   onPress: () => void;
 }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -414,7 +426,7 @@ function AccountMenuRow({
         <SymbolView
           name={icon}
           size={18}
-          tintColor={COLORS.accent}
+          tintColor={colors.accent}
           weight="semibold"
         />
       </View>
@@ -428,7 +440,7 @@ function AccountMenuRow({
         </View>
       ) : null}
       {loading ? (
-        <ActivityIndicator color={COLORS.accent} size="small" />
+        <ActivityIndicator color={colors.accent} size="small" />
       ) : (
         <SymbolView
           name={{
@@ -437,18 +449,18 @@ function AccountMenuRow({
             web: 'chevron_right',
           }}
           size={14}
-          tintColor={COLORS.subtle}
+          tintColor={colors.subtle}
         />
       )}
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   centerState: { alignItems: 'center', gap: 12 },
-  stateText: { color: COLORS.muted, fontSize: 14 },
+  stateText: { color: colors.muted, fontSize: 14 },
   intro: { alignItems: 'center', marginBottom: 32 },
   logoMark: {
     borderRadius: 20,
@@ -457,13 +469,13 @@ const styles = StyleSheet.create({
     width: 76,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
   description: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 15,
     lineHeight: 23,
     marginTop: 12,
@@ -471,46 +483,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorCard: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 16,
     marginBottom: 14,
     padding: 14,
   },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     height: 54,
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: COLORS.surface,
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '800',
   },
   privacyText: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     marginTop: 14,
     textAlign: 'center',
   },
   aboutLink: { alignSelf: 'center', marginTop: 10, padding: 10 },
-  aboutLinkText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  aboutLinkText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   profileCard: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 28,
     padding: 32,
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 38,
     height: 76,
     justifyContent: 'center',
@@ -518,15 +530,15 @@ const styles = StyleSheet.create({
     width: 76,
   },
   nickname: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 24,
     fontWeight: '800',
     marginTop: 18,
   },
-  username: { color: COLORS.muted, fontSize: 14, marginTop: 4 },
+  username: { color: colors.muted, fontSize: 14, marginTop: 4 },
   connectedBadge: {
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderRadius: 99,
     flexDirection: 'row',
     gap: 7,
@@ -540,16 +552,16 @@ const styles = StyleSheet.create({
     height: 8,
     width: 8,
   },
-  connectedText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  connectedText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   profileLink: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 3,
     marginTop: 14,
   },
-  profileLinkText: { color: COLORS.subtle, fontSize: 12, fontWeight: '600' },
+  profileLinkText: { color: colors.subtle, fontSize: 12, fontWeight: '600' },
   menuSectionTitle: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 8,
@@ -557,7 +569,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   menuGroup: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     overflow: 'hidden',
     paddingHorizontal: 18,
@@ -568,23 +580,23 @@ const styles = StyleSheet.create({
     minHeight: 68,
   },
   menuRowDivider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   menuIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 13,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
   menuCopy: { flex: 1, marginLeft: 13 },
-  menuTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
-  menuDescription: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
+  menuTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  menuDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   menuBadge: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 10,
     justifyContent: 'center',
     marginRight: 9,
@@ -593,23 +605,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   menuBadgeText: {
-    color: COLORS.surface,
+    color: colors.surface,
     fontSize: 10,
     fontWeight: '800',
   },
   secondaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     height: 52,
     justifyContent: 'center',
     marginTop: 14,
   },
-  secondaryButtonText: { color: COLORS.accent, fontSize: 15, fontWeight: '700' },
+  secondaryButtonText: { color: colors.accent, fontSize: 15, fontWeight: '700' },
   disconnectButton: { alignItems: 'center', marginTop: 16, paddingVertical: 10 },
-  disconnectButtonText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  disconnectButtonText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   sessionsCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     marginTop: 14,
     paddingHorizontal: 18,
@@ -620,9 +632,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sessionsTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  sessionsTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
   sessionMessage: { paddingTop: 14 },
-  sessionError: { color: COLORS.accent, fontSize: 13 },
+  sessionError: { color: colors.accent, fontSize: 13 },
   sessionRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -630,18 +642,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   sessionRowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   sessionCopy: { flex: 1 },
   sessionNameRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  sessionName: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  sessionName: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   currentSession: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 10,
     fontWeight: '700',
   },
-  sessionMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
-  revokeSessionText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  sessionMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  revokeSessionText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

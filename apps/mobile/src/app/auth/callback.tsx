@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function AuthCallbackScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { code } = useLocalSearchParams<{ code?: string }>();
   const { completeSignIn, isSigningIn, signIn } = useAuth();
   const [error, setError] = useState<string>();
@@ -74,7 +77,7 @@ export default function AuthCallbackScreen() {
           </>
         ) : (
           <>
-            <ActivityIndicator color={COLORS.accent} />
+            <ActivityIndicator color={colors.accent} />
             <Text style={styles.message}>正在完成登录</Text>
           </>
         )}
@@ -83,9 +86,9 @@ export default function AuthCallbackScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     flex: 1,
   },
   content: {
@@ -96,7 +99,7 @@ const styles = StyleSheet.create({
   },
   errorMark: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 22,
     height: 64,
     justifyContent: 'center',
@@ -104,13 +107,13 @@ const styles = StyleSheet.create({
     width: 64,
   },
   errorMarkText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 28,
     fontWeight: '800',
   },
-  title: { color: COLORS.ink, fontSize: 22, fontWeight: '800' },
+  title: { color: colors.ink, fontSize: 22, fontWeight: '800' },
   message: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 12,
@@ -124,8 +127,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.track,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
@@ -133,20 +136,20 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   secondaryButtonText: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.ink,
+    backgroundColor: colors.ink,
     borderRadius: 16,
     flex: 1,
     justifyContent: 'center',
     minHeight: 50,
   },
   primaryButtonText: {
-    color: COLORS.surface,
+    color: colors.surface,
     fontSize: 15,
     fontWeight: '700',
   },
