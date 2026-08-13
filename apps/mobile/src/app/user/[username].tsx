@@ -23,7 +23,7 @@ import { PublicUserCollectionRow } from '@/features/users/public-user-collection
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { FriendAction } from '@/features/users/friend-action';
-import { BlockAction } from '@/features/users/block-action';
+import { ProfileOverflow } from '@/features/users/profile-overflow';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
 import {
@@ -140,7 +140,7 @@ export default function PublicUserScreen() {
                       nickname={user.nickname}
                       username={user.username}
                     />
-                    <BlockAction
+                    <ProfileOverflow
                       nickname={user.nickname}
                       userId={user.id}
                       username={user.username}

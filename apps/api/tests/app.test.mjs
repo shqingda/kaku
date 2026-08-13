@@ -249,3 +249,21 @@ test('blocklist actions are registered as authenticated routes', async () => {
     });
   }
 });
+
+test('reporting is registered as an authenticated route', async () => {
+  const response = await createApp({ createStore: () => ({}) }).request(
+    '/me/reports',
+    {
+      body: JSON.stringify({ id: 1, reason: 1, type: 6 }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+    { DB: {} },
+  );
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), {
+    error: 'unauthorized',
+    message: '请先登录 Kaku。',
+  });
+});

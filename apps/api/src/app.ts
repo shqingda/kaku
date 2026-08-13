@@ -18,6 +18,7 @@ import {
   type RankingDependencies,
   registerRankingRoutes,
 } from './rankings/routes.ts';
+import { registerReportRoutes } from './reports/routes.ts';
 import { registerTimelineRoutes } from './timeline/routes.ts';
 import { registerTagRoutes } from './tags/routes.ts';
 import { registerWikiRoutes } from './wiki/routes.ts';
@@ -45,6 +46,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerNotificationRoutes(app, dependencies);
   registerPeopleBrowserRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
+  registerReportRoutes(app, dependencies);
   registerTagRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
   registerWikiRoutes(app, dependencies);
