@@ -11,7 +11,9 @@ import { useTheme } from '@/features/theme/theme-provider';
 import type { DiscussionReply } from './model';
 
 type ReplyListItemProps = {
+  embedded?: boolean;
   floor: number;
+  hasDivider?: boolean;
   isHighlighted?: boolean;
   onDelete?: (reply: DiscussionReply) => void;
   onEdit?: (reply: DiscussionReply) => void;
@@ -22,7 +24,9 @@ type ReplyListItemProps = {
 };
 
 export const ReplyListItem = memo(function ReplyListItem({
+  embedded = false,
   floor,
+  hasDivider = false,
   isHighlighted,
   onDelete,
   onEdit,
@@ -35,7 +39,13 @@ export const ReplyListItem = memo(function ReplyListItem({
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View style={[styles.card, isHighlighted && styles.highlightedCard]}>
+    <View
+      style={[
+        embedded ? styles.embeddedRow : styles.card,
+        embedded && hasDivider && styles.embeddedDivider,
+        !embedded && isHighlighted && styles.highlightedCard,
+      ]}
+    >
       <View style={styles.header}>
         {reply.authorUsername ? (
           <Link
@@ -204,6 +214,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   highlightedCard: {
     backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
+  },
+  embeddedRow: { paddingVertical: 15 },
+  embeddedDivider: {
+    borderTopColor: colors.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   header: { alignItems: 'center', flexDirection: 'row' },
   avatar: {

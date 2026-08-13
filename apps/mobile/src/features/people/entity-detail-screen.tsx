@@ -380,10 +380,12 @@ export function EntityDetailScreen({
                 ) : comments.length === 0 ? (
                   <Text style={styles.commentsState}>还没有公开评论。</Text>
                 ) : (
-                  <>
+                  <View style={styles.commentsCard}>
                     {comments.slice(0, 3).map((reply, index) => (
                       <ReplyListItem
+                        embedded
                         floor={index + 1}
+                        hasDivider={index > 0}
                         key={reply.id}
                         onDelete={
                           reply.authorUsername === session?.user.username
@@ -424,7 +426,7 @@ export function EntityDetailScreen({
                         weight="semibold"
                       />
                     </Pressable>
-                  </>
+                  </View>
                 )}
               </View>
             </>
@@ -646,16 +648,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 18,
     textAlignVertical: 'center',
   },
+  commentsCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    marginTop: 4,
+    overflow: 'hidden',
+    paddingHorizontal: 18,
+  },
   commentsAllButton: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderCurve: 'continuous',
-    borderRadius: 20,
+    borderTopColor: colors.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 4,
     minHeight: 50,
-    paddingHorizontal: 17,
+    paddingHorizontal: 2,
   },
   commentsAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   commentsState: {
