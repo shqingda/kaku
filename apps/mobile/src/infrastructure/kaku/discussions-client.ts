@@ -244,3 +244,35 @@ export async function deleteGroupPost(
 ) {
   return deletePost(request, `/me/group-posts/${postId}`);
 }
+
+async function editPost(
+  request: AuthenticatedRequest,
+  path: string,
+  content: string,
+) {
+  const response = await request(path, {
+    body: JSON.stringify({ content }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'PUT',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
+export async function editSubjectPost(
+  request: AuthenticatedRequest,
+  postId: number,
+  content: string,
+) {
+  return editPost(request, `/me/subject-posts/${postId}`, content);
+}
+
+export async function editGroupPost(
+  request: AuthenticatedRequest,
+  postId: number,
+  content: string,
+) {
+  return editPost(request, `/me/group-posts/${postId}`, content);
+}

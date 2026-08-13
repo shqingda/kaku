@@ -10,6 +10,8 @@ import {
   createBangumiSubjectTopicReply,
   deleteBangumiGroupPost,
   deleteBangumiSubjectPost,
+  editBangumiGroupPost,
+  editBangumiSubjectPost,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
   getBangumiReview,
@@ -380,4 +382,42 @@ test('deleting a reply that is already gone surfaces a not-found message', async
       return true;
     },
   );
+});
+
+test('editing a subject reply PUTs the new content', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/subjects/-/posts/9001',
+    );
+    assert.equal(init.method, 'PUT');
+    assert.deepEqual(JSON.parse(init.body), { content: '修正后的回复' });
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return new Response('{}', { status: 200 });
+  };
+
+  await editBangumiSubjectPost({
+    accessToken: 'access-token',
+    content: '修正后的回复',
+    fetcher,
+    postId: 9001,
+  });
+});
+
+test('editing a group reply PUTs to the group post endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/groups/-/posts/9002',
+    );
+    assert.equal(init.method, 'PUT');
+    return new Response('{}', { status: 200 });
+  };
+
+  await editBangumiGroupPost({
+    accessToken: 'access-token',
+    content: '编辑内容',
+    fetcher,
+    postId: 9002,
+  });
 });

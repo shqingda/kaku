@@ -20,16 +20,21 @@ import {
   type DiscussionReplyTarget,
   useCreateDiscussionReply,
 } from './use-create-discussion-reply';
+import { useEditGroupReply, useEditSubjectReply } from './use-edit-reply';
 
 const MAX_CONTENT_LENGTH = 5000;
 
 export function DiscussionReplyComposer({
+  editing,
   onClose,
+  onEdited,
   replyingTo,
   target,
   visible,
 }: {
+  editing?: { content: string; postId: number } | null;
   onClose: () => void;
+  onEdited?: () => void;
   replyingTo?: DiscussionReply;
   target: DiscussionReplyTarget;
   visible: boolean;
@@ -38,16 +43,35 @@ export function DiscussionReplyComposer({
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
   const createReply = useCreateDiscussionReply(target);
-  const canSend = content.trim().length > 0 && !createReply.isPending;
+  const editSubjectReply = useEditSubjectReply(
+    target.kind === 'subject-topic' ? target.id : 0,
+  );
+  const editGroupReply = useEditGroupReply(
+    target.kind === 'group-topic' ? target.id : 0,
+  );
+  const editReply =
+    target.kind === 'subject-topic' ? editSubjectReply : editGroupReply;
+  const isEditing = editing != null;
+  const pending = createReply.isPending || editReply.isPending;
+  const canSend = content.trim().length > 0 && !pending;
+  const displayError = createReply.error ?? editReply.error;
 
   useEffect(() => {
     if (!visible) {
       createReply.reset();
+      editReply.reset();
+      return;
+    }
+
+    if (editing) {
+      setContent(editing.content);
+    } else {
+      setContent('');
     }
   }, [visible]);
 
   function close() {
-    if (createReply.isPending) {
+    if (pending) {
       return;
     }
 
@@ -58,7 +82,23 @@ export function DiscussionReplyComposer({
   function send() {
     const nextContent = content.trim();
 
-    if (!nextContent || createReply.isPending) {
+    if (!nextContent || pending) {
+      return;
+    }
+
+    if (isEditing && editing) {
+      editReply.mutate(
+        { content: nextContent, postId: editing.postId },
+        {
+          onSuccess: () => {
+            playSuccessHaptic();
+            Keyboard.dismiss();
+            setContent('');
+            onEdited?.();
+            onClose();
+          },
+        },
+      );
       return;
     }
 
@@ -90,7 +130,7 @@ export function DiscussionReplyComposer({
             <Pressable
               accessibilityLabel="关闭"
               accessibilityRole="button"
-              disabled={createReply.isPending}
+              disabled={pending}
               hitSlop={8}
               onPress={close}
               style={({ pressed }) => [
@@ -106,10 +146,14 @@ export function DiscussionReplyComposer({
               />
             </Pressable>
             <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-              {replyingTo ? `回复 ${replyingTo.author}` : '参与讨论'}
+              {isEditing
+                ? '编辑回复'
+                : replyingTo
+                  ? `回复 ${replyingTo.author}`
+                  : '参与讨论'}
             </Text>
             <Pressable
-              accessibilityLabel="发送回复"
+              accessibilityLabel={isEditing ? '保存回复' : '发送回复'}
               accessibilityRole="button"
               accessibilityState={{ disabled: !canSend }}
               disabled={!canSend}
@@ -121,15 +165,17 @@ export function DiscussionReplyComposer({
                 pressed && canSend && styles.pressed,
               ]}
             >
-              {createReply.isPending ? (
+              {pending ? (
                 <ActivityIndicator color={COLORS.surface} size="small" />
               ) : (
-                <Text style={styles.sendText}>回复</Text>
+                <Text style={styles.sendText}>
+                  {isEditing ? '保存' : '回复'}
+                </Text>
               )}
             </Pressable>
           </View>
 
-          {replyingTo ? (
+          {replyingTo && !isEditing ? (
             <View style={styles.reference}>
               <Text style={styles.referenceAuthor}>@{replyingTo.author}</Text>
               <Text numberOfLines={2} style={styles.referenceBody}>
@@ -156,12 +202,14 @@ export function DiscussionReplyComposer({
           />
 
           <View style={styles.footer}>
-            <Text style={styles.hint}>发送时完成一次 Bangumi 安全验证</Text>
+            <Text style={styles.hint}>
+              {isEditing ? '编辑会直接保存到 Bangumi' : '发送时完成一次 Bangumi 安全验证'}
+            </Text>
             <Text style={styles.count}>{content.length}/{MAX_CONTENT_LENGTH}</Text>
           </View>
-          {createReply.error ? (
+          {displayError ? (
             <Text accessibilityRole="alert" style={styles.errorText}>
-              {createReply.error.message}
+              {displayError.message}
             </Text>
           ) : null}
       </View>

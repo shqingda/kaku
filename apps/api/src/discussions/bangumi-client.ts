@@ -432,3 +432,54 @@ export function deleteBangumiGroupPost({
     path: `/groups/-/posts/${postId}`,
   });
 }
+
+async function updateBangumiPost({
+  accessToken,
+  content,
+  fetcher = fetch,
+  path,
+}: {
+  accessToken: string;
+  content: string;
+  fetcher?: typeof fetch;
+  path: string;
+}): Promise<void> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}${path}`, {
+    body: JSON.stringify({ content }),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+    method: 'PUT',
+  });
+
+  if (!response.ok) {
+    throw discussionError(response, undefined, '回复没有编辑成功，请稍后重试。');
+  }
+}
+
+export function editBangumiSubjectPost({
+  postId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  postId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/subjects/-/posts/${postId}`,
+  });
+}
+
+export function editBangumiGroupPost({
+  postId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  postId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/groups/-/posts/${postId}`,
+  });
+}

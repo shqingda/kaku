@@ -37,6 +37,7 @@ export default function TopicScreen() {
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
   const topicQuery = useBangumiSubjectTopic(numericTopicId ?? 0);
   const deleteReply = useDeleteSubjectReply(numericTopicId ?? 0);
   const topic = topicQuery.data;
@@ -67,6 +68,17 @@ export default function TopicScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  function openEditComposer(reply: DiscussionReply) {
+    setReplyingTo(undefined);
+    setEditingReply(reply);
+    setComposerVisible(true);
+  }
+
+  function closeComposer() {
+    setComposerVisible(false);
+    setEditingReply(null);
   }
 
   function confirmDeleteReply(reply: DiscussionReply) {
@@ -179,6 +191,11 @@ export default function TopicScreen() {
                   ? confirmDeleteReply
                   : undefined
               }
+              onEdit={
+                item.authorUsername === session?.user.username
+                  ? openEditComposer
+                  : undefined
+              }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
               reply={item}
@@ -221,7 +238,13 @@ export default function TopicScreen() {
         ) : null}
       </View>
       <DiscussionReplyComposer
-        onClose={() => setComposerVisible(false)}
+        editing={
+          editingReply
+            ? { content: editingReply.body, postId: Number(editingReply.id) }
+            : null
+        }
+        onClose={closeComposer}
+        onEdited={() => setEditingReply(null)}
         replyingTo={replyingTo}
         target={{ id: numericTopicId, kind: 'subject-topic' }}
         visible={composerVisible}

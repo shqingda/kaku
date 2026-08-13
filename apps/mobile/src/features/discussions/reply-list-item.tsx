@@ -11,6 +11,7 @@ type ReplyListItemProps = {
   floor: number;
   isHighlighted?: boolean;
   onDelete?: (reply: DiscussionReply) => void;
+  onEdit?: (reply: DiscussionReply) => void;
   onOpenReference: (replyId: string) => void;
   onReply?: (reply: DiscussionReply) => void;
   reply: DiscussionReply;
@@ -20,6 +21,7 @@ export const ReplyListItem = memo(function ReplyListItem({
   floor,
   isHighlighted,
   onDelete,
+  onEdit,
   onOpenReference,
   onReply,
   reply,
@@ -117,6 +119,20 @@ export const ReplyListItem = memo(function ReplyListItem({
             ]}
           >
             <Text style={styles.replyAction}>回复</Text>
+          </Pressable>
+        ) : null}
+        {onEdit ? (
+          <Pressable
+            accessibilityLabel="编辑自己的回复"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onEdit(reply)}
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.replyAction}>编辑</Text>
           </Pressable>
         ) : null}
         {onDelete ? (
