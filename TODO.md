@@ -9,6 +9,12 @@
 - [ ] 加入/退出小组：Bangumi P1 公开接口没有小组成员写操作（官网靠服务端表单），前端生成的 P1 客户端（bangumi/frontend `packages/client`）中亦无对应端点。待上游开放后实现，不要臆测端点。好友添加/移除（`PUT/DELETE /p1/friends/{username}`）已按官方端点实现。
 - [ ] 删除自己的动态：`DELETE /p1/timeline/{id}` 端点虽在 P1 spec 中，但官方 iOS 客户端（Bangumi-iOS）与官网均未实现删除 UI，实测返回 5xx。已移除 Kaku 的删除入口，API 路由与测试保留待上游恢复。
 
-## 深色模式（进行中）
+## 已完成
 
-- [ ] 完成全站配色迁移：主题系统已就绪（`constants/theme.ts` 的 `LIGHT_COLORS`/`DARK_COLORS`、`features/theme/theme-provider.tsx` 的 `ThemeProvider`/`useTheme`，`COLORS` 已改为 `LIGHT_COLORS` 并新增 `surfaceSoft`/`surfaceAlt`/`divider`/`inputBorder` 语义 token）。共享组件 `AppState`、`AppSheet` 已改为按主题生成样式，账户、通知、登录回调、关于与错误页也已迁移。剩余约 60 个页面或特性组件需要接入 `createStyles(colors)` + `useTheme()`；全部迁移完成后，将 `app.json` 的 `userInterfaceStyle` 改回 `automatic`、`_layout.tsx` 的 `StatusBar` 改为 `auto` 即启用深色模式。启用前保持浅色，避免半迁移导致的明暗混杂。
+- [x] 全站深色模式：业务页面和共享组件均已接入语义配色 token，系统外观、状态栏与原生导航栏会自动同步明暗主题。最外层错误边界刻意保留独立浅色兜底，确保主题系统本身异常时仍能显示错误和重试入口。
+
+## 发布工程
+
+- [ ] 接入崩溃监控与可读 source map。需要先创建 Sentry 项目，并将 DSN 与 source-map 上传 token 分别按公开配置和敏感构建变量管理，禁止提交 token。
+- [ ] 安装 Maestro 后运行 `.maestro/public-browse-smoke.yaml`，把“启动、搜索、打开条目、返回”作为不写远端数据的首条真机冒烟测试。
+- [ ] 配置 EAS preview / production 构建、签名与商店发布流程。

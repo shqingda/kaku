@@ -1,0 +1,21 @@
+appId: com.shqingda.kaku
+name: Public browse smoke test
+tags:
+  - smoke
+---
+- launchApp
+- assertVisible: Kaku
+- tapOn: 搜索条目
+- inputText: 葬送的芙莉莲
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "葬送的芙莉莲.*"
+    timeout: 15000
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    index: 0
+- extendedWaitUntil:
+    visible: 收藏盒
+    timeout: 15000
+- tapOn: 返回
+- assertVisible: 搜索结果
