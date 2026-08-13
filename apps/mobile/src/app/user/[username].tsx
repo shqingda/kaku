@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
@@ -26,6 +26,7 @@ import { FriendAction } from '@/features/users/friend-action';
 import { ProfileOverflow } from '@/features/users/profile-overflow';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
+import { useTheme } from '@/features/theme/theme-provider';
 import {
   usePublicUser,
   usePublicUserBlogs,
@@ -39,6 +40,8 @@ import {
 const SHOW_ENTITY_ENTRY = false;
 
 export default function PublicUserScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -171,7 +174,7 @@ export default function PublicUserScreen() {
                         web: 'favorite',
                       }}
                       size={19}
-                      tintColor={COLORS.accent}
+                      tintColor={colors.accent}
                       weight="semibold"
                     />
                   </View>
@@ -186,7 +189,7 @@ export default function PublicUserScreen() {
                       web: 'chevron_right',
                     }}
                     size={13}
-                    tintColor={COLORS.subtle}
+                    tintColor={colors.subtle}
                     weight="semibold"
                   />
                 </Pressable>
@@ -265,7 +268,7 @@ export default function PublicUserScreen() {
                           web: 'edit',
                         }}
                         size={15}
-                        tintColor={COLORS.ink}
+                        tintColor={colors.ink}
                         weight="semibold"
                       />
                       <Text style={styles.timelinePublishText}>发布</Text>
@@ -409,11 +412,9 @@ export default function PublicUserScreen() {
             </>
           }
           refreshControl={
-            <RefreshControl
-              colors={[COLORS.accent]}
+            <AppRefreshControl
               onRefresh={() => void refreshProfile()}
               refreshing={isRefreshing}
-              tintColor={COLORS.accent}
             />
           }
           renderItem={({ item }) => (
@@ -469,6 +470,9 @@ function SectionStatus({
   isPending: boolean;
   onRetry: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (isPending) {
     return <Text style={styles.inlineEmpty}>正在读取…</Text>;
   }
@@ -495,8 +499,8 @@ function SectionStatus({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: 14, padding: 20, paddingBottom: 52 },
   profile: {
     alignItems: 'center',
@@ -506,14 +510,14 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 38,
     height: 76,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 76,
   },
-  avatarFallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '800' },
+  avatarFallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
   profileMain: { flex: 1, marginLeft: 16 },
   friendAction: {
     alignItems: 'center',
@@ -524,16 +528,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   nickname: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
-  username: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
-  sign: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
+  username: { color: colors.subtle, fontSize: 12, marginTop: 4 },
+  sign: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
   entityEntry: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     flexDirection: 'row',
     minHeight: 74,
@@ -541,15 +545,15 @@ const styles = StyleSheet.create({
   },
   entityEntryIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 15,
     height: 42,
     justifyContent: 'center',
     width: 42,
   },
   entityEntryMain: { flex: 1, marginLeft: 13 },
-  entityEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
-  entityEntryHint: { color: COLORS.subtle, fontSize: 12, marginTop: 4 },
+  entityEntryTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  entityEntryHint: { color: colors.subtle, fontSize: 12, marginTop: 4 },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -558,22 +562,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 24,
   },
-  sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
-  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
+  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
+  sectionMeta: { color: colors.subtle, fontSize: 12 },
   sectionRight: { alignItems: 'center', flexDirection: 'row' },
   sectionAction: {
     marginLeft: 10,
   },
   friendList: { gap: 14, paddingBottom: 8 },
   timelineList: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   timelinePublishButton: {
     alignItems: 'center',
-    backgroundColor: '#EFEEEA',
+    backgroundColor: colors.surfaceAlt,
     borderCurve: 'continuous',
     borderRadius: 11,
     flexDirection: 'row',
@@ -583,21 +587,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
   },
   timelinePublishText: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 13,
     fontWeight: '700',
     includeFontPadding: false,
     lineHeight: 17,
   },
   timelineAllButton: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     justifyContent: 'space-between',
     minHeight: 50,
     paddingHorizontal: 2,
   },
   inlineEmpty: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     paddingHorizontal: 4,
     paddingVertical: 18,
@@ -613,21 +617,21 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   inlineRetryText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
   },
   blogList: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 10,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
-  blogEmpty: { color: COLORS.muted, fontSize: 13, paddingVertical: 18 },
+  blogEmpty: { color: colors.muted, fontSize: 13, paddingVertical: 18 },
   collectionTypeTabs: { paddingBottom: 10 },
   collectionCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 2,
     overflow: 'hidden',
@@ -635,5 +639,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
+  emptyText: { color: colors.muted, fontSize: 14 },
 });
