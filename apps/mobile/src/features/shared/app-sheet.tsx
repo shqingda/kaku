@@ -215,25 +215,27 @@ export function AppSheet({
             style={StyleSheet.absoluteFill}
           />
         </Animated.View>
-        <GestureDetector gesture={pan}>
-          <Animated.View
-            accessibilityViewIsModal
-            onAccessibilityEscape={onClose}
-            onLayout={(event) => {
-              const nextHeight = event.nativeEvent.layout.height;
-              if (Math.abs(nextHeight - sheetHeight) > 1) {
-                setSheetHeight(nextHeight);
-              }
-            }}
-            pointerEvents={visible ? 'auto' : 'none'}
-            style={[styles.sheet, sheetStyle, { backgroundColor: colors.surface }]}
-          >
+        <Animated.View
+          accessibilityViewIsModal
+          onAccessibilityEscape={onClose}
+          onLayout={(event) => {
+            const nextHeight = event.nativeEvent.layout.height;
+            if (Math.abs(nextHeight - sheetHeight) > 1) {
+              setSheetHeight(nextHeight);
+            }
+          }}
+          pointerEvents={visible ? 'auto' : 'none'}
+          style={[styles.sheet, sheetStyle, { backgroundColor: colors.surface }]}
+        >
+          {/* 拖拽手势只挂在把手上：若包住整个弹层，Android 上会抢走
+              内部 ScrollView/FlatList 的滚动，导致列表无法滚动。 */}
+          <GestureDetector gesture={pan}>
             <View style={styles.dragZone}>
               <View style={[styles.handle, { backgroundColor: colors.track }]} />
             </View>
-            {children}
-          </Animated.View>
-        </GestureDetector>
+          </GestureDetector>
+          {children}
+        </Animated.View>
         </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
   },
   dragZone: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   handle: {
     borderRadius: 2,

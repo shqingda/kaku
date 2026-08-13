@@ -262,21 +262,21 @@ export function EntityDetailScreen({
 
               <View style={styles.commentsSection}>
                 <View style={styles.commentsHeader}>
-                  <View>
-                    <Text style={styles.panelTitle}>评论</Text>
+                  <Text style={styles.panelTitle}>评论</Text>
+                  <View style={styles.commentsHeaderRight}>
                     <Text style={styles.commentsMeta}>
                       {data.commentCount.toLocaleString('zh-CN')} 条公开评论
                     </Text>
+                    {comments.length > 0 ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => setCommentsVisible(true)}
+                        style={({ pressed }) => pressed && styles.pressed}
+                      >
+                        <Text style={styles.commentsAction}>查看全部</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
-                  {comments.length > 0 ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => setCommentsVisible(true)}
-                      style={({ pressed }) => pressed && styles.pressed}
-                    >
-                      <Text style={styles.commentsAction}>查看全部</Text>
-                    </Pressable>
-                  ) : null}
                 </View>
                 {commentsQuery.isPending ? (
                   <Text style={styles.commentsState}>正在读取评论…</Text>
@@ -442,14 +442,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   commentsSection: { marginTop: 10 },
   commentsHeader: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: 10,
     paddingHorizontal: 4,
     paddingTop: 12,
   },
-  commentsMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
+  commentsHeaderRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  commentsMeta: { color: colors.muted, fontSize: 12 },
   commentsAction: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   commentsState: {
     backgroundColor: colors.surface,
