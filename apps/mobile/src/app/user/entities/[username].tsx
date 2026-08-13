@@ -1,18 +1,19 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useTheme } from '@/features/theme/theme-provider';
 import type {
   PublicUserEntityCollection,
   PublicUserEntityKind,
@@ -26,6 +27,8 @@ const TABS: { kind: PublicUserEntityKind; label: string }[] = [
 ];
 
 export default function PublicUserEntitiesScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const [kind, setKind] = useState<PublicUserEntityKind>('character');
   const listRef = useRef<FlatList<PublicUserEntityCollection>>(null);
@@ -103,11 +106,9 @@ export default function PublicUserEntitiesScreen() {
           );
         }}
         refreshControl={
-          <RefreshControl
-            colors={[COLORS.accent]}
+          <AppRefreshControl
             onRefresh={() => void entitiesQuery.refetch()}
             refreshing={entitiesQuery.isRefetching}
-            tintColor={COLORS.accent}
           />
         }
         renderItem={({ item }) => (
@@ -137,8 +138,8 @@ export default function PublicUserEntitiesScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     paddingBottom: 48,
     paddingHorizontal: 20,
@@ -146,15 +147,15 @@ const styles = StyleSheet.create({
   row: { gap: 12, marginBottom: 12 },
   header: { paddingBottom: 20, paddingHorizontal: 4, paddingTop: 18 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   tabs: {
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     flexDirection: 'row',
     gap: 4,
@@ -169,8 +170,8 @@ const styles = StyleSheet.create({
     minWidth: 78,
     paddingHorizontal: 16,
   },
-  selectedTab: { backgroundColor: COLORS.ink },
-  tabText: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
-  selectedTabText: { color: COLORS.surface },
+  selectedTab: { backgroundColor: colors.ink },
+  tabText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  selectedTabText: { color: colors.surface },
   pressed: { opacity: 0.62 },
 });

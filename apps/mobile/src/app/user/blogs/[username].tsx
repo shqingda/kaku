@@ -3,20 +3,22 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { usePublicUserBlogs } from '@/features/users/use-public-user';
 
 export default function PublicUserBlogsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const blogsQuery = usePublicUserBlogs(username);
   const blogs = useMemo(
@@ -108,19 +110,19 @@ export default function PublicUserBlogsScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingHorizontal: 4, paddingTop: 18 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   item: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 17,
   },
@@ -132,5 +134,4 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
   },
-  pressed: { opacity: 0.62 },
 });

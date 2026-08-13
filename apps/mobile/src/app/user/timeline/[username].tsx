@@ -3,19 +3,22 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { usePublicUserTimeline } from '@/features/users/use-public-user';
 
 export default function PublicUserTimelineScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const timelineQuery = usePublicUserTimeline(username);
   const timeline = useMemo(
@@ -39,15 +42,15 @@ export default function PublicUserTimelineScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           timelineQuery.isPending ? (
-            <TimelineState text="正在读取公开动态。" title="时间线加载中" />
+            <AppState text="正在读取公开动态。" title="时间线加载中" />
           ) : timelineQuery.isError ? (
-            <TimelineState
+            <AppState
               action={() => void timelineQuery.refetch()}
               text="请检查网络后重试。"
               title="时间线读取失败"
             />
           ) : (
-            <TimelineState
+            <AppState
               text="该用户没有公开动态。"
               title="暂无动态"
             />
@@ -115,37 +118,8 @@ export default function PublicUserTimelineScreen() {
   );
 }
 
-function TimelineState({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   header: {
     paddingBottom: 18,
@@ -153,14 +127,14 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
-  subtitle: { color: COLORS.muted, fontSize: 13, marginTop: 7 },
+  subtitle: { color: colors.muted, fontSize: 13, marginTop: 7 },
   item: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 17,
   },
@@ -172,27 +146,4 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
   },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
-  pressed: { opacity: 0.62 },
 });

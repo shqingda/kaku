@@ -2,20 +2,22 @@ import { useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { usePublicUserFriends } from '@/features/users/use-public-user';
 
 export default function PublicUserFriendsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const friendsQuery = usePublicUserFriends(username);
   const friends = useMemo(
@@ -98,23 +100,22 @@ export default function PublicUserFriendsScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     paddingBottom: 44,
     paddingHorizontal: 20,
   },
   header: { paddingBottom: 18, paddingHorizontal: 4, paddingTop: 18 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   row: {
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  pressed: { opacity: 0.62 },
 });
