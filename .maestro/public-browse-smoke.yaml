@@ -13,9 +13,9 @@ tags:
     timeout: 15000
 - tapOn:
     text: "葬送的芙莉莲.*"
-    index: 0
+    index: 1
 - extendedWaitUntil:
-    visible: 收藏盒
+    visible: 打开收藏盒
     timeout: 15000
 - tapOn: 返回
 - assertVisible: 搜索结果

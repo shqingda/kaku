@@ -127,6 +127,14 @@ export default function ExploreScreen() {
     };
   }, []);
 
+  // 首页再次提交搜索时，Expo Router 会复用已挂载的 Explore 屏并只更新
+  // query 参数；useState 的初始值不会重新计算，因此把新 q 同步回本地
+  // state。搜索历史由首页提交时写入，这里不再重复记录。
+  useEffect(() => {
+    setDraft(initialKeyword);
+    setKeyword(initialKeyword);
+  }, [initialKeyword]);
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
