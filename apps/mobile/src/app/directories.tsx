@@ -17,6 +17,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { IndexComposer } from '@/features/indexes/index-composer';
 import {
   INDEX_SORTS,
@@ -135,6 +136,9 @@ export default function DirectoriesScreen() {
               />
               <Text style={styles.createButtonText}>新建目录</Text>
             </Pressable>
+            {indexes.length > 0 && indexesQuery.isError ? (
+              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={10}

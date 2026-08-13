@@ -18,6 +18,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -93,6 +94,9 @@ export default function GlobalBlogsScreen() {
                 );
               })}
             </ScrollView>
+            {blogs.length > 0 && blogsQuery.isError ? (
+              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={10}

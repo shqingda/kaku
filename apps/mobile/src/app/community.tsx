@@ -19,6 +19,7 @@ import {
   usePublicCommunityTopics,
 } from '@/features/community/use-community';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
 
 const compactNumber = new Intl.NumberFormat('zh-CN', {
@@ -74,13 +75,17 @@ export default function CommunityScreen() {
         }
         ListHeaderComponent={
           <>
-            <DiscussionStatus
-              errorText="社区内容加载失败，请检查网络后重试。"
-              isError={communityQuery.isError}
-              isPending={communityQuery.isPending}
-              loadingText="正在读取 Bangumi 社区…"
-              onRetry={() => void communityQuery.refetch()}
-            />
+            {community && communityQuery.isError ? (
+              <CachedDataNotice onRetry={() => void communityQuery.refetch()} />
+            ) : (
+              <DiscussionStatus
+                errorText="社区内容加载失败，请检查网络后重试。"
+                isError={communityQuery.isError}
+                isPending={communityQuery.isPending}
+                loadingText="正在读取 Bangumi 社区…"
+                onRetry={() => void communityQuery.refetch()}
+              />
+            )}
             {community ? (
               <>
                 <Text style={styles.sectionTitle}>热门小组</Text>
@@ -136,13 +141,17 @@ export default function CommunityScreen() {
                 </Text>
               ) : null}
             </View>
-            <DiscussionStatus
-              errorText="最新话题加载失败，请检查网络后重试。"
-              isError={topicsQuery.isError}
-              isPending={topicsQuery.isPending}
-              loadingText="正在读取最新话题…"
-              onRetry={() => void topicsQuery.refetch()}
-            />
+            {topics.length > 0 && topicsQuery.isError ? (
+              <CachedDataNotice onRetry={() => void topicsQuery.refetch()} />
+            ) : (
+              <DiscussionStatus
+                errorText="最新话题加载失败，请检查网络后重试。"
+                isError={topicsQuery.isError}
+                isPending={topicsQuery.isPending}
+                loadingText="正在读取最新话题…"
+                onRetry={() => void topicsQuery.refetch()}
+              />
+            )}
           </>
         }
         onEndReached={() => {

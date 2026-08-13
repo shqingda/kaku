@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import {
   CHARACTER_TYPES,
   PEOPLE_GENDERS,
@@ -193,6 +194,9 @@ export default function PeopleScreen() {
                 </FilterRow>
               </>
             )}
+            {people.length > 0 && activeQuery.isError ? (
+              <CachedDataNotice onRetry={() => void activeQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={10}
