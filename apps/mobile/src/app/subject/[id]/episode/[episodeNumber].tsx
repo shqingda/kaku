@@ -28,8 +28,6 @@ import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useDeleteEpisodeReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
-import { ReportSheet } from '@/features/reports/report-sheet';
-import { REPORT_TYPES } from '@/features/reports/types';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -51,10 +49,6 @@ export default function EpisodeScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
   const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
-  const [reportTarget, setReportTarget] = useState<{
-    id: number;
-    label: string;
-  } | null>(null);
   const parsedSubjectId = parsePositiveIntegerRouteParam(id);
   const parsedEpisodeNumber = parsePositiveIntegerRouteParam(episodeParam);
   const subjectId = parsedSubjectId ?? 0;
@@ -380,15 +374,6 @@ export default function EpisodeScreen() {
               }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
-              onReport={
-                session && item.authorUsername !== session.user.username
-                  ? (reply) =>
-                      setReportTarget({
-                        id: Number(reply.id),
-                        label: reply.author,
-                      })
-                  : undefined
-              }
               reply={item}
             />
           )}
@@ -441,18 +426,6 @@ export default function EpisodeScreen() {
             replyingTo={replyingTo}
             target={{ id: catalogEpisode.id, kind: 'episode' }}
             visible={composerVisible}
-          />
-          <ReportSheet
-            onClose={() => setReportTarget(null)}
-            onSubmitted={() =>
-              Alert.alert('举报已提交', '感谢你的反馈，Bangumi 会进行审核。')
-            }
-            target={
-              reportTarget
-                ? { ...reportTarget, type: REPORT_TYPES.episodeReply }
-                : { id: 0, label: '', type: REPORT_TYPES.episodeReply }
-            }
-            visible={reportTarget !== null}
           />
         </>
       ) : null}

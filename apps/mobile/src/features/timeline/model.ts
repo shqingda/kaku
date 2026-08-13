@@ -1,5 +1,8 @@
 export type FriendTimelineItem = {
   createdAt: number;
+  entityId?: number;
+  entityKind?: 'character' | 'person';
+  entityTitle?: string;
   id: number;
   leadingText?: string;
   replies: number;

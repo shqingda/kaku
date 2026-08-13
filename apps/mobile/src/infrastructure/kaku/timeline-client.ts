@@ -6,6 +6,9 @@ import { getFriendTimelinePath } from './timeline-pagination';
 
 const timelineItemSchema = z.object({
   createdAt: z.number().int(),
+  entityId: z.number().int().positive().optional(),
+  entityKind: z.enum(['character', 'person']).optional(),
+  entityTitle: z.string().optional(),
   id: z.number().int().positive(),
   leadingText: z.string().optional(),
   replies: z.number().int().nonnegative(),

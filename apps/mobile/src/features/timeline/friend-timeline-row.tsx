@@ -79,6 +79,25 @@ export function FriendTimelineRow({
               <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
               {item.trailingText}
             </>
+          ) : item.entityTitle ? (
+            <>
+              {item.leadingText}
+              <Text
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      item.entityKind === 'person'
+                        ? '/person/[id]'
+                        : '/character/[id]',
+                    params: { id: String(item.entityId) },
+                  })
+                }
+                style={styles.entityTitle}
+              >
+                {item.entityTitle}
+              </Text>
+              {item.trailingText}
+            </>
           ) : (
             item.text
           )}
@@ -118,6 +137,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   time: { color: colors.subtle, fontSize: 11 },
   text: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
   subjectTitle: { color: colors.accentRich, fontWeight: '700' },
+  entityTitle: { color: colors.accentRich, fontWeight: '700' },
   replies: { color: colors.muted, fontSize: 11, marginTop: 7 },
   pressed: { opacity: 0.62 },
 });

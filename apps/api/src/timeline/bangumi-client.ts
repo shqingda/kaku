@@ -123,6 +123,9 @@ const collectionVerbs: Record<number, string> = {
 };
 
 type TimelineDescription = {
+  entityId?: number;
+  entityKind?: 'character' | 'person';
+  entityTitle?: string;
   leadingText?: string;
   subjectTitle?: string;
   text: string;
@@ -232,8 +235,14 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
       const entity = character ?? person;
       if (!entity) return { text: '更新了人物收藏' };
       const title = entity.nameCN?.trim() || entity.name;
+      const kind: 'character' | 'person' = character ? 'character' : 'person';
+      const leading = `${item.type === 1 ? '收藏了' : '创建了'}${character ? '角色' : '人物'} `;
       return {
-        text: `${item.type === 1 ? '收藏了' : '创建了'}${character ? '角色' : '人物'} ${title}`,
+        leadingText: leading,
+        entityId: entity.id,
+        entityKind: kind,
+        entityTitle: title,
+        text: `${leading}${title}`,
       };
     }
     default:

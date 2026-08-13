@@ -241,6 +241,10 @@ test('Bangumi entity collection event keeps its person name', async () => {
   });
 
   assert.equal(page.items[0]?.text, '收藏了人物 ゆたかめ');
+  assert.equal(page.items[0]?.leadingText, '收藏了人物 ');
+  assert.equal(page.items[0]?.entityTitle, 'ゆたかめ');
+  assert.equal(page.items[0]?.entityKind, 'person');
+  assert.equal(page.items[0]?.entityId, 9);
 });
 
 test('Bangumi friend timeline uses the last raw id as its next cursor', async () => {
