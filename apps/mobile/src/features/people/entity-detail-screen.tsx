@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
@@ -48,6 +49,8 @@ export function EntityDetailScreen({
   kind: '人物' | '角色';
   onRetry: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
@@ -183,7 +186,7 @@ export function EntityDetailScreen({
                   >
                     {(session && collectionQuery.isPending) ||
                     saveCollection.isPending ? (
-                      <ActivityIndicator color={COLORS.accent} size="small" />
+                      <ActivityIndicator color={colors.accent} size="small" />
                     ) : (
                       <SymbolView
                         name={{
@@ -197,7 +200,7 @@ export function EntityDetailScreen({
                         }}
                         size={15}
                         tintColor={
-                          collectionQuery.data ? COLORS.accent : COLORS.muted
+                          collectionQuery.data ? colors.accent : colors.muted
                         }
                         weight="semibold"
                       />
@@ -330,7 +333,7 @@ export function EntityDetailScreen({
               <SymbolView
                 name={{ android: 'close', ios: 'xmark', web: 'close' }}
                 size={17}
-                tintColor={COLORS.ink}
+                tintColor={colors.ink}
                 weight="semibold"
               />
             </Pressable>
@@ -366,8 +369,8 @@ export function EntityDetailScreen({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     alignItems: 'stretch',
     gap: 10,
@@ -382,44 +385,44 @@ const styles = StyleSheet.create({
   },
   portrait: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 22,
     height: 154,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 112,
   },
-  fallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '800' },
+  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
   heroMain: { flex: 1, marginLeft: 20 },
   name: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 27,
     fontWeight: '800',
     letterSpacing: -0.6,
     lineHeight: 34,
   },
-  kind: { color: COLORS.muted, fontSize: 13, marginTop: 8 },
-  stats: { color: COLORS.subtle, fontSize: 11, marginTop: 6 },
+  kind: { color: colors.muted, fontSize: 13, marginTop: 8 },
+  stats: { color: colors.subtle, fontSize: 11, marginTop: 6 },
   collectionButton: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 14,
     flexDirection: 'row',
     gap: 7,
     marginTop: 14,
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 13,
   },
-  collectedButton: { backgroundColor: COLORS.accentSoft },
+  collectedButton: { backgroundColor: colors.accentSoft },
   collectionButtonText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
   },
-  collectedButtonText: { color: COLORS.accent },
+  collectedButtonText: { color: colors.accent },
   panel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginTop: 4,
     padding: 18,
@@ -433,16 +436,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 12,
   },
-  commentsMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
-  commentsAction: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  commentsMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
+  commentsAction: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   commentsState: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     padding: 18,
   },
-  commentsScreen: { backgroundColor: COLORS.background, flex: 1 },
+  commentsScreen: { backgroundColor: colors.background, flex: 1 },
   commentsModalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -451,11 +454,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
   },
-  commentsModalTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '800' },
-  commentsModalMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
+  commentsModalTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' },
+  commentsModalMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
   commentsClose: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     height: 36,
     justifyContent: 'center',
@@ -463,23 +466,23 @@ const styles = StyleSheet.create({
   },
   commentsContent: { paddingBottom: 36, paddingHorizontal: 20 },
   panelTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 12,
   },
-  summary: { color: COLORS.muted, fontSize: 14, lineHeight: 23 },
+  summary: { color: colors.muted, fontSize: 14, lineHeight: 23 },
   metadataRow: {
     flexDirection: 'row',
     paddingVertical: 10,
   },
   rowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  metadataLabel: { color: COLORS.subtle, fontSize: 13, width: 78 },
+  metadataLabel: { color: colors.subtle, fontSize: 13, width: 78 },
   metadataValue: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 13,
     lineHeight: 20,

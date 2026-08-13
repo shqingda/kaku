@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type {
   EntityRelatedPeer,
@@ -81,6 +83,9 @@ export function EntityRelationRow({
   item: EntityListItem;
   kind: '人物' | '角色';
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (item.kind === 'section') {
     return (
       <View style={styles.sectionHeader}>
@@ -145,7 +150,7 @@ export function EntityRelationRow({
               </Text>
             ) : null}
           </View>
-          <Chevron />
+          <Chevron color={colors.subtle} />
         </Pressable>
       </Link>
     );
@@ -185,13 +190,13 @@ export function EntityRelationRow({
           </Text>
           <Text style={styles.relation}>{item.subject.relation}</Text>
         </View>
-        <Chevron />
+        <Chevron color={colors.subtle} />
       </Pressable>
     </Link>
   );
 }
 
-function Chevron() {
+function Chevron({ color }: { color: string }) {
   return (
     <SymbolView
       name={{
@@ -200,13 +205,13 @@ function Chevron() {
         web: 'chevron_right',
       }}
       size={14}
-      tintColor={COLORS.subtle}
+      tintColor={color}
       weight="semibold"
     />
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   sectionHeader: {
     alignSelf: 'stretch',
     alignItems: 'flex-end',
@@ -215,14 +220,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 20,
   },
-  sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
-  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
+  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
+  sectionMeta: { color: colors.subtle, fontSize: 12 },
   empty: { alignItems: 'center', alignSelf: 'stretch', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
+  emptyText: { color: colors.muted, fontSize: 14 },
   peerRow: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 92,
@@ -231,7 +236,7 @@ const styles = StyleSheet.create({
   },
   peerPortrait: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 12,
     height: 72,
     justifyContent: 'center',
@@ -240,15 +245,15 @@ const styles = StyleSheet.create({
     width: 58,
   },
   peerMain: { flex: 1, marginLeft: 13, minWidth: 0 },
-  peerName: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  peerName: { color: colors.ink, fontSize: 15, fontWeight: '800' },
   appearance: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
   },
   moreAppearances: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 11,
     fontWeight: '700',
     marginTop: 4,
@@ -256,7 +261,7 @@ const styles = StyleSheet.create({
   subjectRow: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 88,
@@ -265,7 +270,7 @@ const styles = StyleSheet.create({
   },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 11,
     height: 68,
     justifyContent: 'center',
@@ -273,13 +278,13 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     width: 48,
   },
-  fallback: { color: COLORS.subtle, fontSize: 14, fontWeight: '700' },
+  fallback: { color: colors.subtle, fontSize: 14, fontWeight: '700' },
   subjectMain: { flex: 1, marginLeft: 13, minWidth: 0 },
   subjectTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 21,
   },
-  relation: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
+  relation: { color: colors.muted, fontSize: 12, marginTop: 5 },
 });
