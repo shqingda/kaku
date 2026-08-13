@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
@@ -66,6 +67,9 @@ export default function PublicUserBlogsScreen() {
             <Text style={styles.meta}>
               @{username} · {total ? `${total} 篇` : '读取中'}
             </Text>
+            {blogs.length > 0 && blogsQuery.isError ? (
+              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={12}

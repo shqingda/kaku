@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
@@ -66,6 +67,9 @@ export default function PublicUserFriendsScreen() {
             <Text style={styles.meta}>
               @{username} · {total ? `${total} 位` : '读取中'}
             </Text>
+            {friends.length > 0 && friendsQuery.isError ? (
+              <CachedDataNotice onRetry={() => void friendsQuery.refetch()} />
+            ) : null}
           </View>
         }
         numColumns={3}

@@ -21,6 +21,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useSavePersonalCollection } from '@/features/collections/use-personal-collection';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
@@ -165,6 +166,9 @@ export default function PublicUserCollectionsScreen() {
               selectedStatus={collectionStatus}
               subjectType={subjectType}
             />
+            {collections.length > 0 && collectionsQuery.isError ? (
+              <CachedDataNotice onRetry={() => void collectionsQuery.refetch()} />
+            ) : null}
           </>
         }
         maxToRenderPerBatch={12}

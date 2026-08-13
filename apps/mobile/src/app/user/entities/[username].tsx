@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import type {
@@ -96,6 +97,9 @@ export default function PublicUserEntitiesScreen() {
                 );
               })}
             </View>
+            {entities.length > 0 && entitiesQuery.isError ? (
+              <CachedDataNotice onRetry={() => void entitiesQuery.refetch()} />
+            ) : null}
           </View>
         }
         numColumns={2}

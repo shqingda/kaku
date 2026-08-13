@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
@@ -71,6 +72,9 @@ export default function PublicUserTimelineScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>时间线</Text>
             <Text style={styles.subtitle}>@{username} 的公开动态</Text>
+            {timeline.length > 0 && timelineQuery.isError ? (
+              <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={12}
