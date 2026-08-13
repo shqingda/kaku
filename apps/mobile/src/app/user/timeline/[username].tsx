@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
-  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -12,41 +11,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
-import { useAuth } from '@/features/auth/auth-provider';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
-import { useDeleteTimeline } from '@/features/users/use-delete-timeline';
 import { usePublicUserTimeline } from '@/features/users/use-public-user';
 
 export default function PublicUserTimelineScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { session } = useAuth();
   const timelineQuery = usePublicUserTimeline(username);
-  const deleteTimeline = useDeleteTimeline(username);
   const timeline = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [timelineQuery.data],
   );
-  const isOwnTimeline = session?.user.username === username;
-
-  function confirmDelete(timelineId: number) {
-    Alert.alert(
-      '删除这条动态？',
-      '删除后无法恢复。',
-      [
-        { style: 'cancel', text: '取消' },
-        {
-          onPress: () => {
-            deleteTimeline.mutate(timelineId, {
-              onError: (error) => Alert.alert('动态没有删除', error.message),
-            });
-          },
-          style: 'destructive',
-          text: '删除',
-        },
-      ],
-    );
-  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -120,7 +95,6 @@ export default function PublicUserTimelineScreen() {
             <PublicUserTimelineRow
               hasDivider={index > 0}
               item={item}
-              onDelete={isOwnTimeline ? () => confirmDelete(item.id) : undefined}
               onPress={
                 item.subjectId
                   ? () =>
