@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Platform,
@@ -16,7 +17,6 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicGroupTopic } from '@/features/community/use-community';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
-import { DiscussionComposeButton } from '@/features/discussions/discussion-compose-button';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-body';
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
@@ -202,11 +202,35 @@ export default function GroupTopicScreen() {
           windowSize={7}
         />
         {topic ? (
-          <DiscussionComposeButton
-            accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
-            disabled={isSigningIn}
-            onPress={() => void openComposer()}
-          />
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={COLORS.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? '参与讨论…'
+                    : '登录后参与讨论'}
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
       </View>
       <DiscussionReplyComposer
@@ -228,7 +252,7 @@ export default function GroupTopicScreen() {
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
   contentView: { flex: 1 },
-  listContent: { padding: 20, paddingBottom: 108 },
+  listContent: { padding: 20, paddingBottom: 28 },
   topicHeader: {
     backgroundColor: COLORS.surface,
     borderRadius: 22,
@@ -250,5 +274,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   topicMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 7 },
+  replyBar: {
+    backgroundColor: COLORS.background,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.track,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 48,
+    paddingHorizontal: 17,
+  },
+  replyButtonText: { color: COLORS.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });
