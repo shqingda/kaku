@@ -3,7 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import {
   getSubjectTypeFromSlug,
   getSubjectTypeLabel,
@@ -12,6 +12,7 @@ import {
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicTag } from '@/features/tags/model';
 import { useGlobalTags } from '@/features/tags/use-global-tags';
 
@@ -21,6 +22,8 @@ const compactNumber = new Intl.NumberFormat('zh-CN', {
 });
 
 export default function TagsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() =>
     getSubjectTypeFromSlug(type));
@@ -100,7 +103,7 @@ export default function TagsScreen() {
         }}
         onEndReachedThreshold={0.45}
         renderItem={({ item }) => (
-          <TagCard item={item} onPress={() => browseTag(item.name)} />
+          <TagCard item={item} onPress={() => browseTag(item.name)} styles={styles} />
         )}
         showsVerticalScrollIndicator={false}
       />
@@ -108,7 +111,11 @@ export default function TagsScreen() {
   );
 }
 
-function TagCard({ item, onPress }: { item: PublicTag; onPress: () => void }) {
+function TagCard({ item, onPress, styles }: {
+  item: PublicTag;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <Pressable
       accessibilityLabel={`${item.name}，${item.count} 个条目`}
@@ -127,6 +134,9 @@ function TagState({ error, loading, onRetry }: {
   loading: boolean;
   onRetry: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
       <Text style={styles.stateTitle}>
@@ -144,19 +154,19 @@ function TagState({ error, loading, onRetry }: {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   row: { gap: 10 },
   hero: { paddingHorizontal: 4, paddingTop: 24 },
-  title: { color: COLORS.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 7 },
+  title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
+  subtitle: { color: colors.muted, fontSize: 14, marginTop: 7 },
   tabs: { paddingBottom: 2, paddingTop: 20 },
   search: { marginTop: 14 },
-  sectionTitle: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginBottom: 14, marginTop: 28 },
+  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginBottom: 14, marginTop: 28 },
   tag: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 16,
     flex: 1,
@@ -167,12 +177,12 @@ const styles = StyleSheet.create({
     maxWidth: '49%',
     paddingHorizontal: 15,
   },
-  tagName: { color: COLORS.ink, flex: 1, fontSize: 14, fontWeight: '700' },
-  tagCount: { color: COLORS.subtle, fontSize: 11, marginLeft: 8 },
-  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 34, width: '100%' },
-  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 14, paddingHorizontal: 17, paddingVertical: 9 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  tagName: { color: colors.ink, flex: 1, fontSize: 14, fontWeight: '700' },
+  tagCount: { color: colors.subtle, fontSize: 11, marginLeft: 8 },
+  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, padding: 34, width: '100%' },
+  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  retry: { backgroundColor: colors.accentSoft, borderRadius: 13, marginTop: 14, minHeight: 44, paddingHorizontal: 17, justifyContent: 'center' },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

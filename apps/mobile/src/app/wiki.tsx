@@ -12,13 +12,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicWikiRevision } from '@/features/wiki/model';
 import { useWikiRevisions } from '@/features/wiki/use-wiki-revisions';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function WikiScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const revisionsQuery = useWikiRevisions();
   const revisions = useMemo(
     () => revisionsQuery.data?.items ?? [],
@@ -60,6 +63,8 @@ export default function WikiScreen() {
             isFirst={index === 0}
             isLast={index === revisions.length - 1}
             item={item}
+            styles={styles}
+            tintColor={colors.accent}
           />
         )}
         showsVerticalScrollIndicator={false}
@@ -74,11 +79,15 @@ function RevisionRow({
   isFirst,
   isLast,
   item,
+  styles,
+  tintColor,
 }: {
   hasDivider: boolean;
   isFirst: boolean;
   isLast: boolean;
   item: PublicWikiRevision;
+  styles: ReturnType<typeof createStyles>;
+  tintColor: string;
 }) {
   return (
     <View
@@ -107,7 +116,7 @@ function RevisionRow({
           <SymbolView
             name={{ android: 'edit_note', ios: 'pencil.line', web: 'edit_note' }}
             size={19}
-            tintColor={COLORS.accent}
+            tintColor={tintColor}
           />
         </View>
         <View style={styles.rowMain}>
@@ -137,23 +146,23 @@ function RevisionRow({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
-  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   row: { alignItems: 'center', flexDirection: 'row', minHeight: 112, paddingVertical: 16 },
-  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
-  revisionIcon: { alignItems: 'center', backgroundColor: COLORS.accentSoft, borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
+  rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
+  revisionIcon: { alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
   rowMain: { flex: 1, marginLeft: 13, minWidth: 0 },
-  rowTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
-  note: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
-  rowMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 7 },
-  compare: { alignItems: 'center', backgroundColor: COLORS.background, borderRadius: 11, justifyContent: 'center', marginLeft: 10, minHeight: 36, paddingHorizontal: 11 },
-  compareText: { color: COLORS.accent, fontSize: 12, fontWeight: '800' },
+  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
+  note: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
+  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 7 },
+  compare: { alignItems: 'center', backgroundColor: colors.background, borderRadius: 11, justifyContent: 'center', marginLeft: 10, minHeight: 44, paddingHorizontal: 11 },
+  compareText: { color: colors.accent, fontSize: 12, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 type CatalogStatusBannerProps = {
   isError: boolean;
@@ -15,6 +17,9 @@ export function CatalogStatusBanner({
   isRefreshing,
   onRetry,
 }: CatalogStatusBannerProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (!isError && !isPending && !isRefreshing) {
     return null;
   }
@@ -46,26 +51,26 @@ export function CatalogStatusBanner({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   banner: {
     alignItems: 'center',
-    backgroundColor: '#EEECE5',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 16,
     flexDirection: 'row',
     marginBottom: 14,
     padding: 14,
   },
-  errorBanner: { backgroundColor: COLORS.accentSoft },
+  errorBanner: { backgroundColor: colors.accentSoft },
   copy: { flex: 1 },
-  title: { color: COLORS.ink, fontSize: 13, fontWeight: '700' },
-  detail: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
+  title: { color: colors.ink, fontSize: 13, fontWeight: '700' },
+  detail: { color: colors.muted, fontSize: 11, marginTop: 4 },
   retry: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 11,
     marginLeft: 12,
     paddingHorizontal: 11,
     paddingVertical: 7,
   },
-  retryText: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  retryText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.6 },
 });
