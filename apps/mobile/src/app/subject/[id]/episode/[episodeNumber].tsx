@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   FlatList,
@@ -22,6 +21,7 @@ import {
   useSavePersonalCollection,
 } from '@/features/collections/use-personal-collection';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
+import { DiscussionComposeButton } from '@/features/discussions/discussion-compose-button';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
@@ -325,35 +325,11 @@ export default function EpisodeScreen() {
           windowSize={7}
         />
         {catalogEpisode ? (
-          <View style={styles.replyBar}>
-            <Pressable
-              accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
-              accessibilityRole="button"
-              disabled={isSigningIn}
-              onPress={() => void openComposer()}
-              style={({ pressed }) => [
-                styles.replyButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'chat_bubble_outline',
-                  ios: 'bubble.left',
-                  web: 'chat_bubble_outline',
-                }}
-                size={17}
-                tintColor={COLORS.muted}
-              />
-              <Text style={styles.replyButtonText}>
-                {isSigningIn
-                  ? '正在登录…'
-                  : session
-                    ? `参与本${isTrack ? '曲' : '集'}讨论…`
-                    : '登录后参与讨论'}
-              </Text>
-            </Pressable>
-          </View>
+          <DiscussionComposeButton
+            accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
+            disabled={isSigningIn}
+            onPress={() => void openComposer()}
+          />
         ) : null}
       </View>
       {catalogEpisode ? (
@@ -372,7 +348,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   contentView: { flex: 1 },
   list: { flex: 1 },
-  content: { padding: 20, paddingBottom: 28 },
+  content: { padding: 20, paddingBottom: 108 },
   episodeCard: {
     alignItems: 'flex-start',
     backgroundColor: COLORS.surface,
@@ -439,23 +415,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
-  replyBar: {
-    backgroundColor: COLORS.background,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 9,
-    minHeight: 48,
-    paddingHorizontal: 17,
-  },
-  replyButtonText: { color: COLORS.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });
