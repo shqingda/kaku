@@ -10,7 +10,13 @@ import type {
   DiscussionTopicPage,
 } from '../../../features/discussions/model.ts';
 import { getNextTopicOffset } from '../../../features/discussions/topic-pagination.ts';
+import {
+  cleanBangumiContent,
+  parseBangumiContent,
+} from '../../../lib/bangumi-content.ts';
 import { formatActivityTime } from '../../../lib/format-activity-time.ts';
+
+export { cleanBangumiContent } from '../../../lib/bangumi-content.ts';
 
 function authorName(reply: BangumiDiscussionReply) {
   return (
@@ -24,13 +30,6 @@ function authorName(reply: BangumiDiscussionReply) {
 
 function toIsoTime(timestamp: number) {
   return new Date(timestamp * 1000).toISOString();
-}
-
-export function cleanBangumiContent(content: string) {
-  return content
-    .replace(/\[\/?(?:b|i|u|s|mask|quote|code|url|img)(?:=[^\]]*)?\]/gi, '')
-    .replace(/\r\n/g, '\n')
-    .trim();
 }
 
 export function mapBangumiReplies(
@@ -73,6 +72,7 @@ export function mapBangumiReplies(
                 replyId: String(reply.relatedID ?? parent!.id),
               }
             : undefined,
+        segments: parseBangumiContent(reply.content),
       },
     ];
 

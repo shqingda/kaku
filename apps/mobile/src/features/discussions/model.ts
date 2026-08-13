@@ -1,3 +1,5 @@
+import type { BangumiContentBlock } from '@/lib/bangumi-content';
+
 export type ReplyReference = {
   replyId: string;
   author: string;
@@ -12,6 +14,7 @@ export type DiscussionReply = {
   body: string;
   createdAt: string;
   replyTo?: ReplyReference;
+  segments: BangumiContentBlock[];
 };
 
 export type DiscussionTopic = {

@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { Image } from 'expo-image';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, TextStyle } from 'react-native';
 
 import {
@@ -8,9 +7,12 @@ import {
   getBangumiEmojiUrl,
   parseBangumiEmoji,
 } from '@/lib/bangumi-emoji';
+import type { BangumiContentBlock } from '@/lib/bangumi-content';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
-// 内联渲染 Bangumi 表情包（(bgmNN) 与 ASCII 颜文字）：把文本按表情切分，
-// 表情以与文字等高的小图渲染，其余走原生 Text 换行。无表情时退化为纯 Text。
+// 内联渲染 Bangumi 表情包（(bgmNN) 与 ASCII 颜文字）：表情以原生 Image 内嵌在
+// Text 里，随文字基线对齐、正常换行。无表情时退化为纯 Text。
 export function BangumiText({
   children,
   style,
@@ -20,8 +22,7 @@ export function BangumiText({
 }) {
   const flattened = StyleSheet.flatten(style);
   const fontSize = flattened?.fontSize ?? 14;
-  const lineHeight = flattened?.lineHeight ?? Math.round(fontSize * 1.4);
-  const emojiSize = Math.round(lineHeight * 0.86);
+  const emojiSize = Math.round(fontSize * 1.15);
 
   const segments = useMemo(() => parseBangumiEmoji(children), [children]);
 
@@ -30,29 +31,79 @@ export function BangumiText({
   }
 
   return (
-    <View style={styles.row}>
+    <Text style={style}>
       {segments.map((segment, index) =>
         segment.type === 'emoji' ? (
           <Image
             key={index}
-            contentFit="contain"
+            resizeMode="contain"
             source={{ uri: getBangumiEmojiUrl(segment.value) ?? undefined }}
-            style={{ height: emojiSize, marginHorizontal: 1, width: emojiSize }}
+            style={{ height: emojiSize, width: emojiSize }}
           />
-        ) : segment.value ? (
-          <Text key={index} style={style}>
-            {segment.value}
-          </Text>
-        ) : null,
+        ) : (
+          segment.value
+        ),
+      )}
+    </Text>
+  );
+}
+
+// 渲染回复正文：普通文本走 BangumiText，[quote] 引用块渲染成块引用样式
+// （左侧竖线 + 弱化颜色），不破坏正文排版。
+export function BangumiContentText({
+  blocks,
+  style,
+}: {
+  blocks: BangumiContentBlock[];
+  style?: StyleProp<TextStyle>;
+}) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  if (blocks.length === 0) {
+    return null;
+  }
+
+  const hasQuote = blocks.some((block) => block.type === 'quote');
+  if (!hasQuote) {
+    return (
+      <BangumiText style={style}>
+        {blocks.map((block) => block.value).join('')}
+      </BangumiText>
+    );
+  }
+
+  const flattened = StyleSheet.flatten(style);
+  const containerStyle = flattened?.marginTop
+    ? { marginTop: flattened.marginTop }
+    : undefined;
+  const textStyle = flattened ? { ...flattened, marginTop: 0 } : undefined;
+
+  return (
+    <View style={containerStyle}>
+      {blocks.map((block, index) =>
+        block.type === 'quote' ? (
+          <View key={index} style={styles.quote}>
+            <BangumiText style={styles.quoteText}>{block.value}</BangumiText>
+          </View>
+        ) : (
+          <BangumiText key={index} style={textStyle}>
+            {block.value}
+          </BangumiText>
+        ),
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    quote: {
+      borderLeftColor: colors.divider,
+      borderLeftWidth: 3,
+      marginVertical: 4,
+      paddingLeft: 10,
+    },
+    quoteText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  });
+}

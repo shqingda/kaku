@@ -333,28 +333,39 @@ export function EntityDetailScreen({
 
               <View style={styles.commentsSection}>
                 <View style={styles.commentsHeader}>
-                  <Text style={styles.commentsHeaderTitle}>评论</Text>
-                  <View style={styles.commentsHeaderRight}>
-                    <Text style={styles.commentsMeta}>
+                  <View>
+                    <Text accessibilityRole="header" style={styles.commentsHeaderTitle}>
+                      评论
+                    </Text>
+                    <Text style={styles.commentsHeaderMeta}>
                       {data.commentCount.toLocaleString('zh-CN')} 条公开评论
                     </Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => void openComposer()}
-                      style={({ pressed }) => pressed && styles.pressed}
-                    >
-                      <Text style={styles.commentsAction}>写评论</Text>
-                    </Pressable>
-                    {comments.length > 0 ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() => setCommentsVisible(true)}
-                        style={({ pressed }) => pressed && styles.pressed}
-                      >
-                        <Text style={styles.commentsAction}>查看全部</Text>
-                      </Pressable>
-                    ) : null}
                   </View>
+                  <Pressable
+                    accessibilityLabel={session ? `评论这个${kind}` : '登录后评论'}
+                    accessibilityRole="button"
+                    disabled={isSigningIn}
+                    hitSlop={4}
+                    onPress={() => void openComposer()}
+                    style={({ pressed }) => [
+                      styles.publishButton,
+                      pressed && styles.publishButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.publishIcon}>
+                      <SymbolView
+                        name={{
+                          android: 'edit',
+                          ios: 'square.and.pencil',
+                          web: 'edit',
+                        }}
+                        size={16}
+                        tintColor={colors.ink}
+                        weight="semibold"
+                      />
+                    </View>
+                    <Text style={styles.publishText}>发布</Text>
+                  </Pressable>
                 </View>
                 {commentsQuery.isPending ? (
                   <Text style={styles.commentsState}>正在读取评论…</Text>
@@ -369,28 +380,51 @@ export function EntityDetailScreen({
                 ) : comments.length === 0 ? (
                   <Text style={styles.commentsState}>还没有公开评论。</Text>
                 ) : (
-                  comments.slice(0, 3).map((reply, index) => (
-                    <ReplyListItem
-                      floor={index + 1}
-                      key={reply.id}
-                      onDelete={
-                        reply.authorUsername === session?.user.username
-                          ? confirmDeleteReply
-                          : undefined
-                      }
-                      onEdit={
-                        reply.authorUsername === session?.user.username
-                          ? openEditComposer
-                          : undefined
-                      }
-                      onOpenReference={(replyId) => {
-                        setCommentsVisible(true);
-                        setTimeout(() => openReply(replyId), 220);
-                      }}
-                      onReply={openComposer}
-                      reply={reply}
-                    />
-                  ))
+                  <>
+                    {comments.slice(0, 3).map((reply, index) => (
+                      <ReplyListItem
+                        floor={index + 1}
+                        key={reply.id}
+                        onDelete={
+                          reply.authorUsername === session?.user.username
+                            ? confirmDeleteReply
+                            : undefined
+                        }
+                        onEdit={
+                          reply.authorUsername === session?.user.username
+                            ? openEditComposer
+                            : undefined
+                        }
+                        onOpenReference={(replyId) => {
+                          setCommentsVisible(true);
+                          setTimeout(() => openReply(replyId), 220);
+                        }}
+                        onReply={openComposer}
+                        reply={reply}
+                      />
+                    ))}
+                    <Pressable
+                      accessibilityLabel="查看全部评论"
+                      accessibilityRole="button"
+                      onPress={() => setCommentsVisible(true)}
+                      style={({ pressed }) => [
+                        styles.commentsAllButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.commentsAllText}>查看全部</Text>
+                      <SymbolView
+                        name={{
+                          android: 'chevron_right',
+                          ios: 'chevron.right',
+                          web: 'chevron_right',
+                        }}
+                        size={12}
+                        tintColor={colors.accent}
+                        weight="semibold"
+                      />
+                    </Pressable>
+                  </>
                 )}
               </View>
             </>
@@ -483,35 +517,6 @@ export function EntityDetailScreen({
             updateCellsBatchingPeriod={40}
             windowSize={15}
           />
-          <View style={styles.replyBar}>
-            <Pressable
-              accessibilityLabel={session ? `评论这个${kind}` : '登录后评论'}
-              accessibilityRole="button"
-              disabled={isSigningIn}
-              onPress={() => void openComposer()}
-              style={({ pressed }) => [
-                styles.replyButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'chat_bubble_outline',
-                  ios: 'bubble.left',
-                  web: 'chat_bubble_outline',
-                }}
-                size={17}
-                tintColor={colors.muted}
-              />
-              <Text style={styles.replyButtonText}>
-                {isSigningIn
-                  ? '正在登录…'
-                  : session
-                    ? `评论这个${kind}…`
-                    : '登录后评论'}
-              </Text>
-            </Pressable>
-          </View>
           <ScrollNavButton
             onPress={scrollCommentsToTop}
             visible={showsScrollToTop}
@@ -610,16 +615,49 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   commentsHeaderTitle: {
     color: colors.ink,
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '800',
+    letterSpacing: -0.35,
   },
-  commentsHeaderRight: {
+  commentsHeaderMeta: { color: colors.muted, fontSize: 12, marginTop: 3 },
+  publishButton: {
     alignItems: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderCurve: 'continuous',
+    borderRadius: 12,
     flexDirection: 'row',
-    gap: 10,
+    gap: 5,
+    height: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
   },
-  commentsMeta: { color: colors.muted, fontSize: 12 },
-  commentsAction: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  publishButtonPressed: { backgroundColor: colors.track },
+  publishIcon: {
+    alignItems: 'center',
+    height: 18,
+    justifyContent: 'center',
+    width: 18,
+  },
+  publishText: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+  },
+  commentsAllButton: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderCurve: 'continuous',
+    borderRadius: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    minHeight: 50,
+    paddingHorizontal: 17,
+  },
+  commentsAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   commentsState: {
     backgroundColor: colors.surface,
     borderRadius: 18,
@@ -653,22 +691,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   commentsList: { flex: 1 },
   commentsContent: { paddingBottom: 12 },
-  replyBar: {
-    borderTopColor: colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
-  },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    minHeight: 46,
-    paddingHorizontal: 14,
-  },
-  replyButtonText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   panelTitle: {
     color: colors.ink,
     fontSize: 17,
