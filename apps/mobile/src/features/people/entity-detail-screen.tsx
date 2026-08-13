@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -52,6 +53,10 @@ export function EntityDetailScreen({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  // FlatList 在 Android 上需要确定高度才能滚动（iOS 能透传 maxHeight 约束）。
+  // 92% 为 AppSheet 弹层高度上限，减去拖拽把手(~24)与标题头部(~78)。
+  const commentsMaxHeight = Math.max(240, windowHeight * 0.92 - 102 - insets.bottom);
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
@@ -359,6 +364,7 @@ export function EntityDetailScreen({
               />
             )}
             showsVerticalScrollIndicator={false}
+            style={{ maxHeight: commentsMaxHeight }}
           />
         </View>
       </AppSheet>
