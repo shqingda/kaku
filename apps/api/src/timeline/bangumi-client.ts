@@ -361,3 +361,36 @@ export async function createBangumiTimelineSay({
 
   return createdTimelineSchema.parse(await response.json());
 }
+
+export async function deleteBangumiTimeline({
+  accessToken,
+  fetcher = fetch,
+  timelineId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  timelineId: number;
+}): Promise<void> {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/timeline/${timelineId}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+      method: 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiTimelineError(
+      response.status,
+      response.status === 404
+        ? '这条动态已不存在。'
+        : response.status >= 500
+          ? 'Bangumi 动态服务暂时不可用。'
+          : '动态没有删除成功，请稍后重试。',
+    );
+  }
+}

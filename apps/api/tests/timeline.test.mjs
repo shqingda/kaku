@@ -355,3 +355,19 @@ test('an expired Turnstile token stays distinct from an expired OAuth token', as
       /安全验证已过期/.test(error.message),
   );
 });
+
+test('deleting a timeline item forwards DELETE to the private endpoint', async () => {
+  const { deleteBangumiTimeline } = await import('../src/timeline/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/timeline/70001');
+    assert.equal(init.method, 'DELETE');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return new Response('{}', { status: 200 });
+  };
+
+  await deleteBangumiTimeline({
+    accessToken: 'access-token',
+    fetcher,
+    timelineId: 70001,
+  });
+});

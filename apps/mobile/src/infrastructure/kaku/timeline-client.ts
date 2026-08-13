@@ -57,3 +57,16 @@ export async function createTimelineSay(
 
   return createdTimelineSchema.parse(await response.json());
 }
+
+export async function deleteTimeline(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  timelineId: number,
+): Promise<void> {
+  const response = await request(`/me/timeline/${timelineId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
