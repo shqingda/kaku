@@ -17,4 +17,4 @@
 
 - [ ] 接入崩溃监控与可读 source map。需要先创建 Sentry 项目，并将 DSN 与 source-map 上传 token 分别按公开配置和敏感构建变量管理，禁止提交 token。
 - [ ] 安装 Maestro 后运行 `.maestro/public-browse-smoke.yaml`，把“启动、搜索、打开条目、返回”作为不写远端数据的首条真机冒烟测试。
-- [ ] 配置 EAS preview / production 构建、签名与商店发布流程。
+- [ ] 完成 EAS 项目初始化、签名与商店发布：`apps/mobile/eas.json` 已提供 development / preview / production 三档无密钥构建配置；绑定 EAS 账号后再将版本号来源切到 remote，并配置 Apple / Google 凭据。
