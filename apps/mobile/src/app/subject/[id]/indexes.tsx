@@ -3,15 +3,18 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectIndexesScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const indexesQuery = useSubjectIndexes(subjectId ?? 0);
@@ -109,34 +112,34 @@ export default function SubjectIndexesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: 10, padding: 20, paddingBottom: 44 },
   header: { paddingBottom: 10, paddingTop: 2 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
   },
   indexTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 16,
     fontWeight: '800',
     lineHeight: 23,
   },
-  indexMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 9 },
+  indexMeta: { color: colors.subtle, fontSize: 12, marginTop: 9 },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 32 },
-  emptyTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  emptyTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   emptyText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     marginTop: 7,
     textAlign: 'center',

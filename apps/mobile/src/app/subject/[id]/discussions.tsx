@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -21,9 +21,12 @@ import { TopicList } from '@/features/discussions/topic-list';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectDiscussionsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -114,7 +117,7 @@ export default function SubjectDiscussionsScreen() {
               !subjectQuery.isPending &&
               !discussionQuery.isPending
             }
-            tintColor={COLORS.accent}
+            tintColor={colors.accent}
           />
         }
         scrollEventThrottle={160}
@@ -147,7 +150,7 @@ export default function SubjectDiscussionsScreen() {
               web: 'add_comment',
             }}
             size={15}
-            tintColor={COLORS.surface}
+            tintColor={colors.surface}
             weight="semibold"
           />
           <Text style={styles.newTopicText}>新建话题</Text>
@@ -200,23 +203,23 @@ export default function SubjectDiscussionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 48 },
   header: { marginBottom: 18, paddingHorizontal: 4, paddingTop: 4 },
-  eyebrow: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  eyebrow: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.6,
     marginTop: 7,
   },
-  subtitle: { color: COLORS.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
+  subtitle: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
   newTopicButton: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     flexDirection: 'row',
     gap: 7,
@@ -224,20 +227,20 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     minHeight: 46,
   },
-  newTopicText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  newTopicText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
+  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
     marginTop: 18,
     minHeight: 44,
     paddingHorizontal: 20,
   },
-  errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

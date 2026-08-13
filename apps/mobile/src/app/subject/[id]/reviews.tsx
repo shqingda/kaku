@@ -3,15 +3,18 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectReviews } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectReviewsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const reviewsQuery = useSubjectReviews(subjectId ?? 0);
@@ -117,6 +120,9 @@ export default function SubjectReviewsScreen() {
 }
 
 function EmptyState() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
       <Text style={styles.stateTitle}>暂无评论</Text>
@@ -125,19 +131,19 @@ function EmptyState() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginTop: 12,
     padding: 18,
@@ -145,24 +151,24 @@ const styles = StyleSheet.create({
   firstCard: { marginTop: 0 },
   pressed: { opacity: 0.62, transform: [{ scale: 0.99 }] },
   reviewTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontWeight: '800',
     lineHeight: 23,
   },
-  body: { color: COLORS.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
+  body: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
   },
-  footerText: { color: COLORS.subtle, flex: 1, fontSize: 11 },
-  replyCount: { color: COLORS.muted, fontSize: 11, fontWeight: '700' },
+  footerText: { color: colors.subtle, flex: 1, fontSize: 11 },
+  replyCount: { color: colors.muted, fontSize: 11, fontWeight: '700' },
   state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   stateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 7,

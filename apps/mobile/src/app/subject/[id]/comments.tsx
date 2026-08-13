@@ -3,16 +3,19 @@ import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectCommentsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const commentsQuery = useSubjectComments(subjectId ?? 0);
@@ -120,19 +123,19 @@ export default function SubjectCommentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginTop: 12,
     padding: 18,
@@ -143,14 +146,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  author: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  body: { color: COLORS.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
-  footer: { color: COLORS.subtle, fontSize: 11, marginTop: 12 },
+  author: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+  body: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
+  footer: { color: colors.subtle, fontSize: 11, marginTop: 12 },
   pressed: { opacity: 0.6 },
   state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   stateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 7,
