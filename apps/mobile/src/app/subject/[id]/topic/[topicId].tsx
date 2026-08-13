@@ -24,6 +24,9 @@ import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
 import { useDeleteSubjectReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
+import { ReportButton } from '@/features/reports/report-button';
+import { ReportSheet } from '@/features/reports/report-sheet';
+import { REPORT_TYPES } from '@/features/reports/types';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -38,6 +41,10 @@ export default function TopicScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
   const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const [reportTarget, setReportTarget] = useState<{
+    id: number;
+    label: string;
+  } | null>(null);
   const topicQuery = useBangumiSubjectTopic(numericTopicId ?? 0);
   const deleteReply = useDeleteSubjectReply(numericTopicId ?? 0);
   const topic = topicQuery.data;
@@ -143,14 +150,22 @@ export default function TopicScreen() {
               />
               {topic ? (
                 <>
-                  <View
-                    style={[
-                      styles.topicHeader,
-                      topic.body && styles.topicHeaderWithBody,
-                    ]}
-                  >
-                    <Text style={styles.topicTitle}>{topic.title}</Text>
-                    <View style={styles.topicMetaRow}>
+                    <View
+                      style={[
+                        styles.topicHeader,
+                        topic.body && styles.topicHeaderWithBody,
+                      ]}
+                    >
+                      <View style={styles.topicTitleRow}>
+                        <Text style={styles.topicTitle}>{topic.title}</Text>
+                        <ReportButton
+                          accessibilityLabel="举报该话题"
+                          label={topic.title}
+                          targetId={Number(topic.id)}
+                          type={REPORT_TYPES.subjectTopic}
+                        />
+                      </View>
+                      <View style={styles.topicMetaRow}>
                       {topic.authorUsername ? (
                         <Link
                           asChild
@@ -198,6 +213,15 @@ export default function TopicScreen() {
               }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
+              onReport={
+                session && item.authorUsername !== session.user.username
+                  ? (reply) =>
+                      setReportTarget({
+                        id: Number(reply.id),
+                        label: reply.author,
+                      })
+                  : undefined
+              }
               reply={item}
             />
           )}
@@ -249,6 +273,18 @@ export default function TopicScreen() {
         target={{ id: numericTopicId, kind: 'subject-topic' }}
         visible={composerVisible}
       />
+      <ReportSheet
+        onClose={() => setReportTarget(null)}
+        onSubmitted={() =>
+          Alert.alert('举报已提交', '感谢你的反馈，Bangumi 会进行审核。')
+        }
+        target={
+          reportTarget
+            ? { ...reportTarget, type: REPORT_TYPES.subjectReply }
+            : { id: 0, label: '', type: REPORT_TYPES.subjectReply }
+        }
+        visible={reportTarget !== null}
+      />
     </SafeAreaView>
   );
 }
@@ -266,10 +302,16 @@ const styles = StyleSheet.create({
   topicHeaderWithBody: { marginBottom: 10 },
   topicTitle: {
     color: COLORS.ink,
+    flex: 1,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.4,
     lineHeight: 30,
+  },
+  topicTitleRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
   },
   topicMetaRow: { flexDirection: 'row', marginTop: 8 },
   topicAuthor: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },

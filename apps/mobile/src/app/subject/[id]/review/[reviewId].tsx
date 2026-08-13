@@ -21,6 +21,8 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useDeleteReviewReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
+import { ReportSheet } from '@/features/reports/report-sheet';
+import { REPORT_TYPES } from '@/features/reports/types';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -40,6 +42,10 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
   const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const [reportTarget, setReportTarget] = useState<{
+    id: number;
+    label: string;
+  } | null>(null);
   const reviewQuery = useSubjectReview(numericReviewId ?? 0);
   const deleteReply = useDeleteReviewReply(numericReviewId ?? 0);
   const review = reviewQuery.data;
@@ -174,6 +180,15 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
               }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
+              onReport={
+                session && item.authorUsername !== session.user.username
+                  ? (reply) =>
+                      setReportTarget({
+                        id: Number(reply.id),
+                        label: reply.author,
+                      })
+                  : undefined
+              }
               reply={item}
             />
           )}
@@ -224,6 +239,18 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         replyingTo={replyingTo}
         target={{ id: numericReviewId, kind: 'review' }}
         visible={composerVisible}
+      />
+      <ReportSheet
+        onClose={() => setReportTarget(null)}
+        onSubmitted={() =>
+          Alert.alert('举报已提交', '感谢你的反馈，Bangumi 会进行审核。')
+        }
+        target={
+          reportTarget
+            ? { ...reportTarget, type: REPORT_TYPES.blogReply }
+            : { id: 0, label: '', type: REPORT_TYPES.blogReply }
+        }
+        visible={reportTarget !== null}
       />
     </SafeAreaView>
   );

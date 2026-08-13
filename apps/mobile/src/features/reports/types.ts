@@ -1,0 +1,16 @@
+export const REPORT_TYPES = {
+  user: 6,
+  groupTopic: 7,
+  groupReply: 8,
+  subjectTopic: 9,
+  subjectReply: 10,
+  episodeReply: 11,
+  characterReply: 12,
+  personReply: 13,
+  blog: 14,
+  blogReply: 15,
+  timeline: 16,
+  timelineReply: 17,
+  index: 18,
+  indexReply: 19,
+} as const;

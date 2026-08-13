@@ -15,6 +15,7 @@ type ReplyListItemProps = {
   onEdit?: (reply: DiscussionReply) => void;
   onOpenReference: (replyId: string) => void;
   onReply?: (reply: DiscussionReply) => void;
+  onReport?: (reply: DiscussionReply) => void;
   reply: DiscussionReply;
 };
 
@@ -25,6 +26,7 @@ export const ReplyListItem = memo(function ReplyListItem({
   onEdit,
   onOpenReference,
   onReply,
+  onReport,
   reply,
 }: ReplyListItemProps) {
   return (
@@ -130,7 +132,7 @@ export const ReplyListItem = memo(function ReplyListItem({
         </Pressable>
       ) : null}
       <Text style={styles.body}>{reply.body}</Text>
-      {onEdit || onDelete ? (
+      {onEdit || onDelete || onReport ? (
         <View style={styles.actions}>
           {onEdit ? (
             <Pressable
@@ -158,6 +160,20 @@ export const ReplyListItem = memo(function ReplyListItem({
               ]}
             >
               <Text style={styles.deleteAction}>删除</Text>
+            </Pressable>
+          ) : null}
+          {onReport ? (
+            <Pressable
+              accessibilityLabel={`举报 ${reply.author} 的回复`}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => onReport(reply)}
+              style={({ pressed }) => [
+                styles.actionButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.editAction}>举报</Text>
             </Pressable>
           ) : null}
         </View>
