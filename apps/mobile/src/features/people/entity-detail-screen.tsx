@@ -6,17 +6,17 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
+import { AppSheet } from '@/features/shared/app-sheet';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
@@ -51,6 +51,7 @@ export function EntityDetailScreen({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
@@ -308,13 +309,16 @@ export function EntityDetailScreen({
           showsVerticalScrollIndicator={false}
         />
       )}
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setCommentsVisible(false)}
-        presentationStyle="pageSheet"
+      <AppSheet
+        onClose={() => setCommentsVisible(false)}
         visible={commentsVisible}
       >
-        <SafeAreaView edges={['bottom']} style={styles.commentsScreen}>
+        <View
+          style={[
+            styles.commentsSheetBody,
+            { paddingBottom: Math.max(insets.bottom, 16) },
+          ]}
+        >
           <View style={styles.commentsModalHeader}>
             <View>
               <Text style={styles.commentsModalTitle}>{kind}评论</Text>
@@ -356,8 +360,8 @@ export function EntityDetailScreen({
             )}
             showsVerticalScrollIndicator={false}
           />
-        </SafeAreaView>
-      </Modal>
+        </View>
+      </AppSheet>
       <FullscreenImageViewer
         onClose={() => setPortraitVisible(false)}
         title={data?.name ?? kind}
@@ -445,26 +449,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     padding: 18,
   },
-  commentsScreen: { backgroundColor: colors.background, flex: 1 },
+  commentsSheetBody: { flexShrink: 1 },
   commentsModalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: 14,
-    paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: 12,
   },
   commentsModalTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' },
   commentsModalMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
   commentsClose: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 18,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
-  commentsContent: { paddingBottom: 36, paddingHorizontal: 20 },
+  commentsContent: { paddingBottom: 12 },
   panelTitle: {
     color: colors.ink,
     fontSize: 17,
