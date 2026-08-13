@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '@/constants/design';
@@ -114,10 +115,20 @@ export const ReplyListItem = memo(function ReplyListItem({
             hitSlop={8}
             onPress={() => onReply(reply)}
             style={({ pressed }) => [
-              styles.actionButton,
+              styles.replyButton,
               pressed && styles.pressed,
             ]}
           >
+            <SymbolView
+              name={{
+                android: 'reply',
+                ios: 'arrowshape.turn.up.left',
+                web: 'reply',
+              }}
+              size={13}
+              tintColor={COLORS.accent}
+              weight="semibold"
+            />
             <Text style={styles.replyAction}>回复</Text>
           </Pressable>
         ) : null}
@@ -132,7 +143,7 @@ export const ReplyListItem = memo(function ReplyListItem({
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.replyAction}>编辑</Text>
+            <Text style={styles.editAction}>编辑</Text>
           </Pressable>
         ) : null}
         {onDelete ? (
@@ -203,8 +214,24 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   body: { color: COLORS.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
-  actions: { alignItems: 'center', flexDirection: 'row', marginTop: 4 },
-  replyAction: {
+  actions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginTop: 12,
+    minHeight: 32,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 5,
+    justifyContent: 'center',
+    minHeight: 32,
+    paddingHorizontal: 12,
+  },
+  replyAction: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  editAction: {
     color: COLORS.muted,
     fontSize: 12,
     fontWeight: '700',
@@ -217,9 +244,8 @@ const styles = StyleSheet.create({
   actionButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: 10,
+    minHeight: 32,
+    paddingHorizontal: 12,
   },
-  pressed: { opacity: 0.5 },
+  pressed: { opacity: 0.62 },
 });
