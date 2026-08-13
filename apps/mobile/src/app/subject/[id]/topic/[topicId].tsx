@@ -27,6 +27,7 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { ReportButton } from '@/features/reports/report-button';
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -141,16 +142,18 @@ export default function TopicScreen() {
           data={replies}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
-          ListEmptyComponent={
-            topic && !topicQuery.isError ? <EmptyDiscussionReplies /> : null
-          }
+          ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
           ListHeaderComponent={
             <>
-              <DiscussionStatus
-                isError={topicQuery.isError}
-                isPending={topicQuery.isPending}
-                onRetry={() => void topicQuery.refetch()}
-              />
+              {topic && topicQuery.isError ? (
+                <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
+              ) : (
+                <DiscussionStatus
+                  isError={topicQuery.isError}
+                  isPending={topicQuery.isPending}
+                  onRetry={() => void topicQuery.refetch()}
+                />
+              )}
               {topic ? (
                 <>
                     <View

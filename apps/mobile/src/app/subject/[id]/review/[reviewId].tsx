@@ -24,6 +24,7 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -120,13 +121,17 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           }
           ListHeaderComponent={
             <>
-              <DiscussionStatus
-                errorText={`${contentLabel}读取失败，请检查网络后重试。`}
-                isError={reviewQuery.isError}
-                isPending={reviewQuery.isPending}
-                loadingText={`正在读取${contentLabel}正文和回复…`}
-                onRetry={() => void reviewQuery.refetch()}
-              />
+              {review && reviewQuery.isError ? (
+                <CachedDataNotice onRetry={() => void reviewQuery.refetch()} />
+              ) : (
+                <DiscussionStatus
+                  errorText={`${contentLabel}读取失败，请检查网络后重试。`}
+                  isError={reviewQuery.isError}
+                  isPending={reviewQuery.isPending}
+                  loadingText={`正在读取${contentLabel}正文和回复…`}
+                  onRetry={() => void reviewQuery.refetch()}
+                />
+              )}
               {review ? (
                 <View style={styles.reviewHeader}>
                   <Text style={styles.reviewTitle}>{review.title}</Text>

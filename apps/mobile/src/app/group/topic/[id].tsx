@@ -30,6 +30,7 @@ import { REPORT_TYPES } from '@/features/reports/types';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -138,18 +139,20 @@ export default function GroupTopicScreen() {
           data={replies}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
-          ListEmptyComponent={
-            topic && !topicQuery.isError ? <EmptyDiscussionReplies /> : null
-          }
+          ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
           ListHeaderComponent={
             <>
-              <DiscussionStatus
-                errorText="话题读取失败，请检查网络后重试。"
-                isError={topicQuery.isError}
-                isPending={topicQuery.isPending}
-                loadingText="正在读取小组话题…"
-                onRetry={() => void topicQuery.refetch()}
-              />
+              {topic && topicQuery.isError ? (
+                <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
+              ) : (
+                <DiscussionStatus
+                  errorText="话题读取失败，请检查网络后重试。"
+                  isError={topicQuery.isError}
+                  isPending={topicQuery.isPending}
+                  loadingText="正在读取小组话题…"
+                  onRetry={() => void topicQuery.refetch()}
+                />
+              )}
               {topic ? (
                 <>
                   <View

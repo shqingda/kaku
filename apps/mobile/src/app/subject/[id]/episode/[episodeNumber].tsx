@@ -31,6 +31,7 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -272,7 +273,8 @@ export default function EpisodeScreen() {
           }
           removeClippedSubviews={Platform.OS === 'android'}
           ListEmptyComponent={
-            commentsQuery.isPending || commentsQuery.isError ? null : (
+            commentsQuery.isPending ||
+            (commentsQuery.isError && !commentsQuery.data) ? null : (
               <View style={styles.emptyDiscussion}>
                 <Text style={styles.emptyTitle}>
                   还没有人讨论这一{isTrack ? '曲' : '集'}
@@ -346,14 +348,20 @@ export default function EpisodeScreen() {
                   Bangumi {catalogEpisode?.discussionCount ?? replies.length}
                 </Text>
               </View>
-              <DiscussionStatus
-                isError={commentsQuery.isError}
-                isPending={
-                  catalogQuery.isPending ||
-                  Boolean(catalogEpisode && commentsQuery.isPending)
-                }
-                onRetry={() => void commentsQuery.refetch()}
-              />
+              {commentsQuery.data && commentsQuery.isError ? (
+                <CachedDataNotice
+                  onRetry={() => void commentsQuery.refetch()}
+                />
+              ) : (
+                <DiscussionStatus
+                  isError={commentsQuery.isError}
+                  isPending={
+                    catalogQuery.isPending ||
+                    Boolean(catalogEpisode && commentsQuery.isPending)
+                  }
+                  onRetry={() => void commentsQuery.refetch()}
+                />
+              )}
             </>
           }
           renderItem={({ index, item }) => (

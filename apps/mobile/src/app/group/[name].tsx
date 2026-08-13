@@ -15,6 +15,7 @@ import {
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { TopicComposer } from '@/features/discussions/topic-composer';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -68,13 +69,17 @@ export default function GroupScreen() {
         }
         ListHeaderComponent={
           <>
-            <DiscussionStatus
-              errorText="小组加载失败，请检查网络后重试。"
-              isError={groupQuery.isError}
-              isPending={groupQuery.isPending}
-              loadingText="正在读取小组资料…"
-              onRetry={() => void groupQuery.refetch()}
-            />
+            {group && groupQuery.isError ? (
+              <CachedDataNotice onRetry={() => void groupQuery.refetch()} />
+            ) : (
+              <DiscussionStatus
+                errorText="小组加载失败，请检查网络后重试。"
+                isError={groupQuery.isError}
+                isPending={groupQuery.isPending}
+                loadingText="正在读取小组资料…"
+                onRetry={() => void groupQuery.refetch()}
+              />
+            )}
             {group ? (
               <>
                 <View style={styles.groupHeader}>
@@ -156,13 +161,19 @@ export default function GroupScreen() {
                     </Pressable>
                   </View>
                 </View>
-                <DiscussionStatus
-                  errorText="小组话题加载失败，请检查网络后重试。"
-                  isError={topicsQuery.isError && topics.length === 0}
-                  isPending={topicsQuery.isPending}
-                  loadingText="正在读取小组话题…"
-                  onRetry={() => void topicsQuery.refetch()}
-                />
+                {topics.length > 0 && topicsQuery.isError ? (
+                  <CachedDataNotice
+                    onRetry={() => void topicsQuery.refetch()}
+                  />
+                ) : (
+                  <DiscussionStatus
+                    errorText="小组话题加载失败，请检查网络后重试。"
+                    isError={topicsQuery.isError}
+                    isPending={topicsQuery.isPending}
+                    loadingText="正在读取小组话题…"
+                    onRetry={() => void topicsQuery.refetch()}
+                  />
+                )}
               </>
             ) : null}
           </>
