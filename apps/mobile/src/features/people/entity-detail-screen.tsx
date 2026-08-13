@@ -54,9 +54,9 @@ export function EntityDetailScreen({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
-  // FlatList 在 Android 上需要确定高度才能滚动（iOS 能透传 maxHeight 约束）。
-  // 92% 为 AppSheet 弹层高度上限，减去拖拽把手(~24)与标题头部(~78)。
-  const commentsMaxHeight = Math.max(240, windowHeight * 0.92 - 102 - insets.bottom);
+  // FlatList 在 Android 上必须用确定高度 + flex:1 才能滚动（maxHeight 不被
+  // VirtualizedList 可靠尊重）。92% 为 AppSheet 上限，24 为拖拽把手与内边距。
+  const commentsBodyHeight = Math.max(320, windowHeight * 0.92 - 24);
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
@@ -321,7 +321,7 @@ export function EntityDetailScreen({
         <View
           style={[
             styles.commentsSheetBody,
-            { paddingBottom: Math.max(insets.bottom, 16) },
+            { height: commentsBodyHeight },
           ]}
         >
           <View style={styles.commentsModalHeader}>
@@ -349,7 +349,10 @@ export function EntityDetailScreen({
           </View>
           <FlatList
             ref={commentsListRef}
-            contentContainerStyle={styles.commentsContent}
+            contentContainerStyle={[
+              styles.commentsContent,
+              { paddingBottom: Math.max(insets.bottom, 16) },
+            ]}
             data={comments}
             keyExtractor={(reply) => reply.id}
             onRefresh={() => void commentsQuery.refetch()}
@@ -364,7 +367,7 @@ export function EntityDetailScreen({
               />
             )}
             showsVerticalScrollIndicator={false}
-            style={{ maxHeight: commentsMaxHeight }}
+            style={styles.commentsList}
           />
         </View>
       </AppSheet>
@@ -473,6 +476,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
+  commentsList: { flex: 1 },
   commentsContent: { paddingBottom: 12 },
   panelTitle: {
     color: colors.ink,
