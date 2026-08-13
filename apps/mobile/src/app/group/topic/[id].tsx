@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-bod
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import { useDeleteGroupReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -34,6 +36,7 @@ export default function GroupTopicScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
   const topicQuery = usePublicGroupTopic(numericTopicId ?? 0);
+  const deleteReply = useDeleteGroupReply(numericTopicId ?? 0);
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
@@ -60,6 +63,29 @@ export default function GroupTopicScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  function confirmDeleteReply(reply: DiscussionReply) {
+    Alert.alert(
+      '删除这条回复？',
+      '删除后无法恢复。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => {
+            const postId = Number(reply.id);
+            if (Number.isInteger(postId)) {
+              deleteReply.mutate(postId, {
+                onError: (error) =>
+                  Alert.alert('回复没有删除', error.message),
+              });
+            }
+          },
+          style: 'destructive',
+          text: '删除',
+        },
+      ],
+    );
   }
 
   if (!numericTopicId) {
@@ -144,6 +170,11 @@ export default function GroupTopicScreen() {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
+              onDelete={
+                item.authorUsername === session?.user.username
+                  ? confirmDeleteReply
+                  : undefined
+              }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
               reply={item}

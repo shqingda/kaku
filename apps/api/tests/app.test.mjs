@@ -217,3 +217,17 @@ test('topic creation is registered as authenticated routes', async () => {
     });
   }
 });
+
+test('reply deletion is registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const path of ['/me/subject-posts/9001', '/me/group-posts/9002']) {
+    const response = await app.request(path, { method: 'DELETE' }, { DB: {} });
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});

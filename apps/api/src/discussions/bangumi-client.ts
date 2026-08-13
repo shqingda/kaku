@@ -385,3 +385,50 @@ export function createBangumiGroupTopic({
     path: `/groups/${encodeURIComponent(groupName)}/topics`,
   });
 }
+
+async function deleteBangumiPost({
+  accessToken,
+  fetcher = fetch,
+  path,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  path: string;
+}): Promise<void> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}${path}`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw discussionError(response, undefined, '回复没有删除成功，请稍后重试。');
+  }
+}
+
+export function deleteBangumiSubjectPost({
+  postId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  postId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/subjects/-/posts/${postId}`,
+  });
+}
+
+export function deleteBangumiGroupPost({
+  postId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  postId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/groups/-/posts/${postId}`,
+  });
+}

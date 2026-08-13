@@ -8,6 +8,8 @@ import {
   createBangumiReviewReply,
   createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
+  deleteBangumiGroupPost,
+  deleteBangumiSubjectPost,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
   getBangumiReview,
@@ -322,6 +324,59 @@ test('topic creation surfaces captcha and rate limit messages from upstream', as
     (error) => {
       assert.equal(error.status, 429);
       assert.equal(error.message, '操作得太频繁了，请稍后再试。');
+      return true;
+    },
+  );
+});
+
+test('deleting a subject reply forwards DELETE to the subject post endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/subjects/-/posts/9001',
+    );
+    assert.equal(init.method, 'DELETE');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    return new Response('{}', { status: 200 });
+  };
+
+  await deleteBangumiSubjectPost({
+    accessToken: 'access-token',
+    fetcher,
+    postId: 9001,
+  });
+});
+
+test('deleting a group reply forwards DELETE to the group post endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/groups/-/posts/9002',
+    );
+    assert.equal(init.method, 'DELETE');
+    return new Response('{}', { status: 200 });
+  };
+
+  await deleteBangumiGroupPost({
+    accessToken: 'access-token',
+    fetcher,
+    postId: 9002,
+  });
+});
+
+test('deleting a reply that is already gone surfaces a not-found message', async () => {
+  const fetcher = async () => new Response('{}', { status: 404 });
+
+  await assert.rejects(
+    () =>
+      deleteBangumiSubjectPost({
+        accessToken: 'access-token',
+        fetcher,
+        postId: 9999,
+      }),
+    (error) => {
+      assert.equal(error.status, 404);
+      assert.equal(error.message, '这条讨论已不存在或当前账号无法访问。');
       return true;
     },
   );

@@ -21,6 +21,8 @@ import {
   createBangumiReviewReply,
   createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
+  deleteBangumiGroupPost,
+  deleteBangumiSubjectPost,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
   getBangumiReview,
@@ -406,6 +408,104 @@ export function registerDiscussionRoutes(
       getGroupName(context.req.param('groupName')),
       ({ targetId, ...input }) =>
         createBangumiGroupTopic({ ...input, groupName: targetId as string }),
+    ),
+  );
+
+  type DeleteUpstreamPost = (input: {
+    accessToken: string;
+    fetcher: typeof fetch;
+    postId: number;
+  }) => Promise<void>;
+
+  async function deletePost(
+    context: Context<{ Bindings: Env }>,
+    postId: number | null,
+    upstream: DeleteUpstreamPost,
+  ) {
+    if (!postId) {
+      return context.json(
+        { error: 'invalid_post_id', message: '回复编号格式不正确。' },
+        400,
+      );
+    }
+
+    const store = dependencies.createStore
+      ? dependencies.createStore(context.env.DB)
+      : createD1AuthStore(context.env.DB);
+    const authentication = await authenticateRequest(context, store, now());
+
+    if (isAuthenticationResponse(authentication)) {
+      return authentication;
+    }
+
+    try {
+      const accessToken = await getValidBangumiAccessToken({
+        env: context.env,
+        fetcher,
+        now: now(),
+        store,
+        userId: authentication.userId,
+      });
+      await upstream({ accessToken, fetcher, postId });
+
+      return context.json({ deleted: true });
+    } catch (error) {
+      if (error instanceof BangumiReauthorizationRequiredError) {
+        return context.json(
+          { error: 'bangumi_reauthorization_required', message: error.message },
+          409,
+        );
+      }
+
+      if (error instanceof BangumiDiscussionError) {
+        if (error.status === 401) {
+          await store.deleteBangumiCredential(authentication.userId);
+          return context.json(
+            {
+              error: 'bangumi_reauthorization_required',
+              message: 'Bangumi 授权已失效，请重新登录。',
+            },
+            409,
+          );
+        }
+
+        return context.json(
+          { error: 'bangumi_reply_delete_failed', message: error.message },
+          error.status === 404
+            ? 404
+            : error.status >= 500
+              ? 503
+              : 502,
+        );
+      }
+
+      if (error instanceof BangumiOAuthError) {
+        return context.json(
+          {
+            error: 'bangumi_oauth_unavailable',
+            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
+          },
+          503,
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  app.delete('/me/subject-posts/:postId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('postId')),
+      ({ postId, ...input }) =>
+        deleteBangumiSubjectPost({ ...input, postId }),
+    ),
+  );
+  app.delete('/me/group-posts/:postId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('postId')),
+      ({ postId, ...input }) => deleteBangumiGroupPost({ ...input, postId }),
     ),
   );
 }

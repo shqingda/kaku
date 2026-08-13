@@ -10,6 +10,7 @@ import type { DiscussionReply } from './model';
 type ReplyListItemProps = {
   floor: number;
   isHighlighted?: boolean;
+  onDelete?: (reply: DiscussionReply) => void;
   onOpenReference: (replyId: string) => void;
   onReply?: (reply: DiscussionReply) => void;
   reply: DiscussionReply;
@@ -18,6 +19,7 @@ type ReplyListItemProps = {
 export const ReplyListItem = memo(function ReplyListItem({
   floor,
   isHighlighted,
+  onDelete,
   onOpenReference,
   onReply,
   reply,
@@ -102,20 +104,36 @@ export const ReplyListItem = memo(function ReplyListItem({
         </Pressable>
       ) : null}
       <Text style={styles.body}>{reply.body}</Text>
-      {onReply ? (
-        <Pressable
-          accessibilityLabel={`回复 ${reply.author}`}
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => onReply(reply)}
-          style={({ pressed }) => [
-            styles.replyButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.replyAction}>回复</Text>
-        </Pressable>
-      ) : null}
+      <View style={styles.actions}>
+        {onReply ? (
+          <Pressable
+            accessibilityLabel={`回复 ${reply.author}`}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onReply(reply)}
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.replyAction}>回复</Text>
+          </Pressable>
+        ) : null}
+        {onDelete ? (
+          <Pressable
+            accessibilityLabel={`删除自己的回复`}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onDelete(reply)}
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.deleteAction}>删除</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 });
@@ -169,18 +187,23 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   body: { color: COLORS.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  actions: { alignItems: 'center', flexDirection: 'row', marginTop: 4 },
   replyAction: {
     color: COLORS.muted,
     fontSize: 12,
     fontWeight: '700',
   },
-  replyButton: {
+  deleteAction: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionButton: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
     justifyContent: 'center',
-    marginTop: 4,
     minHeight: 44,
     minWidth: 44,
+    paddingHorizontal: 10,
   },
   pressed: { opacity: 0.5 },
 });

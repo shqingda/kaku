@@ -222,3 +222,25 @@ export async function createGroupTopic(
     input,
   );
 }
+
+async function deletePost(request: AuthenticatedRequest, path: string) {
+  const response = await request(path, { method: 'DELETE' });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
+export async function deleteSubjectPost(
+  request: AuthenticatedRequest,
+  postId: number,
+) {
+  return deletePost(request, `/me/subject-posts/${postId}`);
+}
+
+export async function deleteGroupPost(
+  request: AuthenticatedRequest,
+  postId: number,
+) {
+  return deletePost(request, `/me/group-posts/${postId}`);
+}
