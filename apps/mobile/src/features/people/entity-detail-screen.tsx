@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -21,8 +21,7 @@ import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
@@ -64,8 +63,13 @@ export function EntityDetailScreen({
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
-  const [isAtTop, setIsAtTop] = useState(true);
-  const [isAtBottom, setIsAtBottom] = useState(false);
+  // 'top' 显示"拉到底部"，'bottom' 显示"回到顶部"，'none' 隐藏。
+  const [scrollMode, setScrollMode] = useState<'bottom' | 'none' | 'top'>('none');
+  const scrollMetricsRef = useRef({
+    content: 0,
+    scrollY: 0,
+    viewport: 0,
+  });
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
@@ -83,14 +87,37 @@ export function EntityDetailScreen({
     return buildEntityListItems(data, kind);
   }, [data, kind]);
 
+  // 接近顶部/底部（冗余阈值）即出现对应按钮，中间隐藏。
+  const NEAR_EDGE_THRESHOLD = 240;
+
+  function updateScrollMode() {
+    const { content, scrollY, viewport } = scrollMetricsRef.current;
+    let mode: 'bottom' | 'none' | 'top' = 'none';
+
+    if (content > viewport + 8) {
+      if (scrollY <= NEAR_EDGE_THRESHOLD) {
+        mode = 'top';
+      } else if (content - (scrollY + viewport) <= NEAR_EDGE_THRESHOLD) {
+        mode = 'bottom';
+      }
+    }
+
+    setScrollMode((current) => (current === mode ? current : mode));
+  }
+
   function handleCommentsScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const atTop = contentOffset.y <= 8;
-    const atBottom =
-      contentSize.height > layoutMeasurement.height &&
-      contentOffset.y + layoutMeasurement.height >= contentSize.height - 8;
-    setIsAtTop(atTop);
-    setIsAtBottom(atBottom);
+    scrollMetricsRef.current = {
+      content: contentSize.height,
+      scrollY: contentOffset.y,
+      viewport: layoutMeasurement.height,
+    };
+    updateScrollMode();
+  }
+
+  function handleCommentsContentSizeChange(_width: number, height: number) {
+    scrollMetricsRef.current.content = height;
+    updateScrollMode();
   }
 
   function scrollCommentsToTop() {
@@ -379,6 +406,7 @@ export function EntityDetailScreen({
             ]}
             data={comments}
             keyExtractor={(reply) => reply.id}
+            onContentSizeChange={handleCommentsContentSizeChange}
             onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
             onScrollToIndexFailed={handleScrollToIndexFailed}
@@ -395,11 +423,15 @@ export function EntityDetailScreen({
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
           />
-          <ScrollToBottomButton
-            onPress={scrollCommentsToBottom}
-            visible={!isAtBottom}
+          <ScrollNavButton
+            direction={scrollMode === 'top' ? 'down' : 'up'}
+            onPress={
+              scrollMode === 'top'
+                ? scrollCommentsToBottom
+                : scrollCommentsToTop
+            }
+            visible={scrollMode !== 'none'}
           />
-          <ScrollToTopButton onPress={scrollCommentsToTop} visible={!isAtTop} />
         </View>
       </AppSheet>
       <FullscreenImageViewer

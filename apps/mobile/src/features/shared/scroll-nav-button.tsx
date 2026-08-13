@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
-// 与 ScrollToTopButton 配套的"拉到底部"按钮，样式一致、位置上移一档。
-export function ScrollToBottomButton({
+// 底部居中的胶囊导航按钮：根据 direction 显示"回到顶部"（上）或"拉到底部"（下），
+// 图标 + 文字，淡入淡出 + 微缩放过渡。
+export function ScrollNavButton({
+  direction,
   onPress,
   visible,
 }: {
+  direction: 'down' | 'up';
   onPress: () => void;
   visible: boolean;
 }) {
@@ -25,6 +28,8 @@ export function ScrollToBottomButton({
     }).start();
   }, [progress, reduceMotion, visible]);
 
+  const isUp = direction === 'up';
+
   return (
     <Animated.View
       pointerEvents={visible ? 'auto' : 'none'}
@@ -36,7 +41,7 @@ export function ScrollToBottomButton({
             {
               scale: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0.92, 1],
+                outputRange: [0.94, 1],
               }),
             },
           ],
@@ -44,27 +49,33 @@ export function ScrollToBottomButton({
       ]}
     >
       <Pressable
-        accessibilityLabel="拉到底部"
+        accessibilityLabel={isUp ? '回到顶部' : '拉到底部'}
         accessibilityRole="button"
-        accessibilityHint="滚动到列表底部"
         hitSlop={8}
         onPress={onPress}
         style={({ pressed }) => [
-          styles.button,
+          styles.pill,
           { backgroundColor: colors.surface },
           pressed && styles.pressed,
         ]}
       >
         <SymbolView
-          name={{
-            android: 'arrow_downward',
-            ios: 'arrow.down',
-            web: 'arrow_downward',
-          }}
-          size={18}
+          name={
+            isUp
+              ? { android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }
+              : {
+                  android: 'arrow_downward',
+                  ios: 'arrow.down',
+                  web: 'arrow_downward',
+                }
+          }
+          size={15}
           tintColor={colors.ink}
           weight="semibold"
         />
+        <Text style={[styles.label, { color: colors.ink }]}>
+          {isUp ? '回到顶部' : '拉到底部'}
+        </Text>
       </Pressable>
     </Animated.View>
   );
@@ -72,12 +83,14 @@ export function ScrollToBottomButton({
 
 const styles = StyleSheet.create({
   container: {
-    bottom: 76,
+    alignItems: 'center',
+    bottom: 28,
+    left: 0,
     position: 'absolute',
-    right: 20,
+    right: 0,
     zIndex: 20,
   },
-  button: {
+  pill: {
     alignItems: 'center',
     borderColor:
       Platform.OS === 'android'
@@ -85,14 +98,17 @@ const styles = StyleSheet.create({
         : 'rgba(29, 29, 31, 0.08)',
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
+    elevation: Platform.OS === 'android' ? 8 : 0,
+    flexDirection: 'row',
+    gap: 6,
     height: 44,
     justifyContent: 'center',
-    elevation: Platform.OS === 'android' ? 8 : 0,
+    paddingHorizontal: 18,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
-    width: 44,
   },
+  label: { fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.58 },
 });
