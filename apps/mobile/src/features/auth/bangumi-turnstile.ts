@@ -1,4 +1,5 @@
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import {
   getTurnstileCallbackUrl,
@@ -11,21 +12,24 @@ export async function requestBangumiTurnstileToken() {
   const callbackUrl = getTurnstileCallbackUrl();
   const challengeUrl = new URL(BANGUMI_TURNSTILE_URL);
   challengeUrl.searchParams.set('redirect_uri', callbackUrl);
-  challengeUrl.searchParams.set('theme', 'light');
+  challengeUrl.searchParams.set('theme', 'auto');
 
-  const availability = await fetch(challengeUrl, {
-    headers: { Accept: 'text/html' },
-    signal: AbortSignal.timeout(12_000),
-  });
-
-  if (!availability.ok) {
-    throw new Error('Bangumi 暂未允许 Kaku 完成发布安全验证。');
+  if (Platform.OS === 'android') {
+    await WebBrowser.warmUpAsync();
   }
 
-  const result = await WebBrowser.openAuthSessionAsync(
-    challengeUrl.toString(),
-    callbackUrl,
-  );
+  let result: Awaited<ReturnType<typeof WebBrowser.openAuthSessionAsync>>;
+
+  try {
+    result = await WebBrowser.openAuthSessionAsync(
+      challengeUrl.toString(),
+      callbackUrl,
+    );
+  } finally {
+    if (Platform.OS === 'android') {
+      await WebBrowser.coolDownAsync();
+    }
+  }
 
   if (result.type !== 'success') {
     throw new Error('安全验证未完成，内容没有发送。');
