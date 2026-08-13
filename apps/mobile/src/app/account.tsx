@@ -25,6 +25,7 @@ import { clearRecentSubjects } from '@/features/history/recent-subjects';
 import { clearRecentSearches } from '@/features/search/search-history';
 import { useTheme } from '@/features/theme/theme-provider';
 import { queryPersister } from '@/lib/query-persister';
+import { clearDiagnosticRecords } from '@/lib/diagnostic-log';
 
 function formatSessionTime(timestamp: number) {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -85,6 +86,7 @@ export default function AccountScreen() {
         queryPersister.removeClient(),
         clearRecentSearches(),
         clearRecentSubjects(),
+        clearDiagnosticRecords(),
         Image.clearMemoryCache(),
         Image.clearDiskCache(),
       ]);
@@ -94,7 +96,10 @@ export default function AccountScreen() {
         return;
       }
 
-      Alert.alert('已清理', '公开缓存、图片和最近记录已从本机移除。');
+      Alert.alert(
+        '已清理',
+        '公开缓存、图片、最近记录和诊断信息已从本机移除。',
+      );
     } finally {
       setIsClearingLocalData(false);
     }
@@ -103,7 +108,7 @@ export default function AccountScreen() {
   function confirmClearLocalData() {
     Alert.alert(
       '清理本地数据？',
-      '将删除公开内容缓存、图片缓存、最近搜索和最近浏览。不会退出登录，也不会修改 Bangumi 收藏。',
+      '将删除公开内容缓存、图片缓存、最近搜索、最近浏览和诊断记录。不会退出登录，也不会修改 Bangumi 收藏。',
       [
         { style: 'cancel', text: '取消' },
         {
@@ -380,6 +385,18 @@ export default function AccountScreen() {
                 label="清理本地数据"
                 loading={isClearingLocalData}
                 onPress={confirmClearLocalData}
+              />
+              <AccountMenuRow
+                colors={colors}
+                description="查看仅保存在本机的错误记录"
+                hasDivider
+                icon={{
+                  android: 'troubleshoot',
+                  ios: 'waveform.path.ecg',
+                  web: 'troubleshoot',
+                }}
+                label="诊断信息"
+                onPress={() => router.push('/diagnostics')}
               />
             </View>
           </>

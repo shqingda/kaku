@@ -129,6 +129,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="diagnostics"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '诊断信息',
+            }}
+          />
+          <Stack.Screen
             name="notifications"
             options={{
               headerBackButtonDisplayMode: 'minimal',

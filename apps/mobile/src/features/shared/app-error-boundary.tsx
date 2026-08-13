@@ -3,6 +3,7 @@ import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import { SymbolView } from 'expo-symbols';
 
 import { COLORS } from '@/constants/design';
+import { recordDiagnosticError } from '@/lib/diagnostic-log';
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -24,6 +25,9 @@ export class AppErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Kaku render error', error, info.componentStack);
+    void recordDiagnosticError(error, info.componentStack).catch(() => {
+      // 诊断记录本身失败时不能再次触发错误边界。
+    });
   }
 
   private retry = () => {
