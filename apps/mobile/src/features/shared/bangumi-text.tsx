@@ -11,8 +11,8 @@ import type { BangumiContentBlock } from '@/lib/bangumi-content';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
-// 内联渲染 Bangumi 表情包（(bgmNN) 与 ASCII 颜文字）：表情以原生 Image 内嵌在
-// Text 里，随文字基线对齐、正常换行。无表情时退化为纯 Text。
+// 内联渲染 Bangumi 表情包（(bgmNN) 与 ASCII 颜文字）：用可换行的 row 把文字与
+// 表情底部对齐，文字片段可收缩换行。无表情时退化为纯 Text。
 export function BangumiText({
   children,
   style,
@@ -30,21 +30,31 @@ export function BangumiText({
     return <Text style={style}>{children}</Text>;
   }
 
+  const containerStyle = {
+    marginBottom: flattened?.marginBottom,
+    marginTop: flattened?.marginTop,
+  };
+  const textStyle = flattened
+    ? { ...flattened, marginBottom: 0, marginTop: 0 }
+    : undefined;
+
   return (
-    <Text style={style}>
+    <View style={[styles.row, containerStyle]}>
       {segments.map((segment, index) =>
         segment.type === 'emoji' ? (
           <Image
             key={index}
             resizeMode="contain"
             source={{ uri: getBangumiEmojiUrl(segment.value) ?? undefined }}
-            style={{ height: emojiSize, width: emojiSize }}
+            style={{ height: emojiSize, marginHorizontal: 1, width: emojiSize }}
           />
-        ) : (
-          segment.value
-        ),
+        ) : segment.value ? (
+          <Text key={index} style={[textStyle, styles.text]}>
+            {segment.value}
+          </Text>
+        ) : null,
       )}
-    </Text>
+    </View>
   );
 }
 
@@ -95,6 +105,15 @@ export function BangumiContentText({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  text: { flexShrink: 1 },
+});
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({

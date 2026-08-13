@@ -14,7 +14,7 @@ export type DiscussionReply = {
   body: string;
   createdAt: string;
   replyTo?: ReplyReference;
-  segments: BangumiContentBlock[];
+  segments?: BangumiContentBlock[];
 };
 
 export type DiscussionTopic = {

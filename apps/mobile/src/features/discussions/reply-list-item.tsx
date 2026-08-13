@@ -136,7 +136,12 @@ export const ReplyListItem = memo(function ReplyListItem({
           </Text>
         </Pressable>
       ) : null}
-      <BangumiContentText blocks={reply.segments} style={styles.body} />
+      <BangumiContentText
+        blocks={
+          reply.segments ?? [{ type: 'text', value: reply.body ?? '' }]
+        }
+        style={styles.body}
+      />
       {onEdit || onDelete || onReport ? (
         <View style={styles.actions}>
           {onEdit ? (
