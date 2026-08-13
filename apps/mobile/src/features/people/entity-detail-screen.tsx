@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -144,6 +144,52 @@ export function EntityDetailScreen({
       commentsListRef.current?.scrollToEnd({ animated: true });
     }
   }
+
+  // 打开抽屉后预热：瞬间滚到底再滚回顶，让 FlatList 渲染并缓存头部与尾部
+  // 条目的高度，使"拉到底部"的 scrollToEnd 估算更准、一次到位。全程
+  // animated:false，不会有可见的滚动动画。
+  useEffect(() => {
+    if (!commentsVisible || comments.length === 0) return;
+
+    const timer = setTimeout(() => {
+      if (!commentsListRef.current) return;
+
+      let attempts = 0;
+      const maxAttempts = 30;
+
+      function measureStep() {
+        if (attempts >= maxAttempts) {
+          commentsListRef.current?.scrollToOffset({
+            animated: false,
+            offset: 0,
+          });
+          return;
+        }
+        attempts += 1;
+        commentsListRef.current?.scrollToEnd({ animated: false });
+
+        requestAnimationFrame(() => {
+          const { content, scrollY, viewport } = scrollMetricsRef.current;
+          const reached =
+            content > 0 &&
+            viewport > 0 &&
+            scrollY + viewport >= content - 4;
+          if (reached) {
+            commentsListRef.current?.scrollToOffset({
+              animated: false,
+              offset: 0,
+            });
+          } else {
+            measureStep();
+          }
+        });
+      }
+
+      measureStep();
+    }, 160);
+
+    return () => clearTimeout(timer);
+  }, [commentsVisible, comments.length]);
 
   async function toggleCollection() {
     if (!session) {
