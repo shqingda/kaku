@@ -1,12 +1,13 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import {
   getCollectionStatusLabel,
   supportsWatchProgress,
 } from '@/features/catalog/subject-types';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { PublicUserCollection } from './model';
 
@@ -21,6 +22,9 @@ export function PublicUserCollectionRow({
   onPress: () => void;
   trailing?: ReactNode;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const progress =
     supportsWatchProgress(item.subjectType) && item.progress > 0
       ? `${item.progress}${item.totalEpisodes > 0 ? `/${item.totalEpisodes}` : ''} 集`
@@ -72,7 +76,7 @@ export function PublicUserCollectionRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -80,12 +84,12 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   divider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 11,
     height: 76,
     justifyContent: 'center',
@@ -93,24 +97,24 @@ const styles = StyleSheet.create({
     width: 54,
   },
   coverFallback: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 14,
     fontWeight: '700',
   },
   main: { flex: 1, marginLeft: 13 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 21,
   },
   meta: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     marginTop: 7,
   },
   chevron: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 24,
     marginLeft: 8,
   },

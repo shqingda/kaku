@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { PublicUserEntityCollection } from './model';
 
@@ -12,6 +14,9 @@ export function PublicUserEntityCard({
   entity: PublicUserEntityCollection;
   onPress: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`打开${entity.kind === 'character' ? '角色' : '人物'}：${entity.name}`}
@@ -41,9 +46,9 @@ export function PublicUserEntityCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     flex: 1,
     overflow: 'hidden',
@@ -52,21 +57,21 @@ const styles = StyleSheet.create({
   portrait: {
     alignItems: 'center',
     aspectRatio: 112 / 154,
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 14,
     justifyContent: 'center',
     overflow: 'hidden',
     width: '100%',
   },
-  fallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '800' },
+  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
   name: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '800',
     lineHeight: 19,
     marginTop: 10,
     minHeight: 38,
   },
-  subtitle: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
+  subtitle: { color: colors.subtle, fontSize: 11, marginTop: 4 },
   pressed: { opacity: 0.62, transform: [{ scale: 0.985 }] },
 });

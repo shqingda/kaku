@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserFriend } from './model';
 
 export function PublicUserFriendCard({
@@ -13,6 +15,9 @@ export function PublicUserFriendCard({
   friend: PublicUserFriend;
   onPress: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`打开用户：${friend.nickname}`}
@@ -46,10 +51,10 @@ export function PublicUserFriendCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 11,
     width: 104,
@@ -57,23 +62,23 @@ const styles = StyleSheet.create({
   compactCard: { width: 92 },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 24,
     height: 48,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 48,
   },
-  fallback: { color: COLORS.subtle, fontSize: 15, fontWeight: '800' },
+  fallback: { color: colors.subtle, fontSize: 15, fontWeight: '800' },
   nickname: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
     maxWidth: 82,
   },
   username: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 10,
     marginTop: 3,
     maxWidth: 82,

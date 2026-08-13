@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserBlog } from './model';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -13,6 +15,9 @@ export function PublicUserBlogRow({
   item: PublicUserBlog;
   onPress: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`打开日志：${item.title}`}
@@ -37,24 +42,24 @@ export function PublicUserBlogRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: { paddingVertical: 15 },
   divider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 21,
   },
   summary: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 6,
   },
-  meta: { color: COLORS.subtle, fontSize: 11, marginTop: 8 },
+  meta: { color: colors.subtle, fontSize: 11, marginTop: 8 },
   pressed: { opacity: 0.62 },
 });
