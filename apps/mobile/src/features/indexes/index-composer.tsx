@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import { useCreateIndex, useUpdateIndex } from './use-create-index';
@@ -34,6 +35,8 @@ export function IndexComposer({
   onEdited?: () => void;
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
@@ -115,7 +118,7 @@ export function IndexComposer({
             <SymbolView
               name={{ android: 'close', ios: 'xmark', web: 'close' }}
               size={17}
-              tintColor={COLORS.muted}
+              tintColor={colors.muted}
               weight="semibold"
             />
           </Pressable>
@@ -136,7 +139,7 @@ export function IndexComposer({
             ]}
           >
             {mutation.isPending ? (
-              <ActivityIndicator color={COLORS.surface} size="small" />
+              <ActivityIndicator color={colors.surface} size="small" />
             ) : (
               <Text style={styles.publishText}>
                 {isEditing ? '保存' : '创建'}
@@ -152,7 +155,7 @@ export function IndexComposer({
           maxLength={MAX_TITLE_LENGTH}
           onChangeText={setTitle}
           placeholder="给目录起个名字"
-          placeholderTextColor={COLORS.subtle}
+          placeholderTextColor={colors.subtle}
           returnKeyType="next"
           style={styles.titleInput}
           value={title}
@@ -164,7 +167,7 @@ export function IndexComposer({
           multiline
           onChangeText={setDesc}
           placeholder="说明这个目录收录了什么（可选）"
-          placeholderTextColor={COLORS.subtle}
+          placeholderTextColor={colors.subtle}
           scrollEnabled
           style={styles.bodyInput}
           textAlignVertical="top"
@@ -180,9 +183,9 @@ export function IndexComposer({
           </View>
           <Switch
             accessibilityLabel="仅自己可见"
-            ios_backgroundColor={COLORS.track}
+            ios_backgroundColor={colors.track}
             onValueChange={setIsPrivate}
-            trackColor={{ false: COLORS.track, true: COLORS.accentSoft }}
+            trackColor={{ false: colors.track, true: colors.accentSoft }}
             value={isPrivate}
           />
         </View>
@@ -197,7 +200,7 @@ export function IndexComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {},
   heading: {
     alignItems: 'center',
@@ -206,14 +209,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
     width: 34,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 17,
     fontWeight: '800',
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
   },
   publishButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
@@ -230,9 +233,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   publishButtonDisabled: { opacity: 0.35 },
-  publishText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  publishText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   titleInput: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontWeight: '700',
     marginTop: 18,
@@ -240,7 +243,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   bodyInput: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     lineHeight: 23,
     minHeight: 120,
@@ -249,7 +252,7 @@ const styles = StyleSheet.create({
   },
   privacyRow: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -258,14 +261,14 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   privacyCopy: { flex: 1, gap: 4, paddingRight: 16 },
-  privacyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  privacyTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   privacyDescription: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 11,
     lineHeight: 16,
   },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 18,
     paddingTop: 8,

@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { IndexComposer } from '@/features/indexes/index-composer';
 import {
@@ -24,9 +25,12 @@ import {
 } from '@/features/indexes/model';
 import { useGlobalIndexes } from '@/features/indexes/use-global-indexes';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function DirectoriesScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [sort, setSort] = useState<IndexSort>('latest');
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -126,7 +130,7 @@ export default function DirectoriesScreen() {
                   web: 'add',
                 }}
                 size={15}
-                tintColor={COLORS.surface}
+                tintColor={colors.surface}
                 weight="semibold"
               />
               <Text style={styles.createButtonText}>新建目录</Text>
@@ -144,8 +148,12 @@ export default function DirectoriesScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={() => void indexesQuery.refetch()}
-        refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void indexesQuery.refetch()}
+            refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
+          />
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <IndexRow
@@ -184,6 +192,9 @@ function IndexRow({
   isLast: boolean;
   item: PublicIndexSummary;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={[
@@ -238,28 +249,28 @@ function IndexRow({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   filters: { flexDirection: 'row', gap: 8, paddingTop: 20 },
   filter: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 15,
-    minHeight: 40,
+    minHeight: 44,
     minWidth: 72,
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  filterSelected: { backgroundColor: COLORS.ink },
-  filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  filterTextSelected: { color: COLORS.surface },
+  filterSelected: { backgroundColor: colors.ink },
+  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterTextSelected: { color: colors.surface },
   createButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     flexDirection: 'row',
     gap: 7,
@@ -267,28 +278,28 @@ const styles = StyleSheet.create({
     marginTop: 14,
     minHeight: 46,
   },
-  createButtonText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
-  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  createButtonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   row: { flexDirection: 'row', minHeight: 130, paddingVertical: 17 },
-  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
+  rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 24,
     height: 48,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 48,
   },
-  avatarFallback: { color: COLORS.accent, fontSize: 17, fontWeight: '800' },
+  avatarFallback: { color: colors.accent, fontSize: 17, fontWeight: '800' },
   rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10 },
-  rowTitle: { color: COLORS.ink, flex: 1, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  countPill: { backgroundColor: COLORS.background, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
-  countText: { color: COLORS.muted, fontSize: 10, fontWeight: '700' },
-  description: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  rowMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 8 },
+  rowTitle: { color: colors.ink, flex: 1, fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  countPill: { backgroundColor: colors.background, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
+  countText: { color: colors.muted, fontSize: 10, fontWeight: '700' },
+  description: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 8 },
   pressed: { opacity: 0.62 },
 });
