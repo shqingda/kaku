@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
-import { COLORS, MIN_TOUCH_SIZE } from '@/constants/design';
+import { MIN_TOUCH_SIZE } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import { SUBJECT_TYPES } from './subject-types';
 
@@ -16,6 +19,9 @@ export function SubjectTypeTabs({
   selectedType: number;
   types?: ReadonlyArray<{ id: number; label: string }>;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <ScrollView
       accessibilityRole="tablist"
@@ -50,22 +56,22 @@ export function SubjectTypeTabs({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   tabs: { gap: 8 },
   tab: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 12,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_SIZE,
     paddingHorizontal: 14,
   },
-  selectedTab: { backgroundColor: COLORS.ink },
+  selectedTab: { backgroundColor: colors.ink },
   tabText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     fontWeight: '700',
   },
-  selectedTabText: { color: COLORS.surface },
+  selectedTabText: { color: colors.surface },
 });

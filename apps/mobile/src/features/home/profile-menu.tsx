@@ -1,4 +1,4 @@
-import { type ComponentProps, useEffect, useRef, useState } from 'react';
+import { type ComponentProps, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -14,15 +14,18 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { AuthSession } from '@/features/auth/model';
 import { useNotifications } from '@/features/notifications/use-notifications';
+import { useTheme } from '@/features/theme/theme-provider';
 
 const MENU_WIDTH = 252;
 const MENU_EDGE_MARGIN = 12;
 
 export function ProfileMenu({ session }: { session: AuthSession }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { signOut } = useAuth();
   const notificationsQuery = useNotifications();
   const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
@@ -129,7 +132,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
                 web: 'account_circle',
               }}
               size={34}
-              tintColor={COLORS.ink}
+              tintColor={colors.ink}
               weight="semibold"
             />
           )}
@@ -204,7 +207,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
                       web: 'account_circle',
                     }}
                     size={36}
-                    tintColor={COLORS.subtle}
+                    tintColor={colors.subtle}
                   />
                 )}
               </View>
@@ -222,6 +225,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
 
             <MenuItem
               badge={unreadCount}
+              colors={colors}
               icon={{
                 android: 'notifications',
                 ios: 'bell',
@@ -234,6 +238,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
               }}
             />
             <MenuItem
+              colors={colors}
               icon={{
                 android: 'account_circle',
                 ios: 'person.crop.circle',
@@ -243,6 +248,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
               onPress={goToProfile}
             />
             <MenuItem
+              colors={colors}
               icon={{
                 android: 'settings',
                 ios: 'gearshape',
@@ -255,6 +261,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
             <View style={styles.divider} />
 
             <MenuItem
+              colors={colors}
               icon={{
                 android: 'logout',
                 ios: 'rectangle.portrait.and.arrow.right',
@@ -272,15 +279,19 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
 
 function MenuItem({
   badge,
+  colors,
   icon,
   label,
   onPress,
 }: {
   badge?: number;
+  colors: ThemeColors;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   onPress: () => void;
 }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -295,7 +306,7 @@ function MenuItem({
         <SymbolView
           name={icon}
           size={17}
-          tintColor={COLORS.ink}
+          tintColor={colors.ink}
           weight="medium"
         />
       </View>
@@ -309,7 +320,7 @@ function MenuItem({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   avatarButton: {
     alignItems: 'center',
     height: 44,
@@ -319,8 +330,8 @@ const styles = StyleSheet.create({
   avatar: { borderRadius: 18, height: 36, width: 36 },
   notificationBadge: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.background,
+    backgroundColor: colors.accent,
+    borderColor: colors.background,
     borderRadius: 9,
     borderWidth: 2,
     justifyContent: 'center',
@@ -332,7 +343,7 @@ const styles = StyleSheet.create({
     top: 0,
   },
   notificationBadgeText: {
-    color: COLORS.surface,
+    color: colors.surface,
     fontSize: 9,
     fontWeight: '800',
     lineHeight: 12,
@@ -342,7 +353,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     elevation: 16,
     paddingVertical: 6,
@@ -361,7 +372,7 @@ const styles = StyleSheet.create({
   },
   avatarLarge: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 18,
     height: 36,
     justifyContent: 'center',
@@ -370,13 +381,13 @@ const styles = StyleSheet.create({
   },
   userCopy: { flex: 1, marginLeft: 11, minWidth: 0 },
   nickname: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '700',
   },
-  username: { color: COLORS.muted, fontSize: 12, marginTop: 3 },
+  username: { color: colors.muted, fontSize: 12, marginTop: 3 },
   divider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.divider,
     height: StyleSheet.hairlineWidth,
     marginVertical: 4,
   },
@@ -394,7 +405,7 @@ const styles = StyleSheet.create({
   },
   menuBadge: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 10,
     justifyContent: 'center',
     minHeight: 20,
@@ -402,13 +413,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   menuBadgeText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 10,
     fontWeight: '800',
   },
-  itemPressed: { backgroundColor: COLORS.track },
+  itemPressed: { backgroundColor: colors.surfaceSoft },
   itemText: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 14,
     fontWeight: '500',

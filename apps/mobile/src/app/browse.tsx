@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { BrowseSort } from '@/features/browse/model';
 import { useBrowseSubjects } from '@/features/browse/use-browse-subjects';
 import {
@@ -33,7 +34,15 @@ const SORTS: Array<{ id: BrowseSort; label: string }> = [
   { id: 'date', label: '日期' },
 ];
 
+function useThemedStyles() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return { colors, styles };
+}
+
 export default function BrowseScreen() {
+  const { colors, styles } = useThemedStyles();
   const { tag: initialTag, type } = useLocalSearchParams<{
     tag?: string;
     type?: string;
@@ -124,7 +133,7 @@ export default function BrowseScreen() {
                 maxLength={4}
                 onChangeText={setYearDraft}
                 placeholder="年份，如 2026"
-                placeholderTextColor={COLORS.subtle}
+                placeholderTextColor={colors.subtle}
                 style={styles.filterInput}
                 value={yearDraft}
               />
@@ -136,7 +145,7 @@ export default function BrowseScreen() {
                 onChangeText={setTagDraft}
                 onSubmitEditing={applyFilters}
                 placeholder="标签，如 TV、科幻"
-                placeholderTextColor={COLORS.subtle}
+                placeholderTextColor={colors.subtle}
                 returnKeyType="search"
                 style={styles.filterInput}
                 value={tagDraft}
@@ -196,6 +205,8 @@ export default function BrowseScreen() {
 }
 
 function BrowseCard({ item }: { item: DiscoverSubject }) {
+  const { styles } = useThemedStyles();
+
   return (
     <Pressable
       accessibilityLabel={`打开${item.title}`}
@@ -217,6 +228,8 @@ function BrowseCard({ item }: { item: DiscoverSubject }) {
 }
 
 function BrowseState({ error, loading, onRetry }: { error: boolean; loading: boolean; onRetry: () => void }) {
+  const { styles } = useThemedStyles();
+
   return (
     <View style={styles.state}>
       <Text style={styles.stateTitle}>{loading ? '正在筛选条目' : error ? '分类浏览失败' : '没有匹配条目'}</Text>
@@ -235,34 +248,34 @@ function BrowseState({ error, loading, onRetry }: { error: boolean; loading: boo
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   gridRow: { gap: 14 },
   hero: { paddingHorizontal: 4, paddingTop: 24 },
-  title: { color: COLORS.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 7 },
+  title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
+  subtitle: { color: colors.muted, fontSize: 14, marginTop: 7 },
   typeTabs: { paddingBottom: 2, paddingTop: 20 },
   sorts: { flexDirection: 'row', gap: 8, paddingTop: 12 },
-  sort: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, justifyContent: 'center', minHeight: 44, paddingHorizontal: 14 },
-  sortSelected: { backgroundColor: COLORS.accentSoft },
-  sortText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
-  sortTextSelected: { color: COLORS.accent },
-  filterCard: { alignItems: 'center', backgroundColor: COLORS.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
-  filterInput: { color: COLORS.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
-  filterDivider: { backgroundColor: COLORS.track, height: 24, width: StyleSheet.hairlineWidth },
-  applyButton: { alignItems: 'center', backgroundColor: COLORS.ink, borderRadius: 13, height: 44, justifyContent: 'center', paddingHorizontal: 14 },
-  applyText: { color: COLORS.surface, fontSize: 12, fontWeight: '800' },
-  resultTitle: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginBottom: 15, marginTop: 28 },
+  sort: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 12, justifyContent: 'center', minHeight: 44, paddingHorizontal: 14 },
+  sortSelected: { backgroundColor: colors.accentSoft },
+  sortText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  sortTextSelected: { color: colors.accent },
+  filterCard: { alignItems: 'center', backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
+  filterInput: { color: colors.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
+  filterDivider: { backgroundColor: colors.divider, height: 24, width: StyleSheet.hairlineWidth },
+  applyButton: { alignItems: 'center', backgroundColor: colors.ink, borderRadius: 13, height: 44, justifyContent: 'center', paddingHorizontal: 14 },
+  applyText: { color: colors.surface, fontSize: 12, fontWeight: '800' },
+  resultTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginBottom: 15, marginTop: 28 },
   card: { flex: 1, marginBottom: 22, maxWidth: '48%' },
-  cover: { alignItems: 'center', backgroundColor: COLORS.track, borderRadius: 18, height: 218, justifyContent: 'center', overflow: 'hidden', width: '100%' },
-  coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
-  cardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
-  cardMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
-  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 34, width: '100%' },
-  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 13, marginTop: 7 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800', marginTop: 14 },
+  cover: { alignItems: 'center', backgroundColor: colors.track, borderRadius: 18, height: 218, justifyContent: 'center', overflow: 'hidden', width: '100%' },
+  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
+  cardTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
+  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, padding: 34, width: '100%' },
+  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  stateText: { color: colors.muted, fontSize: 13, marginTop: 7 },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800', marginTop: 14 },
   retry: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 72 },
   pressed: { opacity: 0.62 },
 });

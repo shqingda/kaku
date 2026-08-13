@@ -1,11 +1,12 @@
-import { useState, type ComponentProps } from 'react';
+import { useMemo, useState, type ComponentProps } from 'react';
 import { Image } from 'expo-image';
 import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import {
   getSubjectTypeFromSlug,
   getSubjectTypeLabel,
@@ -30,7 +31,15 @@ const CHANNEL_TYPES = [
   { id: 6, label: '三次元' },
 ] as const;
 
+function useThemedStyles() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return { colors, styles };
+}
+
 export default function ChannelScreen() {
+  const { styles } = useThemedStyles();
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
   const label = subjectType === 1 ? '阅读' : getSubjectTypeLabel(subjectType);
@@ -189,6 +198,8 @@ export default function ChannelScreen() {
 }
 
 function ChannelCard({ item }: { item: ChannelSubject }) {
+  const { styles } = useThemedStyles();
+
   return (
     <View style={styles.hotCard}>
       <Link
@@ -234,6 +245,8 @@ function ChannelAction({ compact = false, icon, label, onPress }: {
   label: string;
   onPress: () => void;
 }) {
+  const { colors, styles } = useThemedStyles();
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -246,7 +259,7 @@ function ChannelAction({ compact = false, icon, label, onPress }: {
       ]}
     >
       <View style={styles.actionIcon}>
-        <SymbolView name={icon} size={18} tintColor={COLORS.accent} />
+        <SymbolView name={icon} size={18} tintColor={colors.accent} />
       </View>
       <Text style={styles.actionLabel}>{label}</Text>
     </Pressable>
@@ -254,6 +267,8 @@ function ChannelAction({ compact = false, icon, label, onPress }: {
 }
 
 function SectionHeading({ meta, title }: { meta: string; title: string }) {
+  const { styles } = useThemedStyles();
+
   return (
     <View style={styles.sectionHeading}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -267,6 +282,8 @@ function ChannelState({ action, text, title }: {
   text: string;
   title: string;
 }) {
+  const { styles } = useThemedStyles();
+
   return (
     <View
       accessibilityLiveRegion={action ? 'assertive' : 'polite'}
@@ -289,35 +306,35 @@ function ChannelState({ action, text, title }: {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 52, paddingHorizontal: 20 },
   hero: { paddingHorizontal: 4, paddingTop: 24 },
-  eyebrow: { color: COLORS.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 },
-  title: { color: COLORS.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1, marginTop: 7 },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 8 },
+  eyebrow: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 },
+  title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1, marginTop: 7 },
+  subtitle: { color: colors.muted, fontSize: 14, marginTop: 8 },
   typeTabs: { paddingBottom: 2, paddingTop: 22 },
   sectionHeading: { paddingHorizontal: 4, paddingTop: 30 },
-  sectionTitle: { color: COLORS.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  sectionMeta: { color: COLORS.muted, fontSize: 12, marginTop: 5 },
+  sectionTitle: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  sectionMeta: { color: colors.muted, fontSize: 12, marginTop: 5 },
   hotList: { gap: 14, paddingRight: 20, paddingTop: 16 },
   hotCard: { width: 126 },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 18,
     height: 175,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 126,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
-  cardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
-  cardMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
+  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
+  cardTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
+  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 16 },
   action: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     flexBasis: '47%',
     flexGrow: 1,
@@ -327,20 +344,20 @@ const styles = StyleSheet.create({
   actionCompact: { flexBasis: '30%' },
   actionIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 13,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
-  actionLabel: { color: COLORS.ink, fontSize: 13, fontWeight: '700', marginTop: 9 },
+  actionLabel: { color: colors.ink, fontSize: 13, fontWeight: '700', marginTop: 9 },
   rankingHeading: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   allAction: { paddingHorizontal: 4 },
-  rankingList: { backgroundColor: COLORS.surface, borderRadius: 22, marginTop: 16, overflow: 'hidden', paddingHorizontal: 16 },
-  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, marginTop: 16, padding: 30 },
-  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 6, textAlign: 'center' },
-  retry: { alignItems: 'center', backgroundColor: COLORS.accentSoft, borderRadius: 13, justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 17 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  rankingList: { backgroundColor: colors.surface, borderRadius: 22, marginTop: 16, overflow: 'hidden', paddingHorizontal: 16 },
+  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, marginTop: 16, padding: 30 },
+  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 6, textAlign: 'center' },
+  retry: { alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 13, justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 17 },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

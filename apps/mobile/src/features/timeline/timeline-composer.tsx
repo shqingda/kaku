@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import { useCreateTimelineSay } from './use-create-timeline-say';
 
 const MAX_CONTENT_LENGTH = 380;
@@ -27,6 +28,8 @@ export function TimelineComposer({
   onClose: () => void;
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
@@ -111,7 +114,7 @@ export function TimelineComposer({
               <SymbolView
                 name={{ android: 'close', ios: 'xmark', web: 'close' }}
                 size={17}
-                tintColor={COLORS.muted}
+                tintColor={colors.muted}
                 weight="semibold"
               />
             </Pressable>
@@ -130,7 +133,7 @@ export function TimelineComposer({
               ]}
             >
               {createTimeline.isPending ? (
-                <ActivityIndicator color={COLORS.surface} size="small" />
+                <ActivityIndicator color={colors.surface} size="small" />
               ) : (
                 <Text style={styles.sendText}>发布</Text>
               )}
@@ -145,7 +148,7 @@ export function TimelineComposer({
             multiline
             onChangeText={setContent}
             placeholder="分享此刻…"
-            placeholderTextColor={COLORS.subtle}
+            placeholderTextColor={colors.subtle}
             ref={inputRef}
             scrollEnabled
             showSoftInputOnFocus
@@ -163,7 +166,7 @@ export function TimelineComposer({
                   web: 'verified_user',
                 }}
                 size={13}
-                tintColor={COLORS.subtle}
+                tintColor={colors.subtle}
               />
               <Text style={styles.hintText}>发布时完成一次 Bangumi 安全验证</Text>
             </View>
@@ -183,14 +186,14 @@ export function TimelineComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   backdrop: {
     backgroundColor: 'rgba(0, 0, 0, 0.28)',
     flex: 1,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -198,7 +201,7 @@ const styles = StyleSheet.create({
   },
   handle: {
     alignSelf: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 2,
     height: 4,
     marginBottom: 14,
@@ -211,16 +214,16 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
     width: 34,
   },
-  title: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  title: { color: colors.ink, fontSize: 17, fontWeight: '800' },
   sendButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
@@ -228,9 +231,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   sendButtonDisabled: { opacity: 0.35 },
-  sendText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  sendText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   input: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 18,
     lineHeight: 27,
     minHeight: 150,
@@ -239,17 +242,17 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 46,
   },
   verificationHint: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  hintText: { color: COLORS.muted, fontSize: 12 },
-  count: { color: COLORS.muted, fontSize: 12, fontVariant: ['tabular-nums'] },
+  hintText: { color: colors.muted, fontSize: 12 },
+  count: { color: colors.muted, fontSize: 12, fontVariant: ['tabular-nums'] },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 18,
     paddingBottom: 8,

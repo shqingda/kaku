@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   getCollectionStatusLabel,
@@ -24,8 +24,11 @@ import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function HomeScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedTrackingType, setSelectedTrackingType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
@@ -81,11 +84,11 @@ export default function HomeScreen() {
         refreshControl={
           session ? (
             <RefreshControl
-              colors={[COLORS.accent]}
+              colors={[colors.accent]}
               onRefresh={refreshHome}
-              progressBackgroundColor={COLORS.surface}
+              progressBackgroundColor={colors.surface}
               refreshing={isRefreshing}
-              tintColor={COLORS.accent}
+              tintColor={colors.accent}
             />
           ) : undefined
         }
@@ -126,6 +129,8 @@ function TimelineBoundary({
 }: {
   timelineQuery: ReturnType<typeof useFriendTimeline>;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [composerVisible, setComposerVisible] = useState(false);
   const items = timelineQuery.data?.pages[0]?.items.slice(0, 4) ?? [];
 
@@ -151,7 +156,7 @@ function TimelineBoundary({
                 web: 'edit',
               }}
               size={16}
-              tintColor={COLORS.ink}
+              tintColor={colors.ink}
               weight="semibold"
             />
           </View>
@@ -161,7 +166,7 @@ function TimelineBoundary({
       <View style={styles.timelineCard}>
         {timelineQuery.isPending ? (
           <View style={styles.timelineInlineState}>
-            <ActivityIndicator color={COLORS.accent} size="small" />
+            <ActivityIndicator color={colors.accent} size="small" />
             <Text style={styles.timelineEmptyText}>正在读取好友动态</Text>
           </View>
         ) : timelineQuery.isError ? (
@@ -205,7 +210,7 @@ function TimelineBoundary({
                   web: 'chevron_right',
                 }}
                 size={12}
-                tintColor={COLORS.accent}
+                tintColor={colors.accent}
                 weight="semibold"
               />
             </Pressable>
@@ -221,6 +226,9 @@ function TimelineBoundary({
 }
 
 function SignedOutHome() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <>
       <View style={styles.signedOutCard}>
@@ -232,7 +240,7 @@ function SignedOutHome() {
               web: 'bookmark',
             }}
             size={24}
-            tintColor={COLORS.accent}
+            tintColor={colors.accent}
           />
         </View>
         <Text style={styles.signedOutTitle}>从记录开始</Text>
@@ -256,6 +264,9 @@ function SignedOutHome() {
 }
 
 function QuickActions() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.quickSection}>
       <Text accessibilityRole="header" style={styles.quickTitle}>发现</Text>
@@ -313,6 +324,9 @@ function QuickActionRow({
   label: string;
   meta: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -329,7 +343,7 @@ function QuickActionRow({
           <SymbolView
             name={icon}
             size={19}
-            tintColor={COLORS.accent}
+            tintColor={colors.accent}
             weight="medium"
           />
         </View>
@@ -346,7 +360,7 @@ function QuickActionRow({
             web: 'chevron_right',
           }}
           size={14}
-          tintColor={COLORS.subtle}
+          tintColor={colors.subtle}
           weight="semibold"
         />
     </Pressable>
@@ -354,16 +368,19 @@ function QuickActionRow({
 }
 
 function HomeState({ message }: { message: string }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
-      <ActivityIndicator color={COLORS.accent} />
+      <ActivityIndicator color={colors.accent} />
       <Text style={styles.stateText}>{message}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   timelineSection: { marginTop: 34 },
   timelineHeading: {
@@ -373,7 +390,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   timelineCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginTop: 14,
     overflow: 'hidden',
@@ -381,7 +398,7 @@ const styles = StyleSheet.create({
   },
   timelinePublishButton: {
     alignItems: 'center',
-    backgroundColor: '#EFEEEA',
+    backgroundColor: colors.surfaceAlt,
     borderCurve: 'continuous',
     borderRadius: 12,
     flexDirection: 'row',
@@ -390,7 +407,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
-  timelinePublishButtonPressed: { backgroundColor: '#E4E2DC' },
+  timelinePublishButtonPressed: { backgroundColor: colors.track },
   timelinePublishIcon: {
     alignItems: 'center',
     height: 18,
@@ -398,7 +415,7 @@ const styles = StyleSheet.create({
     width: 18,
   },
   timelinePublishText: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '700',
     includeFontPadding: false,
@@ -407,14 +424,14 @@ const styles = StyleSheet.create({
   },
   timelineAllButton: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 50,
     paddingHorizontal: 2,
   },
-  timelineAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  timelineAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   timelineInlineState: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -423,31 +440,31 @@ const styles = StyleSheet.create({
     minHeight: 88,
     paddingHorizontal: 16,
   },
-  timelineEmptyText: { color: COLORS.muted, fontSize: 13 },
-  timelineErrorText: { color: COLORS.accent, fontSize: 13, fontWeight: '600' },
+  timelineEmptyText: { color: colors.muted, fontSize: 13 },
+  timelineErrorText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   signedOutCard: {
     alignItems: 'flex-start',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 28,
     padding: 24,
   },
   signedOutMark: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 16,
     height: 52,
     justifyContent: 'center',
     width: 52,
   },
   signedOutTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 27,
     fontWeight: '800',
     letterSpacing: -0.6,
     marginTop: 24,
   },
   signedOutText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 15,
     lineHeight: 23,
     marginTop: 10,
@@ -455,22 +472,22 @@ const styles = StyleSheet.create({
   loginButton: {
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     height: 52,
     justifyContent: 'center',
     marginTop: 24,
   },
-  loginButtonText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
+  loginButtonText: { color: colors.surface, fontSize: 15, fontWeight: '800' },
   quickSection: { marginTop: 34 },
   quickTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.35,
   },
   quickCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     marginTop: 14,
     overflow: 'hidden',
@@ -483,29 +500,29 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   quickDivider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   quickIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 12,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
   quickCopy: { flex: 1, marginLeft: 13, minWidth: 0 },
-  quickLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  quickMeta: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
+  quickLabel: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+  quickMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
   state: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     gap: 10,
     justifyContent: 'center',
     minHeight: 180,
     padding: 24,
   },
-  stateText: { color: COLORS.muted, fontSize: 14, textAlign: 'center' },
+  stateText: { color: colors.muted, fontSize: 14, textAlign: 'center' },
   pressed: { opacity: 0.62 },
 });

@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,10 +10,11 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
 import { SectionAction } from '@/features/shared/section-action';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
 
 const HOME_TRACKING_TYPES = [
@@ -44,6 +46,9 @@ export function HomeMediaSection({
   total: number;
   username: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   function openAll() {
     router.push({
       pathname: '/user/collections/[username]',
@@ -68,7 +73,7 @@ export function HomeMediaSection({
           <SectionAction
             accessibilityHint="打开完整收藏列表"
             accessibilityLabel={`查看全部${title}`}
-            color={COLORS.muted}
+            color={colors.muted}
             label="全部"
             onPress={openAll}
           />
@@ -84,7 +89,7 @@ export function HomeMediaSection({
 
       {loading ? (
         <View style={styles.state}>
-          <ActivityIndicator color={COLORS.accent} size="small" />
+          <ActivityIndicator color={colors.accent} size="small" />
           <Text style={styles.stateText}>正在读取</Text>
         </View>
       ) : error ? (
@@ -116,6 +121,8 @@ export function HomeMediaSection({
 }
 
 function MediaCard({ item }: { item: PublicUserCollection }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const progress =
     supportsWatchProgress(item.subjectType) && item.totalEpisodes > 0
       ? `${item.progress}/${item.totalEpisodes} 集`
@@ -169,7 +176,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   section: { marginTop: 12 },
   heading: {
     alignItems: 'center',
@@ -180,38 +187,38 @@ const styles = StyleSheet.create({
   },
   headingCopy: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.35,
   },
-  count: { color: COLORS.subtle, fontSize: 12, fontWeight: '700' },
+  count: { color: colors.subtle, fontSize: 12, fontWeight: '700' },
   typeTabs: { paddingBottom: 2, paddingTop: 4 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
   card: { width: 104 },
   cardButton: { width: '100%' },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 14,
     height: 146,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 104,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 16, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 16, fontWeight: '700' },
   cardTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 13,
     fontWeight: '700',
     height: 36,
     lineHeight: 18,
     marginTop: 9,
   },
-  cardMeta: { color: COLORS.muted, fontSize: 11, marginTop: 5 },
+  cardMeta: { color: colors.muted, fontSize: 11, marginTop: 5 },
   state: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     gap: 9,
@@ -220,7 +227,7 @@ const styles = StyleSheet.create({
     minHeight: 76,
     paddingHorizontal: 18,
   },
-  stateText: { color: COLORS.muted, fontSize: 13 },
-  errorText: { color: COLORS.accent, fontSize: 13, fontWeight: '600' },
+  stateText: { color: colors.muted, fontSize: 13 },
+  errorText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   pressed: { opacity: 0.62 },
 });

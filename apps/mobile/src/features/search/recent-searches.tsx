@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function RecentSearches({
   items,
@@ -11,6 +13,9 @@ export function RecentSearches({
   onClear: () => void;
   onSelect: (keyword: string) => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (!items.length) return null;
 
   return (
@@ -53,7 +58,7 @@ export function RecentSearches({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   section: { paddingTop: 18 },
   heading: {
     alignItems: 'center',
@@ -61,11 +66,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 4,
   },
-  title: { color: COLORS.ink, fontSize: 13, fontWeight: '700' },
-  clear: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  title: { color: colors.ink, fontSize: 13, fontWeight: '700' },
+  clear: { color: colors.muted, fontSize: 12, fontWeight: '600' },
   list: { gap: 8, paddingRight: 20, paddingTop: 10 },
   item: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 13,
     justifyContent: 'center',
@@ -73,7 +78,7 @@ const styles = StyleSheet.create({
     maxWidth: 180,
     paddingHorizontal: 14,
   },
-  itemPressed: { backgroundColor: COLORS.accentSoft },
-  itemText: { color: COLORS.ink, fontSize: 13, fontWeight: '600' },
+  itemPressed: { backgroundColor: colors.accentSoft },
+  itemText: { color: colors.ink, fontSize: 13, fontWeight: '600' },
   pressed: { opacity: 0.6 },
 });

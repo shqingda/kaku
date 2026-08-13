@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useMemo } from 'react';
 import {
   Platform,
   Pressable,
@@ -7,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { DiscoverSubject } from './model';
 
@@ -22,6 +24,9 @@ export function RankedSubjectRow({
   onPress: () => void;
   position: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`排行榜第 ${position} 名：${item.title}`}
@@ -67,7 +72,7 @@ export function RankedSubjectRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -75,21 +80,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   divider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   position: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     textAlign: 'center',
     width: 32,
   },
-  regularPosition: { color: COLORS.muted },
+  regularPosition: { color: colors.muted },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 9,
     height: 70,
     justifyContent: 'center',
@@ -97,24 +102,24 @@ const styles = StyleSheet.create({
     width: 50,
   },
   coverFallback: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 16,
     fontWeight: '700',
   },
   main: { flex: 1, marginLeft: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 21,
   },
   meta: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     marginTop: 7,
   },
   chevron: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 26,
     marginLeft: 8,
   },

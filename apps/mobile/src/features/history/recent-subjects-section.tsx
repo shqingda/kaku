@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import type { RecentSubject } from './recent-subjects-model';
 
@@ -14,6 +16,9 @@ export function RecentSubjectsSection({
   items: RecentSubject[];
   onClear: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (!items.length) return null;
 
   return (
@@ -83,7 +88,7 @@ export function RecentSubjectsSection({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   section: { paddingTop: 24 },
   heading: {
     alignItems: 'center',
@@ -92,13 +97,13 @@ const styles = StyleSheet.create({
     minHeight: 30,
     paddingHorizontal: 4,
   },
-  title: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  clear: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  title: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  clear: { color: colors.muted, fontSize: 12, fontWeight: '600' },
   list: { gap: 13, paddingRight: 20, paddingTop: 12 },
   card: { width: 96 },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderCurve: 'continuous',
     borderRadius: 14,
     height: 134,
@@ -106,15 +111,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 96,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 16, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 16, fontWeight: '700' },
   cardTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 12,
     fontWeight: '700',
     height: 34,
     lineHeight: 17,
     marginTop: 8,
   },
-  cardMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
+  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   pressed: { opacity: 0.62 },
 });

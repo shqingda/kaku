@@ -1,8 +1,10 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import type { FriendTimelineItem } from './model';
 
@@ -13,6 +15,9 @@ export function FriendTimelineRow({
   hasDivider?: boolean;
   item: FriendTimelineItem;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityLabel={`${item.user.nickname}：${item.text}`}
@@ -86,19 +91,19 @@ export function FriendTimelineRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     paddingVertical: 15,
   },
   divider: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 18,
     height: 36,
     justifyContent: 'center',
@@ -106,13 +111,13 @@ const styles = StyleSheet.create({
     width: 36,
   },
   pressedAvatar: { opacity: 0.62 },
-  avatarFallback: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
+  avatarFallback: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   copy: { flex: 1, marginLeft: 12 },
   metaRow: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
-  nickname: { color: COLORS.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
-  time: { color: COLORS.subtle, fontSize: 11 },
-  text: { color: COLORS.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
-  subjectTitle: { color: COLORS.accentRich, fontWeight: '700' },
-  replies: { color: COLORS.muted, fontSize: 11, marginTop: 7 },
+  nickname: { color: colors.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
+  time: { color: colors.subtle, fontSize: 11 },
+  text: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
+  subjectTitle: { color: colors.accentRich, fontWeight: '700' },
+  replies: { color: colors.muted, fontSize: 11, marginTop: 7 },
   pressed: { opacity: 0.62 },
 });

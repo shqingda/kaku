@@ -24,7 +24,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import { AppState } from '@/features/shared/app-state';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
@@ -67,7 +68,15 @@ function currentWeekdayId() {
   return day === 0 ? 7 : day;
 }
 
+function useThemedStyles() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return { colors, styles };
+}
+
 export default function ExploreScreen() {
+  const { styles } = useThemedStyles();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const initialKeyword = typeof q === 'string' ? q.trim() : '';
   const [draft, setDraft] = useState(initialKeyword);
@@ -388,6 +397,8 @@ function SearchField({
   onChangeDraft: (value: string) => void;
   onSubmit: () => void;
 }) {
+  const { styles } = useThemedStyles();
+
   return (
     <SubjectSearchField
       onChangeText={onChangeDraft}
@@ -411,6 +422,8 @@ function ExploreEntry({
   onPress: () => void;
   title: string;
 }) {
+  const { colors, styles } = useThemedStyles();
+
   return (
     <Pressable
       accessibilityHint={`打开${title}`}
@@ -424,7 +437,7 @@ function ExploreEntry({
       ]}
     >
       <View style={styles.exploreEntryIcon}>
-        <SymbolView name={icon} size={17} tintColor={COLORS.accent} />
+        <SymbolView name={icon} size={17} tintColor={colors.accent} />
       </View>
       <View style={styles.exploreEntryText}>
         <Text style={styles.exploreEntryTitle}>{title}</Text>
@@ -435,7 +448,7 @@ function ExploreEntry({
       <SymbolView
         name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
         size={13}
-        tintColor={COLORS.subtle}
+        tintColor={colors.subtle}
         weight="semibold"
       />
     </Pressable>
@@ -455,6 +468,7 @@ function RankingSection({
   subjects: DiscoverSubject[];
   subjectType: number;
 }) {
+  const { styles } = useThemedStyles();
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
 
   return (
@@ -508,6 +522,8 @@ function RankingSection({
 }
 
 function CalendarCard({ item }: { item: DiscoverSubject }) {
+  const { styles } = useThemedStyles();
+
   return (
     <Pressable
       accessibilityHint="打开条目详情"
@@ -587,6 +603,8 @@ function SearchResults({
   subjectType: number;
   total: number;
 }) {
+  const { styles } = useThemedStyles();
+
   return (
     <FlatList
       contentContainerStyle={styles.searchContent}
@@ -715,8 +733,8 @@ function SearchResults({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   searchList: { flex: 1 },
   searchContent: { paddingBottom: 48, paddingHorizontal: 20 },
@@ -728,7 +746,7 @@ const styles = StyleSheet.create({
   },
   exploreEntry: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 18,
     flexBasis: '47%',
@@ -740,15 +758,15 @@ const styles = StyleSheet.create({
   exploreEntryFeatured: { flexBasis: '100%', minHeight: 68, paddingHorizontal: 16 },
   exploreEntryIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 11,
     height: 34,
     justifyContent: 'center',
     width: 34,
   },
   exploreEntryText: { flex: 1, marginLeft: 10, minWidth: 0, paddingRight: 5 },
-  exploreEntryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
-  exploreEntryMeta: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
+  exploreEntryTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  exploreEntryMeta: { color: colors.muted, fontSize: 11, marginTop: 3 },
   searchBar: {
     marginTop: 14,
   },
@@ -761,45 +779,45 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   sectionTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.6,
   },
-  sectionMeta: { color: COLORS.muted, fontSize: 13, marginTop: 5 },
+  sectionMeta: { color: colors.muted, fontSize: 13, marginTop: 5 },
   dayTabs: { gap: 8, paddingBottom: 18 },
   dayTab: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  dayTabSelected: { backgroundColor: COLORS.accentSoft },
-  dayTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  dayTabTextSelected: { color: COLORS.accent },
+  dayTabSelected: { backgroundColor: colors.accentSoft },
+  dayTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  dayTabTextSelected: { color: colors.accent },
   calendarList: { gap: 14, paddingRight: 20 },
   calendarCard: { width: 126 },
   calendarCover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 18,
     height: 175,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 126,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
   calendarTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '700',
     minHeight: 38,
     lineHeight: 19,
     marginTop: 9,
   },
-  calendarMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 5 },
+  calendarMeta: { color: colors.subtle, fontSize: 11, marginTop: 5 },
   resultItem: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 16,
   },
@@ -812,7 +830,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 22,
   },
   rankingList: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 16,
@@ -824,12 +842,12 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   resultBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   resultCover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 11,
     height: 88,
     justifyContent: 'center',
@@ -838,12 +856,12 @@ const styles = StyleSheet.create({
   },
   resultMain: { flex: 1, marginLeft: 14 },
   resultTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 21,
   },
-  resultMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 7 },
-  chevron: { color: COLORS.subtle, fontSize: 26, marginLeft: 8 },
+  resultMeta: { color: colors.subtle, fontSize: 12, marginTop: 7 },
+  chevron: { color: colors.subtle, fontSize: 26, marginLeft: 8 },
   pressed: { opacity: 0.62 },
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import type { AuthSession } from '@/features/auth/model';
 import {
   addRecentSearch,
@@ -17,10 +17,13 @@ import {
   saveRecentSearches,
 } from '@/features/search/search-history';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { useTheme } from '@/features/theme/theme-provider';
 
 import { ProfileMenu } from './profile-menu';
 
 export function HomeHeader({ session }: { session: AuthSession | null }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [searchDraft, setSearchDraft] = useState('');
 
   function submitSearch() {
@@ -61,7 +64,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
                 web: 'account_circle',
               }}
               size={34}
-              tintColor={COLORS.ink}
+              tintColor={colors.ink}
               weight="semibold"
             />
           </Pressable>
@@ -79,7 +82,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   area: { paddingBottom: 8, paddingTop: 10 },
   header: {
     alignItems: 'center',
@@ -88,7 +91,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   brand: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.9,

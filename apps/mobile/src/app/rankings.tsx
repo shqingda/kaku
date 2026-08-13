@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import {
   getSubjectTypeLabel,
   SUBJECT_TYPES,
@@ -24,8 +24,11 @@ import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import type { DiscoverSubjectPage } from '@/features/discover/model';
 import { readInfinitePages } from '@/lib/query-data';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function RankingsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { type } = useLocalSearchParams<{ type?: string }>();
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>
@@ -181,6 +184,9 @@ function RankingState({
   text: string;
   title: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
       <Text style={styles.stateTitle}>{title}</Text>
@@ -201,8 +207,8 @@ function RankingState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     paddingBottom: 44,
     paddingHorizontal: 20,
@@ -213,19 +219,19 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
   subtitle: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     marginTop: 7,
   },
   subjectTypeTabs: { paddingBottom: 14 },
   item: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 14,
   },
@@ -239,31 +245,31 @@ const styles = StyleSheet.create({
   },
   state: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 30,
   },
   stateTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontWeight: '800',
   },
   stateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 7,
     textAlign: 'center',
   },
   retry: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 13,
     marginTop: 15,
     paddingHorizontal: 17,
     paddingVertical: 9,
   },
   retryText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '800',
   },
