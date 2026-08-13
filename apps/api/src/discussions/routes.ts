@@ -15,20 +15,26 @@ import { createD1AuthStore } from '../auth/store.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiDiscussionError,
+  createBangumiCharacterComment,
   createBangumiEpisodeComment,
   createBangumiGroupTopic,
   createBangumiGroupTopicReply,
+  createBangumiPersonComment,
   createBangumiReviewReply,
   createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
+  deleteBangumiBlogComment,
+  deleteBangumiCharacterComment,
+  deleteBangumiEpisodeComment,
   deleteBangumiGroupPost,
+  deleteBangumiPersonComment,
   deleteBangumiSubjectPost,
   editBangumiBlogComment,
+  editBangumiCharacterComment,
   editBangumiEpisodeComment,
   editBangumiGroupPost,
+  editBangumiPersonComment,
   editBangumiSubjectPost,
-  deleteBangumiBlogComment,
-  deleteBangumiEpisodeComment,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
   getBangumiReview,
@@ -299,6 +305,24 @@ export function registerDiscussionRoutes(
       getPositiveId(context.req.param('reviewId')),
       ({ targetId, ...input }) =>
         createBangumiReviewReply({ ...input, reviewId: targetId }),
+    ),
+  );
+
+  app.post('/me/characters/:characterId/comments', (context) =>
+    createReply(
+      context,
+      getPositiveId(context.req.param('characterId')),
+      ({ targetId, ...input }) =>
+        createBangumiCharacterComment({ ...input, characterId: targetId }),
+    ),
+  );
+
+  app.post('/me/persons/:personId/comments', (context) =>
+    createReply(
+      context,
+      getPositiveId(context.req.param('personId')),
+      ({ targetId, ...input }) =>
+        createBangumiPersonComment({ ...input, personId: targetId }),
     ),
   );
 
@@ -642,6 +666,42 @@ export function registerDiscussionRoutes(
       getPositiveId(context.req.param('commentId')),
       ({ postId, ...input }) =>
         editBangumiBlogComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.put('/me/character-comments/:commentId', (context) =>
+    updatePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        editBangumiCharacterComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.put('/me/person-comments/:commentId', (context) =>
+    updatePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        editBangumiPersonComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.delete('/me/character-comments/:commentId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        deleteBangumiCharacterComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.delete('/me/person-comments/:commentId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        deleteBangumiPersonComment({ ...input, commentId: postId }),
     ),
   );
 

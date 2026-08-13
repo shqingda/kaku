@@ -24,7 +24,13 @@ import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer
 import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
+import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
+import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import {
+  useDeleteCharacterReply,
+  useDeletePersonReply,
+} from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 
 import {
@@ -62,6 +68,9 @@ export function EntityDetailScreen({
   const commentsBodyHeight = Math.max(320, windowHeight * 0.92 - 24);
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [composerVisible, setComposerVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
   const [portraitVisible, setPortraitVisible] = useState(false);
   // 与排行榜一致：往下滚动一段距离后显示"回到顶部"。
   const [showsScrollToTop, setShowsScrollToTop] = useState(false);
@@ -70,6 +79,10 @@ export function EntityDetailScreen({
   const collectionQuery = useEntityCollection(entityKind, entityId);
   const commentsQuery = useEntityComments(entityKind, entityId);
   const saveCollection = useSaveEntityCollection(entityKind, entityId);
+  const deleteCharacterReply = useDeleteCharacterReply(entityId);
+  const deletePersonReply = useDeletePersonReply(entityId);
+  const deleteReply =
+    entityKind === 'character' ? deleteCharacterReply : deletePersonReply;
   const comments = commentsQuery.data ?? [];
   const {
     handleScrollToIndexFailed,
@@ -131,6 +144,48 @@ export function EntityDetailScreen({
         error instanceof Error ? error.message : '请稍后重试。',
       );
     }
+  }
+
+  async function openComposer(reply?: DiscussionReply) {
+    if (!session) {
+      const signedIn = await signIn();
+      if (!signedIn) {
+        return;
+      }
+    }
+
+    setReplyingTo(reply);
+    setComposerVisible(true);
+  }
+
+  function openEditComposer(reply: DiscussionReply) {
+    setReplyingTo(undefined);
+    setEditingReply(reply);
+    setComposerVisible(true);
+  }
+
+  function closeComposer() {
+    setComposerVisible(false);
+    setEditingReply(null);
+  }
+
+  function confirmDeleteReply(reply: DiscussionReply) {
+    Alert.alert('删除这条评论？', '删除后无法恢复。', [
+      { style: 'cancel', text: '取消' },
+      {
+        onPress: () => {
+          const commentId = Number(reply.id);
+          if (Number.isInteger(commentId)) {
+            deleteReply.mutate(commentId, {
+              onError: (error) =>
+                Alert.alert('评论没有删除', error.message),
+            });
+          }
+        },
+        style: 'destructive',
+        text: '删除',
+      },
+    ]);
   }
 
   return (
@@ -283,6 +338,13 @@ export function EntityDetailScreen({
                     <Text style={styles.commentsMeta}>
                       {data.commentCount.toLocaleString('zh-CN')} 条公开评论
                     </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => void openComposer()}
+                      style={({ pressed }) => pressed && styles.pressed}
+                    >
+                      <Text style={styles.commentsAction}>写评论</Text>
+                    </Pressable>
                     {comments.length > 0 ? (
                       <Pressable
                         accessibilityRole="button"
@@ -311,10 +373,21 @@ export function EntityDetailScreen({
                     <ReplyListItem
                       floor={index + 1}
                       key={reply.id}
+                      onDelete={
+                        reply.authorUsername === session?.user.username
+                          ? confirmDeleteReply
+                          : undefined
+                      }
+                      onEdit={
+                        reply.authorUsername === session?.user.username
+                          ? openEditComposer
+                          : undefined
+                      }
                       onOpenReference={(replyId) => {
                         setCommentsVisible(true);
                         setTimeout(() => openReply(replyId), 220);
                       }}
+                      onReply={openComposer}
                       reply={reply}
                     />
                   ))
@@ -389,7 +462,18 @@ export function EntityDetailScreen({
               <ReplyListItem
                 floor={index + 1}
                 isHighlighted={highlightedReplyId === item.id}
+                onDelete={
+                  item.authorUsername === session?.user.username
+                    ? confirmDeleteReply
+                    : undefined
+                }
+                onEdit={
+                  item.authorUsername === session?.user.username
+                    ? openEditComposer
+                    : undefined
+                }
                 onOpenReference={openReply}
+                onReply={openComposer}
                 reply={item}
               />
             )}
@@ -399,12 +483,53 @@ export function EntityDetailScreen({
             updateCellsBatchingPeriod={40}
             windowSize={15}
           />
+          <View style={styles.replyBar}>
+            <Pressable
+              accessibilityLabel={session ? `评论这个${kind}` : '登录后评论'}
+              accessibilityRole="button"
+              disabled={isSigningIn}
+              onPress={() => void openComposer()}
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'chat_bubble_outline',
+                  ios: 'bubble.left',
+                  web: 'chat_bubble_outline',
+                }}
+                size={17}
+                tintColor={colors.muted}
+              />
+              <Text style={styles.replyButtonText}>
+                {isSigningIn
+                  ? '正在登录…'
+                  : session
+                    ? `评论这个${kind}…`
+                    : '登录后评论'}
+              </Text>
+            </Pressable>
+          </View>
           <ScrollNavButton
             onPress={scrollCommentsToTop}
             visible={showsScrollToTop}
           />
         </View>
       </AppSheet>
+      <DiscussionReplyComposer
+        editing={
+          editingReply
+            ? { content: editingReply.body, postId: Number(editingReply.id) }
+            : null
+        }
+        onClose={closeComposer}
+        onEdited={() => setEditingReply(null)}
+        replyingTo={replyingTo}
+        target={{ id: entityId, kind: entityKind }}
+        visible={composerVisible}
+      />
       <FullscreenImageViewer
         onClose={() => setPortraitVisible(false)}
         title={data?.name ?? kind}
@@ -528,6 +653,22 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   commentsList: { flex: 1 },
   commentsContent: { paddingBottom: 12 },
+  replyBar: {
+    borderTopColor: colors.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 12,
+  },
+  replyButton: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: 14,
+  },
+  replyButtonText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   panelTitle: {
     color: colors.ink,
     fontSize: 17,

@@ -316,6 +316,30 @@ export function createBangumiReviewReply({
   });
 }
 
+export function createBangumiCharacterComment({
+  characterId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  characterId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/characters/${characterId}/comments`,
+  });
+}
+
+export function createBangumiPersonComment({
+  personId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopicReply>[0], 'path'> & {
+  personId: number;
+}) {
+  return createBangumiTopicReply({
+    ...input,
+    path: `/persons/${personId}/comments`,
+  });
+}
+
 async function createBangumiTopic({
   accessToken,
   content,
@@ -529,5 +553,53 @@ export function deleteBangumiBlogComment({
   return deleteBangumiPost({
     ...input,
     path: `/blogs/-/comments/${commentId}`,
+  });
+}
+
+export function editBangumiCharacterComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/characters/-/comments/${commentId}`,
+  });
+}
+
+export function editBangumiPersonComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/persons/-/comments/${commentId}`,
+  });
+}
+
+export function deleteBangumiCharacterComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/characters/-/comments/${commentId}`,
+  });
+}
+
+export function deleteBangumiPersonComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/persons/-/comments/${commentId}`,
   });
 }

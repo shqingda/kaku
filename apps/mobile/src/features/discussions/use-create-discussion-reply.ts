@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/auth-provider';
 import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 import {
+  createCharacterComment,
   createEpisodeComment,
   createGroupTopicReply,
+  createPersonComment,
   createReviewReply,
   createSubjectTopicReply,
 } from '@/infrastructure/kaku/discussions-client';
@@ -17,7 +19,13 @@ export type CreateDiscussionReplyInput = {
 
 export type DiscussionReplyTarget = {
   id: number;
-  kind: 'episode' | 'group-topic' | 'review' | 'subject-topic';
+  kind:
+    | 'character'
+    | 'episode'
+    | 'group-topic'
+    | 'person'
+    | 'review'
+    | 'subject-topic';
 };
 
 export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
@@ -45,6 +53,24 @@ export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
         });
       }
 
+      if (target.kind === 'character') {
+        return createCharacterComment(request, {
+          content,
+          characterId: target.id,
+          replyTo,
+          turnstileToken,
+        });
+      }
+
+      if (target.kind === 'person') {
+        return createPersonComment(request, {
+          content,
+          personId: target.id,
+          replyTo,
+          turnstileToken,
+        });
+      }
+
       const createReply =
         target.kind === 'group-topic'
           ? createGroupTopicReply
@@ -64,9 +90,13 @@ export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
             ? queryKeys.episodeComments(target.id)
             : target.kind === 'review'
               ? queryKeys.subjectReview(target.id)
-              : target.kind === 'group-topic'
-                ? queryKeys.groupTopic(target.id)
-                : queryKeys.subjectTopic(target.id),
+              : target.kind === 'character'
+                ? queryKeys.entityComments('character', target.id)
+                : target.kind === 'person'
+                  ? queryKeys.entityComments('person', target.id)
+                  : target.kind === 'group-topic'
+                    ? queryKeys.groupTopic(target.id)
+                    : queryKeys.subjectTopic(target.id),
       });
     },
   });

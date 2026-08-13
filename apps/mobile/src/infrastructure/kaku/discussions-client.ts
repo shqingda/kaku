@@ -173,6 +173,28 @@ export async function createReviewReply(
   return createReply(request, `/me/reviews/${input.reviewId}/replies`, input);
 }
 
+export async function createCharacterComment(
+  request: AuthenticatedRequest,
+  input: CreateReplyInput & { characterId: number },
+) {
+  return createReply(
+    request,
+    `/me/characters/${input.characterId}/comments`,
+    input,
+  );
+}
+
+export async function createPersonComment(
+  request: AuthenticatedRequest,
+  input: CreateReplyInput & { personId: number },
+) {
+  return createReply(
+    request,
+    `/me/persons/${input.personId}/comments`,
+    input,
+  );
+}
+
 type CreateTopicInput = {
   content: string;
   title: string;
@@ -305,4 +327,34 @@ export async function deleteBlogComment(
   commentId: number,
 ) {
   return deletePost(request, `/me/blog-comments/${commentId}`);
+}
+
+export async function editCharacterComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+  content: string,
+) {
+  return editPost(request, `/me/character-comments/${commentId}`, content);
+}
+
+export async function editPersonComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+  content: string,
+) {
+  return editPost(request, `/me/person-comments/${commentId}`, content);
+}
+
+export async function deleteCharacterComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+) {
+  return deletePost(request, `/me/character-comments/${commentId}`);
+}
+
+export async function deletePersonComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+) {
+  return deletePost(request, `/me/person-comments/${commentId}`);
 }

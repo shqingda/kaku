@@ -23,8 +23,10 @@ import {
   useCreateDiscussionReply,
 } from './use-create-discussion-reply';
 import {
+  useEditCharacterReply,
   useEditEpisodeReply,
   useEditGroupReply,
+  useEditPersonReply,
   useEditReviewReply,
   useEditSubjectReply,
 } from './use-edit-reply';
@@ -64,6 +66,12 @@ export function DiscussionReplyComposer({
   const editReviewReply = useEditReviewReply(
     target.kind === 'review' ? target.id : 0,
   );
+  const editCharacterReply = useEditCharacterReply(
+    target.kind === 'character' ? target.id : 0,
+  );
+  const editPersonReply = useEditPersonReply(
+    target.kind === 'person' ? target.id : 0,
+  );
   const editReply =
     target.kind === 'subject-topic'
       ? editSubjectReply
@@ -71,7 +79,11 @@ export function DiscussionReplyComposer({
         ? editGroupReply
         : target.kind === 'episode'
           ? editEpisodeReply
-          : editReviewReply;
+          : target.kind === 'review'
+            ? editReviewReply
+            : target.kind === 'character'
+              ? editCharacterReply
+              : editPersonReply;
   const isEditing = editing != null;
   const pending = createReply.isPending || editReply.isPending;
   const hasUnsavedChanges = isEditing
