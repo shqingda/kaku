@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -64,6 +65,29 @@ export function IndexComposer({
     }
   }, [visible]);
 
+  function finishClose() {
+    onClose();
+  }
+
+  function close() {
+    if (mutation.isPending) {
+      return;
+    }
+
+    const hasChanges = editing
+      ? title !== editing.title ||
+        desc !== editing.desc ||
+        isPrivate !== editing.isPrivate
+      : Boolean(title.trim() || desc.trim() || isPrivate);
+
+    if (hasChanges) {
+      confirmDiscard(finishClose);
+      return;
+    }
+
+    finishClose();
+  }
+
   function submit() {
     const nextTitle = title.trim();
 
@@ -96,7 +120,7 @@ export function IndexComposer({
   }
 
   return (
-    <AppSheet onClose={onClose} visible={visible}>
+    <AppSheet onClose={close} visible={visible}>
       <View
         style={[
           styles.content,
@@ -109,7 +133,7 @@ export function IndexComposer({
             accessibilityRole="button"
             disabled={mutation.isPending}
             hitSlop={8}
-            onPress={onClose}
+            onPress={close}
             style={({ pressed }) => [
               styles.closeButton,
               pressed && styles.pressed,

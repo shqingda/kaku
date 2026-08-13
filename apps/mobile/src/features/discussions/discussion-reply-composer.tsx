@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -90,13 +91,23 @@ export function DiscussionReplyComposer({
     }
   }, [visible]);
 
+  function finishClose() {
+    Keyboard.dismiss();
+    onClose();
+  }
+
   function close() {
     if (pending) {
       return;
     }
 
-    Keyboard.dismiss();
-    onClose();
+    const initialContent = editing?.content ?? '';
+    if (content !== initialContent && content.trim()) {
+      confirmDiscard(finishClose);
+      return;
+    }
+
+    finishClose();
   }
 
   function send() {

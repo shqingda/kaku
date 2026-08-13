@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -60,6 +61,19 @@ export function ReportSheet({
     }
   }, [visible]);
 
+  function close() {
+    if (createReport.isPending) {
+      return;
+    }
+
+    if (reason !== undefined || comment.trim()) {
+      confirmDiscard(onClose);
+      return;
+    }
+
+    onClose();
+  }
+
   function submit() {
     if (reason === undefined || createReport.isPending) {
       return;
@@ -83,7 +97,7 @@ export function ReportSheet({
   }
 
   return (
-    <AppSheet onClose={onClose} visible={visible}>
+    <AppSheet onClose={close} visible={visible}>
       <View
         style={[
           styles.content,
@@ -95,7 +109,8 @@ export function ReportSheet({
             accessibilityLabel="关闭"
             accessibilityRole="button"
             hitSlop={8}
-            onPress={onClose}
+            disabled={createReport.isPending}
+            onPress={close}
             style={({ pressed }) => [
               styles.closeButton,
               pressed && styles.pressed,

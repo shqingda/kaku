@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { useCreateTimelineSay } from './use-create-timeline-say';
 
@@ -46,13 +47,22 @@ export function TimelineComposer({
     InteractionManager.runAfterInteractions(() => inputRef.current?.focus());
   }
 
+  function finishClose() {
+    Keyboard.dismiss();
+    onClose();
+  }
+
   function close() {
     if (createTimeline.isPending) {
       return;
     }
 
-    Keyboard.dismiss();
-    onClose();
+    if (content.trim()) {
+      confirmDiscard(finishClose);
+      return;
+    }
+
+    finishClose();
   }
 
   function send() {
