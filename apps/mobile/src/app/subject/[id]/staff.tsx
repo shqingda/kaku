@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 const COLLAPSED_COUNT = 3;
@@ -44,6 +45,13 @@ type StaffSection = {
   role: string;
   totalCount: number;
 };
+
+function useThemedStyles() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return { colors, styles };
+}
 
 function groupStaff(
   credits: StaffCredit[],
@@ -91,6 +99,7 @@ function StaffAvatar({
   item: StaffCredit;
   withZoom: boolean;
 }) {
+  const { styles } = useThemedStyles();
   const avatar = (
     <View style={styles.avatar}>
       <Text style={styles.avatarFallback}>{item.name.slice(0, 1)}</Text>
@@ -109,6 +118,7 @@ function StaffAvatar({
 }
 
 function StaffRow({ item }: { item: StaffCredit }) {
+  const { colors, styles } = useThemedStyles();
   const content = (
     <>
       <StaffAvatar item={item} withZoom={!item.isOrganization} />
@@ -133,7 +143,7 @@ function StaffRow({ item }: { item: StaffCredit }) {
             web: 'chevron_right',
           }}
           size={13}
-          tintColor={COLORS.subtle}
+          tintColor={colors.subtle}
           weight="semibold"
         />
       ) : null}
@@ -164,6 +174,7 @@ function StaffRow({ item }: { item: StaffCredit }) {
 }
 
 export default function StaffScreen() {
+  const { styles } = useThemedStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const staffQuery = useSubjectStaff(subjectId ?? 0);
@@ -288,34 +299,34 @@ export default function StaffScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   pageHeader: { paddingBottom: 22, paddingTop: 14 },
   pageTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  pageMeta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  pageMeta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   sectionHeader: {
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     flexDirection: 'row',
     paddingBottom: 10,
     paddingTop: 18,
   },
-  sectionTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   sectionCount: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     fontWeight: '700',
     marginLeft: 8,
   },
   staffRow: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     flexDirection: 'row',
     marginBottom: 8,
@@ -325,33 +336,33 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     height: 44,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 44,
   },
-  avatarFallback: { color: COLORS.subtle, fontSize: 15, fontWeight: '700' },
+  avatarFallback: { color: colors.subtle, fontSize: 15, fontWeight: '700' },
   staffMain: { flex: 1, marginLeft: 12 },
-  staffName: { color: COLORS.ink, fontSize: 15, fontWeight: '700' },
-  staffType: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
+  staffName: { color: colors.ink, fontSize: 15, fontWeight: '700' },
+  staffType: { color: colors.subtle, fontSize: 11, marginTop: 4 },
   episodeBadge: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 9,
     marginLeft: 10,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
-  episodeBadgeText: { color: COLORS.accent, fontSize: 10, fontWeight: '800' },
+  episodeBadgeText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
   expandButton: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 14,
     marginTop: 2,
     paddingVertical: 11,
   },
-  expandText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  expandText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.58 },
   state: {
     alignItems: 'center',
@@ -359,20 +370,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   stateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 7,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 14,
     marginTop: 18,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
-  retryText: { color: COLORS.surface, fontSize: 13, fontWeight: '800' },
+  retryText: { color: colors.surface, fontSize: 13, fontWeight: '800' },
 });

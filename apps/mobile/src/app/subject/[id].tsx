@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
@@ -38,7 +38,15 @@ import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+
+function useThemedStyles() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return { colors, styles };
+}
 
 function DetailEntry({
   hint,
@@ -51,6 +59,7 @@ function DetailEntry({
   onPress: () => void;
   withBorder?: boolean;
 }) {
+  const { colors, styles } = useThemedStyles();
   return (
     <Pressable
       accessibilityLabel={`查看${label}`}
@@ -69,7 +78,7 @@ function DetailEntry({
       <SymbolView
         name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
         size={13}
-        tintColor={COLORS.subtle}
+        tintColor={colors.subtle}
         weight="semibold"
       />
     </Pressable>
@@ -83,6 +92,7 @@ function FloatingBackButton({
   onPress: () => void;
   top: number;
 }) {
+  const { styles } = useThemedStyles();
   return (
     <View style={[styles.backButton, { top }]}>
       <HeaderIconButton
@@ -107,6 +117,7 @@ function FloatingHomeButton({
   onPress: () => void;
   top: number;
 }) {
+  const { styles } = useThemedStyles();
   return (
     <View style={[styles.homeButton, { top }]}>
       <HeaderIconButton
@@ -123,6 +134,7 @@ function FloatingHomeButton({
 }
 
 export default function SubjectScreen() {
+  const { colors, styles } = useThemedStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -279,7 +291,7 @@ export default function SubjectScreen() {
                 collectionQuery.isRefetching) &&
               !catalogQuery.isPending
             }
-            tintColor={COLORS.accent}
+            tintColor={colors.accent}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -482,8 +494,8 @@ export default function SubjectScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   backButton: {
     left: 16,
@@ -497,14 +509,14 @@ const styles = StyleSheet.create({
   },
   heroSpacing: { height: 20 },
   personalState: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
   },
-  personalStateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  personalStateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
   personalStateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 6,
@@ -514,15 +526,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 4,
   },
-  personalRetryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  personalRetryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   panel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
   },
   detailEntries: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     overflow: 'hidden',
@@ -536,33 +548,33 @@ const styles = StyleSheet.create({
   },
   detailEntryCopy: { flex: 1, minWidth: 0, paddingRight: 12 },
   detailEntryBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  detailEntryTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
-  detailEntryHint: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
-  panelTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
-  summary: { color: COLORS.muted, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  detailEntryTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  detailEntryHint: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  panelTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
+  summary: { color: colors.muted, fontSize: 15, lineHeight: 24, marginTop: 10 },
   summaryToggle: {
     alignSelf: 'flex-start',
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 9,
   },
   pressed: { opacity: 0.62 },
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
+  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
     marginTop: 18,
     minHeight: 44,
     paddingHorizontal: 20,
   },
-  errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
 });
