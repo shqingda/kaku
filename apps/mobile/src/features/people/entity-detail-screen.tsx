@@ -125,7 +125,15 @@ export function EntityDetailScreen({
   }
 
   function scrollCommentsToBottom() {
-    commentsListRef.current?.scrollToEnd({ animated: true });
+    // 虚拟化下 scrollToEnd 的偏移按已渲染条目的平均高度估算，首次会停在
+    // 中间；滚动途中渲染出更多条目后再滚几次，逐步修正到真正底部。
+    const delays = [0, 350, 750];
+
+    for (const delay of delays) {
+      setTimeout(() => {
+        commentsListRef.current?.scrollToEnd({ animated: true });
+      }, delay);
+    }
   }
 
   async function toggleCollection() {

@@ -1,12 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+} from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 // 底部居中的胶囊导航按钮：根据 direction 显示"回到顶部"（上）或"拉到底部"（下），
-// 图标 + 文字，淡入淡出 + 微缩放过渡。
+// 图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
 export function ScrollNavButton({
   direction,
   onPress,
@@ -22,7 +29,8 @@ export function ScrollNavButton({
 
   useEffect(() => {
     Animated.timing(progress, {
-      duration: reduceMotion ? 0 : visible ? 160 : 120,
+      duration: reduceMotion ? 0 : visible ? 200 : 160,
+      easing: Easing.out(Easing.cubic),
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
     }).start();
@@ -39,9 +47,9 @@ export function ScrollNavButton({
           opacity: progress,
           transform: [
             {
-              scale: progress.interpolate({
+              translateY: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0.94, 1],
+                outputRange: [10, 0],
               }),
             },
           ],
