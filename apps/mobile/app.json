@@ -35,6 +35,10 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#C96878",
+          "dark": {
+            "backgroundColor": "#0E0E10",
+            "image": "./assets/images/kaku-mark.png"
+          },
           "image": "./assets/images/kaku-mark.png",
           "imageWidth": 116
         }
