@@ -423,27 +423,27 @@ export function CollectionBoxSheet({
               </View>
             </View>
 
-            {item.comment !== undefined ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>收藏备注</Text>
-                <TextInput
-                  accessibilityLabel="收藏备注"
-                  maxLength={1000}
-                  multiline
-                  onChangeText={setComment}
-                  onFocus={() => {
-                    setTimeout(() => {
-                      contentScrollRef.current?.scrollToEnd({ animated: true });
-                    }, 250);
-                  }}
-                  placeholder="写下你对这个条目的简短记录"
-                  placeholderTextColor={colors.subtle}
-                  style={styles.commentInput}
-                  textAlignVertical="top"
-                  value={comment}
-                />
-              </View>
-            ) : null}
+             {item.comment !== undefined ? (
+               <View style={styles.section}>
+                 <Text style={styles.sectionLabel}>吐槽</Text>
+                 <TextInput
+                   accessibilityLabel="吐槽"
+                   maxLength={1000}
+                   multiline
+                   onChangeText={setComment}
+                   onFocus={() => {
+                     setTimeout(() => {
+                       contentScrollRef.current?.scrollToEnd({ animated: true });
+                     }, 250);
+                   }}
+                   placeholder="写下你对这个条目的简短记录"
+                   placeholderTextColor={colors.subtle}
+                   style={styles.commentInput}
+                   textAlignVertical="top"
+                   value={comment}
+                 />
+               </View>
+             ) : null}
 
             {item.tags !== undefined ? (
               <View style={styles.section}>
