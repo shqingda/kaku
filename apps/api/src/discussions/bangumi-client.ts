@@ -315,3 +315,73 @@ export function createBangumiReviewReply({
     path: `/blogs/${reviewId}/comments`,
   });
 }
+
+async function createBangumiTopic({
+  accessToken,
+  content,
+  fetcher = fetch,
+  path,
+  title,
+  turnstileToken,
+}: {
+  accessToken: string;
+  content: string;
+  fetcher?: typeof fetch;
+  path: string;
+  title: string;
+  turnstileToken: string;
+}): Promise<{ id: number }> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}${path}`, {
+    body: JSON.stringify({ content, title, turnstileToken }),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const code =
+      body &&
+      typeof body === 'object' &&
+      'code' in body &&
+      typeof body.code === 'string'
+        ? body.code
+        : undefined;
+
+    throw discussionError(
+      response,
+      code,
+      '话题没有创建成功，请稍后重试。',
+    );
+  }
+
+  return createdReplySchema.parse(await response.json());
+}
+
+export function createBangumiSubjectTopic({
+  subjectId,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopic>[0], 'path'> & {
+  subjectId: number;
+}) {
+  return createBangumiTopic({
+    ...input,
+    path: `/subjects/${subjectId}/topics`,
+  });
+}
+
+export function createBangumiGroupTopic({
+  groupName,
+  ...input
+}: Omit<Parameters<typeof createBangumiTopic>[0], 'path'> & {
+  groupName: string;
+}) {
+  return createBangumiTopic({
+    ...input,
+    path: `/groups/${encodeURIComponent(groupName)}/topics`,
+  });
+}

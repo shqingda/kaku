@@ -3,8 +3,10 @@ import test from 'node:test';
 
 import {
   createBangumiEpisodeComment,
+  createBangumiGroupTopic,
   createBangumiGroupTopicReply,
   createBangumiReviewReply,
+  createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
@@ -230,4 +232,97 @@ test('creating a group topic reply uses the group P1 endpoint', async () => {
   });
 
   assert.deepEqual(reply, { id: 10002 });
+});
+
+test('creating a subject topic posts title and content to the subject P1 endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/subjects/22447/topics');
+    assert.equal(init.method, 'POST');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), {
+      content: '大家觉得第三话的节奏如何？',
+      title: '第三话节奏讨论',
+      turnstileToken: 'turnstile-token',
+    });
+    return Response.json({ id: 30001 });
+  };
+
+  const topic = await createBangumiSubjectTopic({
+    accessToken: 'access-token',
+    content: '大家觉得第三话的节奏如何？',
+    fetcher,
+    subjectId: 22447,
+    title: '第三话节奏讨论',
+    turnstileToken: 'turnstile-token',
+  });
+
+  assert.deepEqual(topic, { id: 30001 });
+});
+
+test('creating a group topic posts to the encoded group P1 endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/groups/anime/topics',
+    );
+    assert.equal(init.method, 'POST');
+    assert.deepEqual(JSON.parse(init.body), {
+      content: '新番楼',
+      title: '七月新番集中讨论',
+      turnstileToken: 'turnstile-token',
+    });
+    return Response.json({ id: 30002 });
+  };
+
+  const topic = await createBangumiGroupTopic({
+    accessToken: 'access-token',
+    content: '新番楼',
+    fetcher,
+    groupName: 'anime',
+    title: '七月新番集中讨论',
+    turnstileToken: 'turnstile-token',
+  });
+
+  assert.deepEqual(topic, { id: 30002 });
+});
+
+test('topic creation surfaces captcha and rate limit messages from upstream', async () => {
+  const fetcher = async () =>
+    Response.json({ code: 'CAPTCHA_ERROR' }, { status: 400 });
+
+  await assert.rejects(
+    () =>
+      createBangumiSubjectTopic({
+        accessToken: 'access-token',
+        content: '内容',
+        fetcher,
+        subjectId: 1,
+        title: '标题',
+        turnstileToken: 'stale-token',
+      }),
+    (error) => {
+      assert.equal(error.status, 400);
+      assert.equal(error.message, '安全验证已过期，请重新验证后再试。');
+      return true;
+    },
+  );
+
+  const rateLimitedFetcher = async () => new Response('{}', { status: 429 });
+
+  await assert.rejects(
+    () =>
+      createBangumiGroupTopic({
+        accessToken: 'access-token',
+        content: '内容',
+        fetcher: rateLimitedFetcher,
+        groupName: 'anime',
+        title: '标题',
+        turnstileToken: 'turnstile-token',
+      }),
+    (error) => {
+      assert.equal(error.status, 429);
+      assert.equal(error.message, '操作得太频繁了，请稍后再试。');
+      return true;
+    },
+  );
 });

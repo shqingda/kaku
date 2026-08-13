@@ -172,3 +172,53 @@ export async function createReviewReply(
 ) {
   return createReply(request, `/me/reviews/${input.reviewId}/replies`, input);
 }
+
+type CreateTopicInput = {
+  content: string;
+  title: string;
+  turnstileToken: string;
+};
+
+async function createTopic(
+  request: AuthenticatedRequest,
+  path: string,
+  input: CreateTopicInput,
+) {
+  const response = await request(path, {
+    body: JSON.stringify({
+      content: input.content,
+      title: input.title,
+      turnstileToken: input.turnstileToken,
+    }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return createdReplySchema.parse(await response.json());
+}
+
+export async function createSubjectTopic(
+  request: AuthenticatedRequest,
+  input: CreateTopicInput & { subjectId: number },
+) {
+  return createTopic(
+    request,
+    `/me/subjects/${input.subjectId}/topics`,
+    input,
+  );
+}
+
+export async function createGroupTopic(
+  request: AuthenticatedRequest,
+  input: CreateTopicInput & { groupName: string },
+) {
+  return createTopic(
+    request,
+    `/me/groups/${encodeURIComponent(input.groupName)}/topics`,
+    input,
+  );
+}

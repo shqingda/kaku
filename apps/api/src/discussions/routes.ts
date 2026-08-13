@@ -16,8 +16,10 @@ import type { Env } from '../env.ts';
 import {
   BangumiDiscussionError,
   createBangumiEpisodeComment,
+  createBangumiGroupTopic,
   createBangumiGroupTopicReply,
   createBangumiReviewReply,
+  createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
@@ -30,6 +32,18 @@ const createReplySchema = z.object({
   replyTo: z.number().int().positive().optional(),
   turnstileToken: z.string().min(1).max(2048),
 });
+
+const createTopicSchema = z.object({
+  content: z.string().trim().min(1).max(5000),
+  title: z.string().trim().min(1).max(120),
+  turnstileToken: z.string().min(1).max(2048),
+});
+
+const GROUP_NAME_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
+
+function getGroupName(value: string | undefined) {
+  return value && GROUP_NAME_PATTERN.test(value) ? value : null;
+}
 
 function getPositiveId(value: string | undefined) {
   const id = Number(value);
@@ -277,6 +291,121 @@ export function registerDiscussionRoutes(
       getPositiveId(context.req.param('reviewId')),
       ({ targetId, ...input }) =>
         createBangumiReviewReply({ ...input, reviewId: targetId }),
+    ),
+  );
+
+  type CreateUpstreamTopic = (input: {
+    accessToken: string;
+    content: string;
+    fetcher: typeof fetch;
+    targetId: number | string;
+    title: string;
+    turnstileToken: string;
+  }) => Promise<{ id: number }>;
+
+  async function createTopic(
+    context: Context<{ Bindings: Env }>,
+    targetId: number | string | null,
+    upstream: CreateUpstreamTopic,
+  ) {
+    const parsedBody = createTopicSchema.safeParse(
+      await context.req.json().catch(() => null),
+    );
+
+    if (!targetId || !parsedBody.success) {
+      return context.json(
+        { error: 'invalid_topic', message: '话题标题或内容格式不正确。' },
+        400,
+      );
+    }
+
+    const store = dependencies.createStore
+      ? dependencies.createStore(context.env.DB)
+      : createD1AuthStore(context.env.DB);
+    const authentication = await authenticateRequest(context, store, now());
+
+    if (isAuthenticationResponse(authentication)) {
+      return authentication;
+    }
+
+    try {
+      const accessToken = await getValidBangumiAccessToken({
+        env: context.env,
+        fetcher,
+        now: now(),
+        store,
+        userId: authentication.userId,
+      });
+      const topic = await upstream({
+        accessToken,
+        content: parsedBody.data.content,
+        fetcher,
+        targetId,
+        title: parsedBody.data.title,
+        turnstileToken: parsedBody.data.turnstileToken,
+      });
+
+      return context.json(topic);
+    } catch (error) {
+      if (error instanceof BangumiReauthorizationRequiredError) {
+        return context.json(
+          { error: 'bangumi_reauthorization_required', message: error.message },
+          409,
+        );
+      }
+
+      if (error instanceof BangumiDiscussionError) {
+        if (error.status === 401 && error.code !== 'CAPTCHA_ERROR') {
+          await store.deleteBangumiCredential(authentication.userId);
+          return context.json(
+            {
+              error: 'bangumi_reauthorization_required',
+              message: 'Bangumi 授权已失效，请重新登录。',
+            },
+            409,
+          );
+        }
+
+        return context.json(
+          { error: 'bangumi_topic_create_failed', message: error.message },
+          error.code === 'CAPTCHA_ERROR'
+            ? 400
+            : error.status === 429
+              ? 429
+              : error.status >= 500
+                ? 503
+                : 502,
+        );
+      }
+
+      if (error instanceof BangumiOAuthError) {
+        return context.json(
+          {
+            error: 'bangumi_oauth_unavailable',
+            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
+          },
+          503,
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  app.post('/me/subjects/:subjectId/topics', (context) =>
+    createTopic(
+      context,
+      getPositiveId(context.req.param('subjectId')),
+      ({ targetId, ...input }) =>
+        createBangumiSubjectTopic({ ...input, subjectId: targetId as number }),
+    ),
+  );
+  app.post('/me/groups/:groupName/topics', (context) =>
+    createTopic(
+      context,
+      getGroupName(context.req.param('groupName')),
+      ({ targetId, ...input }) =>
+        createBangumiGroupTopic({ ...input, groupName: targetId as string }),
     ),
   );
 }

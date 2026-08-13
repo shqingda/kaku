@@ -1,20 +1,25 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import {
   usePublicGroup,
   usePublicGroupTopics,
 } from '@/features/community/use-community';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { TopicComposer } from '@/features/discussions/topic-composer';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 
 export default function GroupScreen() {
   const { name } = useLocalSearchParams<{ name: string }>();
+  const { session } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
   const groupQuery = usePublicGroup(name);
   const topicsQuery = usePublicGroupTopics(name);
   const group = groupQuery.data;
@@ -26,6 +31,22 @@ export default function GroupScreen() {
     topicsQuery.data?.pages[0]?.total ?? group?.topicCount ?? 0;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const canCollapseDescription = (group?.description.length ?? 0) > 180;
+
+  function openTopicComposer() {
+    if (session) {
+      setComposerVisible(true);
+      return;
+    }
+
+    Alert.alert(
+      '登录后发布话题',
+      '话题会发布到你的 Bangumi 账户。',
+      [
+        { style: 'cancel', text: '取消' },
+        { onPress: () => router.push('/account'), text: '去登录' },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -104,9 +125,32 @@ export default function GroupScreen() {
                 ) : null}
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>小组话题</Text>
-                  <Text style={styles.sectionCount}>
-                    已加载 {topics.length} · 共 {topicTotal.toLocaleString('zh-CN')}
-                  </Text>
+                  <View style={styles.sectionRight}>
+                    <Text style={styles.sectionCount}>
+                      已加载 {topics.length} · 共 {topicTotal.toLocaleString('zh-CN')}
+                    </Text>
+                    <Pressable
+                      accessibilityLabel="新建小组话题"
+                      accessibilityRole="button"
+                      onPress={openTopicComposer}
+                      style={({ pressed }) => [
+                        styles.newTopicButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <SymbolView
+                        name={{
+                          android: 'add_comment',
+                          ios: 'square.and.pencil',
+                          web: 'add_comment',
+                        }}
+                        size={13}
+                        tintColor={COLORS.surface}
+                        weight="semibold"
+                      />
+                      <Text style={styles.newTopicText}>发话题</Text>
+                    </Pressable>
+                  </View>
                 </View>
                 <DiscussionStatus
                   errorText="小组话题加载失败，请检查网络后重试。"
@@ -172,6 +216,18 @@ export default function GroupScreen() {
         )}
         showsVerticalScrollIndicator={false}
       />
+      <TopicComposer
+        onClose={() => setComposerVisible(false)}
+        onCreated={(topicId) => {
+          setComposerVisible(false);
+          router.push({
+            pathname: '/group/topic/[id]',
+            params: { id: String(topicId) },
+          });
+        }}
+        target={{ groupName: name, kind: 'group' }}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -220,7 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   sectionHeader: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
@@ -228,7 +284,19 @@ const styles = StyleSheet.create({
     paddingTop: 18,
   },
   sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
+  sectionRight: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   sectionCount: { color: COLORS.subtle, fontSize: 12 },
+  newTopicButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderRadius: 13,
+    flexDirection: 'row',
+    gap: 5,
+    justifyContent: 'center',
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  newTopicText: { color: COLORS.surface, fontSize: 13, fontWeight: '800' },
   topicList: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',
