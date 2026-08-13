@@ -11,6 +11,8 @@ import {
   Text,
   View,
   useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +21,8 @@ import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
+import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
@@ -60,6 +64,8 @@ export function EntityDetailScreen({
   const { isSigningIn, session, signIn } = useAuth();
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [portraitVisible, setPortraitVisible] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
@@ -76,6 +82,24 @@ export function EntityDetailScreen({
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
+
+  function handleCommentsScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const atTop = contentOffset.y <= 8;
+    const atBottom =
+      contentSize.height > layoutMeasurement.height &&
+      contentOffset.y + layoutMeasurement.height >= contentSize.height - 8;
+    setIsAtTop(atTop);
+    setIsAtBottom(atBottom);
+  }
+
+  function scrollCommentsToTop() {
+    commentsListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  }
+
+  function scrollCommentsToBottom() {
+    commentsListRef.current?.scrollToEnd({ animated: true });
+  }
 
   async function toggleCollection() {
     if (!session) {
@@ -262,7 +286,7 @@ export function EntityDetailScreen({
 
               <View style={styles.commentsSection}>
                 <View style={styles.commentsHeader}>
-                  <Text style={styles.panelTitle}>评论</Text>
+                  <Text style={styles.commentsHeaderTitle}>评论</Text>
                   <View style={styles.commentsHeaderRight}>
                     <Text style={styles.commentsMeta}>
                       {data.commentCount.toLocaleString('zh-CN')} 条公开评论
@@ -356,6 +380,7 @@ export function EntityDetailScreen({
             data={comments}
             keyExtractor={(reply) => reply.id}
             onRefresh={() => void commentsQuery.refetch()}
+            onScroll={handleCommentsScroll}
             onScrollToIndexFailed={handleScrollToIndexFailed}
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
@@ -366,9 +391,15 @@ export function EntityDetailScreen({
                 reply={item}
               />
             )}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
           />
+          <ScrollToBottomButton
+            onPress={scrollCommentsToBottom}
+            visible={!isAtBottom}
+          />
+          <ScrollToTopButton onPress={scrollCommentsToTop} visible={!isAtTop} />
         </View>
       </AppSheet>
       <FullscreenImageViewer
@@ -448,6 +479,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingBottom: 10,
     paddingHorizontal: 4,
     paddingTop: 12,
+  },
+  commentsHeaderTitle: {
+    color: colors.ink,
+    fontSize: 17,
+    fontWeight: '800',
   },
   commentsHeaderRight: {
     alignItems: 'center',
