@@ -14,7 +14,9 @@ import { createD1AuthStore } from '../auth/store.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiFriendsError,
+  getBangumiBlocklist,
   getBangumiUserFriendship,
+  setBangumiBlocked,
   setBangumiFriend,
 } from './bangumi-client.ts';
 
@@ -32,10 +34,10 @@ export function registerFriendRoutes(
   const now = dependencies.now ?? Date.now;
   const fetcher = dependencies.fetcher ?? fetch;
 
-  async function withAuthenticatedFriendAction(
+  async function withAuthenticatedRelation(
     context: Context<{ Bindings: Env }>,
     action: (input: { accessToken: string; username: string }) => Promise<{
-      isFriend: boolean;
+      [key: string]: unknown;
     }>,
   ) {
     const username = getUsername(context.req.param('username'));
@@ -113,13 +115,13 @@ export function registerFriendRoutes(
   }
 
   app.get('/me/users/:username', (context) =>
-    withAuthenticatedFriendAction(context, ({ accessToken, username }) =>
+    withAuthenticatedRelation(context, ({ accessToken, username }) =>
       getBangumiUserFriendship({ accessToken, fetcher, username }),
     ),
   );
 
   app.put('/me/friends/:username', (context) =>
-    withAuthenticatedFriendAction(context, async ({ accessToken, username }) => ({
+    withAuthenticatedRelation(context, async ({ accessToken, username }) => ({
       isFriend: await setBangumiFriend({
         accessToken,
         fetcher,
@@ -130,7 +132,7 @@ export function registerFriendRoutes(
   );
 
   app.delete('/me/friends/:username', (context) =>
-    withAuthenticatedFriendAction(context, async ({ accessToken, username }) => ({
+    withAuthenticatedRelation(context, async ({ accessToken, username }) => ({
       isFriend: await setBangumiFriend({
         accessToken,
         fetcher,
@@ -138,5 +140,78 @@ export function registerFriendRoutes(
         username,
       }),
     })),
+  );
+
+  app.get('/me/blocklist', async (context) => {
+    const store = dependencies.createStore
+      ? dependencies.createStore(context.env.DB)
+      : createD1AuthStore(context.env.DB);
+    const authentication = await authenticateRequest(context, store, now());
+
+    if (isAuthenticationResponse(authentication)) {
+      return authentication;
+    }
+
+    try {
+      const accessToken = await getValidBangumiAccessToken({
+        env: context.env,
+        fetcher,
+        now: now(),
+        store,
+        userId: authentication.userId,
+      });
+      return context.json(
+        await getBangumiBlocklist({ accessToken, fetcher }),
+      );
+    } catch (error) {
+      if (error instanceof BangumiReauthorizationRequiredError) {
+        return context.json(
+          { error: 'bangumi_reauthorization_required', message: error.message },
+          409,
+        );
+      }
+
+      if (error instanceof BangumiFriendsError) {
+        if (error.status === 401) {
+          await store.deleteBangumiCredential(authentication.userId);
+          return context.json(
+            {
+              error: 'bangumi_reauthorization_required',
+              message: 'Bangumi 授权已失效，请重新登录。',
+            },
+            409,
+          );
+        }
+
+        return context.json(
+          { error: 'bangumi_blocklist_unavailable', message: error.message },
+          error.status >= 500 ? 503 : 502,
+        );
+      }
+
+      if (error instanceof BangumiOAuthError) {
+        return context.json(
+          {
+            error: 'bangumi_oauth_unavailable',
+            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
+          },
+          503,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  app.put('/me/blocklist/:username', (context) =>
+    withAuthenticatedRelation(context, ({ accessToken, username }) =>
+      setBangumiBlocked({ accessToken, fetcher, shouldBlock: true, username }),
+    ),
+  );
+
+  app.delete('/me/blocklist/:username', (context) =>
+    withAuthenticatedRelation(context, ({ accessToken, username }) =>
+      setBangumiBlocked({ accessToken, fetcher, shouldBlock: false, username }),
+    ),
   );
 }

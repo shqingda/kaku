@@ -3,7 +3,9 @@ import test from 'node:test';
 
 import {
   BangumiFriendsError,
+  getBangumiBlocklist,
   getBangumiUserFriendship,
+  setBangumiBlocked,
   setBangumiFriend,
 } from '../src/friends/bangumi-client.ts';
 
@@ -111,4 +113,68 @@ test('missing users map to a not-found error', async () => {
       return true;
     },
   );
+});
+
+test('blocklist read hits the private blocklist endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/blocklist');
+    assert.equal(init.headers.Authorization, 'Bearer bangumi-access-token');
+    return Response.json({ blocklist: [7, 42] });
+  };
+
+  const result = await getBangumiBlocklist({
+    accessToken,
+    fetcher,
+  });
+
+  assert.deepEqual(result, { blocklist: [7, 42] });
+});
+
+test('blocklist read tolerates an empty list', async () => {
+  const result = await getBangumiBlocklist({
+    accessToken,
+    fetcher: async () => Response.json({}),
+  });
+
+  assert.deepEqual(result, { blocklist: [] });
+});
+
+test('blocking a user PUTs and returns the updated list', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/blocklist/spammer',
+    );
+    assert.equal(init.method, 'PUT');
+    return Response.json({ blocklist: [7, 42] });
+  };
+
+  const result = await setBangumiBlocked({
+    accessToken,
+    fetcher,
+    shouldBlock: true,
+    username: 'spammer',
+  });
+
+  assert.deepEqual(result, { blocklist: [7, 42] });
+});
+
+test('unblocking a user DELETEs and returns the updated list', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/blocklist/spammer',
+    );
+    assert.equal(init.method, 'DELETE');
+    return Response.json({ blocklist: [42] });
+  };
+
+  const result = await setBangumiBlocked({
+    accessToken,
+    fetcher,
+    shouldBlock: false,
+    username: 'spammer',
+  });
+
+  assert.deepEqual(result, { blocklist: [42] });
 });

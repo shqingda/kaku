@@ -96,3 +96,67 @@ export async function setBangumiFriend({
 
   return shouldAdd;
 }
+
+const bangumiBlocklistSchema = z.object({
+  blocklist: z.array(z.number().int().positive()).default([]),
+});
+
+// 屏蔽列表返回被屏蔽用户的 ID（数字）。
+export async function getBangumiBlocklist({
+  accessToken,
+  fetcher = fetch,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+}): Promise<{ blocklist: number[] }> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}/blocklist`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+  });
+
+  if (!response.ok) {
+    throw new BangumiFriendsError(
+      response.status,
+      friendsErrorMessage(response.status),
+    );
+  }
+
+  return bangumiBlocklistSchema.parse(await response.json());
+}
+
+// 屏蔽/取消屏蔽：PUT 加入、DELETE 移除，均返回更新后的屏蔽列表。
+export async function setBangumiBlocked({
+  accessToken,
+  fetcher = fetch,
+  shouldBlock,
+  username,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  shouldBlock: boolean;
+  username: string;
+}): Promise<{ blocklist: number[] }> {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/blocklist/${encodeURIComponent(username)}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+      method: shouldBlock ? 'PUT' : 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiFriendsError(
+      response.status,
+      friendsErrorMessage(response.status),
+    );
+  }
+
+  return bangumiBlocklistSchema.parse(await response.json());
+}

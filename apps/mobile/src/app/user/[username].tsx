@@ -23,6 +23,7 @@ import { PublicUserCollectionRow } from '@/features/users/public-user-collection
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { FriendAction } from '@/features/users/friend-action';
+import { BlockAction } from '@/features/users/block-action';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
 import {
@@ -137,6 +138,11 @@ export default function PublicUserScreen() {
                   <View style={styles.friendAction}>
                     <FriendAction
                       nickname={user.nickname}
+                      username={user.username}
+                    />
+                    <BlockAction
+                      nickname={user.nickname}
+                      userId={user.id}
                       username={user.username}
                     />
                   </View>
@@ -510,7 +516,10 @@ const styles = StyleSheet.create({
   avatarFallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '800' },
   profileMain: { flex: 1, marginLeft: 16 },
   friendAction: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
     marginLeft: 10,
     marginTop: 2,
   },

@@ -231,3 +231,21 @@ test('reply deletion is registered as authenticated routes', async () => {
     });
   }
 });
+
+test('blocklist actions are registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const [method, path] of [
+    ['GET', '/me/blocklist'],
+    ['PUT', '/me/blocklist/spammer'],
+    ['DELETE', '/me/blocklist/spammer'],
+  ]) {
+    const response = await app.request(path, { method }, { DB: {} });
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});
