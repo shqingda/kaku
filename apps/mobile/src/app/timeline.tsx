@@ -10,12 +10,15 @@ import {
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 
 export default function FriendTimelineScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -31,6 +34,7 @@ export default function FriendTimelineScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           <TimelineState
+            colors={colors}
             error={timelineQuery.isError}
             loading={timelineQuery.isPending}
             onRetry={() => void timelineQuery.refetch()}
@@ -72,14 +76,18 @@ export default function FriendTimelineScreen() {
 }
 
 function TimelineState({
+  colors,
   error,
   loading,
   onRetry,
 }: {
+  colors: ThemeColors;
   error: boolean;
   loading: boolean;
   onRetry: () => void;
 }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       accessibilityLiveRegion={error ? 'assertive' : 'polite'}
@@ -106,19 +114,19 @@ function TimelineState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     margin: 20,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 42 },
-  stateTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
+  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
   retryButton: { alignItems: 'center', justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 16 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

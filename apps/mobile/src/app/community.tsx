@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import {
@@ -19,6 +19,7 @@ import {
   usePublicCommunityTopics,
 } from '@/features/community/use-community';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 
 const compactNumber = new Intl.NumberFormat('zh-CN', {
   maximumFractionDigits: 1,
@@ -26,6 +27,8 @@ const compactNumber = new Intl.NumberFormat('zh-CN', {
 });
 
 export default function CommunityScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
   const community = communityQuery.data;
@@ -182,11 +185,11 @@ export default function CommunityScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   sectionTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 19,
     fontWeight: '800',
     paddingBottom: 10,
@@ -198,10 +201,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
+  sectionMeta: { color: colors.subtle, fontSize: 12 },
   groupList: { gap: 10, paddingBottom: 8, paddingTop: 2 },
   groupCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 19,
     minHeight: 138,
     padding: 12,
@@ -209,24 +212,24 @@ const styles = StyleSheet.create({
   },
   groupIcon: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 16,
     height: 48,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 48,
   },
-  iconFallback: { color: COLORS.subtle, fontSize: 16, fontWeight: '800' },
+  iconFallback: { color: colors.subtle, fontSize: 16, fontWeight: '800' },
   groupTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 19,
     marginTop: 10,
   },
-  groupMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 6 },
+  groupMeta: { color: colors.subtle, fontSize: 11, marginTop: 6 },
   topicList: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 16,
   },
@@ -240,5 +243,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
+  emptyText: { color: colors.muted, fontSize: 14 },
 });

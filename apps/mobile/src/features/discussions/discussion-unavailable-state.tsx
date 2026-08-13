@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function DiscussionUnavailableState({
   isSigningIn,
@@ -13,6 +15,9 @@ export function DiscussionUnavailableState({
   onSignIn: () => void;
   signedIn: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.screen}>
       <View style={styles.card}>
@@ -40,17 +45,17 @@ export function DiscussionUnavailableState({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, justifyContent: 'center', padding: 24 },
   card: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 26,
   },
-  title: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
+  title: { color: colors.ink, fontSize: 20, fontWeight: '800' },
   message: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 22,
     marginTop: 9,
@@ -58,13 +63,13 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     justifyContent: 'center',
     marginTop: 20,
     minHeight: 48,
     paddingHorizontal: 24,
   },
-  buttonText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  buttonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

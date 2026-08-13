@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 type DiscussionStatusProps = {
   errorText?: string;
@@ -17,6 +19,9 @@ export function DiscussionStatus({
   loadingText = '正在读取 Bangumi 讨论…',
   onRetry,
 }: DiscussionStatusProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (!isError && !isPending) {
     return null;
   }
@@ -44,18 +49,18 @@ export function DiscussionStatus({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   box: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
     padding: 14,
   },
-  errorBox: { backgroundColor: COLORS.accentSoft },
-  text: { color: COLORS.muted, flex: 1, fontSize: 13 },
+  errorBox: { backgroundColor: colors.accentSoft },
+  text: { color: colors.muted, flex: 1, fontSize: 13 },
   retryButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 56 },
-  retry: { color: COLORS.accent, fontSize: 13, fontWeight: '700', marginLeft: 12 },
+  retry: { color: colors.accent, fontSize: 13, fontWeight: '700', marginLeft: 12 },
 });
