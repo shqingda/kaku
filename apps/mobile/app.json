@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/kaku-icon.png",
     "scheme": "kaku",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "buildNumber": "1",
       "bundleIdentifier": "com.shqingda.kaku",

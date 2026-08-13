@@ -3,10 +3,11 @@ import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, Platform } from 'react-native';
+import { AppState, Platform, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { DARK_COLORS, LIGHT_COLORS } from '@/constants/theme';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
@@ -23,6 +24,7 @@ import {
 import { queryPersister } from '@/lib/query-persister';
 
 export default function RootLayout() {
+  const colors = useColorScheme() === 'dark' ? DARK_COLORS : LIGHT_COLORS;
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -64,8 +66,8 @@ export default function RootLayout() {
         }}
       >
         <AuthProvider>
-          <StatusBar style="dark" />
           <ThemeProvider>
+          <StatusBar style="auto" />
           <Stack
             screenOptions={{
               ...(Platform.OS === 'ios'
@@ -93,6 +95,9 @@ export default function RootLayout() {
                     headerRight: () => <HeaderHomeButton />,
                   }),
               headerShown: false,
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.ink,
+              headerTitleStyle: { color: colors.ink },
             }}
           >
           <Stack.Screen name="index" />
