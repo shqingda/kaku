@@ -356,12 +356,13 @@ test('an expired Turnstile token stays distinct from an expired OAuth token', as
   );
 });
 
-test('deleting a timeline item forwards DELETE to the private endpoint', async () => {
+test('deleting a timeline item forwards DELETE with the turnstile token', async () => {
   const { deleteBangumiTimeline } = await import('../src/timeline/bangumi-client.ts');
   const fetcher = async (input, init) => {
     assert.equal(String(input), 'https://next.bgm.tv/p1/timeline/70001');
     assert.equal(init.method, 'DELETE');
     assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), { turnstileToken: 'turnstile-token' });
     return new Response('{}', { status: 200 });
   };
 
@@ -369,5 +370,28 @@ test('deleting a timeline item forwards DELETE to the private endpoint', async (
     accessToken: 'access-token',
     fetcher,
     timelineId: 70001,
+    turnstileToken: 'turnstile-token',
   });
+});
+
+test('deleting a timeline item surfaces a captcha error distinctly', async () => {
+  const { deleteBangumiTimeline } = await import('../src/timeline/bangumi-client.ts');
+  const fetcher = async () =>
+    Response.json({ code: 'CAPTCHA_ERROR' }, { status: 403 });
+
+  await assert.rejects(
+    () =>
+      deleteBangumiTimeline({
+        accessToken: 'access-token',
+        fetcher,
+        timelineId: 70001,
+        turnstileToken: 'stale-token',
+      }),
+    (error) => {
+      assert.equal(error.status, 403);
+      assert.equal(error.code, 'CAPTCHA_ERROR');
+      assert.equal(error.message, '安全验证已过期，请重新验证后再试。');
+      return true;
+    },
+  );
 });

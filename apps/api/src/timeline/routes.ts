@@ -211,10 +211,24 @@ export function registerTimelineRoutes(
 
   app.delete('/me/timeline/:timelineId', async (context) => {
     const timelineId = Number(context.req.param('timelineId'));
+    const body = await context.req.json().catch(() => null);
+    const turnstileToken =
+      body && typeof body === 'object' && 'turnstileToken' in body
+        ? body.turnstileToken
+        : undefined;
 
-    if (!Number.isSafeInteger(timelineId) || timelineId <= 0) {
+    if (
+      !Number.isSafeInteger(timelineId) ||
+      timelineId <= 0 ||
+      typeof turnstileToken !== 'string' ||
+      turnstileToken.length === 0 ||
+      turnstileToken.length > MAX_TURNSTILE_TOKEN_LENGTH
+    ) {
       return context.json(
-        { error: 'invalid_timeline_id', message: '动态编号格式不正确。' },
+        {
+          error: 'invalid_timeline_delete',
+          message: '请先完成安全验证再删除动态。',
+        },
         400,
       );
     }
@@ -236,7 +250,12 @@ export function registerTimelineRoutes(
         store,
         userId: authentication.userId,
       });
-      await deleteBangumiTimeline({ accessToken, fetcher, timelineId });
+      await deleteBangumiTimeline({
+        accessToken,
+        fetcher,
+        timelineId,
+        turnstileToken,
+      });
 
       return context.json({ deleted: true });
     } catch (error) {
@@ -248,7 +267,7 @@ export function registerTimelineRoutes(
       }
 
       if (error instanceof BangumiTimelineError) {
-        if (error.status === 401) {
+        if (error.status === 401 && error.code !== 'CAPTCHA_ERROR') {
           await store.deleteBangumiCredential(authentication.userId);
           return context.json(
             {
@@ -261,11 +280,13 @@ export function registerTimelineRoutes(
 
         return context.json(
           { error: 'bangumi_timeline_delete_failed', message: error.message },
-          error.status === 404
-            ? 404
-            : error.status >= 500
-              ? 503
-              : 502,
+          error.code === 'CAPTCHA_ERROR'
+            ? 400
+            : error.status === 404
+              ? 404
+              : error.status >= 500
+                ? 503
+                : 502,
         );
       }
 

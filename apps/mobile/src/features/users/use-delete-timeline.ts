@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 import { deleteTimeline } from '@/infrastructure/kaku/timeline-client';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -10,7 +11,10 @@ export function useDeleteTimeline(username: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (timelineId: number) => deleteTimeline(request, timelineId),
+    mutationFn: async (timelineId: number) => {
+      const turnstileToken = await requestBangumiTurnstileToken();
+      return deleteTimeline(request, timelineId, turnstileToken);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.publicUserTimeline(username),

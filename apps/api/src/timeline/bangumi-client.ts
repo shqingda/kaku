@@ -366,17 +366,21 @@ export async function deleteBangumiTimeline({
   accessToken,
   fetcher = fetch,
   timelineId,
+  turnstileToken,
 }: {
   accessToken: string;
   fetcher?: typeof fetch;
   timelineId: number;
+  turnstileToken: string;
 }): Promise<void> {
   const response = await fetcher(
     `${BANGUMI_PRIVATE_API_URL}/timeline/${timelineId}`,
     {
+      body: JSON.stringify({ turnstileToken }),
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
         'User-Agent': BANGUMI_USER_AGENT,
       },
       method: 'DELETE',
@@ -384,13 +388,25 @@ export async function deleteBangumiTimeline({
   );
 
   if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const code =
+      body &&
+      typeof body === 'object' &&
+      'code' in body &&
+      typeof body.code === 'string'
+        ? body.code
+        : undefined;
+
     throw new BangumiTimelineError(
       response.status,
-      response.status === 404
-        ? '这条动态已不存在。'
-        : response.status >= 500
-          ? 'Bangumi 动态服务暂时不可用。'
-          : '动态没有删除成功，请稍后重试。',
+      code === 'CAPTCHA_ERROR'
+        ? '安全验证已过期，请重新验证后再试。'
+        : response.status === 404
+          ? '这条动态已不存在。'
+          : response.status >= 500
+            ? 'Bangumi 动态服务暂时不可用。'
+            : '动态没有删除成功，请稍后重试。',
+      code,
     );
   }
 }
