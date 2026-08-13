@@ -18,6 +18,8 @@ import type { PublicUserCollection } from '@/features/users/model';
 const HOME_TRACKING_TYPES = [
   { id: 2, label: '动画' },
   { id: 1, label: '书籍' },
+  { id: 3, label: '音乐' },
+  { id: 4, label: '游戏' },
   { id: 6, label: '三次元' },
 ] as const;
 

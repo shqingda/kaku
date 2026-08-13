@@ -14,6 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
+import {
+  getCollectionStatusLabel,
+  getSubjectTypeLabel,
+} from '@/features/catalog/subject-types';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
@@ -27,26 +31,29 @@ export default function HomeScreen() {
   const username = session?.user.username ?? '';
   const animeQuery = usePublicUserCollections(username, 2, 'doing');
   const bookQuery = usePublicUserCollections(username, 1, 'doing');
+  const musicQuery = usePublicUserCollections(username, 3, 'doing');
+  const gameQuery = usePublicUserCollections(username, 4, 'doing');
   const realQuery = usePublicUserCollections(username, 6, 'doing');
   const timelineQuery = useFriendTimeline();
-  const isRefreshing =
-    Boolean(session) &&
-    [animeQuery, bookQuery, realQuery, timelineQuery].some(
-      (query) => query.isRefetching && !query.isPending,
-    );
   const trackingQueries = {
     1: bookQuery,
     2: animeQuery,
+    3: musicQuery,
+    4: gameQuery,
     6: realQuery,
   } as const;
-  const selectedQuery = trackingQueries[selectedTrackingType as 1 | 2 | 6];
-  const trackingTitle =
-    selectedTrackingType === 1
-      ? '在读的书籍'
-      : selectedTrackingType === 6
-        ? '在看的三次元'
-        : '在看的动画';
-  const showsTrackingSection = [animeQuery, bookQuery, realQuery].some(
+  type TrackingType = keyof typeof trackingQueries;
+  const isRefreshing =
+    Boolean(session) &&
+    [...Object.values(trackingQueries), timelineQuery].some(
+      (query) => query.isRefetching && !query.isPending,
+    );
+  const selectedQuery = trackingQueries[selectedTrackingType as TrackingType];
+  const trackingTitle = `${getCollectionStatusLabel(
+    selectedTrackingType,
+    'doing',
+  )}的${getSubjectTypeLabel(selectedTrackingType)}`;
+  const showsTrackingSection = Object.values(trackingQueries).some(
     (query) =>
       query.isPending ||
       query.isError ||
@@ -62,9 +69,7 @@ export default function HomeScreen() {
 
   function refreshHome() {
     void Promise.all([
-      animeQuery.refetch(),
-      bookQuery.refetch(),
-      realQuery.refetch(),
+      ...Object.values(trackingQueries).map((query) => query.refetch()),
       timelineQuery.refetch(),
     ]);
   }
