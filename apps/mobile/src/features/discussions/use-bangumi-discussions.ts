@@ -13,6 +13,7 @@ import {
   getAuthenticatedSubjectTopic,
 } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import type { DiscussionTopicPage } from './model';
@@ -28,6 +29,7 @@ export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiDiscussionsProvider.getSubjectTopics(
         subjectId,
@@ -62,7 +64,7 @@ export function useBangumiSubjectTopic(topicId: number) {
       ...queryKeys.subjectTopic(topicId),
       session?.user.id ?? 'public',
     ],
-    meta: session ? { private: true } : undefined,
+    meta: session ? { private: true } : PUBLIC_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });
@@ -93,7 +95,7 @@ export function useBangumiEpisodeComments(episodeId?: number) {
       ...queryKeys.episodeComments(episodeId),
       session?.user.id ?? 'public',
     ],
-    meta: session ? { private: true } : undefined,
+    meta: session ? { private: true } : PUBLIC_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

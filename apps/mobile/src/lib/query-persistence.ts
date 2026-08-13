@@ -7,6 +7,7 @@ type PersistableQuery = {
 };
 
 export const QUERY_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+export const PUBLIC_QUERY_META = { persist: true } as const;
 // Increment this when persisted public query shapes change. It prevents an
 // older native install from hydrating data that current screens cannot read.
 export const QUERY_CACHE_BUSTER = 'public-catalog-v2';

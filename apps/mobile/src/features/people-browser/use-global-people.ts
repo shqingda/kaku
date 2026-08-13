@@ -2,6 +2,7 @@ import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 
 import { getGlobalPeople } from '@/infrastructure/kaku/people-browser-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type {
   GlobalPeoplePage,
@@ -26,6 +27,7 @@ export function useGlobalPeople(
     enabled,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       getGlobalPeople(kind, sort, type, gender, pageParam, signal),
     queryKey: queryKeys.globalPeople(kind, sort, type, gender),

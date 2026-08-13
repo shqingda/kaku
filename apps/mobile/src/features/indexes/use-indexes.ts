@@ -10,6 +10,7 @@ import type {
 } from './model';
 import { bangumiIndexesProvider } from '@/infrastructure/bangumi/indexes/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useSubjectIndexes(subjectId: number) {
@@ -23,6 +24,7 @@ export function useSubjectIndexes(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiIndexesProvider.getSubjectIndexes(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectIndexes(subjectId),
@@ -34,6 +36,7 @@ export function useSubjectIndexes(subjectId: number) {
 export function usePublicIndex(indexId: number) {
   return useQuery({
     enabled: Number.isInteger(indexId) && indexId > 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
       bangumiIndexesProvider.getIndex(indexId, signal),
     queryKey: queryKeys.publicIndex(indexId),
@@ -53,6 +56,7 @@ export function usePublicIndexItems(indexId: number) {
     enabled: Number.isInteger(indexId) && indexId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiIndexesProvider.getIndexItems(indexId, pageParam, signal),
     queryKey: queryKeys.publicIndexItems(indexId),

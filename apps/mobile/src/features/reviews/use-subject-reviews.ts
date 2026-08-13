@@ -13,6 +13,7 @@ import {
 import { mapBangumiReviewDetail } from '@/infrastructure/bangumi/reviews/adapter';
 import { getAuthenticatedReview } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import type {
@@ -32,6 +33,7 @@ export function useSubjectComments(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiReviewsProvider.getComments(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectComments(subjectId),
@@ -51,6 +53,7 @@ export function useSubjectReviews(subjectId: number) {
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiReviewsProvider.getReviews(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectReviews(subjectId),
@@ -84,7 +87,7 @@ export function useSubjectReview(reviewId: number) {
       ...queryKeys.subjectReview(reviewId),
       session?.user.id ?? 'public',
     ],
-    meta: session ? { private: true } : undefined,
+    meta: session ? { private: true } : PUBLIC_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });

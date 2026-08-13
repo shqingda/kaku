@@ -17,10 +17,12 @@ import {
 import { toPublicGroupTopic } from '@/infrastructure/bangumi/community/adapter';
 import { getAuthenticatedGroupTopic } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function usePublicCommunity() {
   return useQuery({
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => getPublicCommunity(signal),
     queryKey: queryKeys.community(),
     retry: shouldRetryBangumiQuery,
@@ -38,6 +40,7 @@ export function usePublicCommunityTopics() {
   >({
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       getPublicCommunityTopics(pageParam, signal),
     queryKey: queryKeys.communityTopics(),
@@ -49,6 +52,7 @@ export function usePublicCommunityTopics() {
 export function usePublicGroup(groupName: string) {
   return useQuery({
     enabled: groupName.trim().length > 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => getPublicGroup(groupName, signal),
     queryKey: queryKeys.group(groupName),
     retry: shouldRetryBangumiQuery,
@@ -67,6 +71,7 @@ export function usePublicGroupTopics(groupName: string) {
     enabled: groupName.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       getPublicGroupTopics(groupName, pageParam, signal),
     queryKey: queryKeys.groupTopics(groupName),
@@ -103,7 +108,7 @@ export function usePublicGroupTopic(topicId: number) {
       ...queryKeys.groupTopic(topicId),
       session?.user.id ?? 'public',
     ],
-    meta: session ? { private: true } : undefined,
+    meta: session ? { private: true } : PUBLIC_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

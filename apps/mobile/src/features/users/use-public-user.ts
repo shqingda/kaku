@@ -14,11 +14,13 @@ import type {
 import type { CollectionStatus } from '@/features/watching/model';
 import { bangumiUsersProvider } from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function usePublicUser(username: string) {
   return useQuery({
     enabled: username.trim().length > 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
       bangumiUsersProvider.getPublicUser(username, signal),
     queryKey: queryKeys.publicUser(username),
@@ -42,6 +44,7 @@ export function usePublicUserCollections(
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserCollections(
         username.trim(),
@@ -71,6 +74,7 @@ export function usePublicUserBlogs(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserBlogs(
         username.trim(),
@@ -94,6 +98,7 @@ export function usePublicUserFriends(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserFriends(
         username.trim(),
@@ -112,6 +117,7 @@ export function usePublicUserEntities(
 ) {
   return useQuery({
     enabled: username.trim().length > 0,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
       bangumiUsersProvider.getPublicUserEntities(
         username.trim(),
@@ -135,6 +141,7 @@ export function usePublicUserTimeline(username: string) {
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiUsersProvider.getPublicUserTimeline(
         username.trim(),
