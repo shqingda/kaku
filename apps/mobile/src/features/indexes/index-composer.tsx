@@ -15,19 +15,23 @@ import { COLORS } from '@/constants/design';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { playSuccessHaptic } from '@/lib/haptics';
 
-import { useCreateIndex } from './use-create-index';
+import { useCreateIndex, useUpdateIndex } from './use-create-index';
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_DESC_LENGTH = 2000;
 
-// 新建目录：标题 + 说明 + 可见范围，与话题/回复框共用 AppSheet。
+// 新建/编辑目录：标题 + 说明 + 可见范围，与话题/回复框共用 AppSheet。
 export function IndexComposer({
+  editing,
   onClose,
   onCreated,
+  onEdited,
   visible,
 }: {
+  editing?: { desc: string; indexId: number; isPrivate: boolean; title: string } | null;
   onClose: () => void;
-  onCreated: (indexId: number) => void;
+  onCreated?: (indexId: number) => void;
+  onEdited?: () => void;
   visible: boolean;
 }) {
   const insets = useSafeAreaInsets();
@@ -35,11 +39,22 @@ export function IndexComposer({
   const [desc, setDesc] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const createIndex = useCreateIndex();
-  const canPublish = title.trim().length > 0 && !createIndex.isPending;
+  const updateIndex = useUpdateIndex(editing?.indexId ?? 0);
+  const isEditing = editing != null;
+  const mutation = isEditing ? updateIndex : createIndex;
+  const canPublish = title.trim().length > 0 && !mutation.isPending;
 
   useEffect(() => {
     if (!visible) {
-      createIndex.reset();
+      mutation.reset();
+      return;
+    }
+
+    if (editing) {
+      setTitle(editing.title);
+      setDesc(editing.desc);
+      setIsPrivate(editing.isPrivate);
+    } else {
       setTitle('');
       setDesc('');
       setIsPrivate(false);
@@ -49,22 +64,32 @@ export function IndexComposer({
   function submit() {
     const nextTitle = title.trim();
 
-    if (!nextTitle || createIndex.isPending) {
+    if (!nextTitle || mutation.isPending) {
       return;
     }
 
-    createIndex.mutate(
-      { desc: desc.trim(), isPrivate, title: nextTitle },
-      {
-        onSuccess: (result) => {
+    const input = { desc: desc.trim(), isPrivate, title: nextTitle };
+
+    if (isEditing && editing) {
+      updateIndex.mutate(input, {
+        onSuccess: () => {
           playSuccessHaptic();
-          setTitle('');
-          setDesc('');
-          setIsPrivate(false);
-          onCreated(result.id);
+          onEdited?.();
+          onClose();
         },
+      });
+      return;
+    }
+
+    createIndex.mutate(input, {
+      onSuccess: (result) => {
+        playSuccessHaptic();
+        setTitle('');
+        setDesc('');
+        setIsPrivate(false);
+        onCreated?.(result.id);
       },
-    );
+    });
   }
 
   return (
@@ -79,7 +104,7 @@ export function IndexComposer({
           <Pressable
             accessibilityLabel="关闭"
             accessibilityRole="button"
-            disabled={createIndex.isPending}
+            disabled={mutation.isPending}
             hitSlop={8}
             onPress={onClose}
             style={({ pressed }) => [
@@ -95,10 +120,10 @@ export function IndexComposer({
             />
           </Pressable>
           <Text accessibilityRole="header" style={styles.title}>
-            新建目录
+            {isEditing ? '编辑目录' : '新建目录'}
           </Text>
           <Pressable
-            accessibilityLabel="创建目录"
+            accessibilityLabel={isEditing ? '保存目录' : '创建目录'}
             accessibilityRole="button"
             accessibilityState={{ disabled: !canPublish }}
             disabled={!canPublish}
@@ -110,10 +135,12 @@ export function IndexComposer({
               pressed && canPublish && styles.pressed,
             ]}
           >
-            {createIndex.isPending ? (
+            {mutation.isPending ? (
               <ActivityIndicator color={COLORS.surface} size="small" />
             ) : (
-              <Text style={styles.publishText}>创建</Text>
+              <Text style={styles.publishText}>
+                {isEditing ? '保存' : '创建'}
+              </Text>
             )}
           </Pressable>
         </View>
@@ -160,9 +187,9 @@ export function IndexComposer({
           />
         </View>
 
-        {createIndex.error ? (
+        {mutation.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {createIndex.error.message}
+            {mutation.error.message}
           </Text>
         ) : null}
       </View>

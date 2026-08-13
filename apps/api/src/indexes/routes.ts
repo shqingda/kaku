@@ -1,4 +1,4 @@
-import type { Hono } from 'hono';
+import type { Context, Hono } from 'hono';
 import { z } from 'zod';
 
 import { BangumiOAuthError } from '../auth/bangumi-client.ts';
@@ -17,8 +17,10 @@ import {
   BangumiIndexListError,
   BangumiIndexWriteError,
   createBangumiIndex,
+  deleteBangumiIndex,
   getBangumiIndexes,
   type IndexSort,
+  updateBangumiIndex,
 } from './bangumi-client.ts';
 
 const INDEX_SORTS = new Set<IndexSort>(['latest', 'popular']);
@@ -28,6 +30,11 @@ const createIndexSchema = z.object({
   desc: z.string().trim().max(2000).optional(),
   private: z.boolean().optional(),
 });
+
+function getPositiveId(value: string | undefined) {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
 
 export function registerIndexRoutes(
   app: Hono<{ Bindings: Env }>,
@@ -74,18 +81,11 @@ export function registerIndexRoutes(
     }
   });
 
-  app.post('/me/indexes', async (context) => {
-    const parsedBody = createIndexSchema.safeParse(
-      await context.req.json().catch(() => null),
-    );
-
-    if (!parsedBody.success) {
-      return context.json(
-        { error: 'invalid_index', message: '目录标题或说明格式不正确。' },
-        400,
-      );
-    }
-
+  async function withIndexWrite(
+    context: Context<{ Bindings: Env }>,
+    errorKey: string,
+    action: (accessToken: string) => Promise<unknown>,
+  ) {
     const store = dependencies.createStore
       ? dependencies.createStore(context.env.DB)
       : createD1AuthStore(context.env.DB);
@@ -103,15 +103,7 @@ export function registerIndexRoutes(
         store,
         userId: authentication.userId,
       });
-      const result = await createBangumiIndex({
-        accessToken,
-        desc: parsedBody.data.desc ?? '',
-        fetcher,
-        isPrivate: parsedBody.data.private,
-        title: parsedBody.data.title,
-      });
-
-      return context.json(result);
+      return context.json(await action(accessToken));
     } catch (error) {
       if (error instanceof BangumiReauthorizationRequiredError) {
         return context.json(
@@ -133,12 +125,14 @@ export function registerIndexRoutes(
         }
 
         return context.json(
-          { error: 'bangumi_index_create_failed', message: error.message },
-          error.status === 429
-            ? 429
-            : error.status >= 500
-              ? 503
-              : 502,
+          { error: errorKey, message: error.message },
+          error.status === 404
+            ? 404
+            : error.status === 429
+              ? 429
+              : error.status >= 500
+                ? 503
+                : 502,
         );
       }
 
@@ -154,5 +148,68 @@ export function registerIndexRoutes(
 
       throw error;
     }
+  }
+
+  app.post('/me/indexes', async (context) => {
+    const parsedBody = createIndexSchema.safeParse(
+      await context.req.json().catch(() => null),
+    );
+
+    if (!parsedBody.success) {
+      return context.json(
+        { error: 'invalid_index', message: '目录标题或说明格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(context, 'bangumi_index_create_failed', (accessToken) =>
+      createBangumiIndex({
+        accessToken,
+        desc: parsedBody.data.desc ?? '',
+        fetcher,
+        isPrivate: parsedBody.data.private,
+        title: parsedBody.data.title,
+      }),
+    );
+  });
+
+  app.patch('/me/indexes/:indexId', async (context) => {
+    const indexId = getPositiveId(context.req.param('indexId'));
+    const parsedBody = createIndexSchema.safeParse(
+      await context.req.json().catch(() => null),
+    );
+
+    if (!indexId || !parsedBody.success) {
+      return context.json(
+        { error: 'invalid_index', message: '目录标题或说明格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(context, 'bangumi_index_update_failed', (accessToken) =>
+      updateBangumiIndex({
+        accessToken,
+        desc: parsedBody.data.desc ?? '',
+        fetcher,
+        indexId,
+        isPrivate: parsedBody.data.private,
+        title: parsedBody.data.title,
+      }),
+    );
+  });
+
+  app.delete('/me/indexes/:indexId', async (context) => {
+    const indexId = getPositiveId(context.req.param('indexId'));
+
+    if (!indexId) {
+      return context.json(
+        { error: 'invalid_index_id', message: '目录编号格式不正确。' },
+        400,
+      );
+    }
+
+    return withIndexWrite(context, 'bangumi_index_delete_failed', (accessToken) =>
+      deleteBangumiIndex({ accessToken, fetcher, indexId }),
+    );
   });
 }

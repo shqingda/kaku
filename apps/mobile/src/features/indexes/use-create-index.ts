@@ -1,18 +1,52 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
-import { createIndex } from '@/infrastructure/kaku/indexes-client';
+import {
+  createIndex,
+  deleteIndex,
+  updateIndex,
+} from '@/infrastructure/kaku/indexes-client';
+import { queryKeys } from '@/lib/query-keys';
+
+type IndexInput = { desc: string; isPrivate?: boolean; title: string };
 
 export function useCreateIndex() {
   const { request } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: {
-      desc: string;
-      isPrivate?: boolean;
-      title: string;
-    }) => createIndex(request, input),
+    mutationFn: (input: IndexInput) => createIndex(request, input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['indexes', 'kaku'],
+      });
+    },
+  });
+}
+
+export function useUpdateIndex(indexId: number) {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: IndexInput) => updateIndex(request, indexId, input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.publicIndex(indexId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['indexes', 'kaku'],
+      });
+    },
+  });
+}
+
+export function useDeleteIndex() {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (indexId: number) => deleteIndex(request, indexId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['indexes', 'kaku'],

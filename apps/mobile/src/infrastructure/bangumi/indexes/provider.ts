@@ -30,6 +30,7 @@ export const bangumiIndexesProvider: IndexesProvider = {
       ...summary,
       collects: detail.collects,
       description: detail.desc,
+      isPrivate: detail.private,
       replyCount: detail.replies,
     };
   },

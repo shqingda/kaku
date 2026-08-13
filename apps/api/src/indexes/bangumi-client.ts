@@ -69,6 +69,82 @@ export async function createBangumiIndex({
   return createdIndexSchema.parse(await response.json());
 }
 
+export async function updateBangumiIndex({
+  accessToken,
+  desc,
+  fetcher = fetch,
+  indexId,
+  isPrivate,
+  title,
+}: {
+  accessToken: string;
+  desc: string;
+  fetcher?: typeof fetch;
+  indexId: number;
+  isPrivate?: boolean;
+  title: string;
+}): Promise<void> {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/indexes/${indexId}`,
+    {
+      body: JSON.stringify({ desc, private: isPrivate, title }),
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+      method: 'PATCH',
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiIndexWriteError(
+      response.status,
+      response.status === 429
+        ? '操作得太频繁了，请稍后再试。'
+        : response.status >= 500
+          ? 'Bangumi 暂时不可用，请稍后重试。'
+          : '目录没有更新成功，请稍后重试。',
+    );
+  }
+}
+
+export async function deleteBangumiIndex({
+  accessToken,
+  fetcher = fetch,
+  indexId,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  indexId: number;
+}): Promise<void> {
+  const response = await fetcher(
+    `${BANGUMI_PRIVATE_API_URL}/indexes/${indexId}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': BANGUMI_USER_AGENT,
+      },
+      method: 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw new BangumiIndexWriteError(
+      response.status,
+      response.status === 404
+        ? '这个目录已不存在。'
+        : response.status === 429
+          ? '操作得太频繁了，请稍后再试。'
+          : response.status >= 500
+            ? 'Bangumi 暂时不可用，请稍后重试。'
+            : '目录没有删除成功，请稍后重试。',
+    );
+  }
+}
+
 function decodeHtml(value: string) {
   return value
     .replace(/<br\s*\/?>/gi, '\n')

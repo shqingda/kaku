@@ -63,3 +63,32 @@ export async function createIndex(
 
   return createdIndexSchema.parse(await response.json());
 }
+
+export async function updateIndex(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  indexId: number,
+  input: { desc: string; isPrivate?: boolean; title: string },
+): Promise<void> {
+  const response = await request(`/me/indexes/${indexId}`, {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
+export async function deleteIndex(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  indexId: number,
+): Promise<void> {
+  const response = await request(`/me/indexes/${indexId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}

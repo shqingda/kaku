@@ -46,6 +46,7 @@ export type PublicIndexItem = {
 export type PublicIndexDetail = PublicIndexSummary & {
   collects: number;
   description: string;
+  isPrivate?: boolean;
   replyCount: number;
 };
 

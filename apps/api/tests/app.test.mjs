@@ -285,3 +285,28 @@ test('creating an index is registered as an authenticated route', async () => {
     message: '请先登录 Kaku。',
   });
 });
+
+test('editing and deleting an index are authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const [method, body] of [
+    ['PATCH', JSON.stringify({ desc: '', title: '标题' })],
+    ['DELETE', undefined],
+  ]) {
+    const response = await app.request(
+      '/me/indexes/20201',
+      {
+        body,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        method,
+      },
+      { DB: {} },
+    );
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});

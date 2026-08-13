@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import {
   type Href,
@@ -8,16 +8,26 @@ import {
   useLocalSearchParams,
 } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { IndexComposer } from '@/features/indexes/index-composer';
 import {
   usePublicIndex,
   usePublicIndexItems,
 } from '@/features/indexes/use-indexes';
+import { useDeleteIndex } from '@/features/indexes/use-create-index';
 import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -25,15 +35,63 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function PublicIndexScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { session } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
   const indexId = parsePositiveIntegerRouteParam(id);
   const indexQuery = usePublicIndex(indexId ?? 0);
   const itemsQuery = usePublicIndexItems(indexId ?? 0);
+  const deleteIndex = useDeleteIndex();
   const index = indexQuery.data;
   const items = useMemo(
     () => itemsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [itemsQuery.data],
   );
   const itemTotal = itemsQuery.data?.pages[0]?.total ?? 0;
+  const isOwnIndex =
+    Boolean(session) && index?.authorUsername === session?.user.username;
+
+  function openMenu() {
+    if (!index) {
+      return;
+    }
+
+    Alert.alert(index.title, undefined, [
+      {
+        onPress: () => setComposerVisible(true),
+        text: '编辑目录',
+      },
+      {
+        onPress: confirmDelete,
+        style: 'destructive',
+        text: '删除目录',
+      },
+      { style: 'cancel', text: '取消' },
+    ]);
+  }
+
+  function confirmDelete() {
+    if (!indexId) {
+      return;
+    }
+
+    Alert.alert(
+      '删除这个目录？',
+      '目录及其收录条目会被永久删除，无法恢复。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => {
+            deleteIndex.mutate(indexId, {
+              onError: (error) => Alert.alert('目录没有删除', error.message),
+              onSuccess: () => router.back(),
+            });
+          },
+          style: 'destructive',
+          text: '删除',
+        },
+      ],
+    );
+  }
 
   if (!indexId) {
     return <InvalidRouteState message="这个目录链接缺少有效编号。" />;
@@ -94,7 +152,32 @@ export default function PublicIndexScreen() {
             />
             {index ? (
               <View style={styles.headerCard}>
-                <Text style={styles.title}>{index.title}</Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.title}>{index.title}</Text>
+                  {isOwnIndex ? (
+                    <Pressable
+                      accessibilityLabel="更多目录操作"
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      onPress={openMenu}
+                      style={({ pressed }) => [
+                        styles.overflowButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <SymbolView
+                        name={{
+                          android: 'more_horiz',
+                          ios: 'ellipsis',
+                          web: 'more_horiz',
+                        }}
+                        size={17}
+                        tintColor={COLORS.muted}
+                        weight="semibold"
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
                 {index.authorUsername ? (
                   <Pressable
                     onPress={() =>
@@ -213,6 +296,21 @@ export default function PublicIndexScreen() {
         }}
         showsVerticalScrollIndicator={false}
       />
+      <IndexComposer
+        editing={
+          index && isOwnIndex
+            ? {
+                desc: index.description ?? '',
+                indexId: index.id,
+                isPrivate: index.isPrivate ?? false,
+                title: index.title,
+              }
+            : null
+        }
+        onClose={() => setComposerVisible(false)}
+        onEdited={() => setComposerVisible(false)}
+        visible={composerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -278,8 +376,19 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 20,
   },
+  titleRow: { alignItems: 'flex-start', flexDirection: 'row' },
+  overflowButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    marginLeft: 8,
+    width: 32,
+  },
   title: {
     color: COLORS.ink,
+    flex: 1,
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,

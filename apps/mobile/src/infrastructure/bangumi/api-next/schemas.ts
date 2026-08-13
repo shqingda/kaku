@@ -135,6 +135,7 @@ export type BangumiSubjectCharacterName = z.infer<
 export const bangumiIndexSchema = bangumiSlimIndexSchema.extend({
   collects: z.number(),
   desc: z.string(),
+  private: z.boolean().optional(),
   replies: z.number(),
 });
 

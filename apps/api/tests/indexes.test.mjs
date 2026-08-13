@@ -130,3 +130,59 @@ test('creating an index maps rate limits to a retry message', async () => {
     },
   );
 });
+
+test('updating an index PATCHes the private index endpoint', async () => {
+  const { updateBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/indexes/20201');
+    assert.equal(init.method, 'PATCH');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), {
+      desc: '更新后的说明',
+      private: false,
+      title: '更新后的标题',
+    });
+    return new Response('{}', { status: 200 });
+  };
+
+  await updateBangumiIndex({
+    accessToken: 'access-token',
+    desc: '更新后的说明',
+    fetcher,
+    indexId: 20201,
+    isPrivate: false,
+    title: '更新后的标题',
+  });
+});
+
+test('deleting an index DELETEs the private index endpoint', async () => {
+  const { deleteBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/indexes/20201');
+    assert.equal(init.method, 'DELETE');
+    return new Response('{}', { status: 200 });
+  };
+
+  await deleteBangumiIndex({
+    accessToken: 'access-token',
+    fetcher,
+    indexId: 20201,
+  });
+});
+
+test('deleting a missing index maps to a not-found message', async () => {
+  const { BangumiIndexWriteError, deleteBangumiIndex } = await import(
+    '../src/indexes/bangumi-client.ts'
+  );
+  const fetcher = async () => new Response('{}', { status: 404 });
+
+  await assert.rejects(
+    () => deleteBangumiIndex({ accessToken: 'access-token', fetcher, indexId: 1 }),
+    (error) => {
+      assert.ok(error instanceof BangumiIndexWriteError);
+      assert.equal(error.status, 404);
+      assert.equal(error.message, '这个目录已不存在。');
+      return true;
+    },
+  );
+});
