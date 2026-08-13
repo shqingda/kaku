@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -34,10 +34,15 @@ import {
 } from '@/features/indexes/use-index-collection';
 import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function PublicIndexScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -135,27 +140,15 @@ export default function PublicIndexScreen() {
         keyExtractor={(item, index) => `${item.id}-${index}`}
         ListEmptyComponent={
           itemsQuery.isPending ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>正在读取目录条目。</Text>
-            </View>
+            <AppState text="正在读取目录条目。" title="条目加载中" />
           ) : itemsQuery.isError ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>目录条目读取失败。</Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void itemsQuery.refetch()}
-                style={({ pressed }) => [
-                  styles.retry,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.retryText}>重试</Text>
-              </Pressable>
-            </View>
+            <AppState
+              action={() => void itemsQuery.refetch()}
+              text="请检查网络后重试。"
+              title="目录条目读取失败"
+            />
           ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>目录中暂无条目。</Text>
-            </View>
+            <AppState text="目录中暂无条目。" title="暂无条目" />
           )
         }
         ListFooterComponent={
@@ -201,7 +194,7 @@ export default function PublicIndexScreen() {
                           web: 'more_horiz',
                         }}
                         size={17}
-                        tintColor={COLORS.muted}
+                        tintColor={colors.muted}
                         weight="semibold"
                       />
                     </Pressable>
@@ -250,7 +243,7 @@ export default function PublicIndexScreen() {
                     }
                     size={14}
                     tintColor={
-                      collectionQuery.data ? COLORS.surface : COLORS.accent
+                      collectionQuery.data ? colors.surface : colors.accent
                     }
                     weight="semibold"
                   />
@@ -285,13 +278,17 @@ export default function PublicIndexScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={() =>
-          void Promise.all([indexQuery.refetch(), itemsQuery.refetch()])
-        }
-        refreshing={
-          (indexQuery.isRefetching || itemsQuery.isRefetching) &&
-          !indexQuery.isPending &&
-          !itemsQuery.isPending
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() =>
+              void Promise.all([indexQuery.refetch(), itemsQuery.refetch()])
+            }
+            refreshing={
+              (indexQuery.isRefetching || itemsQuery.isRefetching) &&
+              !indexQuery.isPending &&
+              !itemsQuery.isPending
+            }
+          />
         }
         renderItem={({ item }) => {
           const href = getIndexItemHref(item);
@@ -299,7 +296,7 @@ export default function PublicIndexScreen() {
             <Pressable
               accessibilityHint={href ? '进入详情' : undefined}
               accessibilityLabel={`打开${item.title}`}
-              accessibilityRole="button"
+              accessibilityRole={href ? 'button' : undefined}
               style={styles.subjectRow}
             >
               {href ? <Link.AppleZoom>
@@ -350,7 +347,7 @@ export default function PublicIndexScreen() {
                   web: 'chevron_right',
                 }}
                 size={14}
-                tintColor={COLORS.subtle}
+                tintColor={colors.subtle}
                 weight="semibold"
               />
             </Pressable>
@@ -432,18 +429,18 @@ function getIndexItemHref(item: PublicIndexItem): Href | undefined {
   }
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: 10, padding: 20, paddingBottom: 44 },
   headerCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 20,
   },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row' },
   overflowButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
@@ -451,7 +448,7 @@ const styles = StyleSheet.create({
     width: 32,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 24,
     fontWeight: '800',
@@ -459,35 +456,35 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   author: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 8,
   },
   description: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 22,
     marginTop: 16,
   },
-  stats: { color: COLORS.subtle, fontSize: 12, marginTop: 14 },
+  stats: { color: colors.subtle, fontSize: 12, marginTop: 14 },
   collectButton: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 15,
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
     marginTop: 16,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 16,
   },
-  collectedButton: { backgroundColor: COLORS.accent },
-  collectText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
-  collectedText: { color: COLORS.surface },
+  collectedButton: { backgroundColor: colors.accent },
+  collectText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  collectedText: { color: colors.surface },
   sectionTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 19,
     fontWeight: '800',
   },
@@ -498,10 +495,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 14,
   },
-  sectionMeta: { color: COLORS.subtle, fontSize: 12 },
+  sectionMeta: { color: colors.subtle, fontSize: 12 },
   subjectRow: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 92,
@@ -509,36 +506,26 @@ const styles = StyleSheet.create({
   },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 11,
     height: 72,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 51,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 14, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 14, fontWeight: '700' },
   subjectMain: { flex: 1, marginLeft: 13 },
   subjectTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 21,
   },
   subjectMeta: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 6,
   },
   pressed: { opacity: 0.62 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 12,
-    marginTop: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
 });
