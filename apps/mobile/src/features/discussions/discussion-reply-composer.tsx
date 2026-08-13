@@ -74,6 +74,9 @@ export function DiscussionReplyComposer({
           : editReviewReply;
   const isEditing = editing != null;
   const pending = createReply.isPending || editReply.isPending;
+  const hasUnsavedChanges = isEditing
+    ? content !== editing.content
+    : Boolean(content.trim());
   const canSend = content.trim().length > 0 && !pending;
   const displayError = createReply.error ?? editReply.error;
 
@@ -101,8 +104,7 @@ export function DiscussionReplyComposer({
       return;
     }
 
-    const initialContent = editing?.content ?? '';
-    if (content !== initialContent && content.trim()) {
+    if (hasUnsavedChanges) {
       confirmDiscard(finishClose);
       return;
     }
@@ -150,7 +152,11 @@ export function DiscussionReplyComposer({
   }
 
   return (
-    <AppSheet onClose={close} visible={visible}>
+    <AppSheet
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !pending}
+      visible={visible}
+    >
       <View
         style={[
           styles.content,

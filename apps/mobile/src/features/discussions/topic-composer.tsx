@@ -53,6 +53,7 @@ export function TopicComposer({
   );
   const mutation =
     target.kind === 'subject' ? createSubjectTopic : createGroupTopic;
+  const hasUnsavedChanges = Boolean(title.trim() || content.trim());
   const canPublish =
     title.trim().length > 0 &&
     content.trim().length > 0 &&
@@ -76,7 +77,7 @@ export function TopicComposer({
       return;
     }
 
-    if (title.trim() || content.trim()) {
+    if (hasUnsavedChanges) {
       confirmDiscard(finishClose);
       return;
     }
@@ -107,7 +108,11 @@ export function TopicComposer({
   }
 
   return (
-    <AppSheet onClose={close} visible={visible}>
+    <AppSheet
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
+      visible={visible}
+    >
       <View
         style={[
           styles.content,

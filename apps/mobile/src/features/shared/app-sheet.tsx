@@ -39,11 +39,15 @@ export function AppSheet({
   children,
   keyboardAvoidingBehavior = Platform.OS === 'ios' ? 'padding' : undefined,
   onClose,
+  onShow,
+  swipeToDismissEnabled = true,
   visible,
 }: {
   children: ReactNode;
   keyboardAvoidingBehavior?: 'height' | 'padding' | 'position' | undefined;
   onClose: () => void;
+  onShow?: () => void;
+  swipeToDismissEnabled?: boolean;
   visible: boolean;
 }) {
   const { height: windowHeight } = useWindowDimensions();
@@ -121,7 +125,7 @@ export function AppSheet({
   );
 
   const pan = Gesture.Pan()
-    .enabled(!reduceMotion)
+    .enabled(!reduceMotion && swipeToDismissEnabled)
     .onBegin(() => {
       cancelAnimation(translateY);
     })
@@ -189,6 +193,7 @@ export function AppSheet({
     <Modal
       animationType="none"
       onRequestClose={onClose}
+      onShow={onShow}
       transparent
       visible={mounted}
     >

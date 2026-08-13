@@ -46,6 +46,11 @@ export function IndexComposer({
   const updateIndex = useUpdateIndex(editing?.indexId ?? 0);
   const isEditing = editing != null;
   const mutation = isEditing ? updateIndex : createIndex;
+  const hasUnsavedChanges = editing
+    ? title !== editing.title ||
+      desc !== editing.desc ||
+      isPrivate !== editing.isPrivate
+    : Boolean(title.trim() || desc.trim() || isPrivate);
   const canPublish = title.trim().length > 0 && !mutation.isPending;
 
   useEffect(() => {
@@ -74,13 +79,7 @@ export function IndexComposer({
       return;
     }
 
-    const hasChanges = editing
-      ? title !== editing.title ||
-        desc !== editing.desc ||
-        isPrivate !== editing.isPrivate
-      : Boolean(title.trim() || desc.trim() || isPrivate);
-
-    if (hasChanges) {
+    if (hasUnsavedChanges) {
       confirmDiscard(finishClose);
       return;
     }
@@ -120,7 +119,11 @@ export function IndexComposer({
   }
 
   return (
-    <AppSheet onClose={close} visible={visible}>
+    <AppSheet
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
+      visible={visible}
+    >
       <View
         style={[
           styles.content,

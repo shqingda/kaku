@@ -50,6 +50,7 @@ export function ReportSheet({
   const [reason, setReason] = useState<number>();
   const [comment, setComment] = useState('');
   const createReport = useCreateReport();
+  const hasUnsavedChanges = reason !== undefined || Boolean(comment.trim());
   const canSubmit =
     reason !== undefined && !createReport.isPending;
 
@@ -66,7 +67,7 @@ export function ReportSheet({
       return;
     }
 
-    if (reason !== undefined || comment.trim()) {
+    if (hasUnsavedChanges) {
       confirmDiscard(onClose);
       return;
     }
@@ -97,7 +98,11 @@ export function ReportSheet({
   }
 
   return (
-    <AppSheet onClose={close} visible={visible}>
+    <AppSheet
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !createReport.isPending}
+      visible={visible}
+    >
       <View
         style={[
           styles.content,
