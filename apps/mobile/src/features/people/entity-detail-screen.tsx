@@ -120,7 +120,21 @@ export function EntityDetailScreen({
     updateScrollMode();
   }
 
+  const scrollToBottomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const scrollToBottomActiveRef = useRef(false);
+
+  function cancelScrollToBottom() {
+    scrollToBottomActiveRef.current = false;
+    if (scrollToBottomTimerRef.current) {
+      clearTimeout(scrollToBottomTimerRef.current);
+      scrollToBottomTimerRef.current = null;
+    }
+  }
+
   function scrollCommentsToTop() {
+    cancelScrollToBottom();
     commentsListRef.current?.scrollToOffset({ animated: true, offset: 0 });
   }
 
@@ -129,19 +143,29 @@ export function EntityDetailScreen({
 
     // 虚拟化下 scrollToEnd 按已渲染条目的平均高度估算偏移，条目高度不一
     // 时会停在中间；滚动途中渲染出更多条目后反复修正，直到真正到底。
+    // 中途触发回到顶部或用户手动拖动时取消，避免把列表再拽回底部。
+    scrollToBottomActiveRef.current = true;
     let attempts = 0;
     const maxAttempts = 40;
 
     function step() {
-      if (attempts >= maxAttempts) return;
+      if (!scrollToBottomActiveRef.current) return;
+      if (attempts >= maxAttempts) {
+        scrollToBottomActiveRef.current = false;
+        return;
+      }
       attempts += 1;
       commentsListRef.current?.scrollToEnd({ animated: true });
 
-      setTimeout(() => {
+      scrollToBottomTimerRef.current = setTimeout(() => {
         const { content, scrollY, viewport } = scrollMetricsRef.current;
         const reached =
           content > 0 && viewport > 0 && scrollY + viewport >= content - 4;
-        if (!reached) step();
+        if (reached) {
+          scrollToBottomActiveRef.current = false;
+        } else {
+          step();
+        }
       }, 360);
     }
 
@@ -439,6 +463,7 @@ export function EntityDetailScreen({
             onContentSizeChange={handleCommentsContentSizeChange}
             onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
+            onScrollBeginDrag={cancelScrollToBottom}
             onScrollToIndexFailed={handleScrollToIndexFailed}
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
