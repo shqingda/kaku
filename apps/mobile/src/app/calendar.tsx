@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { useBangumiCalendar } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { useTheme } from '@/features/theme/theme-provider';
 
 function currentWeekdayId() {
   const day = new Date().getDay();
@@ -25,6 +26,8 @@ function currentWeekdayId() {
 }
 
 export default function CalendarScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const calendarQuery = useBangumiCalendar();
   const selectedCalendarDay = useMemo(
@@ -135,6 +138,9 @@ function CalendarRow({
   isLast: boolean;
   item: DiscoverSubject;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -175,7 +181,7 @@ function CalendarRow({
       <SymbolView
         name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
         size={13}
-        tintColor={COLORS.subtle}
+        tintColor={colors.subtle}
         weight="semibold"
       />
     </Pressable>
@@ -191,9 +197,12 @@ function CalendarState({
   loading?: boolean;
   text: string;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.state}>
-      {loading ? <ActivityIndicator color={COLORS.accent} /> : null}
+      {loading ? <ActivityIndicator color={colors.accent} /> : null}
       <Text style={styles.stateText}>{text}</Text>
       {action ? (
         <Pressable onPress={action} style={styles.retryButton}>
@@ -204,8 +213,8 @@ function CalendarState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     paddingBottom: 48,
     paddingHorizontal: 20,
@@ -213,22 +222,23 @@ const styles = StyleSheet.create({
   header: { paddingBottom: 16 },
   hero: { paddingHorizontal: 4, paddingTop: 24 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 34,
     fontWeight: '800',
     letterSpacing: -1,
   },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 8 },
+  subtitle: { color: colors.muted, fontSize: 14, marginTop: 8 },
   dayTabs: { gap: 8, paddingRight: 20, paddingTop: 22 },
   dayTab: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 13,
     paddingHorizontal: 17,
-    paddingVertical: 10,
+    justifyContent: 'center',
+    minHeight: 44,
   },
-  dayTabSelected: { backgroundColor: COLORS.ink },
-  dayTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  dayTabTextSelected: { color: COLORS.surface },
+  dayTabSelected: { backgroundColor: colors.ink },
+  dayTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  dayTabTextSelected: { color: colors.surface },
   listHeading: {
     alignItems: 'baseline',
     flexDirection: 'row',
@@ -238,20 +248,20 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   listTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   countText: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
   row: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     minHeight: 112,
     padding: 12,
@@ -267,7 +277,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   rowDivider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.divider,
     height: StyleSheet.hairlineWidth,
     left: 94,
     position: 'absolute',
@@ -277,7 +287,7 @@ const styles = StyleSheet.create({
   rowPressed: { opacity: 0.62 },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderCurve: 'continuous',
     borderRadius: 14,
     height: 88,
@@ -285,39 +295,39 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 66,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 18, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 18, fontWeight: '700' },
   rowCopy: { flex: 1, paddingHorizontal: 14 },
   rowTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 22,
   },
   rowMeta: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
     marginTop: 8,
   },
   state: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 22,
     gap: 10,
     padding: 30,
   },
   stateText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 13,
     paddingHorizontal: 17,
     paddingVertical: 9,
   },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
 });

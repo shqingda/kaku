@@ -14,12 +14,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BLOG_FILTERS, type BlogFilter, type GlobalBlog } from '@/features/blogs/model';
 import { useGlobalBlogs } from '@/features/blogs/use-global-blogs';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function GlobalBlogsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<BlogFilter>('all');
   const blogsQuery = useGlobalBlogs(filter);
   const blogs = useMemo(
@@ -102,8 +106,12 @@ export default function GlobalBlogsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={() => void blogsQuery.refetch()}
-        refreshing={blogsQuery.isRefetching && !blogsQuery.isPending}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void blogsQuery.refetch()}
+            refreshing={blogsQuery.isRefetching && !blogsQuery.isPending}
+          />
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <BlogRow
@@ -139,6 +147,9 @@ function BlogRow({
   item: GlobalBlog;
   onPress: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={[
@@ -183,41 +194,41 @@ function BlogRow({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: COLORS.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   filters: { gap: 8, paddingTop: 20 },
   filter: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 15,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
-  filterSelected: { backgroundColor: COLORS.ink },
-  filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  filterTextSelected: { color: COLORS.surface },
-  rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
+  filterSelected: { backgroundColor: colors.ink },
+  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterTextSelected: { color: colors.surface },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   row: { flexDirection: 'row', minHeight: 144, paddingVertical: 16 },
-  rowDivider: { borderTopColor: COLORS.track, borderTopWidth: StyleSheet.hairlineWidth },
+  rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     height: 108,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 76,
   },
-  coverFallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
   rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
-  rowTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  summary: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  rowMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 9 },
+  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  summary: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 9 },
   pressed: { opacity: 0.62 },
 });
