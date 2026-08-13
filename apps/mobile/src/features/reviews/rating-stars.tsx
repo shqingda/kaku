@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 
 type RatingStarsProps = {
   rating: number;
@@ -9,6 +11,8 @@ type RatingStarsProps = {
 };
 
 export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const fivePointRating = Math.max(0, Math.min(5, rating / 2));
 
   return (
@@ -37,7 +41,7 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
                 style={[
                   styles.androidStar,
                   {
-                    color: COLORS.subtle,
+                    color: colors.subtle,
                     fontSize: size,
                     lineHeight: size,
                   },
@@ -56,7 +60,7 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
                     style={[
                       styles.androidStar,
                       {
-                        color: COLORS.accent,
+                        color: colors.accent,
                         fontSize: size,
                         lineHeight: size,
                         width: size,
@@ -90,7 +94,7 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
                     }
             }
             size={size}
-            tintColor={isFull || isHalf ? COLORS.accent : COLORS.subtle}
+            tintColor={isFull || isHalf ? colors.accent : colors.subtle}
           />
         );
       })}
@@ -98,7 +102,7 @@ export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (_colors: ThemeColors) => StyleSheet.create({
   androidStar: {
     left: 0,
     position: 'absolute',

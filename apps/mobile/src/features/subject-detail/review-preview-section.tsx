@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { SubjectReview } from '@/features/reviews/model';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export function ReviewPreviewSection({
@@ -22,6 +24,9 @@ export function ReviewPreviewSection({
   reviews: SubjectReview[];
   total?: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
@@ -98,7 +103,7 @@ export function ReviewPreviewSection({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   section: { marginBottom: 14, marginTop: 4 },
   header: {
     alignItems: 'flex-end',
@@ -107,49 +112,49 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
-  title: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
-  meta: { color: COLORS.subtle, fontSize: 12 },
+  title: { color: colors.ink, fontSize: 18, fontWeight: '700' },
+  meta: { color: colors.subtle, fontSize: 12 },
   list: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   row: { alignItems: 'center', flexDirection: 'row', paddingVertical: 16 },
   rowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   main: { flex: 1, paddingRight: 14 },
   reviewTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 22,
   },
-  summary: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
-  reviewMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 8 },
+  summary: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  reviewMeta: { color: colors.subtle, fontSize: 12, marginTop: 8 },
   replyCount: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
     paddingHorizontal: 8,
   },
-  replyCountText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14, lineHeight: 21 },
+  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   more: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 13,
   },
-  moreText: { color: COLORS.accent, fontSize: 14, fontWeight: '700' },
-  chevron: { color: COLORS.subtle, fontSize: 25, fontWeight: '300' },
+  moreText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
+  chevron: { color: colors.subtle, fontSize: 25, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });

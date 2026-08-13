@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import type { CatalogSubject } from '@/features/catalog/model';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
+import { useTheme } from '@/features/theme/theme-provider';
 
 function formatCount(count?: number) {
   if (count === undefined) {
@@ -15,6 +17,9 @@ function formatCount(count?: number) {
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.metric}>
       <Text style={styles.metricValue}>{value}</Text>
@@ -24,6 +29,9 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.fact}>
       <Text style={styles.factLabel}>{label}</Text>
@@ -47,6 +55,8 @@ export function SubjectOverview({
   totalEpisodes: number;
   year?: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const rating = subject?.rating;
   const releaseDate =
     subject?.releaseDate?.replaceAll('-', '.') ??
@@ -145,9 +155,9 @@ export function SubjectOverview({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
@@ -155,40 +165,40 @@ const styles = StyleSheet.create({
   metrics: { alignItems: 'center', flexDirection: 'row' },
   metric: { alignItems: 'center', flex: 1 },
   metricValue: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 21,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     letterSpacing: -0.4,
   },
   metricLabel: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 10,
     fontWeight: '600',
     marginTop: 5,
   },
   metricDivider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     height: 34,
     width: StyleSheet.hairlineWidth,
   },
   divider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     height: StyleSheet.hairlineWidth,
     marginVertical: 18,
   },
   facts: { flexDirection: 'row', gap: 10 },
   fact: { flex: 1 },
-  factLabel: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
+  factLabel: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
   factValue: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 5,
   },
   originalTitleRow: {
     alignItems: 'center',
-    backgroundColor: '#F6F5F1',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 12,
     flexDirection: 'row',
     marginTop: 17,
@@ -196,23 +206,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   originalTitleLabel: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 11,
     fontWeight: '600',
     marginRight: 10,
   },
   originalTitleValue: {
-    color: COLORS.muted,
+    color: colors.muted,
     flex: 1,
     fontSize: 13,
     fontWeight: '600',
   },
   tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 14 },
   tag: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 10,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  tagText: { color: COLORS.accent, fontSize: 11, fontWeight: '700' },
+  tagText: { color: colors.accent, fontSize: 11, fontWeight: '700' },
 });

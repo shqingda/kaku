@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { SubjectComment } from '@/features/reviews/model';
 import { RatingStars } from '@/features/reviews/rating-stars';
+import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
 export function CommentPreviewSection({
@@ -22,6 +24,9 @@ export function CommentPreviewSection({
   onRetry: () => void;
   total?: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
@@ -112,7 +117,7 @@ export function CommentPreviewSection({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   section: { marginBottom: 14, marginTop: 4 },
   header: {
     alignItems: 'flex-end',
@@ -121,17 +126,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
-  title: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
-  meta: { color: COLORS.subtle, fontSize: 12 },
+  title: { color: colors.ink, fontSize: 18, fontWeight: '700' },
+  meta: { color: colors.subtle, fontSize: 12 },
   list: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   row: { paddingVertical: 16 },
   rowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   commentHeader: {
@@ -140,25 +145,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   author: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     fontWeight: '800',
     marginRight: 12,
   },
   authorButton: { flex: 1 },
-  body: { color: COLORS.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
-  date: { color: COLORS.subtle, fontSize: 11, marginTop: 9 },
+  body: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
+  date: { color: colors.subtle, fontSize: 11, marginTop: 9 },
   empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14, lineHeight: 21 },
+  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   more: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 13,
   },
-  moreText: { color: COLORS.accent, fontSize: 14, fontWeight: '700' },
-  chevron: { color: COLORS.subtle, fontSize: 25, fontWeight: '300' },
+  moreText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
+  chevron: { color: colors.subtle, fontSize: 25, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });

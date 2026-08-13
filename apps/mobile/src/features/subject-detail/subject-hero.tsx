@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export function SubjectHero({
   coverUrl,
@@ -15,6 +16,8 @@ export function SubjectHero({
   title: string;
   year?: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   return (
@@ -62,12 +65,12 @@ export function SubjectHero({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: 8 },
   coverFrame: { borderCurve: 'continuous', borderRadius: 24 },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderCurve: 'continuous',
     borderRadius: 24,
     height: 238,
@@ -76,10 +79,10 @@ const styles = StyleSheet.create({
     width: 170,
   },
   pressed: { opacity: 0.78 },
-  coverFallback: { color: COLORS.subtle, fontSize: 30, fontWeight: '700' },
-  year: { color: COLORS.accent, fontSize: 13, fontWeight: '700', marginTop: 22 },
+  coverFallback: { color: colors.subtle, fontSize: 30, fontWeight: '700' },
+  year: { color: colors.accent, fontSize: 13, fontWeight: '700', marginTop: 22 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
