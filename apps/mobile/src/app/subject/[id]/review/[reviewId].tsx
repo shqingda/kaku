@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
@@ -26,6 +26,7 @@ import { REPORT_TYPES } from '@/features/reports/types';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectReviewScreen() {
@@ -33,6 +34,8 @@ export default function SubjectReviewScreen() {
 }
 
 export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id, reviewId } = useLocalSearchParams<{
     id?: string;
     reviewId?: string;
@@ -215,7 +218,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
                   web: 'chat_bubble_outline',
                 }}
                 size={17}
-                tintColor={COLORS.muted}
+                tintColor={colors.muted}
               />
               <Text style={styles.replyButtonText}>
                 {isSigningIn
@@ -256,52 +259,52 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   contentView: { flex: 1 },
   list: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   reviewHeader: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
   },
   reviewTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.4,
     lineHeight: 30,
   },
   reviewMetaRow: { flexDirection: 'row', marginTop: 8 },
-  reviewAuthor: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
-  reviewMeta: { color: COLORS.subtle, fontSize: 12 },
+  reviewAuthor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+  reviewMeta: { color: colors.subtle, fontSize: 12 },
   reviewBody: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     lineHeight: 25,
     marginTop: 20,
   },
   replyHeading: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 22,
     paddingTop: 16,
   },
   replyBar: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
   },
   replyButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.inputBorder,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
@@ -309,6 +312,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 17,
   },
-  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  replyButtonText: { color: colors.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });

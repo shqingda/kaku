@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import { supportsWatchProgress } from '@/features/catalog/subject-types';
@@ -32,6 +32,7 @@ import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function formatAirDate(date?: string) {
@@ -39,6 +40,8 @@ function formatAirDate(date?: string) {
 }
 
 export default function EpisodeScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { episodeNumber: episodeParam, id } = useLocalSearchParams<{
     episodeNumber: string;
     id: string;
@@ -404,7 +407,7 @@ export default function EpisodeScreen() {
                   web: 'chat_bubble_outline',
                 }}
                 size={17}
-                tintColor={COLORS.muted}
+                tintColor={colors.muted}
               />
               <Text style={styles.replyButtonText}>
                 {isSigningIn
@@ -449,27 +452,27 @@ export default function EpisodeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   contentView: { flex: 1 },
   list: { flex: 1 },
   content: { padding: 20, paddingBottom: 28 },
   episodeCard: {
     alignItems: 'flex-start',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 22,
   },
-  subjectTitle: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  subjectTitle: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   episodeTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.7,
     marginTop: 8,
   },
   catalogEpisodeTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 25,
@@ -477,17 +480,17 @@ const styles = StyleSheet.create({
   },
   metaLine: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 14 },
   statusBadge: {
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  watchedStatusBadge: { backgroundColor: COLORS.accent },
+  watchedStatusBadge: { backgroundColor: colors.accent },
   pressedStatusBadge: { opacity: 0.65 },
-  statusText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
-  watchedStatusText: { color: COLORS.surface },
-  airDate: { color: COLORS.subtle, fontSize: 12 },
-  description: { color: COLORS.muted, fontSize: 14, lineHeight: 22, marginTop: 18 },
+  statusText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  watchedStatusText: { color: colors.surface },
+  airDate: { color: colors.subtle, fontSize: 12 },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 18 },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -496,40 +499,40 @@ const styles = StyleSheet.create({
     marginTop: 26,
     paddingHorizontal: 4,
   },
-  sectionTitle: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
-  remoteReplyCount: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: '800' },
+  remoteReplyCount: { color: colors.accent, fontSize: 12, fontWeight: '700' },
   emptyDiscussion: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 28,
   },
-  emptyTitle: { color: COLORS.ink, fontSize: 15, fontWeight: '700' },
-  emptyText: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  emptyTitle: { color: colors.ink, fontSize: 15, fontWeight: '700' },
+  emptyText: { color: colors.muted, fontSize: 13, marginTop: 6 },
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: COLORS.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: COLORS.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
+  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
     marginTop: 18,
     minHeight: 44,
     paddingHorizontal: 20,
   },
-  errorRetryText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   replyBar: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
   },
   replyButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.inputBorder,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
@@ -537,6 +540,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 17,
   },
-  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  replyButtonText: { color: colors.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });
