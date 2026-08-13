@@ -5,7 +5,7 @@ import { SymbolView } from 'expo-symbols';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import {
@@ -14,9 +14,13 @@ import {
 } from '@/features/community/use-community';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { TopicComposer } from '@/features/discussions/topic-composer';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { useTheme } from '@/features/theme/theme-provider';
 
 export default function GroupScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { name } = useLocalSearchParams<{ name: string }>();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -145,7 +149,7 @@ export default function GroupScreen() {
                           web: 'add_comment',
                         }}
                         size={13}
-                        tintColor={COLORS.surface}
+                        tintColor={colors.surface}
                         weight="semibold"
                       />
                       <Text style={styles.newTopicText}>发话题</Text>
@@ -185,13 +189,17 @@ export default function GroupScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={() =>
-          void Promise.all([groupQuery.refetch(), topicsQuery.refetch()])
-        }
-        refreshing={
-          (groupQuery.isRefetching || topicsQuery.isRefetching) &&
-          !groupQuery.isPending &&
-          !topicsQuery.isPending
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() =>
+              void Promise.all([groupQuery.refetch(), topicsQuery.refetch()])
+            }
+            refreshing={
+              (groupQuery.isRefetching || topicsQuery.isRefetching) &&
+              !groupQuery.isPending &&
+              !topicsQuery.isPending
+            }
+          />
         }
         renderItem={({ index, item }) => (
           <View
@@ -232,8 +240,8 @@ export default function GroupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { padding: 20, paddingBottom: 44 },
   groupHeader: {
     alignItems: 'center',
@@ -242,36 +250,37 @@ const styles = StyleSheet.create({
   },
   icon: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 21,
     height: 76,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 76,
   },
-  iconFallback: { color: COLORS.subtle, fontSize: 22, fontWeight: '800' },
+  iconFallback: { color: colors.subtle, fontSize: 22, fontWeight: '800' },
   groupMain: { flex: 1, marginLeft: 17 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 25,
     fontWeight: '800',
     letterSpacing: -0.5,
     lineHeight: 32,
   },
-  meta: { color: COLORS.muted, fontSize: 12, marginTop: 7 },
+  meta: { color: colors.muted, fontSize: 12, marginTop: 7 },
   descriptionCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 21,
     padding: 18,
   },
-  description: { color: COLORS.muted, fontSize: 14, lineHeight: 22 },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 22 },
   descriptionToggle: {
     alignSelf: 'flex-start',
     marginTop: 12,
-    paddingVertical: 2,
+    justifyContent: 'center',
+    minHeight: 44,
   },
   descriptionToggleText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -283,22 +292,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 18,
   },
-  sectionTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
+  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
   sectionRight: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  sectionCount: { color: COLORS.subtle, fontSize: 12 },
+  sectionCount: { color: colors.subtle, fontSize: 12 },
   newTopicButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 13,
     flexDirection: 'row',
     gap: 5,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
-  newTopicText: { color: COLORS.surface, fontSize: 13, fontWeight: '800' },
+  newTopicText: { color: colors.surface, fontSize: 13, fontWeight: '800' },
   topicList: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 16,
   },
@@ -312,5 +321,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: COLORS.muted, fontSize: 14 },
+  emptyText: { color: colors.muted, fontSize: 14 },
 });
