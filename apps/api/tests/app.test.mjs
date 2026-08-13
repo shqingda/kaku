@@ -267,3 +267,21 @@ test('reporting is registered as an authenticated route', async () => {
     message: '请先登录 Kaku。',
   });
 });
+
+test('creating an index is registered as an authenticated route', async () => {
+  const response = await createApp({ createStore: () => ({}) }).request(
+    '/me/indexes',
+    {
+      body: JSON.stringify({ desc: '', title: '标题' }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+    { DB: {} },
+  );
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), {
+    error: 'unauthorized',
+    message: '请先登录 Kaku。',
+  });
+});

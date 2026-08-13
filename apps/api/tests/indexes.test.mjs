@@ -82,3 +82,51 @@ test('public indexes route rejects invalid sort and page', async () => {
 
   assert.equal(response.status, 400);
 });
+
+test('creating an index posts title, description, and visibility to P1', async () => {
+  const { createBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+  const fetcher = async (input, init) => {
+    assert.equal(String(input), 'https://next.bgm.tv/p1/indexes');
+    assert.equal(init.method, 'POST');
+    assert.equal(init.headers.Authorization, 'Bearer access-token');
+    assert.deepEqual(JSON.parse(init.body), {
+      desc: '我整理的冷门动画清单',
+      private: true,
+      title: '冷门动画补完计划',
+    });
+    return Response.json({ id: 20201 });
+  };
+
+  const result = await createBangumiIndex({
+    accessToken: 'access-token',
+    desc: '我整理的冷门动画清单',
+    fetcher,
+    isPrivate: true,
+    title: '冷门动画补完计划',
+  });
+
+  assert.deepEqual(result, { id: 20201 });
+});
+
+test('creating an index maps rate limits to a retry message', async () => {
+  const { BangumiIndexWriteError, createBangumiIndex } = await import(
+    '../src/indexes/bangumi-client.ts'
+  );
+  const fetcher = async () => new Response('{}', { status: 429 });
+
+  await assert.rejects(
+    () =>
+      createBangumiIndex({
+        accessToken: 'access-token',
+        desc: '',
+        fetcher,
+        title: '标题',
+      }),
+    (error) => {
+      assert.ok(error instanceof BangumiIndexWriteError);
+      assert.equal(error.status, 429);
+      assert.equal(error.message, '创建得太频繁了，请稍后再试。');
+      return true;
+    },
+  );
+});

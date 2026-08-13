@@ -44,3 +44,22 @@ export async function getGlobalIndexes(
   }
   return indexPageSchema.parse(await response.json());
 }
+
+const createdIndexSchema = z.object({ id: z.number().int().positive() });
+
+export async function createIndex(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  input: { desc: string; isPrivate?: boolean; title: string },
+): Promise<{ id: number }> {
+  const response = await request('/me/indexes', {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return createdIndexSchema.parse(await response.json());
+}

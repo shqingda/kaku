@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import {
+  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -12,7 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import { AppState } from '@/features/shared/app-state';
+import { IndexComposer } from '@/features/indexes/index-composer';
 import {
   INDEX_SORTS,
   type IndexSort,
@@ -24,12 +28,30 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function DirectoriesScreen() {
   const [sort, setSort] = useState<IndexSort>('latest');
+  const { session } = useAuth();
+  const [composerVisible, setComposerVisible] = useState(false);
   const indexesQuery = useGlobalIndexes(sort);
   const indexes = useMemo(
     () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [indexesQuery.data],
   );
   const totalPages = indexesQuery.data?.pages[0]?.totalPages;
+
+  function openComposer() {
+    if (session) {
+      setComposerVisible(true);
+      return;
+    }
+
+    Alert.alert(
+      '登录后新建目录',
+      '目录会保存在你的 Bangumi 账户。',
+      [
+        { style: 'cancel', text: '取消' },
+        { onPress: () => router.push('/account'), text: '去登录' },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -88,6 +110,27 @@ export default function DirectoriesScreen() {
                 );
               })}
             </View>
+            <Pressable
+              accessibilityLabel="新建目录"
+              accessibilityRole="button"
+              onPress={openComposer}
+              style={({ pressed }) => [
+                styles.createButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SymbolView
+                name={{
+                  android: 'add',
+                  ios: 'plus',
+                  web: 'add',
+                }}
+                size={15}
+                tintColor={COLORS.surface}
+                weight="semibold"
+              />
+              <Text style={styles.createButtonText}>新建目录</Text>
+            </Pressable>
           </View>
         }
         maxToRenderPerBatch={10}
@@ -114,6 +157,17 @@ export default function DirectoriesScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <IndexComposer
+        onClose={() => setComposerVisible(false)}
+        onCreated={(indexId) => {
+          setComposerVisible(false);
+          router.push({
+            pathname: '/directory/[id]',
+            params: { id: String(indexId) },
+          });
+        }}
+        visible={composerVisible}
       />
     </SafeAreaView>
   );
@@ -203,6 +257,17 @@ const styles = StyleSheet.create({
   filterSelected: { backgroundColor: COLORS.ink },
   filterText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
   filterTextSelected: { color: COLORS.surface },
+  createButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    marginTop: 14,
+    minHeight: 46,
+  },
+  createButtonText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
   rowCard: { backgroundColor: COLORS.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },

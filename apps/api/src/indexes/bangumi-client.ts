@@ -1,7 +1,10 @@
+import { z } from 'zod';
+
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import type { PublicIndexPage } from './model.ts';
 
 const BANGUMI_INDEX_URL = 'https://bgm.tv/index/browser';
+const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 const MAX_HTML_LENGTH = 1_000_000;
 
 export type IndexSort = 'latest' | 'popular';
@@ -14,6 +17,56 @@ export class BangumiIndexListError extends Error {
     this.name = 'BangumiIndexListError';
     this.status = status;
   }
+}
+
+export class BangumiIndexWriteError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'BangumiIndexWriteError';
+    this.status = status;
+  }
+}
+
+const createdIndexSchema = z.object({ id: z.number().int().positive() });
+
+export async function createBangumiIndex({
+  accessToken,
+  desc,
+  fetcher = fetch,
+  isPrivate,
+  title,
+}: {
+  accessToken: string;
+  desc: string;
+  fetcher?: typeof fetch;
+  isPrivate?: boolean;
+  title: string;
+}): Promise<{ id: number }> {
+  const response = await fetcher(`${BANGUMI_PRIVATE_API_URL}/indexes`, {
+    body: JSON.stringify({ desc, private: isPrivate, title }),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new BangumiIndexWriteError(
+      response.status,
+      response.status === 429
+        ? '创建得太频繁了，请稍后再试。'
+        : response.status >= 500
+          ? 'Bangumi 暂时不可用，请稍后重试。'
+          : '目录没有创建成功，请稍后重试。',
+    );
+  }
+
+  return createdIndexSchema.parse(await response.json());
 }
 
 function decodeHtml(value: string) {
