@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
+  deleteBlogComment,
+  deleteEpisodeComment,
   deleteGroupPost,
   deleteSubjectPost,
 } from '@/infrastructure/kaku/discussions-client';
@@ -30,6 +32,34 @@ export function useDeleteGroupReply(topicId: number) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.groupTopic(topicId),
+      });
+    },
+  });
+}
+
+export function useDeleteEpisodeReply(episodeId: number) {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: number) => deleteEpisodeComment(request, commentId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.episodeComments(episodeId),
+      });
+    },
+  });
+}
+
+export function useDeleteReviewReply(reviewId: number) {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: number) => deleteBlogComment(request, commentId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.subjectReview(reviewId),
       });
     },
   });

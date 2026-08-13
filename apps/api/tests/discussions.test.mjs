@@ -8,8 +8,10 @@ import {
   createBangumiReviewReply,
   createBangumiSubjectTopic,
   createBangumiSubjectTopicReply,
+  deleteBangumiBlogComment,
   deleteBangumiGroupPost,
   deleteBangumiSubjectPost,
+  editBangumiEpisodeComment,
   editBangumiGroupPost,
   editBangumiSubjectPost,
   getBangumiEpisodeComments,
@@ -419,5 +421,41 @@ test('editing a group reply PUTs to the group post endpoint', async () => {
     content: '编辑内容',
     fetcher,
     postId: 9002,
+  });
+});
+
+test('editing an episode comment PUTs to the episode comment endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/episodes/-/comments/9100',
+    );
+    assert.equal(init.method, 'PUT');
+    assert.deepEqual(JSON.parse(init.body), { content: '修改后的评论' });
+    return new Response('{}', { status: 200 });
+  };
+
+  await editBangumiEpisodeComment({
+    accessToken: 'access-token',
+    commentId: 9100,
+    content: '修改后的评论',
+    fetcher,
+  });
+});
+
+test('deleting a blog comment DELETEs the blog comment endpoint', async () => {
+  const fetcher = async (input, init) => {
+    assert.equal(
+      String(input),
+      'https://next.bgm.tv/p1/blogs/-/comments/9200',
+    );
+    assert.equal(init.method, 'DELETE');
+    return new Response('{}', { status: 200 });
+  };
+
+  await deleteBangumiBlogComment({
+    accessToken: 'access-token',
+    commentId: 9200,
+    fetcher,
   });
 });

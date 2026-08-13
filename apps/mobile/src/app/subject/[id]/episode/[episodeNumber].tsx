@@ -26,6 +26,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
+import { useDeleteEpisodeReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -43,6 +44,7 @@ export default function EpisodeScreen() {
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
   const parsedSubjectId = parsePositiveIntegerRouteParam(id);
   const parsedEpisodeNumber = parsePositiveIntegerRouteParam(episodeParam);
   const subjectId = parsedSubjectId ?? 0;
@@ -64,6 +66,7 @@ export default function EpisodeScreen() {
     (episode) => episode.number === episodeNumber,
   );
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id);
+  const deleteReply = useDeleteEpisodeReply(catalogEpisode?.id ?? 0);
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
 
@@ -77,6 +80,39 @@ export default function EpisodeScreen() {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  function openEditComposer(reply: DiscussionReply) {
+    setReplyingTo(undefined);
+    setEditingReply(reply);
+    setComposerVisible(true);
+  }
+
+  function closeComposer() {
+    setComposerVisible(false);
+    setEditingReply(null);
+  }
+
+  function confirmDeleteReply(reply: DiscussionReply) {
+    Alert.alert(
+      '删除这条回复？',
+      '删除后无法恢复。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => {
+            const postId = Number(reply.id);
+            if (Number.isInteger(postId)) {
+              deleteReply.mutate(postId, {
+                onError: (error) => Alert.alert('回复没有删除', error.message),
+              });
+            }
+          },
+          style: 'destructive',
+          text: '删除',
+        },
+      ],
+    );
   }
 
   if (!parsedSubjectId || !parsedEpisodeNumber) {
@@ -315,6 +351,16 @@ export default function EpisodeScreen() {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
+              onDelete={
+                item.authorUsername === session?.user.username
+                  ? confirmDeleteReply
+                  : undefined
+              }
+              onEdit={
+                item.authorUsername === session?.user.username
+                  ? openEditComposer
+                  : undefined
+              }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
               reply={item}
@@ -358,7 +404,13 @@ export default function EpisodeScreen() {
       </View>
       {catalogEpisode ? (
         <DiscussionReplyComposer
-          onClose={() => setComposerVisible(false)}
+          editing={
+            editingReply
+              ? { content: editingReply.body, postId: Number(editingReply.id) }
+              : null
+          }
+          onClose={closeComposer}
+          onEdited={() => setEditingReply(null)}
           replyingTo={replyingTo}
           target={{ id: catalogEpisode.id, kind: 'episode' }}
           visible={composerVisible}

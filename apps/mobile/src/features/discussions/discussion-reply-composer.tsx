@@ -20,7 +20,12 @@ import {
   type DiscussionReplyTarget,
   useCreateDiscussionReply,
 } from './use-create-discussion-reply';
-import { useEditGroupReply, useEditSubjectReply } from './use-edit-reply';
+import {
+  useEditEpisodeReply,
+  useEditGroupReply,
+  useEditReviewReply,
+  useEditSubjectReply,
+} from './use-edit-reply';
 
 const MAX_CONTENT_LENGTH = 5000;
 
@@ -49,8 +54,20 @@ export function DiscussionReplyComposer({
   const editGroupReply = useEditGroupReply(
     target.kind === 'group-topic' ? target.id : 0,
   );
+  const editEpisodeReply = useEditEpisodeReply(
+    target.kind === 'episode' ? target.id : 0,
+  );
+  const editReviewReply = useEditReviewReply(
+    target.kind === 'review' ? target.id : 0,
+  );
   const editReply =
-    target.kind === 'subject-topic' ? editSubjectReply : editGroupReply;
+    target.kind === 'subject-topic'
+      ? editSubjectReply
+      : target.kind === 'group-topic'
+        ? editGroupReply
+        : target.kind === 'episode'
+          ? editEpisodeReply
+          : editReviewReply;
   const isEditing = editing != null;
   const pending = createReply.isPending || editReply.isPending;
   const canSend = content.trim().length > 0 && !pending;

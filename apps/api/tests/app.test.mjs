@@ -232,6 +232,31 @@ test('reply deletion is registered as authenticated routes', async () => {
   }
 });
 
+test('episode and blog comment edits are authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const path of [
+    '/me/episode-comments/9100',
+    '/me/blog-comments/9200',
+  ]) {
+    const response = await app.request(
+      path,
+      {
+        body: JSON.stringify({ content: '内容' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+      },
+      { DB: {} },
+    );
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});
+
 test('blocklist actions are registered as authenticated routes', async () => {
   const app = createApp({ createStore: () => ({}) });
 

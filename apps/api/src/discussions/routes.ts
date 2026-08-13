@@ -23,8 +23,12 @@ import {
   createBangumiSubjectTopicReply,
   deleteBangumiGroupPost,
   deleteBangumiSubjectPost,
+  editBangumiBlogComment,
+  editBangumiEpisodeComment,
   editBangumiGroupPost,
   editBangumiSubjectPost,
+  deleteBangumiBlogComment,
+  deleteBangumiEpisodeComment,
   getBangumiEpisodeComments,
   getBangumiGroupTopic,
   getBangumiReview,
@@ -620,6 +624,42 @@ export function registerDiscussionRoutes(
       context,
       getPositiveId(context.req.param('postId')),
       ({ postId, ...input }) => editBangumiGroupPost({ ...input, postId }),
+    ),
+  );
+
+  app.put('/me/episode-comments/:commentId', (context) =>
+    updatePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        editBangumiEpisodeComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.put('/me/blog-comments/:commentId', (context) =>
+    updatePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        editBangumiBlogComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.delete('/me/episode-comments/:commentId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        deleteBangumiEpisodeComment({ ...input, commentId: postId }),
+    ),
+  );
+
+  app.delete('/me/blog-comments/:commentId', (context) =>
+    deletePost(
+      context,
+      getPositiveId(context.req.param('commentId')),
+      ({ postId, ...input }) =>
+        deleteBangumiBlogComment({ ...input, commentId: postId }),
     ),
   );
 }

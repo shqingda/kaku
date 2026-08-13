@@ -276,3 +276,33 @@ export async function editGroupPost(
 ) {
   return editPost(request, `/me/group-posts/${postId}`, content);
 }
+
+export async function editEpisodeComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+  content: string,
+) {
+  return editPost(request, `/me/episode-comments/${commentId}`, content);
+}
+
+export async function editBlogComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+  content: string,
+) {
+  return editPost(request, `/me/blog-comments/${commentId}`, content);
+}
+
+export async function deleteEpisodeComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+) {
+  return deletePost(request, `/me/episode-comments/${commentId}`);
+}
+
+export async function deleteBlogComment(
+  request: AuthenticatedRequest,
+  commentId: number,
+) {
+  return deletePost(request, `/me/blog-comments/${commentId}`);
+}

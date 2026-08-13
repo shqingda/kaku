@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
+  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -18,6 +19,7 @@ import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
+import { useDeleteReviewReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { formatActivityTime } from '@/lib/format-activity-time';
@@ -37,7 +39,9 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
+  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
   const reviewQuery = useSubjectReview(numericReviewId ?? 0);
+  const deleteReply = useDeleteReviewReply(numericReviewId ?? 0);
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
@@ -53,6 +57,39 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 
     setReplyingTo(reply);
     setComposerVisible(true);
+  }
+
+  function openEditComposer(reply: DiscussionReply) {
+    setReplyingTo(undefined);
+    setEditingReply(reply);
+    setComposerVisible(true);
+  }
+
+  function closeComposer() {
+    setComposerVisible(false);
+    setEditingReply(null);
+  }
+
+  function confirmDeleteReply(reply: DiscussionReply) {
+    Alert.alert(
+      '删除这条回复？',
+      '删除后无法恢复。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => {
+            const postId = Number(reply.id);
+            if (Number.isInteger(postId)) {
+              deleteReply.mutate(postId, {
+                onError: (error) => Alert.alert('回复没有删除', error.message),
+              });
+            }
+          },
+          style: 'destructive',
+          text: '删除',
+        },
+      ],
+    );
   }
 
   if (!numericReviewId) {
@@ -125,6 +162,16 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
+              onDelete={
+                item.authorUsername === session?.user.username
+                  ? confirmDeleteReply
+                  : undefined
+              }
+              onEdit={
+                item.authorUsername === session?.user.username
+                  ? openEditComposer
+                  : undefined
+              }
               onOpenReference={replyNavigation.openReply}
               onReply={openComposer}
               reply={item}
@@ -167,7 +214,13 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         ) : null}
       </View>
       <DiscussionReplyComposer
-        onClose={() => setComposerVisible(false)}
+        editing={
+          editingReply
+            ? { content: editingReply.body, postId: Number(editingReply.id) }
+            : null
+        }
+        onClose={closeComposer}
+        onEdited={() => setEditingReply(null)}
         replyingTo={replyingTo}
         target={{ id: numericReviewId, kind: 'review' }}
         visible={composerVisible}

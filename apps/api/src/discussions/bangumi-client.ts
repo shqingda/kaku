@@ -483,3 +483,51 @@ export function editBangumiGroupPost({
     path: `/groups/-/posts/${postId}`,
   });
 }
+
+export function editBangumiEpisodeComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/episodes/-/comments/${commentId}`,
+  });
+}
+
+export function editBangumiBlogComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof updateBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return updateBangumiPost({
+    ...input,
+    path: `/blogs/-/comments/${commentId}`,
+  });
+}
+
+export function deleteBangumiEpisodeComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/episodes/-/comments/${commentId}`,
+  });
+}
+
+export function deleteBangumiBlogComment({
+  commentId,
+  ...input
+}: Omit<Parameters<typeof deleteBangumiPost>[0], 'path'> & {
+  commentId: number;
+}) {
+  return deleteBangumiPost({
+    ...input,
+    path: `/blogs/-/comments/${commentId}`,
+  });
+}
