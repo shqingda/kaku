@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
@@ -21,6 +22,7 @@ import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
+import { FriendAction } from '@/features/users/friend-action';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
 import {
@@ -86,9 +88,9 @@ export default function PublicUserScreen() {
         }}
       />
       {userQuery.isPending ? (
-        <State text="正在读取公开资料。" title="加载中" />
+        <AppState text="正在读取公开资料。" title="加载中" />
       ) : userQuery.isError || !user ? (
-        <State
+        <AppState
           action={() => void userQuery.refetch()}
           text="用户可能不存在，或网络暂时不可用。"
           title="用户资料读取失败"
@@ -131,6 +133,14 @@ export default function PublicUserScreen() {
                     </Text>
                   ) : null}
                 </View>
+                {session && !isOwnProfile ? (
+                  <View style={styles.friendAction}>
+                    <FriendAction
+                      nickname={user.nickname}
+                      username={user.username}
+                    />
+                  </View>
+                ) : null}
               </View>
               {SHOW_ENTITY_ENTRY ? (
                 <Pressable
@@ -478,27 +488,6 @@ function SectionStatus({
   return <Text style={styles.inlineEmpty}>{emptyText}</Text>;
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable onPress={action} style={styles.retry}>
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -520,6 +509,11 @@ const styles = StyleSheet.create({
   },
   avatarFallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '800' },
   profileMain: { flex: 1, marginLeft: 16 },
+  friendAction: {
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    marginTop: 2,
+  },
   nickname: {
     color: COLORS.ink,
     fontSize: 24,
@@ -633,26 +627,4 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: 28 },
   emptyText: { color: COLORS.muted, fontSize: 14 },
-  state: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

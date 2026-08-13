@@ -78,6 +78,8 @@ export const queryKeys = {
     ] as const,
   publicUser: (username: string) =>
     ['users', 'bangumi', username] as const,
+  userFriendship: (userId: number | undefined, username: string) =>
+    ['friends', 'kaku', userId ?? 'signed-out', username] as const,
   publicUserCollections: (
     username: string,
     subjectType: number,

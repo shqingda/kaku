@@ -10,6 +10,7 @@ import { registerChannelRoutes } from './channels/routes.ts';
 import { registerBrowseRoutes } from './browse/routes.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
 import { registerDiscussionRoutes } from './discussions/routes.ts';
+import { registerFriendRoutes } from './friends/routes.ts';
 import { registerIndexRoutes } from './indexes/routes.ts';
 import { registerNotificationRoutes } from './notifications/routes.ts';
 import { registerPeopleBrowserRoutes } from './people-browser/routes.ts';
@@ -39,6 +40,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerChannelRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
   registerDiscussionRoutes(app, dependencies);
+  registerFriendRoutes(app, dependencies);
   registerIndexRoutes(app, dependencies);
   registerNotificationRoutes(app, dependencies);
   registerPeopleBrowserRoutes(app, dependencies);

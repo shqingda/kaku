@@ -154,3 +154,66 @@ test('entity collections are registered as authenticated routes', async () => {
     });
   }
 });
+
+test('friend actions are registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const [method, path] of [
+    ['GET', '/me/users/friend-a'],
+    ['PUT', '/me/friends/friend-a'],
+    ['DELETE', '/me/friends/friend-a'],
+  ]) {
+    const response = await app.request(path, { method }, { DB: {} });
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});
+
+test('friend actions reject malformed usernames before authentication', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const [method, path] of [
+    ['GET', '/me/users/bad%20name'],
+    ['PUT', '/me/friends/bad%20name'],
+    ['DELETE', '/me/friends/bad%20name'],
+  ]) {
+    const response = await app.request(path, { method }, { DB: {} });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: 'invalid_username',
+      message: '用户名格式不正确。',
+    });
+  }
+});
+
+test('topic creation is registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+  const body = JSON.stringify({
+    content: '内容',
+    title: '标题',
+    turnstileToken: 'turnstile-token',
+  });
+
+  for (const path of ['/me/subjects/22447/topics', '/me/groups/anime/topics']) {
+    const response = await app.request(
+      path,
+      {
+        body,
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      },
+      { DB: {} },
+    );
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      error: 'unauthorized',
+      message: '请先登录 Kaku。',
+    });
+  }
+});
