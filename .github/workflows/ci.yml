@@ -31,6 +31,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check Expo dependency compatibility
+        run: pnpm --filter @kaku/mobile exec expo install --check
+
+      - name: Run Expo project diagnostics
+        working-directory: apps/mobile
+        run: pnpm dlx expo-doctor
+
       - name: Type-check workspace
         run: pnpm typecheck
 
