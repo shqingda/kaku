@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -26,9 +27,9 @@ export default function SubjectCharactersScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title }} />
       {charactersQuery.isPending ? (
-        <State title="正在读取角色资料" text={`${title}名单加载中。`} />
+        <AppState title="正在读取角色资料" text={`${title}名单加载中。`} />
       ) : charactersQuery.isError ? (
-        <State
+        <AppState
           action={() => void charactersQuery.refetch()}
           title="角色资料读取失败"
           text="请检查网络后重试。"
@@ -39,7 +40,7 @@ export default function SubjectCharactersScreen() {
           data={charactersQuery.data}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={
-            <State title="暂无角色资料" text="Bangumi 尚未收录角色信息。" />
+            <AppState title="暂无角色资料" text="Bangumi 尚未收录角色信息。" />
           }
           ListHeaderComponent={
             <View style={styles.header}>
@@ -148,27 +149,6 @@ export default function SubjectCharactersScreen() {
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable onPress={action} style={styles.retry}>
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -226,21 +206,4 @@ const styles = StyleSheet.create({
   actorLabel: { color: COLORS.ink, fontSize: 12, fontWeight: '600' },
   actor: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.58 },
-  state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

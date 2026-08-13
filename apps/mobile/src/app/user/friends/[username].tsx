@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { usePublicUserFriends } from '@/features/users/use-public-user';
@@ -34,15 +35,15 @@ export default function PublicUserFriendsScreen() {
         keyExtractor={(item) => item.username}
         ListEmptyComponent={
           friendsQuery.isPending ? (
-            <State text="正在读取公开好友。" title="好友加载中" />
+            <AppState text="正在读取公开好友。" title="好友加载中" />
           ) : friendsQuery.isError ? (
-            <State
+            <AppState
               action={() => void friendsQuery.refetch()}
               text="请检查网络后重试。"
               title="好友读取失败"
             />
           ) : (
-            <State text="该用户没有公开好友。" title="暂无好友" />
+            <AppState text="该用户没有公开好友。" title="暂无好友" />
           )
         }
         ListFooterComponent={
@@ -96,34 +97,6 @@ export default function PublicUserFriendsScreen() {
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -143,27 +116,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

@@ -25,6 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
   getSubjectTypeLabel,
@@ -305,9 +306,9 @@ export default function ExploreScreen() {
                   <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
                 ) : null}
                 {calendarQuery.isPending && !calendarQuery.data ? (
-                  <State title="正在读取放送表" text="本周动画加载中。" />
+                  <AppState title="正在读取放送表" text="本周动画加载中。" />
                 ) : calendarQuery.isError && !calendarQuery.data ? (
-                  <State
+                  <AppState
                     action={() => void calendarQuery.refetch()}
                     title="放送表读取失败"
                     text="请检查网络后重试。"
@@ -351,7 +352,7 @@ export default function ExploreScreen() {
                       horizontal
                       keyExtractor={(item) => String(item.id)}
                       ListEmptyComponent={
-                        <State title="今天暂无条目" text="放送表还没有相关数据。" />
+                        <AppState title="今天暂无条目" text="放送表还没有相关数据。" />
                       }
                       renderItem={({ item }) => <CalendarCard item={item} />}
                       showsHorizontalScrollIndicator={false}
@@ -478,12 +479,12 @@ function RankingSection({
         <CachedDataNotice onRetry={onRetry} />
       ) : null}
       {isPending && subjects.length === 0 ? (
-        <State
+        <AppState
           title="正在读取排行榜"
           text={`高评分${subjectTypeLabel}加载中。`}
         />
       ) : isError && subjects.length === 0 ? (
-        <State action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
+        <AppState action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
       ) : (
         <View style={styles.rankingList}>
           {subjects.slice(0, 6).map((item, index) => (
@@ -595,15 +596,15 @@ function SearchResults({
       keyExtractor={(item) => String(item.id)}
       ListEmptyComponent={
         isPending ? (
-          <State title="正在搜索" text="正在查询 Bangumi 条目。" />
+          <AppState title="正在搜索" text="正在查询 Bangumi 条目。" />
         ) : isError ? (
-          <State
+          <AppState
             action={onRetry}
             title="搜索失败"
             text="请检查网络后重试。"
           />
         ) : (
-          <State title="没有找到结果" text="可以尝试原名或更短的关键词。" />
+          <AppState title="没有找到结果" text="可以尝试原名或更短的关键词。" />
         )
       }
       ListFooterComponent={
@@ -713,36 +714,6 @@ function SearchResults({
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View
-      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
-      accessibilityRole={action ? 'alert' : undefined}
-      style={styles.state}
-    >
-      <Text accessibilityRole="header" style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityLabel={`重试${title}`}
-          accessibilityRole="button"
-          onPress={action}
-          style={styles.retry}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -874,30 +845,5 @@ const styles = StyleSheet.create({
   },
   resultMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 7 },
   chevron: { color: COLORS.subtle, fontSize: 26, marginLeft: 8 },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    minWidth: 300,
-    padding: 30,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  retry: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    justifyContent: 'center',
-    marginTop: 15,
-    minHeight: 44,
-    paddingHorizontal: 17,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { usePublicUserBlogs } from '@/features/users/use-public-user';
@@ -34,15 +35,15 @@ export default function PublicUserBlogsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           blogsQuery.isPending ? (
-            <State text="正在读取公开日志。" title="日志加载中" />
+            <AppState text="正在读取公开日志。" title="日志加载中" />
           ) : blogsQuery.isError ? (
-            <State
+            <AppState
               action={() => void blogsQuery.refetch()}
               text="请检查网络后重试。"
               title="日志读取失败"
             />
           ) : (
-            <State text="该用户没有公开日志。" title="暂无日志" />
+            <AppState text="该用户没有公开日志。" title="暂无日志" />
           )
         }
         ListFooterComponent={
@@ -106,34 +107,6 @@ export default function PublicUserBlogsScreen() {
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -159,27 +132,5 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
   },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

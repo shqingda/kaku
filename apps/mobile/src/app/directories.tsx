@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import {
   INDEX_SORTS,
   type IndexSort,
@@ -40,15 +41,15 @@ export default function DirectoriesScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           indexesQuery.isPending ? (
-            <State text="正在读取 Bangumi 公开目录。" title="目录加载中" />
+            <AppState text="正在读取 Bangumi 公开目录。" title="目录加载中" />
           ) : indexesQuery.isError ? (
-            <State
+            <AppState
               action={() => void indexesQuery.refetch()}
               text="Bangumi 偶尔会响应较慢，稍后重试即可。"
               title="目录读取失败"
             />
           ) : (
-            <State text="这里暂时没有公开目录。" title="暂无目录" />
+            <AppState text="这里暂时没有公开目录。" title="暂无目录" />
           )
         }
         ListFooterComponent={
@@ -182,26 +183,6 @@ function IndexRow({
   );
 }
 
-function State({ action, text, title }: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          onPress={action}
-          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -245,9 +226,4 @@ const styles = StyleSheet.create({
   description: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   rowMeta: { color: COLORS.subtle, fontSize: 11, marginTop: 8 },
   pressed: { opacity: 0.62 },
-  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 30 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 15, paddingHorizontal: 17, paddingVertical: 9 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
 });

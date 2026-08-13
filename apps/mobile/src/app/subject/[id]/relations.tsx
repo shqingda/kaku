@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -36,9 +37,9 @@ export default function SubjectRelationsScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '关联条目' }} />
       {relationsQuery.isPending ? (
-        <State title="正在读取关联条目" text="系列作品和音乐条目加载中。" />
+        <AppState title="正在读取关联条目" text="系列作品和音乐条目加载中。" />
       ) : relationsQuery.isError ? (
-        <State
+        <AppState
           action={() => void relationsQuery.refetch()}
           title="关联条目读取失败"
           text="请检查网络后重试。"
@@ -49,7 +50,7 @@ export default function SubjectRelationsScreen() {
           data={relationsQuery.data}
           keyExtractor={(item) => `${item.type}-${item.id}`}
           ListEmptyComponent={
-            <State title="暂无关联条目" text="Bangumi 尚未收录关联作品。" />
+            <AppState title="暂无关联条目" text="Bangumi 尚未收录关联作品。" />
           }
           ListHeaderComponent={
             <View style={styles.header}>
@@ -123,27 +124,6 @@ export default function SubjectRelationsScreen() {
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable onPress={action} style={styles.retry}>
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -192,21 +172,4 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 8,
   },
-  state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

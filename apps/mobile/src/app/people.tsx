@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import {
   CHARACTER_TYPES,
   PEOPLE_GENDERS,
@@ -81,18 +82,18 @@ export default function PeopleScreen() {
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
           activeQuery.isPending ? (
-            <State
+            <AppState
               title={keyword ? '正在搜索' : '人物加载中'}
               text={keyword ? `正在查找“${keyword}”。` : '正在读取 Bangumi 公开人物资料。'}
             />
           ) : activeQuery.isError ? (
-            <State
+            <AppState
               action={() => void activeQuery.refetch()}
               title={keyword ? '搜索失败' : '人物读取失败'}
               text="Bangumi 偶尔会响应较慢，请稍后重试。"
             />
           ) : (
-            <State
+            <AppState
               title={keyword ? '没有搜索结果' : '暂无人物'}
               text={keyword ? `没有找到与“${keyword}”相关的资料。` : '当前筛选条件下没有找到资料。'}
             />
@@ -322,23 +323,6 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
   );
 }
 
-function State({ action, text, title }: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable onPress={action} style={styles.retry}>
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -395,10 +379,5 @@ const styles = StyleSheet.create({
   commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   commentText: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
   chevron: { color: COLORS.subtle, fontSize: 26, fontWeight: '300' },
-  state: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 22, padding: 30 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retry: { backgroundColor: COLORS.accentSoft, borderRadius: 13, marginTop: 15, paddingHorizontal: 17, paddingVertical: 9 },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

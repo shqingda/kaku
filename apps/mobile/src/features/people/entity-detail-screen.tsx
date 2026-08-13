@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
 import { playSuccessHaptic } from '@/lib/haptics';
@@ -111,9 +112,9 @@ export function EntityDetailScreen({
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: data?.name ?? `${kind}详情` }} />
       {isPending ? (
-        <State text={`正在读取${kind}资料。`} title="加载中" />
+        <AppState text={`正在读取${kind}资料。`} title="加载中" />
       ) : isError || !data ? (
-        <State
+        <AppState
           action={onRetry}
           text="请检查网络后重试。"
           title={`${kind}资料读取失败`}
@@ -364,27 +365,6 @@ export function EntityDetailScreen({
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable onPress={action} style={styles.retry}>
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -504,21 +484,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
   },
-  state: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 19, fontWeight: '800' },
-  stateText: { color: COLORS.muted, fontSize: 14, marginTop: 8 },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import {
   getCollectionStatusLabel,
   getSubjectInfoKeys,
@@ -52,9 +53,9 @@ export default function SubjectInfoScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: `${subjectTypeLabel}资料` }} />
       {subjectQuery.isPending ? (
-        <State title="正在读取条目资料" text="评分与基础资料加载中。" />
+        <AppState title="正在读取条目资料" text="评分与基础资料加载中。" />
       ) : subjectQuery.isError || !subject ? (
-        <State
+        <AppState
           action={() => void subjectQuery.refetch()}
           title="条目资料读取失败"
           text="请检查网络后重试。"
@@ -180,36 +181,6 @@ function RatingDistribution({
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View
-      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
-      accessibilityRole={action ? 'alert' : undefined}
-      style={styles.state}
-    >
-      <Text accessibilityRole="header" style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityLabel="重试加载条目资料"
-          accessibilityRole="button"
-          onPress={action}
-          style={styles.retry}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -311,23 +282,4 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     textAlign: 'center',
   },
-  state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    justifyContent: 'center',
-    marginTop: 12,
-    minHeight: 44,
-    paddingHorizontal: 18,
-  },
-  retryText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

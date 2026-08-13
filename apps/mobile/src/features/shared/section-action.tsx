@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { COLORS, HIT_SLOP } from '@/constants/design';
+import { COLORS, HIT_SLOP, TYPE } from '@/constants/design';
 
 export function SectionAction({
   accessibilityHint,
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   label: {
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '700',
     includeFontPadding: false,
     lineHeight: 18,

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppState } from '@/features/shared/app-state';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import type {
   PublicUserEntityCollection,
@@ -45,15 +46,15 @@ export default function PublicUserEntitiesScreen() {
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
           entitiesQuery.isPending ? (
-            <State text="正在读取公开收藏。" title="加载中" />
+            <AppState text="正在读取公开收藏。" title="加载中" />
           ) : entitiesQuery.isError ? (
-            <State
+            <AppState
               action={() => void entitiesQuery.refetch()}
               text="网络暂时不可用，请稍后重试。"
               title="收藏读取失败"
             />
           ) : (
-            <State
+            <AppState
               text={`该用户没有公开收藏的${kind === 'character' ? '角色' : '人物'}。`}
               title="暂无收藏"
             />
@@ -135,31 +136,6 @@ export default function PublicUserEntitiesScreen() {
   );
 }
 
-function State({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.background, flex: 1 },
@@ -196,27 +172,5 @@ const styles = StyleSheet.create({
   selectedTab: { backgroundColor: COLORS.ink },
   tabText: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
   selectedTabText: { color: COLORS.surface },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });
