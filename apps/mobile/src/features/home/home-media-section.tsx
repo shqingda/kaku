@@ -13,6 +13,7 @@ import {
 import type { ThemeColors } from '@/constants/theme';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
@@ -92,7 +93,7 @@ export function HomeMediaSection({
           <ActivityIndicator color={colors.accent} size="small" />
           <Text style={styles.stateText}>正在读取</Text>
         </View>
-      ) : error ? (
+      ) : error && items.length === 0 ? (
         <Pressable
           accessibilityRole="button"
           onPress={onRetry}
@@ -105,16 +106,23 @@ export function HomeMediaSection({
           <Text style={styles.stateText}>这里还没有条目</Text>
         </View>
       ) : (
-        <ScrollView
-          accessibilityLabel={title}
-          contentContainerStyle={styles.list}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {items.map((item) => (
-            <MediaCard item={item} key={item.id} />
-          ))}
-        </ScrollView>
+        <>
+          {error ? (
+            <View style={styles.cachedNotice}>
+              <CachedDataNotice onRetry={onRetry} />
+            </View>
+          ) : null}
+          <ScrollView
+            accessibilityLabel={title}
+            contentContainerStyle={styles.list}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            {items.map((item) => (
+              <MediaCard item={item} key={item.id} />
+            ))}
+          </ScrollView>
+        </>
       )}
     </View>
   );
@@ -194,6 +202,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   count: { color: colors.subtle, fontSize: 12, fontWeight: '700' },
   typeTabs: { paddingBottom: 2, paddingTop: 4 },
+  cachedNotice: { marginTop: 10 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
   card: { width: 104 },
   cardButton: { width: '100%' },
