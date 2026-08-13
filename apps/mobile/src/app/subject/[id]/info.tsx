@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
   Pressable,
@@ -9,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import {
   getCollectionStatusLabel,
@@ -18,6 +19,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { CollectionStatus } from '@/features/watching/model';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -36,6 +38,8 @@ function formatCount(value: number) {
 }
 
 export default function SubjectInfoScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const subjectQuery = useCatalogSubject(subjectId ?? 0);
@@ -69,7 +73,7 @@ export default function SubjectInfoScreen() {
               refreshing={
                 subjectQuery.isRefetching && !subjectQuery.isPending
               }
-              tintColor={COLORS.accent}
+              tintColor={colors.accent}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -155,6 +159,8 @@ function RatingDistribution({
 }: {
   distribution: Record<number, number>;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const maxCount = Math.max(...Object.values(distribution), 1);
 
   return (
@@ -182,19 +188,19 @@ function RatingDistribution({
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   header: { paddingBottom: 20, paddingTop: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   ratingCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 20,
   },
@@ -204,24 +210,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   score: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 42,
     fontWeight: '800',
     letterSpacing: -1.5,
   },
-  scoreLabel: { color: COLORS.subtle, fontSize: 11, marginTop: 3 },
+  scoreLabel: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   rankBlock: { alignItems: 'flex-end', paddingBottom: 3 },
-  rank: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
+  rank: { color: colors.ink, fontSize: 20, fontWeight: '800' },
   distribution: { gap: 7, marginTop: 22 },
   distributionRow: { alignItems: 'center', flexDirection: 'row' },
   distributionScore: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 10,
     textAlign: 'right',
     width: 14,
   },
   distributionTrack: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.track,
     borderRadius: 99,
     flex: 1,
     height: 5,
@@ -229,26 +235,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   distributionFill: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 99,
     height: '100%',
   },
   distributionCount: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 10,
     textAlign: 'right',
     width: 34,
   },
   section: { marginTop: 28 },
   sectionTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 12,
     paddingHorizontal: 4,
   },
   collectionCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -256,28 +262,28 @@ const styles = StyleSheet.create({
     paddingVertical: 19,
   },
   collectionItem: { alignItems: 'center', minWidth: 52 },
-  collectionValue: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
-  collectionLabel: { color: COLORS.subtle, fontSize: 10, marginTop: 5 },
+  collectionValue: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+  collectionLabel: { color: colors.subtle, fontSize: 10, marginTop: 5 },
   infoCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
     paddingHorizontal: 18,
   },
   infoRow: { flexDirection: 'row', paddingVertical: 16 },
   infoRowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  infoKey: { color: COLORS.subtle, fontSize: 12, width: 78 },
+  infoKey: { color: colors.subtle, fontSize: 12, width: 78 },
   infoValue: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
   },
   emptyText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 14,
     paddingVertical: 24,
     textAlign: 'center',

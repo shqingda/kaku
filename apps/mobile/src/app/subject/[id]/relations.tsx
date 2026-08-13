@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -10,10 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 const TYPE_LABELS: Record<number, string> = {
@@ -25,6 +27,8 @@ const TYPE_LABELS: Record<number, string> = {
 };
 
 export default function SubjectRelationsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const relationsQuery = useSubjectRelations(subjectId ?? 0);
@@ -111,7 +115,7 @@ export default function SubjectRelationsScreen() {
                     web: 'chevron_right',
                   }}
                   size={14}
-                  tintColor={COLORS.subtle}
+                  tintColor={colors.subtle}
                   weight="semibold"
                 />
               </Pressable>
@@ -125,20 +129,20 @@ export default function SubjectRelationsScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
   header: { paddingBottom: 20, paddingTop: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   card: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     flexDirection: 'row',
     marginBottom: 12,
@@ -147,26 +151,26 @@ const styles = StyleSheet.create({
   },
   cover: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     height: 108,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 78,
   },
-  fallback: { color: COLORS.subtle, fontSize: 24, fontWeight: '700' },
+  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '700' },
   cardMain: { flex: 1, marginLeft: 14 },
   badges: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   relationBadge: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 9,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  relationText: { color: COLORS.accent, fontSize: 10, fontWeight: '800' },
-  type: { color: COLORS.subtle, fontSize: 11, fontWeight: '700' },
+  relationText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
+  type: { color: colors.subtle, fontSize: 11, fontWeight: '700' },
   name: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     fontWeight: '800',
     lineHeight: 21,

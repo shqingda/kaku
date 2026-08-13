@@ -1,17 +1,21 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectCharactersScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const charactersQuery = useSubjectCharacters(subjectId ?? 0);
@@ -150,19 +154,19 @@ export default function SubjectCharactersScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: 12, paddingBottom: 44, paddingHorizontal: 20 },
   header: { paddingBottom: 10, paddingTop: 14 },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: COLORS.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     flexDirection: 'row',
     minHeight: 158,
@@ -170,29 +174,29 @@ const styles = StyleSheet.create({
   },
   portrait: {
     alignItems: 'center',
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 14,
     height: 134,
     justifyContent: 'center',
     overflow: 'hidden',
     width: 92,
   },
-  fallback: { color: COLORS.subtle, fontSize: 20, fontWeight: '700' },
+  fallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
   main: { flex: 1, justifyContent: 'center', marginLeft: 14, width: 0 },
   nameLine: { alignItems: 'center', flexDirection: 'row' },
   nameButton: { flex: 1, minWidth: 0, overflow: 'hidden' },
-  name: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  name: { color: colors.ink, fontSize: 17, fontWeight: '800' },
   roleBadge: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 9,
     flexShrink: 0,
     marginLeft: 8,
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
-  roleText: { color: COLORS.accent, fontSize: 10, fontWeight: '800' },
+  roleText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
   summary: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 9,
@@ -203,7 +207,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginTop: 9,
   },
-  actorLabel: { color: COLORS.ink, fontSize: 12, fontWeight: '600' },
-  actor: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  actorLabel: { color: colors.ink, fontSize: 12, fontWeight: '600' },
+  actor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.58 },
 });
