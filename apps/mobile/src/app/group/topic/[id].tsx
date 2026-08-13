@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicGroupTopic } from '@/features/community/use-community';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
@@ -29,9 +29,13 @@ import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function GroupTopicScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id, replyId } = useLocalSearchParams<{ id: string; replyId?: string }>();
   const numericTopicId = parsePositiveIntegerRouteParam(id);
   const numericReplyId = parsePositiveIntegerRouteParam(replyId);
@@ -189,9 +193,13 @@ export default function GroupTopicScreen() {
           }
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
-          onRefresh={() => void topicQuery.refetch()}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() => void topicQuery.refetch()}
+              refreshing={topicQuery.isRefetching && !topicQuery.isPending}
+            />
+          }
           ref={replyNavigation.listRef}
-          refreshing={topicQuery.isRefetching && !topicQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -244,7 +252,7 @@ export default function GroupTopicScreen() {
                   web: 'chat_bubble_outline',
                 }}
                 size={17}
-                tintColor={COLORS.muted}
+                tintColor={colors.muted}
               />
               <Text style={styles.replyButtonText}>
                 {isSigningIn
@@ -285,19 +293,19 @@ export default function GroupTopicScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   contentView: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   topicHeader: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
   },
   topicHeaderWithBody: { marginBottom: 10 },
   topicTitle: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 22,
     fontWeight: '800',
@@ -310,22 +318,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   groupName: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 10,
   },
-  topicMeta: { color: COLORS.subtle, fontSize: 12, marginTop: 7 },
+  topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 7 },
   replyBar: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
   },
   replyButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.track,
+    backgroundColor: colors.surface,
+    borderColor: colors.inputBorder,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
@@ -333,6 +341,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 17,
   },
-  replyButtonText: { color: COLORS.muted, fontSize: 14 },
+  replyButtonText: { color: colors.muted, fontSize: 14 },
   pressed: { opacity: 0.62 },
 });
