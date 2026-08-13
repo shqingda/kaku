@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Pressable,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { CatalogEpisode } from '@/features/catalog/model';
 
 import {
@@ -39,6 +40,8 @@ export function EpisodeSection({
   tracksWatchProgress?: boolean;
   watchedEpisodeNumbers: number[];
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isTrack = kind === 'track';
   const [layout, setLayout] = useState<EpisodeLayout>(
     isTrack ? 'list' : 'grid',
@@ -96,7 +99,7 @@ export function EpisodeSection({
                           }
                     }
                     size={17}
-                    tintColor={isActive ? COLORS.ink : COLORS.subtle}
+                    tintColor={isActive ? colors.ink : colors.subtle}
                     weight="semibold"
                   />
                 </Pressable>
@@ -252,37 +255,37 @@ export function EpisodeSection({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 18,
   },
-  panelTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '700' },
+  panelTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionHint: { color: COLORS.subtle, fontSize: 12, marginTop: 9 },
+  sectionHint: { color: colors.subtle, fontSize: 12, marginTop: 9 },
   ranges: { gap: 7, paddingTop: 14 },
   range: {
-    backgroundColor: '#F1F0EB',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  selectedRange: { backgroundColor: COLORS.accentSoft },
+  selectedRange: { backgroundColor: colors.accentSoft },
   rangeText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 11,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
-  selectedRangeText: { color: COLORS.accent },
+  selectedRangeText: { color: colors.accent },
   layoutActions: {
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     flexDirection: 'row',
     gap: 2,
@@ -295,11 +298,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
-  activeLayoutButton: { backgroundColor: COLORS.surface },
+  activeLayoutButton: { backgroundColor: colors.surface },
   episodeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 18 },
   episodeCell: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderColor: 'transparent',
     borderRadius: 12,
     borderWidth: 2,
@@ -307,10 +310,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
-  watchedEpisodeCell: { backgroundColor: COLORS.accent },
+  watchedEpisodeCell: { backgroundColor: colors.accent },
   pressedEpisodeCell: { opacity: 0.72, transform: [{ scale: 0.9 }] },
-  episodeNumber: { color: COLORS.muted, fontSize: 14, fontWeight: '700' },
-  watchedEpisodeNumber: { color: COLORS.surface },
+  episodeNumber: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  watchedEpisodeNumber: { color: colors.surface },
   episodeList: { marginTop: 10 },
   episodeRow: {
     alignItems: 'center',
@@ -319,29 +322,29 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   episodeRowBorder: {
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   episodeStatus: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 11,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
   episodeRowMain: { flex: 1, marginLeft: 12 },
-  episodeRowTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
-  episodeAirDate: { color: COLORS.subtle, fontSize: 11, marginTop: 4 },
+  episodeRowTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  episodeAirDate: { color: colors.subtle, fontSize: 11, marginTop: 4 },
   replyCount: {
     alignItems: 'center',
-    backgroundColor: '#EFEEE9',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
     paddingHorizontal: 8,
   },
-  replyCountText: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

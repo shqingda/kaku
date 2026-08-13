@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { getCollectionStatusLabel } from '@/features/catalog/subject-types';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 import type {
   CollectionStatus,
   WatchingItem,
@@ -60,6 +61,8 @@ export function CollectionBoxSheet({
   supportsProgress: boolean;
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const contentScrollRef = useRef<ScrollView>(null);
   const [status, setStatus] = useState<CollectionStatus | undefined>(
@@ -193,7 +196,7 @@ export function CollectionBoxSheet({
                 web: 'close',
               }}
               size={17}
-              tintColor={COLORS.muted}
+              tintColor={colors.muted}
               weight="semibold"
             />
           </Pressable>
@@ -253,7 +256,7 @@ export function CollectionBoxSheet({
                               web: 'check',
                             }}
                             size={12}
-                            tintColor={COLORS.surface}
+                            tintColor={colors.surface}
                             weight="bold"
                           />
                         ) : null}
@@ -394,7 +397,7 @@ export function CollectionBoxSheet({
                         web: 'info',
                       }}
                       size={15}
-                      tintColor={COLORS.subtle}
+                      tintColor={colors.subtle}
                     />
                     <Text style={styles.inactiveNoticeText}>
                       {status === 'wish'
@@ -434,7 +437,7 @@ export function CollectionBoxSheet({
                     }, 250);
                   }}
                   placeholder="写下你对这个条目的简短记录"
-                  placeholderTextColor={COLORS.subtle}
+                  placeholderTextColor={colors.subtle}
                   style={styles.commentInput}
                   textAlignVertical="top"
                   value={comment}
@@ -468,7 +471,7 @@ export function CollectionBoxSheet({
                             web: 'close',
                           }}
                           size={10}
-                          tintColor={COLORS.muted}
+                          tintColor={colors.muted}
                           weight="semibold"
                         />
                       </Pressable>
@@ -484,7 +487,7 @@ export function CollectionBoxSheet({
                     placeholder={
                       tags.length === 0 ? '输入标签后按回车' : '添加标签'
                     }
-                    placeholderTextColor={COLORS.subtle}
+                    placeholderTextColor={colors.subtle}
                     returnKeyType="done"
                     style={styles.tagInput}
                     value={tagDraft}
@@ -505,11 +508,11 @@ export function CollectionBoxSheet({
                   </View>
                   <Switch
                     accessibilityLabel="仅自己可见"
-                    ios_backgroundColor={COLORS.track}
+                    ios_backgroundColor={colors.track}
                     onValueChange={setIsPrivate}
                     trackColor={{
-                      false: COLORS.track,
-                      true: COLORS.accentSoft,
+                      false: colors.track,
+                      true: colors.accentSoft,
                     }}
                     value={isPrivate}
                   />
@@ -547,7 +550,7 @@ export function CollectionBoxSheet({
                 ]}
               >
                 {isSaving ? (
-                  <ActivityIndicator color={COLORS.surface} />
+                  <ActivityIndicator color={colors.surface} />
                 ) : (
                   <Text style={styles.saveText}>
                     {status ? '保存' : '选择状态'}
@@ -561,16 +564,16 @@ export function CollectionBoxSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  title: { color: COLORS.ink, fontSize: 20, fontWeight: '800' },
+  title: { color: colors.ink, fontSize: 20, fontWeight: '800' },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
@@ -579,14 +582,14 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 12, paddingTop: 8 },
   section: { marginTop: 16 },
   sectionLabel: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 8,
     marginLeft: 4,
   },
   statusOptions: {
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     padding: 4,
   },
@@ -598,12 +601,12 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 12,
   },
-  selectedStatusOption: { backgroundColor: COLORS.surface },
-  statusText: { color: COLORS.ink, fontSize: 14, fontWeight: '600' },
-  selectedStatusText: { color: COLORS.accent, fontWeight: '800' },
+  selectedStatusOption: { backgroundColor: colors.surface },
+  statusText: { color: colors.ink, fontSize: 14, fontWeight: '600' },
+  selectedStatusText: { color: colors.accent, fontWeight: '800' },
   selectionIndicator: {
     alignItems: 'center',
-    borderColor: COLORS.track,
+    borderColor: colors.track,
     borderRadius: 9,
     borderWidth: 1,
     height: 18,
@@ -611,11 +614,11 @@ const styles = StyleSheet.create({
     width: 18,
   },
   selectedIndicator: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   records: {
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     padding: 14,
   },
@@ -624,9 +627,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  recordTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  recordTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   recordDivider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.divider,
     height: StyleSheet.hairlineWidth,
     marginVertical: 14,
   },
@@ -637,8 +640,8 @@ const styles = StyleSheet.create({
   },
   progressControl: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: '#D8D3CA',
+    backgroundColor: colors.surface,
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -647,7 +650,7 @@ const styles = StyleSheet.create({
     width: 46,
   },
   progressInput: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
@@ -660,7 +663,7 @@ const styles = StyleSheet.create({
     width: 46,
   },
   progressTotal: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
@@ -682,11 +685,11 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   readingInput: {
-    backgroundColor: COLORS.surface,
-    borderColor: '#D8D3CA',
+    backgroundColor: colors.surface,
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     borderWidth: 1,
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
@@ -698,7 +701,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     width: 48,
   },
-  readingUnit: { color: COLORS.muted, fontSize: 12, fontWeight: '700' },
+  readingUnit: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   ratingRecord: { gap: 12 },
   ratingHeading: {
     alignItems: 'center',
@@ -711,12 +714,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   currentRatingText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 11,
     fontWeight: '700',
   },
   unsetText: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 11,
   },
   ratingOptions: {
@@ -726,7 +729,7 @@ const styles = StyleSheet.create({
   },
   ratingOption: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderColor: 'transparent',
     borderRadius: 10,
     borderWidth: 1,
@@ -736,16 +739,16 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   selectedRatingOption: {
-    backgroundColor: COLORS.accentSoft,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
   },
   ratingOptionText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
-  selectedRatingOptionText: { color: COLORS.accent, fontWeight: '800' },
+  selectedRatingOptionText: { color: colors.accent, fontWeight: '800' },
   inactiveNotice: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -754,14 +757,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   inactiveNoticeText: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 12,
     lineHeight: 18,
   },
   commentInput: {
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
     lineHeight: 20,
     minHeight: 92,
@@ -770,7 +773,7 @@ const styles = StyleSheet.create({
   },
   tagsEditor: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -781,7 +784,7 @@ const styles = StyleSheet.create({
   },
   tagChip: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     flexDirection: 'row',
     gap: 5,
@@ -790,13 +793,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
   },
   tagText: {
-    color: COLORS.ink,
+    color: colors.ink,
     flexShrink: 1,
     fontSize: 12,
     fontWeight: '700',
   },
   tagInput: {
-    color: COLORS.ink,
+    color: colors.ink,
     flexGrow: 1,
     fontSize: 13,
     height: 30,
@@ -805,7 +808,7 @@ const styles = StyleSheet.create({
   },
   privacyRow: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -814,9 +817,9 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   privacyCopy: { flex: 1, gap: 4, paddingRight: 16 },
-  privacyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '700' },
+  privacyTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   privacyDescription: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     fontSize: 11,
     lineHeight: 16,
   },
@@ -833,10 +836,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
   },
-  removeButton: { backgroundColor: COLORS.accentSoft },
-  removeText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
-  saveButton: { backgroundColor: COLORS.accent },
-  saveText: { color: COLORS.surface, fontSize: 15, fontWeight: '800' },
+  removeButton: { backgroundColor: colors.accentSoft },
+  removeText: { color: colors.accent, fontSize: 14, fontWeight: '800' },
+  saveButton: { backgroundColor: colors.accent },
+  saveText: { color: colors.surface, fontSize: 15, fontWeight: '800' },
   disabledButton: { opacity: 0.46 },
   pressed: { opacity: 0.58 },
 });

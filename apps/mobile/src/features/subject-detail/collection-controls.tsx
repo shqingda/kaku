@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { PersonalCollectionUpdate } from '@/features/collections/model';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { getRatingLabel } from '@/features/reviews/rating-label';
 import { RatingStars } from '@/features/reviews/rating-stars';
+import { useTheme } from '@/features/theme/theme-provider';
 import type {
   CollectionStatus,
   WatchingItem,
@@ -37,6 +38,8 @@ export function CollectionControls({
   onSave: (update: PersonalCollectionUpdate) => Promise<void>;
   variant?: 'panel' | 'compact';
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { session } = useAuth();
@@ -210,7 +213,7 @@ export function CollectionControls({
           <SymbolView
             name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
             size={16}
-            tintColor={COLORS.ink}
+            tintColor={colors.ink}
             weight="semibold"
           />
         </Pressable>
@@ -241,7 +244,7 @@ export function CollectionControls({
                 web: 'edit',
               }}
               size={16}
-              tintColor={COLORS.ink}
+              tintColor={colors.ink}
               weight="semibold"
             />
           </View>
@@ -333,17 +336,17 @@ export function CollectionControls({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     marginBottom: 14,
     padding: 20,
   },
   compactButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
-    borderColor: COLORS.track,
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     height: 34,
@@ -357,13 +360,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headingCopy: { gap: 7 },
-  title: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
-  statusValue: { color: COLORS.accent, fontSize: 20, fontWeight: '800' },
-  emptyStatus: { color: COLORS.accent },
+  title: { color: colors.muted, fontSize: 11, fontWeight: '600' },
+  statusValue: { color: colors.accent, fontSize: 20, fontWeight: '800' },
+  emptyStatus: { color: colors.accent },
   editButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
-    borderColor: COLORS.track,
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     height: 34,
@@ -372,7 +375,7 @@ const styles = StyleSheet.create({
   },
   details: {
     alignItems: 'center',
-    borderTopColor: '#ECE9E2',
+    borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     marginTop: 18,
@@ -395,41 +398,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   watchedValue: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 19,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   compactWatchedValue: { fontSize: 17 },
   totalValue: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   compactTotalValue: { fontSize: 15 },
   unitValue: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
     marginLeft: 5,
   },
   compactUnitValue: { fontSize: 11, marginLeft: 4 },
-  detailHint: { color: COLORS.subtle, fontSize: 10, fontWeight: '600' },
+  detailHint: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
   progressTrack: {
-    backgroundColor: COLORS.accentSoft,
+    backgroundColor: colors.accentSoft,
     borderRadius: 2,
     height: 3,
     marginTop: 10,
     overflow: 'hidden',
   },
   progressFill: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 2,
     height: 3,
   },
   divider: {
-    backgroundColor: COLORS.track,
+    backgroundColor: colors.divider,
     height: 34,
     width: StyleSheet.hairlineWidth,
   },
@@ -441,7 +444,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingLeft: 18,
   },
-  ratingLabel: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  unsetText: { color: COLORS.muted },
+  ratingLabel: { color: colors.ink, fontSize: 17, fontWeight: '800' },
+  unsetText: { color: colors.muted },
   pressed: { opacity: 0.58 },
 });
