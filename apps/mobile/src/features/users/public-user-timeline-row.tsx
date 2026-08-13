@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -32,17 +33,15 @@ export function PublicUserTimelineRow({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={styles.text}>
-        {item.subjectTitle ? (
-          <>
-            {item.leadingText}
-            <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
-            {item.trailingText}
-          </>
-        ) : (
-          item.text
-        )}
-      </Text>
+      {item.subjectTitle ? (
+        <Text style={styles.text}>
+          {item.leadingText}
+          <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
+          {item.trailingText}
+        </Text>
+      ) : (
+        <BangumiText style={styles.text}>{item.text}</BangumiText>
+      )}
       <Text style={styles.meta}>{formatActivityTime(item.createdAt)}</Text>
     </Pressable>
   );

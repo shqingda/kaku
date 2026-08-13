@@ -5,6 +5,7 @@ import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import type { DiscussionReply } from './model';
@@ -135,7 +136,7 @@ export const ReplyListItem = memo(function ReplyListItem({
           </Text>
         </Pressable>
       ) : null}
-      <Text style={styles.body}>{reply.body}</Text>
+      <BangumiText style={styles.body}>{reply.body}</BangumiText>
       {onEdit || onDelete || onReport ? (
         <View style={styles.actions}>
           {onEdit ? (

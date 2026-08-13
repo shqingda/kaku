@@ -25,6 +25,7 @@ import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -158,7 +159,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
                       {formatActivityTime(review.updatedAt)}
                     </Text>
                   </View>
-                  <Text style={styles.reviewBody}>{review.body}</Text>
+                  <BangumiText style={styles.reviewBody}>{review.body}</BangumiText>
                   <Text style={styles.replyHeading}>
                     回复 {review.replyCount}
                   </Text>

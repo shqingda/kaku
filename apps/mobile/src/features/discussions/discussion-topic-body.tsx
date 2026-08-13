@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export function DiscussionTopicBody({ body }: { body?: string }) {
@@ -12,9 +13,7 @@ export function DiscussionTopicBody({ body }: { body?: string }) {
 
   return (
     <View style={styles.card}>
-      <Text selectable style={styles.body}>
-        {body}
-      </Text>
+      <BangumiText style={styles.body}>{body}</BangumiText>
     </View>
   );
 }

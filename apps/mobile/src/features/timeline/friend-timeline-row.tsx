@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import type { FriendTimelineItem } from './model';
@@ -72,16 +73,12 @@ export function FriendTimelineRow({
           </Text>
           <Text style={styles.time}>{formatActivityTime(item.createdAt)}</Text>
         </View>
-        <Text style={styles.text}>
-          {item.subjectTitle ? (
-            <>
-              {item.leadingText}
+        {item.subjectTitle || item.entityTitle ? (
+          <Text style={styles.text}>
+            {item.leadingText}
+            {item.subjectTitle ? (
               <Text style={styles.subjectTitle}>《{item.subjectTitle}》</Text>
-              {item.trailingText}
-            </>
-          ) : item.entityTitle ? (
-            <>
-              {item.leadingText}
+            ) : (
               <Text
                 onPress={() =>
                   router.push({
@@ -96,12 +93,12 @@ export function FriendTimelineRow({
               >
                 {item.entityTitle}
               </Text>
-              {item.trailingText}
-            </>
-          ) : (
-            item.text
-          )}
-        </Text>
+            )}
+            {item.trailingText}
+          </Text>
+        ) : (
+          <BangumiText style={styles.text}>{item.text}</BangumiText>
+        )}
         {item.replies > 0 ? (
           <Text style={styles.replies}>{item.replies} 回复</Text>
         ) : null}
