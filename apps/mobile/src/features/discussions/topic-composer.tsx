@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import { useCreateGroupTopic, useCreateSubjectTopic } from './use-create-topic';
@@ -37,6 +38,8 @@ export function TopicComposer({
   target: TopicComposerTarget;
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -116,7 +119,7 @@ export function TopicComposer({
             <SymbolView
               name={{ android: 'close', ios: 'xmark', web: 'close' }}
               size={17}
-              tintColor={COLORS.muted}
+              tintColor={colors.muted}
               weight="semibold"
             />
           </Pressable>
@@ -137,7 +140,7 @@ export function TopicComposer({
             ]}
           >
             {mutation.isPending ? (
-              <ActivityIndicator color={COLORS.surface} size="small" />
+              <ActivityIndicator color={colors.surface} size="small" />
             ) : (
               <Text style={styles.publishText}>发布</Text>
             )}
@@ -151,7 +154,7 @@ export function TopicComposer({
           maxLength={MAX_TITLE_LENGTH}
           onChangeText={setTitle}
           placeholder="写一个清楚的话题标题"
-          placeholderTextColor={COLORS.subtle}
+          placeholderTextColor={colors.subtle}
           returnKeyType="next"
           style={styles.titleInput}
           value={title}
@@ -163,7 +166,7 @@ export function TopicComposer({
           multiline
           onChangeText={setContent}
           placeholder="友善地描述你想讨论的内容…"
-          placeholderTextColor={COLORS.subtle}
+          placeholderTextColor={colors.subtle}
           scrollEnabled
           style={styles.bodyInput}
           textAlignVertical="top"
@@ -186,7 +189,7 @@ export function TopicComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {},
   heading: {
     alignItems: 'center',
@@ -195,14 +198,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
     width: 34,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 17,
     fontWeight: '800',
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   },
   publishButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
@@ -219,9 +222,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   publishButtonDisabled: { opacity: 0.35 },
-  publishText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  publishText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   titleInput: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     fontWeight: '700',
     marginTop: 18,
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   bodyInput: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
     lineHeight: 23,
     minHeight: 140,
@@ -238,16 +241,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
   },
-  hint: { color: COLORS.muted, fontSize: 11 },
-  count: { color: COLORS.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
+  hint: { color: colors.muted, fontSize: 11 },
+  count: { color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 18,
     paddingBottom: 8,

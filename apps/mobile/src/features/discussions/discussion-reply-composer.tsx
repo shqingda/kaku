@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
+import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import type { DiscussionReply } from './model';
@@ -44,6 +45,8 @@ export function DiscussionReplyComposer({
   target: DiscussionReplyTarget;
   visible: boolean;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
@@ -158,7 +161,7 @@ export function DiscussionReplyComposer({
               <SymbolView
                 name={{ android: 'close', ios: 'xmark', web: 'close' }}
                 size={17}
-                tintColor={COLORS.muted}
+                tintColor={colors.muted}
                 weight="semibold"
               />
             </Pressable>
@@ -183,7 +186,7 @@ export function DiscussionReplyComposer({
               ]}
             >
               {pending ? (
-                <ActivityIndicator color={COLORS.surface} size="small" />
+                <ActivityIndicator color={colors.surface} size="small" />
               ) : (
                 <Text style={styles.sendText}>
                   {isEditing ? '保存' : '回复'}
@@ -209,7 +212,7 @@ export function DiscussionReplyComposer({
             multiline
             onChangeText={setContent}
             placeholder="友善地参与讨论…"
-            placeholderTextColor={COLORS.subtle}
+            placeholderTextColor={colors.subtle}
             ref={inputRef}
             scrollEnabled
             showSoftInputOnFocus
@@ -234,7 +237,7 @@ export function DiscussionReplyComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {},
   heading: {
     alignItems: 'center',
@@ -243,14 +246,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    backgroundColor: '#F7F6F2',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
     width: 34,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     flex: 1,
     fontSize: 17,
     fontWeight: '800',
@@ -259,7 +262,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius: 17,
     height: 34,
     justifyContent: 'center',
@@ -267,23 +270,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   sendButtonDisabled: { opacity: 0.35 },
-  sendText: { color: COLORS.surface, fontSize: 14, fontWeight: '800' },
+  sendText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   reference: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderRadius: 14,
     marginTop: 18,
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
-  referenceAuthor: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  referenceAuthor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
   referenceBody: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
   },
   input: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 17,
     lineHeight: 25,
     minHeight: 130,
@@ -292,16 +295,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    borderTopColor: COLORS.track,
+    borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
   },
-  hint: { color: COLORS.muted, fontSize: 11 },
-  count: { color: COLORS.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
+  hint: { color: colors.muted, fontSize: 11 },
+  count: { color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
   errorText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 18,
     paddingBottom: 8,
