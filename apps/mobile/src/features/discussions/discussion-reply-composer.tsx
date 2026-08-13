@@ -3,10 +3,6 @@ import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Keyboard,
-  KeyboardAvoidingView,
-  InteractionManager,
-  Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +12,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/design';
+import { AppSheet } from '@/features/shared/app-sheet';
+import { playSuccessHaptic } from '@/lib/haptics';
 
 import type { DiscussionReply } from './model';
 import {
@@ -71,6 +69,7 @@ export function DiscussionReplyComposer({
       },
       {
         onSuccess: () => {
+          playSuccessHaptic();
           Keyboard.dismiss();
           setContent('');
           onClose();
@@ -80,36 +79,14 @@ export function DiscussionReplyComposer({
   }
 
   return (
-    <Modal
-      accessibilityViewIsModal
-      animationType="fade"
-      onRequestClose={close}
-      onShow={() =>
-        InteractionManager.runAfterInteractions(() => inputRef.current?.focus())
-      }
-      transparent
-      visible={visible}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
+    <AppSheet onClose={close} visible={visible}>
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
       >
-        <Pressable
-          accessibilityLabel="关闭回复框"
-          accessibilityRole="button"
-          onPress={close}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          accessibilityViewIsModal
-          onAccessibilityEscape={close}
-          style={[
-            styles.sheet,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-          ]}
-        >
-          <View style={styles.handle} />
-          <View style={styles.heading}>
+        <View style={styles.heading}>
             <Pressable
               accessibilityLabel="关闭"
               accessibilityRole="button"
@@ -187,33 +164,13 @@ export function DiscussionReplyComposer({
               {createReply.error.message}
             </Text>
           ) : null}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </View>
+    </AppSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.28)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  handle: {
-    alignSelf: 'center',
-    backgroundColor: COLORS.track,
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 14,
-    width: 36,
-  },
+  content: {},
   heading: {
     alignItems: 'center',
     flexDirection: 'row',

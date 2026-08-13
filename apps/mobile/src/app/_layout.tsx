@@ -4,6 +4,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
@@ -48,7 +49,8 @@ export default function RootLayout() {
 
   return (
     <AppErrorBoundary>
-      <PersistQueryClientProvider
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <PersistQueryClientProvider
         client={queryClient}
         persistOptions={{
           buster: QUERY_CACHE_BUSTER,
@@ -444,7 +446,8 @@ export default function RootLayout() {
           />
           </Stack>
         </AuthProvider>
-      </PersistQueryClientProvider>
+        </PersistQueryClientProvider>
+      </GestureHandlerRootView>
     </AppErrorBoundary>
   );
 }

@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
-  AccessibilityInfo,
   Animated,
   Platform,
   Pressable,
@@ -9,6 +8,7 @@ import {
 import { SymbolView } from 'expo-symbols';
 
 import { COLORS } from '@/constants/design';
+import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 export function ScrollToTopButton({
   onPress,
@@ -18,24 +18,7 @@ export function ScrollToTopButton({
   visible: boolean;
 }) {
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (active) setReduceMotion(enabled);
-    });
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setReduceMotion,
-    );
-
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, []);
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
     Animated.timing(progress, {

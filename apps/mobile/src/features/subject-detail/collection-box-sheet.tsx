@@ -2,9 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/design';
 import { getCollectionStatusLabel } from '@/features/catalog/subject-types';
 import { RatingStars } from '@/features/reviews/rating-stars';
+import { AppSheet } from '@/features/shared/app-sheet';
 import type {
   CollectionStatus,
   WatchingItem,
@@ -167,59 +165,39 @@ export function CollectionBoxSheet({
   }
 
   return (
-    <Modal
-      animationType="fade"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
-      <KeyboardAvoidingView
-        accessibilityViewIsModal
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        onAccessibilityEscape={onClose}
-        style={styles.backdrop}
+    <AppSheet onClose={onClose} visible={visible}>
+      <View
+        style={{
+          flexShrink: 1,
+          paddingBottom: Math.max(insets.bottom, 18),
+        }}
       >
-        <Pressable
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          accessibilityViewIsModal
-          onAccessibilityEscape={onClose}
-          style={[
-            styles.sheet,
-            { paddingBottom: Math.max(insets.bottom, 18) },
-          ]}
-        >
-          <View style={styles.handle} />
-          <View style={styles.heading}>
-            <Text accessibilityRole="header" style={styles.title}>
-              收藏盒
-            </Text>
-            <Pressable
-              accessibilityLabel="关闭收藏盒"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'close',
-                  ios: 'xmark',
-                  web: 'close',
-                }}
-                size={17}
-                tintColor={COLORS.muted}
-                weight="semibold"
-              />
-            </Pressable>
-          </View>
+        <View style={styles.heading}>
+          <Text accessibilityRole="header" style={styles.title}>
+            收藏盒
+          </Text>
+          <Pressable
+            accessibilityLabel="关闭收藏盒"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={onClose}
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <SymbolView
+              name={{
+                android: 'close',
+                ios: 'xmark',
+                web: 'close',
+              }}
+              size={17}
+              tintColor={COLORS.muted}
+              weight="semibold"
+            />
+          </Pressable>
+        </View>
 
           <ScrollView
             contentContainerStyle={styles.content}
@@ -579,33 +557,11 @@ export function CollectionBoxSheet({
             </View>
           </ScrollView>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </AppSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.28)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '92%',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  handle: {
-    alignSelf: 'center',
-    backgroundColor: COLORS.track,
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 16,
-    width: 36,
-  },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',

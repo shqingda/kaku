@@ -21,7 +21,7 @@ import {
   canRateCollectionStatus,
   resizeWatchedEpisodes,
 } from '@/features/watching/progress';
-import { playSelectionHaptic } from '@/lib/haptics';
+import { playSuccessHaptic } from '@/lib/haptics';
 
 import {
   CollectionBoxSheet,
@@ -91,7 +91,7 @@ export function CollectionControls({
               : undefined,
       });
       setIsOpen(false);
-      playSelectionHaptic();
+      playSuccessHaptic();
     } catch (error) {
       Alert.alert(
         '收藏没有保存',

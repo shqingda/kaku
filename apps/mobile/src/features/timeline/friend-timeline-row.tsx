@@ -43,7 +43,10 @@ export function FriendTimelineRow({
             params: { username: item.user.username },
           });
         }}
-        style={styles.avatar}
+        style={({ pressed }) => [
+          styles.avatar,
+          pressed && styles.pressedAvatar,
+        ]}
       >
         <Text style={styles.avatarFallback}>
           {item.user.nickname.slice(0, 1)}
@@ -102,6 +105,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 36,
   },
+  pressedAvatar: { opacity: 0.62 },
   avatarFallback: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
   copy: { flex: 1, marginLeft: 12 },
   metaRow: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
