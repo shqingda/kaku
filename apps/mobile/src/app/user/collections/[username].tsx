@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS } from '@/constants/design';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
@@ -20,10 +20,12 @@ import {
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { AppState } from '@/features/shared/app-state';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useSavePersonalCollection } from '@/features/collections/use-personal-collection';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
+import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
 import type { WatchingItem } from '@/features/watching/model';
@@ -53,6 +55,8 @@ function parseCollectionStatus(value?: string) {
 }
 
 export default function PublicUserCollectionsScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { status, type, username } = useLocalSearchParams<{
     status?: string;
     type?: string;
@@ -105,18 +109,18 @@ export default function PublicUserCollectionsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           collectionsQuery.isPending ? (
-            <CollectionState
+            <AppState
               text={`正在读取公开${subjectTypeLabel}收藏。`}
               title="收藏加载中"
             />
           ) : collectionsQuery.isError ? (
-            <CollectionState
+            <AppState
               action={() => void collectionsQuery.refetch()}
               text="请检查网络后重试，已加载的数据不会被覆盖。"
               title="收藏读取失败"
             />
           ) : (
-            <CollectionState
+            <AppState
               text={`该用户没有公开${subjectTypeLabel}收藏。`}
               title="暂无收藏"
             />
@@ -230,6 +234,9 @@ function CollectionStatusTabs({
   selectedStatus?: CollectionStatus;
   subjectType: number;
 }) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <ScrollView
       contentContainerStyle={styles.statusTabs}
@@ -302,37 +309,8 @@ function CollectionRowEditor({ item }: { item: PublicUserCollection }) {
   );
 }
 
-function CollectionState({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  screen: { backgroundColor: COLORS.background, flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
   content: {
     paddingBottom: 44,
     paddingHorizontal: 20,
@@ -343,13 +321,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   title: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
   subtitle: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 13,
     marginTop: 7,
   },
@@ -357,19 +335,19 @@ const styles = StyleSheet.create({
   statusTabs: { gap: 8, paddingBottom: 18, paddingRight: 20 },
   statusTab: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 13,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
     minWidth: 58,
     paddingHorizontal: 14,
   },
-  statusTabSelected: { backgroundColor: COLORS.ink },
-  statusTabText: { color: COLORS.muted, fontSize: 13, fontWeight: '700' },
-  statusTabTextSelected: { color: COLORS.surface },
+  statusTabSelected: { backgroundColor: colors.ink },
+  statusTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  statusTabTextSelected: { color: colors.surface },
   item: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
     paddingHorizontal: 14,
   },
@@ -380,36 +358,6 @@ const styles = StyleSheet.create({
   lastItem: {
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
-  },
-  state: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: {
-    color: COLORS.ink,
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  stateText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: {
-    color: COLORS.accent,
-    fontSize: 13,
-    fontWeight: '800',
   },
   pressed: { opacity: 0.62 },
 });
