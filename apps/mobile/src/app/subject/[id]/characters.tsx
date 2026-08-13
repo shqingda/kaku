@@ -9,6 +9,7 @@ import { AppState } from '@/features/shared/app-state';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -32,7 +33,7 @@ export default function SubjectCharactersScreen() {
       <Stack.Screen options={{ title }} />
       {charactersQuery.isPending ? (
         <AppState title="正在读取角色资料" text={`${title}名单加载中。`} />
-      ) : charactersQuery.isError ? (
+      ) : charactersQuery.isError && !charactersQuery.data ? (
         <AppState
           action={() => void charactersQuery.refetch()}
           title="角色资料读取失败"
@@ -47,12 +48,19 @@ export default function SubjectCharactersScreen() {
             <AppState title="暂无角色资料" text="Bangumi 尚未收录角色信息。" />
           }
           ListHeaderComponent={
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.meta}>
-                {charactersQuery.data.length} 个角色
-              </Text>
-            </View>
+            <>
+              {charactersQuery.isError ? (
+                <CachedDataNotice
+                  onRetry={() => void charactersQuery.refetch()}
+                />
+              ) : null}
+              <View style={styles.header}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.meta}>
+                  {charactersQuery.data.length} 个角色
+                </Text>
+              </View>
+            </>
           }
           onRefresh={() =>
             void Promise.all([

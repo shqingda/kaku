@@ -15,6 +15,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -223,7 +224,7 @@ export default function StaffScreen() {
           <Text style={styles.stateTitle}>正在读取{title}</Text>
           <Text style={styles.stateText}>名单较长，请稍候。</Text>
         </View>
-      ) : staffQuery.isError ? (
+      ) : staffQuery.isError && !staffQuery.data ? (
         <View style={styles.state}>
           <Text style={styles.stateTitle}>{title}读取失败</Text>
           <Text style={styles.stateText}>网络恢复后可以重新获取。</Text>
@@ -249,12 +250,17 @@ export default function StaffScreen() {
             </View>
           }
           ListHeaderComponent={
-            <View style={styles.pageHeader}>
-              <Text style={styles.pageTitle}>{pageTitle}</Text>
-              <Text style={styles.pageMeta}>
-                {staffQuery.data?.length ?? 0} 条记录 · 按职位分组
-              </Text>
-            </View>
+            <>
+              {staffQuery.isError ? (
+                <CachedDataNotice onRetry={() => void staffQuery.refetch()} />
+              ) : null}
+              <View style={styles.pageHeader}>
+                <Text style={styles.pageTitle}>{pageTitle}</Text>
+                <Text style={styles.pageMeta}>
+                  {staffQuery.data?.length ?? 0} 条记录 · 按职位分组
+                </Text>
+              </View>
+            </>
           }
           maxToRenderPerBatch={16}
           onRefresh={() =>

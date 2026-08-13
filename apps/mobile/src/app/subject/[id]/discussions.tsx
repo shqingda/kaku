@@ -20,6 +20,7 @@ import { TopicComposer } from '@/features/discussions/topic-composer';
 import { TopicList } from '@/features/discussions/topic-list';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -61,7 +62,7 @@ export default function SubjectDiscussionsScreen() {
     return <InvalidRouteState message="这个讨论版链接缺少有效条目编号。" />;
   }
 
-  if (subjectQuery.isError) {
+  if (subjectQuery.isError && !subjectQuery.data) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <Stack.Screen options={{ title: '讨论版' }} />
@@ -123,6 +124,17 @@ export default function SubjectDiscussionsScreen() {
         scrollEventThrottle={160}
         showsVerticalScrollIndicator={false}
       >
+        {(subjectQuery.isError && subjectQuery.data) ||
+        (discussionQuery.isError && subjectTopics.length > 0) ? (
+          <CachedDataNotice
+            onRetry={() =>
+              void Promise.all([
+                subjectQuery.refetch(),
+                discussionQuery.refetch(),
+              ])
+            }
+          />
+        ) : null}
         <View style={styles.header}>
           <Text style={styles.eyebrow}>
             {subjectQuery.data?.title ?? '正在读取条目'}

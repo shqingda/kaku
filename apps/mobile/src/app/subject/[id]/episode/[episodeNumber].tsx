@@ -146,7 +146,7 @@ export default function EpisodeScreen() {
     );
   }
 
-  if (catalogQuery.isError) {
+  if (catalogQuery.isError && !catalogSubject) {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <Stack.Screen

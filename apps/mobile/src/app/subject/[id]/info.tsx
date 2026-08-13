@@ -18,6 +18,7 @@ import {
   getSubjectTypeLabel,
 } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CollectionStatus } from '@/features/watching/model';
@@ -58,7 +59,7 @@ export default function SubjectInfoScreen() {
       <Stack.Screen options={{ title: `${subjectTypeLabel}资料` }} />
       {subjectQuery.isPending ? (
         <AppState title="正在读取条目资料" text="评分与基础资料加载中。" />
-      ) : subjectQuery.isError || !subject ? (
+      ) : !subject ? (
         <AppState
           action={() => void subjectQuery.refetch()}
           title="条目资料读取失败"
@@ -78,6 +79,9 @@ export default function SubjectInfoScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
+          {subjectQuery.isError ? (
+            <CachedDataNotice onRetry={() => void subjectQuery.refetch()} />
+          ) : null}
           <View style={styles.header}>
             <Text style={styles.title}>评分与资料</Text>
             <Text style={styles.meta}>
