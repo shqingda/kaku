@@ -86,6 +86,29 @@ export const ReplyListItem = memo(function ReplyListItem({
           )}
           <Text style={styles.time}>{reply.createdAt}</Text>
         </View>
+        {onReply ? (
+          <Pressable
+            accessibilityLabel={`回复 ${reply.author}`}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onReply(reply)}
+            style={({ pressed }) => [
+              styles.replyIcon,
+              pressed && styles.pressed,
+            ]}
+          >
+            <SymbolView
+              name={{
+                android: 'reply',
+                ios: 'arrowshape.turn.up.left',
+                web: 'reply',
+              }}
+              size={13}
+              tintColor={COLORS.muted}
+              weight="semibold"
+            />
+          </Pressable>
+        ) : null}
         <Text style={styles.floor}>#{floor}</Text>
       </View>
       {reply.replyTo ? (
@@ -107,60 +130,38 @@ export const ReplyListItem = memo(function ReplyListItem({
         </Pressable>
       ) : null}
       <Text style={styles.body}>{reply.body}</Text>
-      <View style={styles.actions}>
-        {onReply ? (
-          <Pressable
-            accessibilityLabel={`回复 ${reply.author}`}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => onReply(reply)}
-            style={({ pressed }) => [
-              styles.replyButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <SymbolView
-              name={{
-                android: 'reply',
-                ios: 'arrowshape.turn.up.left',
-                web: 'reply',
-              }}
-              size={13}
-              tintColor={COLORS.accent}
-              weight="semibold"
-            />
-            <Text style={styles.replyAction}>回复</Text>
-          </Pressable>
-        ) : null}
-        {onEdit ? (
-          <Pressable
-            accessibilityLabel="编辑自己的回复"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => onEdit(reply)}
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.editAction}>编辑</Text>
-          </Pressable>
-        ) : null}
-        {onDelete ? (
-          <Pressable
-            accessibilityLabel={`删除自己的回复`}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => onDelete(reply)}
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.deleteAction}>删除</Text>
-          </Pressable>
-        ) : null}
-      </View>
+      {onEdit || onDelete ? (
+        <View style={styles.actions}>
+          {onEdit ? (
+            <Pressable
+              accessibilityLabel="编辑自己的回复"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => onEdit(reply)}
+              style={({ pressed }) => [
+                styles.actionButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.editAction}>编辑</Text>
+            </Pressable>
+          ) : null}
+          {onDelete ? (
+            <Pressable
+              accessibilityLabel={`删除自己的回复`}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => onDelete(reply)}
+              style={({ pressed }) => [
+                styles.actionButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.deleteAction}>删除</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 });
@@ -214,23 +215,19 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   body: { color: COLORS.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  replyIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+    minHeight: 28,
+    minWidth: 28,
+  },
   actions: {
     alignItems: 'center',
     flexDirection: 'row',
     marginTop: 12,
     minHeight: 32,
   },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accentSoft,
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 5,
-    justifyContent: 'center',
-    minHeight: 32,
-    paddingHorizontal: 12,
-  },
-  replyAction: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
   editAction: {
     color: COLORS.muted,
     fontSize: 12,
