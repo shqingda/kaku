@@ -19,20 +19,24 @@ export const RUBBERBAND_CONSTANT = 0.55;
 export const DECELERATION_RATE = 0.998;
 
 // Apple 的动量投影：v/1000 · d/(1-d)，把释放速度换算成最终还会滑行的距离。
-export function project(velocity: number, decelerationRate = DECELERATION_RATE): number {
+// 注意：worklet 序列化不会捕获默认参数表达式里的模块常量，默认值必须放在
+// 函数体内部解析，否则在 UI 线程会报 "Property 'DECELERATION_RATE' doesn't exist"。
+export function project(velocity: number, decelerationRate?: number): number {
   'worklet';
-  return ((velocity / 1000) * decelerationRate) / (1 - decelerationRate);
+  const rate = decelerationRate ?? DECELERATION_RATE;
+  return ((velocity / 1000) * rate) / (1 - rate);
 }
 
 // 橡皮筋：越拖过边界，元素跟随得越少，形成"软边界"而不是硬停。
 export function rubberband(
   overshoot: number,
   dimension: number,
-  constant = RUBBERBAND_CONSTANT,
+  constant?: number,
 ): number {
   'worklet';
-  const denominator = dimension + constant * Math.abs(overshoot);
-  return denominator === 0 ? 0 : (overshoot * dimension * constant) / denominator;
+  const c = constant ?? RUBBERBAND_CONSTANT;
+  const denominator = dimension + c * Math.abs(overshoot);
+  return denominator === 0 ? 0 : (overshoot * dimension * c) / denominator;
 }
 
 // 拖拽释放时的关闭判定：先做动量投影，再与位置阈值比较；
