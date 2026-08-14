@@ -3,7 +3,6 @@ import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Keyboard,
-  InteractionManager,
   Pressable,
   StyleSheet,
   Text,
@@ -43,7 +42,7 @@ export function TimelineComposer({
   }, [visible]);
 
   function focusInput() {
-    InteractionManager.runAfterInteractions(() => inputRef.current?.focus());
+    requestIdleCallback(() => inputRef.current?.focus(), { timeout: 200 });
   }
 
   function finishClose() {
