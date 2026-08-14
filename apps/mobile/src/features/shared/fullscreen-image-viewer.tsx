@@ -25,8 +25,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   containedTranslation,
+  DISMISS_HEIGHT_RATIO,
   resistedScale,
+  RUBBERBAND_CONSTANT,
   settleScale,
+  SHEET_DISMISS_SPRING,
+  shouldDismissSheet,
+  rubberband,
 } from '@/lib/motion';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
@@ -71,6 +76,8 @@ export function FullscreenImageViewer({
   const scale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  const dismissY = useSharedValue(0);
+  const dismissOpacity = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
@@ -89,6 +96,7 @@ export function FullscreenImageViewer({
       : null;
   const halfWindowWidth = windowWidth / 2;
   const halfWindowHeight = windowHeight / 2;
+  const dismissDistance = windowHeight * DISMISS_HEIGHT_RATIO;
 
   useEffect(() => {
     if (visible && !mounted) {
@@ -130,17 +138,19 @@ export function FullscreenImageViewer({
     scale.value = 1;
     translateX.value = 0;
     translateY.value = 0;
+    dismissY.value = 0;
+    dismissOpacity.value = 1;
     savedScale.value = 1;
     savedTranslateX.value = 0;
     savedTranslateY.value = 0;
-  }, [savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
+  }, [dismissOpacity, dismissY, savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
 
   const style = useAnimatedStyle(() => {
     if (reduceMotion) {
-      return { opacity: progress.value };
+      return { opacity: progress.value * dismissOpacity.value };
     }
     return {
-      opacity: progress.value,
+      opacity: progress.value * dismissOpacity.value,
       transform: [{ scale: 0.96 + 0.04 * progress.value }],
     };
   });
@@ -148,7 +158,7 @@ export function FullscreenImageViewer({
   const imageStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
-      { translateY: translateY.value },
+      { translateY: translateY.value + dismissY.value },
       { scale: scale.value },
     ],
   }));
@@ -200,6 +210,22 @@ export function FullscreenImageViewer({
     })
     .onUpdate((event) => {
       if (scale.value <= 1.01) {
+        // 未缩放时，向下拖拽用于关闭预览；其余方向忽略。
+        if (event.translationY <= 0) {
+          dismissY.value = 0;
+          dismissOpacity.value = 1;
+          return;
+        }
+        const distance = rubberband(
+          event.translationY,
+          windowHeight,
+          RUBBERBAND_CONSTANT,
+        );
+        dismissY.value = distance;
+        dismissOpacity.value = Math.max(
+          0,
+          1 - distance / (windowHeight * 0.5),
+        );
         return;
       }
       const fittedWidth = fitted?.width ?? 0;
@@ -216,6 +242,20 @@ export function FullscreenImageViewer({
         fittedHeight,
         scale.value,
       );
+    })
+    .onEnd((event) => {
+      if (scale.value > 1.01) {
+        return;
+      }
+      if (shouldDismissSheet(dismissY.value, event.velocityY, dismissDistance)) {
+        dismissY.value = withTiming(windowHeight, { duration: 220 }, (finished) => {
+          if (finished) runOnJS(onClose)();
+        });
+        dismissOpacity.value = withTiming(0, { duration: 220 });
+        return;
+      }
+      dismissY.value = withSpring(0, SHEET_DISMISS_SPRING);
+      dismissOpacity.value = withTiming(1, { duration: 160 });
     });
 
   const doubleTap = Gesture.Tap()
