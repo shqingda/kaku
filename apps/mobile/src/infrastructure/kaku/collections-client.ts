@@ -4,7 +4,7 @@ import type {
   PersonalCollection,
   PersonalCollectionUpdate,
 } from '@/features/collections/model';
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const personalCollectionSchema = z.object({
   collectionStatus: z.enum([
@@ -36,7 +36,7 @@ export async function getPersonalCollection(
   const response = await request(`/me/collections/${subjectId}`, { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json()).collection;
@@ -54,7 +54,7 @@ export async function savePersonalCollection(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json()).collection;

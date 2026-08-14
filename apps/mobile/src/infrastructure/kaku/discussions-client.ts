@@ -7,7 +7,7 @@ import {
   bangumiGroupTopicSchema,
   bangumiSubjectTopicSchema,
 } from '../bangumi/api-next/schemas.ts';
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
 
@@ -34,7 +34,7 @@ export async function getAuthenticatedSubjectTopic(
   }
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return bangumiSubjectTopicSchema.parse(await response.json());
@@ -48,7 +48,7 @@ async function getAuthenticatedDiscussion(
   const response = await request(path, { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return response.json();
@@ -66,7 +66,7 @@ export async function getAuthenticatedGroupTopic(
   }
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return bangumiGroupTopicSchema.parse(await response.json());
@@ -120,7 +120,7 @@ async function createReply(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return createdReplySchema.parse(await response.json());
@@ -217,7 +217,7 @@ async function createTopic(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return createdReplySchema.parse(await response.json());
@@ -249,7 +249,7 @@ async function deletePost(request: AuthenticatedRequest, path: string) {
   const response = await request(path, { method: 'DELETE' });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 }
 
@@ -279,7 +279,7 @@ async function editPost(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 }
 

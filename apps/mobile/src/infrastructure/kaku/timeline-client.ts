@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { FriendTimelinePage } from '@/features/timeline/model';
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 import { getFriendTimelinePath } from './timeline-pagination.ts';
 
 const timelineItemSchema = z.object({
@@ -40,7 +40,7 @@ export async function getFriendTimeline(
   const response = await request(getFriendTimelinePath(until), { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json());
@@ -58,7 +58,7 @@ export async function createTimelineSay(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return createdTimelineSchema.parse(await response.json());

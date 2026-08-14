@@ -58,7 +58,7 @@ export async function createIndex(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return createdIndexSchema.parse(await response.json());
@@ -76,7 +76,7 @@ export async function updateIndex(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 }
 
@@ -89,7 +89,7 @@ export async function deleteIndex(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 }
 
@@ -105,7 +105,7 @@ export async function getIndexCollection(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return indexCollectionSchema.parse(await response.json()).collected;
@@ -121,7 +121,7 @@ export async function setIndexCollection(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return indexCollectionSchema.parse(await response.json()).collected;

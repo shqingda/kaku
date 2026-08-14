@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const friendshipSchema = z.object({ isFriend: z.boolean() });
 const blocklistSchema = z.object({
@@ -18,7 +18,7 @@ export async function getUserFriendship(
   );
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return friendshipSchema.parse(await response.json()).isFriend;
@@ -31,7 +31,7 @@ export async function getBlocklist(
   const response = await request('/me/blocklist', { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return blocklistSchema.parse(await response.json()).blocklist;
@@ -48,7 +48,7 @@ export async function setUserBlocked(
   );
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return blocklistSchema.parse(await response.json()).blocklist;
@@ -68,7 +68,7 @@ export async function setUserFriend(
   );
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return friendshipSchema.parse(await response.json()).isFriend;

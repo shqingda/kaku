@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { NotificationList } from '@/features/notifications/model';
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const targetSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -44,7 +44,7 @@ export async function getNotifications(
   const response = await request('/me/notifications', { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json());
@@ -61,6 +61,6 @@ export async function markNotificationsRead(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 }

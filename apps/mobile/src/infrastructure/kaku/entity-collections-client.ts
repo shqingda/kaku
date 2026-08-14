@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 export type EntityCollectionKind = 'character' | 'person';
 
@@ -19,7 +19,7 @@ export async function getEntityCollection(
   const response = await request(path(kind, entityId), { signal });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json()).collected;
@@ -38,7 +38,7 @@ export async function saveEntityCollection(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return responseSchema.parse(await response.json()).collected;

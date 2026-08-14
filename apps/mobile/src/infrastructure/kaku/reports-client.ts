@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { readErrorMessage } from './auth-client.ts';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const reportResultSchema = z.object({ message: z.string() });
 
@@ -22,7 +22,7 @@ export async function createReport(
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
   return reportResultSchema.parse(await response.json()).message;
