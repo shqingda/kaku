@@ -7,12 +7,13 @@ import {
 import type { DiscoverSubjectPage } from './model';
 import { bangumiDiscoverProvider } from '@/infrastructure/bangumi/discover/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useBangumiCalendar(enabled = true) {
   return useQuery({
     enabled,
-    meta: { persist: true },
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => bangumiDiscoverProvider.getCalendar(signal),
     queryKey: queryKeys.calendar(),
     retry: shouldRetryBangumiQuery,
@@ -30,7 +31,7 @@ export function useBangumiRankedSubjects(subjectType = 2) {
   >({
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    meta: { persist: true },
+    meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       bangumiDiscoverProvider.getRankedSubjects(
         subjectType,
