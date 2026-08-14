@@ -13,10 +13,8 @@ import {
   encryptSecret,
   hashToken,
 } from './crypto.ts';
-import {
-  createD1AuthStore,
-  type AuthStore,
-} from './store.ts';
+import type { AuthStore } from './store.ts';
+import { getAuthStore } from './route-helpers.ts';
 import {
   authenticateRequest,
   isAuthenticationResponse,
@@ -44,9 +42,7 @@ export type AuthDependencies = {
 };
 
 function getStore(env: Env, dependencies: AuthDependencies) {
-  return dependencies.createStore
-    ? dependencies.createStore(env.DB)
-    : createD1AuthStore(env.DB);
+  return getAuthStore(env, dependencies.createStore);
 }
 
 async function createSessionTokens({

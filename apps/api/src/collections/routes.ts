@@ -1,17 +1,13 @@
 import type { Context, Hono } from 'hono';
 import { z } from 'zod';
 
-import { BangumiOAuthError } from '../auth/bangumi-client.ts';
-import {
-  BangumiReauthorizationRequiredError,
-  getValidBangumiAccessToken,
-} from '../auth/bangumi-token-service.ts';
+import { getValidBangumiAccessToken } from '../auth/bangumi-token-service.ts';
 import type { AuthDependencies } from '../auth/routes.ts';
+import { getAuthStore, mapBangumiAuthError } from '../auth/route-helpers.ts';
 import {
   authenticateRequest,
   isAuthenticationResponse,
 } from '../auth/session-service.ts';
-import { createD1AuthStore } from '../auth/store.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiApiError,
@@ -76,9 +72,7 @@ export function registerCollectionRoutes(
       );
     }
 
-    const store = dependencies.createStore
-      ? dependencies.createStore(context.env.DB)
-      : createD1AuthStore(context.env.DB);
+    const store = getAuthStore(context.env, dependencies.createStore);
     const authentication = await authenticateRequest(context, store, now());
 
     if (isAuthenticationResponse(authentication)) {
@@ -101,12 +95,8 @@ export function registerCollectionRoutes(
       });
       return context.json({ collected });
     } catch (error) {
-      if (error instanceof BangumiReauthorizationRequiredError) {
-        return context.json(
-          { error: 'bangumi_reauthorization_required', message: error.message },
-          409,
-        );
-      }
+      const authError = mapBangumiAuthError(context, error);
+      if (authError) return authError;
 
       if (error instanceof BangumiApiError) {
         console.error('Bangumi entity collection request failed', {
@@ -131,16 +121,6 @@ export function registerCollectionRoutes(
         return context.json(
           { error: 'bangumi_unavailable', message: error.message },
           error.status >= 500 ? 503 : 502,
-        );
-      }
-
-      if (error instanceof BangumiOAuthError) {
-        return context.json(
-          {
-            error: 'bangumi_oauth_unavailable',
-            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
-          },
-          503,
         );
       }
 
@@ -197,9 +177,7 @@ export function registerCollectionRoutes(
       );
     }
 
-    const store = dependencies.createStore
-      ? dependencies.createStore(context.env.DB)
-      : createD1AuthStore(context.env.DB);
+    const store = getAuthStore(context.env, dependencies.createStore);
     const authentication = await authenticateRequest(context, store, now());
 
     if (isAuthenticationResponse(authentication)) {
@@ -223,12 +201,8 @@ export function registerCollectionRoutes(
 
       return context.json({ collection });
     } catch (error) {
-      if (error instanceof BangumiReauthorizationRequiredError) {
-        return context.json(
-          { error: 'bangumi_reauthorization_required', message: error.message },
-          409,
-        );
-      }
+      const authError = mapBangumiAuthError(context, error);
+      if (authError) return authError;
 
       if (error instanceof BangumiApiError) {
         if (error.status === 401) {
@@ -245,16 +219,6 @@ export function registerCollectionRoutes(
         return context.json(
           { error: 'bangumi_unavailable', message: error.message },
           error.status >= 500 ? 503 : 502,
-        );
-      }
-
-      if (error instanceof BangumiOAuthError) {
-        return context.json(
-          {
-            error: 'bangumi_oauth_unavailable',
-            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
-          },
-          503,
         );
       }
 
@@ -285,9 +249,7 @@ export function registerCollectionRoutes(
       );
     }
 
-    const store = dependencies.createStore
-      ? dependencies.createStore(context.env.DB)
-      : createD1AuthStore(context.env.DB);
+    const store = getAuthStore(context.env, dependencies.createStore);
     const authentication = await authenticateRequest(context, store, now());
 
     if (isAuthenticationResponse(authentication)) {
@@ -326,12 +288,8 @@ export function registerCollectionRoutes(
 
       return context.json({ collection });
     } catch (error) {
-      if (error instanceof BangumiReauthorizationRequiredError) {
-        return context.json(
-          { error: 'bangumi_reauthorization_required', message: error.message },
-          409,
-        );
-      }
+      const authError = mapBangumiAuthError(context, error);
+      if (authError) return authError;
 
       if (error instanceof BangumiApiError) {
         if (error.status === 401) {
@@ -348,16 +306,6 @@ export function registerCollectionRoutes(
         return context.json(
           { error: 'bangumi_unavailable', message: error.message },
           error.status >= 500 ? 503 : 502,
-        );
-      }
-
-      if (error instanceof BangumiOAuthError) {
-        return context.json(
-          {
-            error: 'bangumi_oauth_unavailable',
-            message: 'Bangumi 登录服务暂时不可用，请稍后重试。',
-          },
-          503,
         );
       }
 
