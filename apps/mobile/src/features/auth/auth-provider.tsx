@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -29,20 +30,26 @@ import {
 import { authStorage } from './auth-storage';
 import type { AuthSession } from './model';
 
-type AuthContextValue = {
+type AuthSessionValue = {
   error?: string;
   isLoading: boolean;
   isSigningIn: boolean;
   session: AuthSession | null;
-  clearError: () => void;
-  completeSignIn: (callbackUrl: string) => Promise<void>;
-  signIn: () => Promise<boolean>;
-  signOut: () => Promise<void>;
-  disconnectBangumi: () => Promise<void>;
-  request: (path: string, init?: RequestInit) => Promise<Response>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+type AuthActionsValue = {
+  clearError: () => void;
+  completeSignIn: (callbackUrl: string) => Promise<void>;
+  disconnectBangumi: () => Promise<void>;
+  request: (path: string, init?: RequestInit) => Promise<Response>;
+  signIn: () => Promise<boolean>;
+  signOut: () => Promise<void>;
+};
+
+// 拆成两个 context：登录状态（变化频繁）与操作函数（稳定）。只依赖 request 的
+// 数据层可以用 useAuthActions，登录状态变化时不会跟着重渲染。
+const AuthSessionContext = createContext<AuthSessionValue | null>(null);
+const AuthActionsContext = createContext<AuthActionsValue | null>(null);
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -262,32 +269,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(undefined);
   }, [clearSession, request]);
 
+  const clearError = useCallback(() => setError(undefined), []);
+
+  const sessionValue = useMemo(
+    () => ({ error, isLoading, isSigningIn, session }),
+    [error, isLoading, isSigningIn, session],
+  );
+
+  const actionsValue = useMemo(
+    () => ({
+      clearError,
+      completeSignIn,
+      disconnectBangumi,
+      request,
+      signIn,
+      signOut,
+    }),
+    [clearError, completeSignIn, disconnectBangumi, request, signIn, signOut],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        clearError: () => setError(undefined),
-        completeSignIn,
-        disconnectBangumi,
-        error,
-        isLoading,
-        isSigningIn,
-        session,
-        signIn,
-        signOut,
-        request,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthActionsContext.Provider value={actionsValue}>
+      <AuthSessionContext.Provider value={sessionValue}>
+        {children}
+      </AuthSessionContext.Provider>
+    </AuthActionsContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const session = useContext(AuthSessionContext);
+  const actions = useContext(AuthActionsContext);
 
-  if (!context) {
+  if (!session || !actions) {
     throw new Error('useAuth must be used inside AuthProvider');
   }
 
-  return context;
+  return { ...session, ...actions };
+}
+
+export function useAuthActions() {
+  const actions = useContext(AuthActionsContext);
+
+  if (!actions) {
+    throw new Error('useAuthActions must be used inside AuthProvider');
+  }
+
+  return actions;
 }

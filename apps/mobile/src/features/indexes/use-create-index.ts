@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuthActions } from '@/features/auth/auth-provider';
 import {
   createIndex,
   deleteIndex,
@@ -11,7 +11,7 @@ import { queryKeys } from '@/lib/query-keys';
 type IndexInput = { desc: string; isPrivate?: boolean; title: string };
 
 export function useCreateIndex() {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -25,7 +25,7 @@ export function useCreateIndex() {
 }
 
 export function useUpdateIndex(indexId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -42,7 +42,7 @@ export function useUpdateIndex(indexId: number) {
 }
 
 export function useDeleteIndex() {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({

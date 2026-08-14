@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuthActions } from '@/features/auth/auth-provider';
 import {
   editBlogComment,
   editCharacterComment,
@@ -14,7 +14,7 @@ import { queryKeys } from '@/lib/query-keys';
 type EditReplyInput = { content: string; postId: number };
 
 export function useEditSubjectReply(topicId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -29,7 +29,7 @@ export function useEditSubjectReply(topicId: number) {
 }
 
 export function useEditGroupReply(topicId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -44,7 +44,7 @@ export function useEditGroupReply(topicId: number) {
 }
 
 export function useEditEpisodeReply(episodeId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -59,7 +59,7 @@ export function useEditEpisodeReply(episodeId: number) {
 }
 
 export function useEditReviewReply(reviewId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -74,7 +74,7 @@ export function useEditReviewReply(reviewId: number) {
 }
 
 export function useEditCharacterReply(characterId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -89,7 +89,7 @@ export function useEditCharacterReply(characterId: number) {
 }
 
 export function useEditPersonReply(personId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({

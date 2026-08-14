@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuthActions } from '@/features/auth/auth-provider';
 import {
   deleteBlogComment,
   deleteCharacterComment,
@@ -12,7 +12,7 @@ import {
 import { queryKeys } from '@/lib/query-keys';
 
 export function useDeleteSubjectReply(topicId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -26,7 +26,7 @@ export function useDeleteSubjectReply(topicId: number) {
 }
 
 export function useDeleteGroupReply(topicId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -40,7 +40,7 @@ export function useDeleteGroupReply(topicId: number) {
 }
 
 export function useDeleteEpisodeReply(episodeId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -54,7 +54,7 @@ export function useDeleteEpisodeReply(episodeId: number) {
 }
 
 export function useDeleteReviewReply(reviewId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -68,7 +68,7 @@ export function useDeleteReviewReply(reviewId: number) {
 }
 
 export function useDeleteCharacterReply(characterId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -83,7 +83,7 @@ export function useDeleteCharacterReply(characterId: number) {
 }
 
 export function useDeletePersonReply(personId: number) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({

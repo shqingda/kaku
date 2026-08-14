@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuthActions } from '@/features/auth/auth-provider';
 import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 import {
   createCharacterComment,
@@ -29,7 +29,7 @@ export type DiscussionReplyTarget = {
 };
 
 export function useCreateDiscussionReply(target: DiscussionReplyTarget) {
-  const { request } = useAuth();
+  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
   return useMutation({
