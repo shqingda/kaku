@@ -11,6 +11,7 @@ import { DARK_COLORS, LIGHT_COLORS } from '@/constants/theme';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
+import { OfflineBanner } from '@/features/shared/offline-banner';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 import {
   bangumiRetryDelay,
@@ -461,6 +462,7 @@ export default function RootLayout() {
             }}
           />
           </Stack>
+          <OfflineBanner />
         </ThemeProvider>
         </AuthProvider>
         </PersistQueryClientProvider>
