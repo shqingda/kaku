@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -91,10 +91,25 @@ export function EntityDetailScreen({
     listRef: commentsListRef,
     openReply,
   } = useReplyNavigation(comments);
+  // 打开评论弹层后要定位到的回复：等弹层入场动画结束再滚动，避免硬编码等待时间。
+  const pendingReplyIdRef = useRef<string | undefined>(undefined);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
+
+  function openReplyInSheet(replyId: string) {
+    pendingReplyIdRef.current = replyId;
+    setCommentsVisible(true);
+  }
+
+  function handleCommentsEntered() {
+    const replyId = pendingReplyIdRef.current;
+    pendingReplyIdRef.current = undefined;
+    if (replyId) {
+      openReply(replyId);
+    }
+  }
 
   function handleCommentsScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const nextVisible = event.nativeEvent.contentOffset.y > 720;
@@ -398,10 +413,7 @@ export function EntityDetailScreen({
                             ? openEditComposer
                             : undefined
                         }
-                        onOpenReference={(replyId) => {
-                          setCommentsVisible(true);
-                          setTimeout(() => openReply(replyId), 220);
-                        }}
+                        onOpenReference={openReplyInSheet}
                         onReply={openComposer}
                         reply={reply}
                       />
@@ -442,6 +454,7 @@ export function EntityDetailScreen({
       )}
       <AppSheet
         onClose={() => setCommentsVisible(false)}
+        onEntered={handleCommentsEntered}
         visible={commentsVisible}
       >
         <View

@@ -39,6 +39,7 @@ export function AppSheet({
   children,
   keyboardAvoidingBehavior = Platform.OS === 'ios' ? 'padding' : undefined,
   onClose,
+  onEntered,
   onShow,
   swipeToDismissEnabled = true,
   visible,
@@ -46,6 +47,7 @@ export function AppSheet({
   children: ReactNode;
   keyboardAvoidingBehavior?: 'height' | 'padding' | 'position' | undefined;
   onClose: () => void;
+  onEntered?: () => void;
   onShow?: () => void;
   swipeToDismissEnabled?: boolean;
   visible: boolean;
@@ -58,10 +60,15 @@ export function AppSheet({
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(0);
   const mountedRef = useRef(mounted);
+  const onEnteredRef = useRef(onEntered);
 
   useEffect(() => {
     mountedRef.current = mounted;
   }, [mounted]);
+
+  useEffect(() => {
+    onEnteredRef.current = onEntered;
+  }, [onEntered]);
 
   // 打开：重置到展开位，再从屏幕下方以临界阻尼弹簧滑入。
   useEffect(() => {
@@ -72,14 +79,20 @@ export function AppSheet({
     translateY.value = windowHeight;
     backdropOpacity.value = 0;
 
+    const finishEntering = (finished?: boolean) => {
+      if (finished && onEnteredRef.current) {
+        runOnJS(onEnteredRef.current)();
+      }
+    };
+
     if (reduceMotion) {
       translateY.value = 0;
       backdropOpacity.value = withTiming(1, {
         duration: 180,
         easing: Easing.out(Easing.cubic),
-      });
+      }, finishEntering);
     } else {
-      translateY.value = withSpring(0, SHEET_ENTER_SPRING);
+      translateY.value = withSpring(0, SHEET_ENTER_SPRING, finishEntering);
       backdropOpacity.value = withTiming(1, {
         duration: 180,
         easing: Easing.out(Easing.cubic),
