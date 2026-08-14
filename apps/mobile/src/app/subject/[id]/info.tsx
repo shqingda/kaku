@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,

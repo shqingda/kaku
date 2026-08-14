@@ -23,10 +23,6 @@ const currentUserSchema = z.object({
   username: z.string().min(1),
 });
 
-
-export type BangumiTokenResponse = z.infer<typeof tokenResponseSchema>;
-export type BangumiCurrentUser = z.infer<typeof currentUserSchema>;
-
 export class BangumiOAuthError extends Error {
   readonly status: number;
 

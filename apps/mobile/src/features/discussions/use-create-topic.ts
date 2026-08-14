@@ -6,7 +6,6 @@ import {
   createGroupTopic,
   createSubjectTopic,
 } from '@/infrastructure/kaku/discussions-client';
-import { queryKeys } from '@/lib/query-keys';
 
 type CreateTopicInput = { content: string; title: string };
 

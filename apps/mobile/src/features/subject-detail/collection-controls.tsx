@@ -14,10 +14,7 @@ import {
 import { getRatingLabel } from '@/features/reviews/rating-label';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useTheme } from '@/features/theme/theme-provider';
-import type {
-  CollectionStatus,
-  WatchingItem,
-} from '@/features/watching/model';
+import type { WatchingItem } from '@/features/watching/model';
 import {
   canRateCollectionStatus,
   resizeWatchedEpisodes,
