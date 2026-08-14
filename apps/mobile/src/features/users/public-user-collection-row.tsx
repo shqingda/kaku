@@ -57,6 +57,7 @@ export function PublicUserCollectionRow({
         {item.coverUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={item.coverUrl}
             source={item.coverUrl}
             style={StyleSheet.absoluteFill}
             transition={120}

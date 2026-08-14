@@ -78,6 +78,7 @@ export function NotificationRow({
         {item.sender.avatarUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={item.sender.avatarUrl}
             source={item.sender.avatarUrl}
             style={StyleSheet.absoluteFill}
             transition={100}

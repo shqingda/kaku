@@ -124,6 +124,7 @@ export function EntityRelationRow({
               <Image
                 contentFit="cover"
                 contentPosition="top"
+                recyclingKey={item.peer.imageUrl}
                 source={item.peer.imageUrl}
                 style={StyleSheet.absoluteFill}
                 transition={120}
@@ -177,6 +178,7 @@ export function EntityRelationRow({
             {item.subject.coverUrl ? (
               <Image
                 contentFit="cover"
+                recyclingKey={item.subject.coverUrl}
                 source={item.subject.coverUrl}
                 style={StyleSheet.absoluteFill}
                 transition={120}

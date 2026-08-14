@@ -222,7 +222,7 @@ function BrowseCard({ item }: { item: DiscoverSubject }) {
       <View style={styles.cover}>
         <Text style={styles.coverFallback}>{item.title.slice(0, 1)}</Text>
         {item.coverUrl ? (
-          <Image contentFit="cover" source={item.coverUrl} style={StyleSheet.absoluteFill} transition={120} />
+          <Image contentFit="cover" recyclingKey={item.coverUrl} source={item.coverUrl} style={StyleSheet.absoluteFill} transition={120} />
         ) : null}
       </View>
       <Text maxFontSizeMultiplier={1.35} numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>

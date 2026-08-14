@@ -30,6 +30,7 @@ export function PublicUserEntityCard({
           <Image
             contentFit="cover"
             contentPosition="top"
+            recyclingKey={entity.imageUrl}
             source={entity.imageUrl}
             style={StyleSheet.absoluteFill}
             transition={120}

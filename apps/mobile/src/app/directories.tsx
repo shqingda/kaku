@@ -227,6 +227,7 @@ function IndexRow({
           {item.authorAvatarUrl ? (
             <Image
               contentFit="cover"
+              recyclingKey={item.authorAvatarUrl}
               source={item.authorAvatarUrl}
               style={StyleSheet.absoluteFill}
               transition={120}

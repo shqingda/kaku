@@ -68,6 +68,7 @@ export const ReplyListItem = memo(function ReplyListItem({
                 {reply.authorAvatarUrl ? (
                   <Image
                     contentFit="cover"
+                    recyclingKey={reply.authorAvatarUrl}
                     source={reply.authorAvatarUrl}
                     style={StyleSheet.absoluteFill}
                   />

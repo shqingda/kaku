@@ -117,6 +117,7 @@ export default function CommunityScreen() {
                         {group.iconUrl ? (
                           <Image
                             contentFit="cover"
+                            recyclingKey={group.iconUrl}
                             source={group.iconUrl}
                             style={StyleSheet.absoluteFill}
                           />

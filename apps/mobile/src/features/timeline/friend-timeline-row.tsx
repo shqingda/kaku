@@ -60,6 +60,7 @@ export function FriendTimelineRow({
         {item.user.avatarUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={item.user.avatarUrl}
             source={item.user.avatarUrl}
             style={StyleSheet.absoluteFill}
             transition={100}

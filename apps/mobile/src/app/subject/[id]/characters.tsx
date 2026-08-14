@@ -88,6 +88,7 @@ export default function SubjectCharactersScreen() {
                       <Image
                         contentFit="cover"
                         contentPosition="top"
+                        recyclingKey={item.imageUrl}
                         source={item.imageUrl}
                         style={StyleSheet.absoluteFill}
                         transition={140}

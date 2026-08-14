@@ -48,6 +48,7 @@ export function GroupTopicRow({
         {topic.authorAvatarUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={topic.authorAvatarUrl}
             source={topic.authorAvatarUrl}
             style={StyleSheet.absoluteFill}
           />

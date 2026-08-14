@@ -307,6 +307,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
             {item.imageUrl ? (
               <Image
                 contentFit="cover"
+                recyclingKey={item.imageUrl}
                 source={item.imageUrl}
                 style={StyleSheet.absoluteFill}
                 transition={120}

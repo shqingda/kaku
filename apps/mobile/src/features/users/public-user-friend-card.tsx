@@ -34,6 +34,7 @@ export function PublicUserFriendCard({
         {friend.avatarUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={friend.avatarUrl}
             source={friend.avatarUrl}
             style={StyleSheet.absoluteFill}
           />

@@ -553,6 +553,7 @@ function CalendarCard({ item }: { item: DiscoverSubject }) {
         {item.coverUrl ? (
           <Image
             contentFit="cover"
+            recyclingKey={item.coverUrl}
             source={item.coverUrl}
             style={StyleSheet.absoluteFill}
             transition={140}
@@ -715,6 +716,7 @@ function SearchResults({
                 {item.coverUrl ? (
                   <Image
                     contentFit="cover"
+                    recyclingKey={item.coverUrl}
                     source={item.coverUrl}
                     style={StyleSheet.absoluteFill}
                     transition={120}
