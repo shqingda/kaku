@@ -4,7 +4,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
 import { mapBangumiTopic } from '@/infrastructure/bangumi/discussions/adapter';
 import { mapBangumiEpisodeComments } from '@/infrastructure/bangumi/discussions/adapter';
 import { bangumiDiscussionsProvider } from '@/infrastructure/bangumi/discussions/provider';
@@ -44,15 +44,10 @@ export function useBangumiSubjectTopics(subjectId: number, limit = 20) {
 }
 
 export function useBangumiSubjectTopic(topicId: number) {
-  const { request, session } = useAuth();
-
-  return useQuery({
-    enabled: Number.isInteger(topicId) && topicId > 0,
-    queryFn: async ({ signal }) => {
-      if (!session) {
-        return bangumiDiscussionsProvider.getSubjectTopic(topicId, signal);
-      }
-
+  const { queryFn, meta, suffix } = useSessionAwareQuery({
+    public: (signal) =>
+      bangumiDiscussionsProvider.getSubjectTopic(topicId, signal),
+    authenticated: async (request, signal) => {
       const topic = await getAuthenticatedSubjectTopic(
         request,
         topicId,
@@ -60,42 +55,37 @@ export function useBangumiSubjectTopic(topicId: number) {
       );
       return topic ? mapBangumiTopic(topic) : null;
     },
-    queryKey: [
-      ...queryKeys.subjectTopic(topicId),
-      session?.user.id ?? 'public',
-    ],
-    meta: session ? { private: true } : PUBLIC_QUERY_META,
+  });
+
+  return useQuery({
+    enabled: Number.isInteger(topicId) && topicId > 0,
+    queryFn,
+    queryKey: [...queryKeys.subjectTopic(topicId), suffix],
+    meta,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });
 }
 
 export function useBangumiEpisodeComments(episodeId?: number) {
-  const { request, session } = useAuth();
-
-  return useQuery({
-    enabled: Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
-    queryFn: async ({ signal }) => {
-      if (!session) {
-        return bangumiDiscussionsProvider.getEpisodeComments(
-          episodeId!,
-          signal,
-        );
-      }
-
-      return mapBangumiEpisodeComments(
+  const { queryFn, meta, suffix } = useSessionAwareQuery({
+    public: (signal) =>
+      bangumiDiscussionsProvider.getEpisodeComments(episodeId!, signal),
+    authenticated: async (request, signal) =>
+      mapBangumiEpisodeComments(
         await getAuthenticatedEpisodeComments(
           request,
           episodeId!,
           signal,
         ),
-      );
-    },
-    queryKey: [
-      ...queryKeys.episodeComments(episodeId),
-      session?.user.id ?? 'public',
-    ],
-    meta: session ? { private: true } : PUBLIC_QUERY_META,
+      ),
+  });
+
+  return useQuery({
+    enabled: Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
+    queryFn,
+    queryKey: [...queryKeys.episodeComments(episodeId), suffix],
+    meta,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

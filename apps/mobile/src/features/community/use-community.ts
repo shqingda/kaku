@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import type { PublicGroupTopicPage } from './model';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
 import { mapBangumiTopicContent } from '@/infrastructure/bangumi/discussions/adapter';
 import {
   getPublicCommunity,
@@ -81,15 +81,9 @@ export function usePublicGroupTopics(groupName: string) {
 }
 
 export function usePublicGroupTopic(topicId: number) {
-  const { request, session } = useAuth();
-
-  return useQuery({
-    enabled: Number.isInteger(topicId) && topicId > 0,
-    queryFn: async ({ signal }) => {
-      if (!session) {
-        return getPublicGroupTopic(topicId, signal);
-      }
-
+  const { queryFn, meta, suffix } = useSessionAwareQuery({
+    public: (signal) => getPublicGroupTopic(topicId, signal),
+    authenticated: async (request, signal) => {
       const topic = await getAuthenticatedGroupTopic(
         request,
         topicId,
@@ -104,11 +98,13 @@ export function usePublicGroupTopic(topicId: number) {
         groupTitle: topic.group.title,
       };
     },
-    queryKey: [
-      ...queryKeys.groupTopic(topicId),
-      session?.user.id ?? 'public',
-    ],
-    meta: session ? { private: true } : PUBLIC_QUERY_META,
+  });
+
+  return useQuery({
+    enabled: Number.isInteger(topicId) && topicId > 0,
+    queryFn,
+    queryKey: [...queryKeys.groupTopic(topicId), suffix],
+    meta,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
   });

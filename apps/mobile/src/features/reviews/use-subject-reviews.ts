@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { bangumiReviewsProvider } from '@/infrastructure/bangumi/reviews/provider';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
 import {
   cleanBangumiContent,
   mapBangumiReplies,
@@ -63,15 +63,9 @@ export function useSubjectReviews(subjectId: number) {
 }
 
 export function useSubjectReview(reviewId: number) {
-  const { request, session } = useAuth();
-
-  return useQuery<SubjectReviewDetail>({
-    enabled: Number.isInteger(reviewId) && reviewId > 0,
-    queryFn: async ({ signal }) => {
-      if (!session) {
-        return bangumiReviewsProvider.getReview(reviewId, signal);
-      }
-
+  const { queryFn, meta, suffix } = useSessionAwareQuery({
+    public: (signal) => bangumiReviewsProvider.getReview(reviewId, signal),
+    authenticated: async (request, signal) => {
       const { blog, comments } = await getAuthenticatedReview(
         request,
         reviewId,
@@ -83,11 +77,13 @@ export function useSubjectReview(reviewId: number) {
         mapBangumiReplies(comments),
       );
     },
-    queryKey: [
-      ...queryKeys.subjectReview(reviewId),
-      session?.user.id ?? 'public',
-    ],
-    meta: session ? { private: true } : PUBLIC_QUERY_META,
+  });
+
+  return useQuery<SubjectReviewDetail>({
+    enabled: Number.isInteger(reviewId) && reviewId > 0,
+    queryFn,
+    queryKey: [...queryKeys.subjectReview(reviewId), suffix],
+    meta,
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
   });
