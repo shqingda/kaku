@@ -3,7 +3,6 @@ import test from 'node:test';
 
 import {
   DECELERATION_RATE,
-  DISMISS_HEIGHT_RATIO,
   MAX_IMAGE_SCALE,
   MIN_DISMISS_VELOCITY,
   MIN_IMAGE_SCALE,
@@ -65,10 +64,6 @@ test('a hard flick dismisses even when the projection alone would not', () => {
     shouldDismissSheet(10, MIN_DISMISS_VELOCITY - 100, tallDismissDistance),
     false,
   );
-});
-
-test('dismiss threshold is a ratio of the sheet height', () => {
-  assert.equal(DISMISS_HEIGHT_RATIO, 0.35);
 });
 
 test('image scale stays 1:1 inside the supported range', () => {

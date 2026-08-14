@@ -11,6 +11,7 @@
     "deploy:worker": "wrangler deploy",
     "types:worker": "wrangler types src/worker-configuration.d.ts --env-interface CloudflareBindings --include-runtime false",
     "test": "node --test tests/*.test.mjs",
+    "test:coverage": "node --experimental-test-coverage --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
