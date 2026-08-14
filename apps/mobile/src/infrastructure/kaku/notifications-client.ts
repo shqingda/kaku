@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { NotificationList } from '@/features/notifications/model';
-import { readErrorMessage } from './auth-client';
+import { readErrorMessage } from './auth-client.ts';
 
 const targetSchema = z.discriminatedUnion('kind', [
   z.object({

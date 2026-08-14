@@ -9,7 +9,7 @@ import {
   fetchPublicKaku,
   KakuApiError,
   readErrorMessage,
-} from './auth-client';
+} from './auth-client.ts';
 
 const peoplePageSchema = z.object({
   items: z.array(

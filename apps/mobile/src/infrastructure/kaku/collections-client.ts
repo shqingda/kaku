@@ -4,7 +4,7 @@ import type {
   PersonalCollection,
   PersonalCollectionUpdate,
 } from '@/features/collections/model';
-import { readErrorMessage } from './auth-client';
+import { readErrorMessage } from './auth-client.ts';
 
 const personalCollectionSchema = z.object({
   collectionStatus: z.enum([

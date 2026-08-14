@@ -5,7 +5,7 @@ import {
   fetchPublicKaku,
   KakuApiError,
   readErrorMessage,
-} from './auth-client';
+} from './auth-client.ts';
 
 const tagPageSchema = z.object({
   items: z.array(z.object({

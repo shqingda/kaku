@@ -5,7 +5,7 @@ import {
   fetchPublicKaku,
   KakuApiError,
   readErrorMessage,
-} from './auth-client';
+} from './auth-client.ts';
 
 const responseSchema = z.object({
   items: z.array(

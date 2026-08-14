@@ -6,8 +6,8 @@ import {
   bangumiEpisodeCommentsSchema,
   bangumiGroupTopicSchema,
   bangumiSubjectTopicSchema,
-} from '@/infrastructure/bangumi/api-next/schemas';
-import { readErrorMessage } from './auth-client';
+} from '../bangumi/api-next/schemas.ts';
+import { readErrorMessage } from './auth-client.ts';
 
 const createdReplySchema = z.object({ id: z.number().int().positive() });
 

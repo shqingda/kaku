@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import type { FriendTimelinePage } from '@/features/timeline/model';
-import { readErrorMessage } from './auth-client';
-import { getFriendTimelinePath } from './timeline-pagination';
+import { readErrorMessage } from './auth-client.ts';
+import { getFriendTimelinePath } from './timeline-pagination.ts';
 
 const timelineItemSchema = z.object({
   createdAt: z.number().int(),

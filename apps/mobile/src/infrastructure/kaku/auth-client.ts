@@ -1,4 +1,4 @@
-import { authSessionSchema } from '@/features/auth/auth-session';
+import { authSessionSchema } from '../../features/auth/auth-session.ts';
 import type { DeviceSession } from '@/features/auth/model';
 
 import { z } from 'zod';

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { readErrorMessage } from './auth-client';
+import { readErrorMessage } from './auth-client.ts';
 
 const reportResultSchema = z.object({ message: z.string() });
 

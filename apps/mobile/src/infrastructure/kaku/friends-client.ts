@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { readErrorMessage } from './auth-client';
+import { readErrorMessage } from './auth-client.ts';
 
 const friendshipSchema = z.object({ isFriend: z.boolean() });
 const blocklistSchema = z.object({

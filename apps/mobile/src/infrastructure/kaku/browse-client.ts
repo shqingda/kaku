@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { BrowseSort, BrowseSubjectPage } from '@/features/browse/model';
-import { fetchPublicKaku, KakuApiError, readErrorMessage } from './auth-client';
+import { fetchPublicKaku, KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const responseSchema = z.object({
   items: z.array(z.object({
