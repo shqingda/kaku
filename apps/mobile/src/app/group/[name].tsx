@@ -134,32 +134,30 @@ export default function GroupScreen() {
                 ) : null}
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>小组话题</Text>
-                  <View style={styles.sectionRight}>
-                    <Text style={styles.sectionCount}>
-                      已加载 {topics.length} · 共 {topicTotal.toLocaleString('zh-CN')}
-                    </Text>
-                    <Pressable
-                      accessibilityLabel="新建小组话题"
-                      accessibilityRole="button"
-                      onPress={openTopicComposer}
-                      style={({ pressed }) => [
-                        styles.newTopicButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
+                  <Pressable
+                    accessibilityLabel="新建小组话题"
+                    accessibilityRole="button"
+                    hitSlop={4}
+                    onPress={openTopicComposer}
+                    style={({ pressed }) => [
+                      styles.newTopicButton,
+                      pressed && styles.newTopicButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.newTopicIcon}>
                       <SymbolView
                         name={{
-                          android: 'add_comment',
+                          android: 'edit',
                           ios: 'square.and.pencil',
-                          web: 'add_comment',
+                          web: 'edit',
                         }}
-                        size={13}
-                        tintColor={colors.surface}
+                        size={16}
+                        tintColor={colors.ink}
                         weight="semibold"
                       />
-                      <Text style={styles.newTopicText}>发话题</Text>
-                    </Pressable>
-                  </View>
+                    </View>
+                    <Text style={styles.newTopicText}>发话题</Text>
+                  </Pressable>
                 </View>
                 {topics.length > 0 && topicsQuery.isError ? (
                   <CachedDataNotice
@@ -304,19 +302,32 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: 18,
   },
   sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
-  sectionRight: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  sectionCount: { color: colors.subtle, fontSize: 12 },
   newTopicButton: {
     alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 13,
+    backgroundColor: colors.surfaceAlt,
+    borderCurve: 'continuous',
+    borderRadius: 12,
     flexDirection: 'row',
     gap: 5,
+    height: 34,
     justifyContent: 'center',
-    minHeight: 44,
     paddingHorizontal: 12,
   },
-  newTopicText: { color: colors.surface, fontSize: 13, fontWeight: '800' },
+  newTopicButtonPressed: { backgroundColor: colors.track },
+  newTopicIcon: {
+    alignItems: 'center',
+    height: 18,
+    justifyContent: 'center',
+    width: 18,
+  },
+  newTopicText: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+  },
   topicList: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
