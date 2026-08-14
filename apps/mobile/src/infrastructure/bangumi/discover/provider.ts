@@ -12,7 +12,6 @@ import {
   getBangumiRankedSubjects,
   searchBangumiSubjects,
 } from '../api-v0/client';
-import { getPublicRankedSubjects } from '../../kaku/rankings-client';
 
 export const bangumiDiscoverProvider: DiscoverProvider = {
   async getCalendar(signal): Promise<CalendarDay[]> {
@@ -25,20 +24,12 @@ export const bangumiDiscoverProvider: DiscoverProvider = {
     }));
   },
   async getRankedSubjects(subjectType, offset, signal) {
-    try {
-      return await getPublicRankedSubjects(subjectType, offset, signal);
-    } catch (error) {
-      if (signal?.aborted) {
-        throw error;
-      }
-
-      const result = await getBangumiRankedSubjects(
-        subjectType,
-        offset,
-        signal,
-      );
-      return toDiscoverSubjectPage(result, subjectType);
-    }
+    const result = await getBangumiRankedSubjects(
+      subjectType,
+      offset,
+      signal,
+    );
+    return toDiscoverSubjectPage(result, subjectType);
   },
   async searchSubjects(keyword, subjectType, offset, signal) {
     const result = await searchBangumiSubjects(

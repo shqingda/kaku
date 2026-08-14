@@ -6,6 +6,7 @@ import {
 
 import type { DiscoverSubjectPage } from './model';
 import { bangumiDiscoverProvider } from '@/infrastructure/bangumi/discover/provider';
+import { getPublicRankedSubjects } from '@/infrastructure/kaku/rankings-client';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
@@ -32,12 +33,21 @@ export function useBangumiRankedSubjects(subjectType = 2) {
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
-    queryFn: ({ pageParam, signal }) =>
-      bangumiDiscoverProvider.getRankedSubjects(
-        subjectType,
-        pageParam,
-        signal,
-      ),
+    queryFn: async ({ pageParam, signal }) => {
+      try {
+        return await getPublicRankedSubjects(subjectType, pageParam, signal);
+      } catch (error) {
+        if (signal?.aborted) {
+          throw error;
+        }
+
+        return bangumiDiscoverProvider.getRankedSubjects(
+          subjectType,
+          pageParam,
+          signal,
+        );
+      }
+    },
     queryKey: queryKeys.rankedSubjects(subjectType),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
