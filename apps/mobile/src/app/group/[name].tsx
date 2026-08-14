@@ -6,6 +6,7 @@ import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import {
@@ -137,7 +138,7 @@ export default function GroupScreen() {
                   <Pressable
                     accessibilityLabel="新建小组话题"
                     accessibilityRole="button"
-                    hitSlop={4}
+                    hitSlop={HIT_SLOP}
                     onPress={openTopicComposer}
                     style={({ pressed }) => [
                       styles.newTopicButton,

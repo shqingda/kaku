@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { MIN_TOUCH_SIZE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
+import { playSelectionHaptic } from '@/lib/haptics';
 
 import { SUBJECT_TYPES } from './subject-types';
 
@@ -40,7 +41,10 @@ export function SubjectTypeTabs({
             accessibilityState={{ selected: isSelected }}
             hitSlop={{ bottom: 4, top: 4 }}
             key={type.id}
-            onPress={() => onChange(type.id)}
+            onPress={() => {
+              playSelectionHaptic();
+              onChange(type.id);
+            }}
             style={[styles.tab, isSelected && styles.selectedTab]}
           >
             <Text

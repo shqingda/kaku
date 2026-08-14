@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   getCollectionStatusLabel,
@@ -160,7 +161,7 @@ function TimelineBoundary({
         <Pressable
           accessibilityLabel="发布动态"
           accessibilityRole="button"
-          hitSlop={4}
+          hitSlop={HIT_SLOP}
           onPress={() => setComposerVisible(true)}
           style={({ pressed }) => [
             styles.timelinePublishButton,

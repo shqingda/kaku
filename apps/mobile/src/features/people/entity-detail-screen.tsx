@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppSheet } from '@/features/shared/app-sheet';
@@ -345,7 +346,7 @@ export function EntityDetailScreen({
                     accessibilityLabel={session ? `评论这个${kind}` : '登录后评论'}
                     accessibilityRole="button"
                     disabled={isSigningIn}
-                    hitSlop={4}
+                    hitSlop={HIT_SLOP}
                     onPress={() => void openComposer()}
                     style={({ pressed }) => [
                       styles.publishButton,
@@ -513,7 +514,7 @@ export function EntityDetailScreen({
                 reply={item}
               />
             )}
-            scrollEventThrottle={16}
+            scrollEventThrottle={80}
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
             updateCellsBatchingPeriod={40}
