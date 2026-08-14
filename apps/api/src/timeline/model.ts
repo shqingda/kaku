@@ -15,6 +15,7 @@ export type FriendTimelineItem = {
     nickname: string;
     username: string;
   };
+  userMentions?: { nickname: string; username: string }[];
 };
 
 export type FriendTimelinePage = {

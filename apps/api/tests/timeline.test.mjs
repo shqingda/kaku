@@ -213,6 +213,11 @@ test('Bangumi friend event keeps the added friend name', async () => {
   });
 
   assert.equal(page.items[0]?.text, '将 蓝与火 加为了好友');
+  assert.equal(page.items[0]?.leadingText, '将 ');
+  assert.equal(page.items[0]?.trailingText, ' 加为了好友');
+  assert.deepEqual(page.items[0]?.userMentions, [
+    { nickname: '蓝与火', username: 'blue-fire' },
+  ]);
 });
 
 test('Bangumi entity collection event keeps its person name', async () => {

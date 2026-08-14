@@ -130,6 +130,7 @@ type TimelineDescription = {
   subjectTitle?: string;
   text: string;
   trailingText?: string;
+  userMentions?: { nickname: string; username: string }[];
 };
 
 function subjectDescription({
@@ -158,8 +159,15 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
   switch (item.cat) {
     case 1:
       if (item.type === 2 && item.memo.daily?.users?.length) {
+        const users = item.memo.daily.users;
         return {
-          text: `将 ${item.memo.daily.users.map((user) => user.nickname || user.username).join('、')} 加为了好友`,
+          leadingText: '将 ',
+          text: `将 ${users.map((user) => user.nickname || user.username).join('、')} 加为了好友`,
+          trailingText: ' 加为了好友',
+          userMentions: users.map((user) => ({
+            nickname: user.nickname || user.username,
+            username: user.username,
+          })),
         };
       }
       return {

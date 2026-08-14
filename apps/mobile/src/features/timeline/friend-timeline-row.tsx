@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -73,7 +73,28 @@ export function FriendTimelineRow({
           </Text>
           <Text style={styles.time}>{formatActivityTime(item.createdAt)}</Text>
         </View>
-        {item.subjectTitle || item.entityTitle ? (
+        {item.userMentions?.length ? (
+          <Text style={styles.text}>
+            {item.leadingText}
+            {item.userMentions.map((mention, index) => (
+              <Fragment key={mention.username}>
+                {index > 0 ? '、' : null}
+                <Text
+                  onPress={() =>
+                    router.push({
+                      pathname: '/user/[username]',
+                      params: { username: mention.username },
+                    })
+                  }
+                  style={styles.userMention}
+                >
+                  {mention.nickname}
+                </Text>
+              </Fragment>
+            ))}
+            {item.trailingText}
+          </Text>
+        ) : item.subjectTitle || item.entityTitle ? (
           <Text style={styles.text}>
             {item.leadingText}
             {item.subjectTitle ? (
@@ -135,6 +156,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   text: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
   subjectTitle: { color: colors.accentRich, fontWeight: '700' },
   entityTitle: { color: colors.accentRich, fontWeight: '700' },
+  userMention: { color: colors.accentRich, fontWeight: '700' },
   replies: { color: colors.muted, fontSize: 11, marginTop: 7 },
   pressed: { opacity: 0.62 },
 });

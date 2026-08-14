@@ -21,6 +21,9 @@ const timelineItemSchema = z.object({
     nickname: z.string(),
     username: z.string(),
   }),
+  userMentions: z
+    .array(z.object({ nickname: z.string(), username: z.string() }))
+    .optional(),
 });
 
 const responseSchema = z.object({
