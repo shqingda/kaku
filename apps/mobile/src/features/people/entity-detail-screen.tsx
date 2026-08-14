@@ -487,9 +487,9 @@ export function EntityDetailScreen({
               { paddingBottom: Math.max(insets.bottom, 16) },
             ]}
             data={comments}
-            initialNumToRender={18}
+            initialNumToRender={10}
             keyExtractor={(reply) => reply.id}
-            maxToRenderPerBatch={18}
+            maxToRenderPerBatch={10}
             onRefresh={() => void commentsQuery.refetch()}
             onScroll={handleCommentsScroll}
             onScrollToIndexFailed={handleScrollToIndexFailed}
@@ -517,7 +517,7 @@ export function EntityDetailScreen({
             showsVerticalScrollIndicator={false}
             style={styles.commentsList}
             updateCellsBatchingPeriod={40}
-            windowSize={15}
+            windowSize={9}
           />
           <ScrollNavButton
             onPress={scrollCommentsToTop}

@@ -73,6 +73,7 @@ export function AppSheet({
     backdropOpacity.value = 0;
 
     if (reduceMotion) {
+      translateY.value = 0;
       backdropOpacity.value = withTiming(1, {
         duration: 180,
         easing: Easing.out(Easing.cubic),

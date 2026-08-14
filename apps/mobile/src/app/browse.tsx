@@ -173,7 +173,11 @@ export default function BrowseScreen() {
         }
         numColumns={2}
         onEndReached={() => {
-          if (browseQuery.hasNextPage && !browseQuery.isFetchingNextPage) {
+          if (
+            browseQuery.hasNextPage &&
+            !browseQuery.isFetchingNextPage &&
+            !browseQuery.isFetchNextPageError
+          ) {
             void browseQuery.fetchNextPage();
           }
         }}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useIsRestoring } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -27,6 +28,24 @@ import { usePublicUserCollections } from '@/features/users/use-public-user';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function HomeScreen() {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const isRestoring = useIsRestoring();
+
+  // 持久化缓存恢复完成前不挂载业务查询：否则冷启动时 SQLite 里的缓存还没
+  // hydrate，6 个查询就会按 staleTime 过期立刻发出网络请求，缓存白做。
+  if (isRestoring) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <HomeState message="正在读取缓存" />
+      </SafeAreaView>
+    );
+  }
+
+  return <HomeContent />;
+}
+
+function HomeContent() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedTrackingType, setSelectedTrackingType] = useState(2);

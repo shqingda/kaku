@@ -97,7 +97,11 @@ export default function TagsScreen() {
         }
         numColumns={2}
         onEndReached={() => {
-          if (tagsQuery.hasNextPage && !tagsQuery.isFetchingNextPage) {
+          if (
+            tagsQuery.hasNextPage &&
+            !tagsQuery.isFetchingNextPage &&
+            !tagsQuery.isFetchNextPageError
+          ) {
             void tagsQuery.fetchNextPage();
           }
         }}
