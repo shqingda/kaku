@@ -7,7 +7,6 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { MIN_TOUCH_SIZE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
@@ -34,6 +33,8 @@ export function SubjectTypeTabs({
   const indicatorX = useSharedValue(0);
   const indicatorWidth = useSharedValue(0);
   const layouts = useRef(new Map<number, { x: number; width: number }>());
+  const selectedLabel =
+    types.find((type) => type.id === selectedType)?.label ?? '';
 
   function measureTab(typeId: number, x: number, width: number) {
     layouts.current.set(typeId, { x, width });
@@ -71,10 +72,6 @@ export function SubjectTypeTabs({
       showsHorizontalScrollIndicator={false}
     >
       <View style={styles.track}>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.indicator, indicatorStyle]}
-        />
         {types.map((type) => {
           const isSelected = type.id === selectedType;
 
@@ -83,7 +80,7 @@ export function SubjectTypeTabs({
               accessibilityLabel={`${type.label}分类`}
               accessibilityRole="tab"
               accessibilityState={{ selected: isSelected }}
-              hitSlop={{ bottom: 4, top: 4 }}
+              hitSlop={{ bottom: 5, top: 5 }}
               key={type.id}
               onLayout={(event) =>
                 measureTab(
@@ -107,6 +104,15 @@ export function SubjectTypeTabs({
             </Pressable>
           );
         })}
+        {/* 滑动胶囊盖在白底 pill 上，胶囊内单独渲染选中的文字，避免被盖住。 */}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.indicator, indicatorStyle]}
+        >
+          <Text maxFontSizeMultiplier={1.3} style={styles.selectedTabText}>
+            {selectedLabel}
+          </Text>
+        </Animated.View>
       </View>
     </ScrollView>
   );
@@ -115,17 +121,22 @@ export function SubjectTypeTabs({
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   track: { flexDirection: 'row', gap: 8 },
   indicator: {
+    alignItems: 'center',
     backgroundColor: colors.ink,
     borderCurve: 'continuous',
-    borderRadius: 16,
-    bottom: 6,
+    borderRadius: 12,
+    bottom: 0,
+    justifyContent: 'center',
     position: 'absolute',
-    top: 6,
+    top: 0,
   },
   tab: {
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderCurve: 'continuous',
+    borderRadius: 12,
     justifyContent: 'center',
-    minHeight: MIN_TOUCH_SIZE,
+    minHeight: 34,
     paddingHorizontal: 14,
   },
   tabText: {
@@ -133,5 +144,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  selectedTabText: { color: colors.surface },
+  selectedTabText: {
+    color: colors.surface,
+    fontSize: 13,
+    fontWeight: '700',
+  },
 });

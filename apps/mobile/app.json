@@ -23,7 +23,13 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.shqingda.kaku",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "output": "static",
@@ -48,13 +54,22 @@
         {
           "photosPermission": "允许 Kaku 访问照片。",
           "savePhotosPermission": "允许 Kaku 将封面保存到照片。",
-          "granularPermissions": ["photo"]
+          "granularPermissions": [
+            "photo"
+          ]
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "65b88c02-a4de-4cfa-abbb-b4a2cbbd0861"
+      }
+    },
+    "owner": "shqingda"
   }
 }
