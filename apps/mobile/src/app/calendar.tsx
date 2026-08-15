@@ -235,7 +235,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 17,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 36,
   },
   dayTabSelected: { backgroundColor: colors.ink },
   dayTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },

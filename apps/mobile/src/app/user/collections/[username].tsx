@@ -343,7 +343,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 36,
     minWidth: 58,
     paddingHorizontal: 14,
   },

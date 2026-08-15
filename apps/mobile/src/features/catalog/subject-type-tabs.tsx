@@ -136,7 +136,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 36,
     paddingHorizontal: 14,
   },
   tabText: {
