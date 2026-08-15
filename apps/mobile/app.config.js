@@ -28,6 +28,7 @@ module.exports = {
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSCameraUsageDescription: '允许 Kaku 扫描二维码连接开发服务器。',
       },
       supportsTablet: false,
     },
