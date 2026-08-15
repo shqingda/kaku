@@ -2,11 +2,11 @@
 // - production：正式包名 com.shqingda.kaku（Play 上架用）
 // - development：com.shqingda.kaku.dev（EAS dev client，可与正式版共存）
 // - preview：com.shqingda.kaku.preview（独立内测包，可与正式版共存）
-// - 本地（无 EAS_BUILD_PROFILE）：正式包名；本地 expo run:android 的 debug
-//   变体再靠 android/app/build.gradle 的 applicationIdSuffix ".debug" 区分。
+// - 本地（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
 function buildSuffix(profile) {
+  if (!profile) return '.debug';
   if (profile === 'development') return '.dev';
   if (profile === 'preview') return '.preview';
   return '';
