@@ -117,10 +117,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   indicator: {
     backgroundColor: colors.ink,
     borderCurve: 'continuous',
-    borderRadius: 12,
-    bottom: 0,
+    borderRadius: 16,
+    bottom: 6,
     position: 'absolute',
-    top: 0,
+    top: 6,
   },
   tab: {
     alignItems: 'center',
