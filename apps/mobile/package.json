@@ -53,7 +53,11 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/*.test.mjs",
-    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-test-coverage --test tests/*.test.mjs"
+    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-test-coverage --test tests/*.test.mjs",
+    "build:preview": "npx eas-cli build --profile preview --platform android --non-interactive --no-wait",
+    "build:preview:list": "npx eas-cli build:list --platform android --limit 1",
+    "build:dev": "npx eas-cli build --profile development --platform android --non-interactive --no-wait",
+    "eas:whoami": "npx eas-cli whoami"
   },
   "private": true
 }

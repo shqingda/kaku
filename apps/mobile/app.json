@@ -18,8 +18,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#C96878",
-        "foregroundImage": "./assets/images/kaku-mark.png",
-        "monochromeImage": "./assets/images/kaku-mark.png"
+        "foregroundImage": "./assets/images/kaku-mark-safe.png",
+        "monochromeImage": "./assets/images/kaku-mark-safe.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.shqingda.kaku",
