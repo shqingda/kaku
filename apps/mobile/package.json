@@ -58,7 +58,8 @@
     "build:preview": "npx eas-cli build --profile preview --platform android --non-interactive --no-wait",
     "build:preview:list": "npx eas-cli build:list --platform android --limit 1",
     "build:dev": "npx eas-cli build --profile development --platform android --non-interactive --no-wait",
-    "eas:whoami": "npx eas-cli whoami"
+    "eas:whoami": "npx eas-cli whoami",
+    "open:android": "adb reverse tcp:8081 tcp:8081 && adb shell am start -a android.intent.action.VIEW -d 'exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'"
   },
   "private": true
 }
