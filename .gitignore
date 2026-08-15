@@ -12,3 +12,8 @@ apps/mobile/.env
 apps/api/data/
 apps/api/.dev.vars
 !.env.example
+
+# Local EAS tooling (sandbox: HOME override + dlx cache)
+.eas-home/
+.eas-env.sh
+.cache/

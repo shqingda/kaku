@@ -24,7 +24,6 @@ module.exports = {
     scheme: 'kaku',
     userInterfaceStyle: 'automatic',
     ios: {
-      buildNumber: '1',
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
@@ -40,7 +39,6 @@ module.exports = {
       },
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
-      versionCode: 1,
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
