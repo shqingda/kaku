@@ -59,7 +59,7 @@ export function RecentSearches({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { paddingTop: 18 },
+  section: { paddingBottom: 20, paddingTop: 18 },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
