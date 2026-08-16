@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentProps,
 } from 'react';
@@ -85,6 +86,7 @@ export default function ExploreScreen() {
   const [selectedSearchType, setSelectedSearchType] = useState(2);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
+  const clearSearchFrameRef = useRef<number | null>(null);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(keyword, selectedSearchType);
@@ -134,6 +136,15 @@ export default function ExploreScreen() {
     setDraft(initialKeyword);
     setKeyword(initialKeyword);
   }, [initialKeyword]);
+
+  useEffect(
+    () => () => {
+      if (clearSearchFrameRef.current !== null) {
+        cancelAnimationFrame(clearSearchFrameRef.current);
+      }
+    },
+    [],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -188,7 +199,14 @@ export default function ExploreScreen() {
     setDraft(value);
 
     if (!value) {
-      setKeyword('');
+      if (clearSearchFrameRef.current !== null) {
+        cancelAnimationFrame(clearSearchFrameRef.current);
+      }
+      // iOS 的 TextInput clearButton 需要先完成原生清除帧，再卸载搜索 FlatList。
+      clearSearchFrameRef.current = requestAnimationFrame(() => {
+        clearSearchFrameRef.current = null;
+        setKeyword('');
+      });
     }
   }
 
