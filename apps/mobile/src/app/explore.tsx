@@ -225,45 +225,47 @@ export default function ExploreScreen() {
           title: '综合',
         }}
       />
-      {keyword ? (
-        <SearchResults
-          key="search-results"
-          draft={draft}
-          hasNextPage={searchQuery.hasNextPage}
-          isError={searchQuery.isError}
-          isFetchNextPageError={searchQuery.isFetchNextPageError}
-          isFetchingNextPage={searchQuery.isFetchingNextPage}
-          isPending={searchQuery.isPending}
-          isRefetching={searchQuery.isRefetching}
-          keyword={keyword}
-          onChangeDraft={updateDraft}
-          onChangeSubjectType={setSelectedSearchType}
-          onLoadMore={() => void searchQuery.fetchNextPage()}
-          onRetry={() => void searchQuery.refetch()}
-          onRefresh={() => void searchQuery.refetch()}
-          onSubmit={submitSearch}
-          subjects={searchSubjects}
-          subjectType={selectedSearchType}
-          total={searchTotal}
-        />
-      ) : (
-        <ScrollView
-          key="explore-overview"
-          contentContainerStyle={styles.content}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <AppRefreshControl
-              onRefresh={refreshOverview}
-              refreshing={
-                (rankedQuery.isRefetching || calendarQuery.isRefetching) &&
-                !rankedQuery.isPending &&
-                !calendarQuery.isPending
-              }
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
+      <View style={styles.body}>
+        {keyword ? (
+          <SearchResults
+            key="search-results"
+            draft={draft}
+            hasNextPage={searchQuery.hasNextPage}
+            isError={searchQuery.isError}
+            isFetchNextPageError={searchQuery.isFetchNextPageError}
+            isFetchingNextPage={searchQuery.isFetchingNextPage}
+            isPending={searchQuery.isPending}
+            isRefetching={searchQuery.isRefetching}
+            keyword={keyword}
+            onChangeDraft={updateDraft}
+            onChangeSubjectType={setSelectedSearchType}
+            onLoadMore={() => void searchQuery.fetchNextPage()}
+            onRetry={() => void searchQuery.refetch()}
+            onRefresh={() => void searchQuery.refetch()}
+            onSubmit={submitSearch}
+            subjects={searchSubjects}
+            subjectType={selectedSearchType}
+            total={searchTotal}
+          />
+        ) : (
+          <ScrollView
+            key="explore-overview"
+            contentContainerStyle={styles.content}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <AppRefreshControl
+                onRefresh={refreshOverview}
+                refreshing={
+                  (rankedQuery.isRefetching || calendarQuery.isRefetching) &&
+                  !rankedQuery.isPending &&
+                  !calendarQuery.isPending
+                }
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            style={styles.overviewList}
+          >
           <SearchField
             draft={draft}
             onChangeDraft={updateDraft}
@@ -410,8 +412,9 @@ export default function ExploreScreen() {
               subjectType={selectedSearchType}
             />
           </View>
-        </ScrollView>
-      )}
+          </ScrollView>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -765,6 +768,8 @@ function SearchResults({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
+  body: { backgroundColor: colors.background, flex: 1 },
+  overviewList: { flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   searchList: { backgroundColor: colors.background, flex: 1 },
   searchContent: { paddingBottom: 48, paddingHorizontal: 20 },
