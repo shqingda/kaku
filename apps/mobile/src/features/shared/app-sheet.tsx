@@ -37,7 +37,7 @@ import { useReduceMotion } from '@/lib/use-reduce-motion';
 // 向上拖出展开位时按橡皮筋逐渐抵抗。减少动态效果时退化为不透明度过渡。
 export function AppSheet({
   children,
-  keyboardAvoidingBehavior = Platform.OS === 'ios' ? 'padding' : undefined,
+  keyboardAvoidingBehavior = 'padding',
   onClose,
   onEntered,
   onShow,

@@ -111,6 +111,11 @@ export function DiscussionReplyComposer({
     onClose();
   }
 
+  // iOS 上 Modal 内的 autoFocus 不可靠，弹层显示完成后再聚焦输入框弹出键盘。
+  function focusInput() {
+    requestIdleCallback(() => inputRef.current?.focus(), { timeout: 200 });
+  }
+
   function close() {
     if (pending) {
       return;
@@ -166,6 +171,7 @@ export function DiscussionReplyComposer({
   return (
     <AppSheet
       onClose={close}
+      onShow={focusInput}
       swipeToDismissEnabled={!hasUnsavedChanges && !pending}
       visible={visible}
     >

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -42,6 +42,7 @@ export function TopicComposer({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const titleInputRef = useRef<TextInput>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   // 两个 mutation 都注册（hook 顺序稳定），提交时按目标类型选择。
@@ -66,6 +67,11 @@ export function TopicComposer({
       setContent('');
     }
   }, [visible]);
+
+  // iOS 上 Modal 内的 autoFocus 不可靠，弹层显示完成后再聚焦标题框弹出键盘。
+  function focusTitle() {
+    requestIdleCallback(() => titleInputRef.current?.focus(), { timeout: 200 });
+  }
 
   function finishClose() {
     Keyboard.dismiss();
@@ -110,6 +116,7 @@ export function TopicComposer({
   return (
     <AppSheet
       onClose={close}
+      onShow={focusTitle}
       swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
       visible={visible}
     >
@@ -170,6 +177,7 @@ export function TopicComposer({
           onChangeText={setTitle}
           placeholder="写一个清楚的话题标题"
           placeholderTextColor={colors.subtle}
+          ref={titleInputRef}
           returnKeyType="next"
           style={styles.titleInput}
           value={title}
