@@ -209,6 +209,7 @@ export default function ExploreScreen() {
       />
       {keyword ? (
         <SearchResults
+          key="search-results"
           draft={draft}
           hasNextPage={searchQuery.hasNextPage}
           isError={searchQuery.isError}
@@ -229,6 +230,7 @@ export default function ExploreScreen() {
         />
       ) : (
         <ScrollView
+          key="explore-overview"
           contentContainerStyle={styles.content}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
@@ -746,7 +748,7 @@ function SearchResults({
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
-  searchList: { flex: 1 },
+  searchList: { backgroundColor: colors.background, flex: 1 },
   searchContent: { paddingBottom: 48, paddingHorizontal: 20 },
   exploreEntries: {
     flexDirection: 'row',
