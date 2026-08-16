@@ -84,7 +84,6 @@ function HomeContent() {
   );
 
   useEffect(() => {
-    router.prefetch('/explore');
     router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
     router.prefetch('/rankings');
     router.prefetch('/community');
