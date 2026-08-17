@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -74,6 +74,14 @@ export default function PublicUserCollectionsScreen() {
   const [collectionStatus, setCollectionStatus] = useState(() =>
     parseCollectionStatus(status),
   );
+  // 路由参数变化时同步本地状态（页面被复用时不重新初始化 useState）。
+  useEffect(() => {
+    const nextType = Number(type);
+    if (SUBJECT_TYPES.some((item) => item.id === nextType)) {
+      setSubjectType(nextType);
+    }
+    setCollectionStatus(parseCollectionStatus(status));
+  }, [status, type]);
   const collectionStatusLabel = collectionStatus
     ? getCollectionStatusLabel(subjectType, collectionStatus)
     : undefined;

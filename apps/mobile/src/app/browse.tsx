@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -58,6 +58,17 @@ export default function BrowseScreen() {
   const [tag, setTag] = useState<string | undefined>(
     normalizedInitialTag || undefined,
   );
+  // 路由参数变化时同步本地状态（页面被复用时不重新初始化 useState）。
+  useEffect(() => {
+    const nextType = getSubjectTypeFromSlug(type);
+    if (nextType !== subjectType) {
+      setSubjectType(nextType);
+    }
+    const nextTag = typeof initialTag === 'string' ? initialTag.trim().slice(0, 30) : '';
+    setTagDraft(nextTag);
+    setTag(nextTag || undefined);
+    setSort('rank');
+  }, [initialTag, subjectType, type]);
   const listRef = useRef<FlatList<DiscoverSubject>>(null);
   const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const browseQuery = useBrowseSubjects({ sort, subjectType, tag, year });

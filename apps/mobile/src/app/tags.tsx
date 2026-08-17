@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +27,13 @@ export default function TagsScreen() {
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() =>
     getSubjectTypeFromSlug(type));
+  // 路由参数变化时同步本地状态（页面被复用时不重新初始化 useState）。
+  useEffect(() => {
+    const next = getSubjectTypeFromSlug(type);
+    if (next !== subjectType) {
+      setSubjectType(next);
+    }
+  }, [subjectType, type]);
   const [draft, setDraft] = useState('');
   const tagsQuery = useGlobalTags(subjectType);
   const items = useMemo(

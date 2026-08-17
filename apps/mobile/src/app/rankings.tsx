@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -34,6 +34,13 @@ export default function RankingsScreen() {
   const [subjectType, setSubjectType] = useState(() =>
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
   );
+  // 路由参数变化时同步本地状态（页面被复用时不重新初始化 useState）。
+  useEffect(() => {
+    const next = Number(type);
+    if (SUBJECT_TYPES.some((item) => item.id === next)) {
+      setSubjectType(next);
+    }
+  }, [type]);
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
   const listRef = useRef<FlatList>(null);

@@ -84,6 +84,7 @@ export default function PeopleScreen() {
         contentContainerStyle={styles.content}
         data={people}
         initialNumToRender={10}
+        key={keyword ? `search:${kind}` : `browse:${kind}`}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
           activeQuery.isPending ? (
