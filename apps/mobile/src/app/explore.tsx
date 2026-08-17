@@ -32,6 +32,7 @@ import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
   getSubjectTypeLabel,
   getSubjectTypeSlug,
+  SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import type {
   CalendarDay,
@@ -53,6 +54,12 @@ import {
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { RecentSubjectsSection } from '@/features/history/recent-subjects-section';
 import type { RecentSubject } from '@/features/history/recent-subjects-model';
+import type {
+  PeopleKind,
+  PeopleSearchPage,
+  PublicPersonSummary,
+} from '@/features/people-browser/model';
+import { usePeopleSearch } from '@/features/people-browser/use-people-search';
 import {
   clearRecentSubjects,
   loadRecentSubjects,
@@ -69,6 +76,15 @@ function currentWeekdayId() {
   return day === 0 ? 7 : day;
 }
 
+type SearchMode = 'subject' | PeopleKind;
+type SearchResult = DiscoverSubject | PublicPersonSummary;
+
+const SEARCH_TYPES = [
+  ...SUBJECT_TYPES,
+  { id: 100, label: '角色' },
+  { id: 101, label: '人物' },
+];
+
 function useThemedStyles() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -84,12 +100,27 @@ export default function ExploreScreen() {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
+  const [searchMode, setSearchMode] = useState<SearchMode>('subject');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
   const clearSearchFrameRef = useRef<number | null>(null);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
-  const searchQuery = useBangumiSearch(keyword, selectedSearchType);
+  const searchQuery = useBangumiSearch(
+    keyword,
+    selectedSearchType,
+    searchMode === 'subject',
+  );
+  const characterSearchQuery = usePeopleSearch(
+    'character',
+    keyword,
+    searchMode === 'character',
+  );
+  const personSearchQuery = usePeopleSearch(
+    'person',
+    keyword,
+    searchMode === 'person',
+  );
   const calendarDays = useMemo(
     () => readQueryArray<CalendarDay>(calendarQuery.data),
     [calendarQuery.data],
@@ -109,7 +140,29 @@ export default function ExploreScreen() {
       ),
     [searchPages],
   );
-  const searchTotal = searchPages[0]?.total ?? 0;
+  const characterPages = useMemo(
+    () => readInfinitePages<PeopleSearchPage>(characterSearchQuery.data),
+    [characterSearchQuery.data],
+  );
+  const personPages = useMemo(
+    () => readInfinitePages<PeopleSearchPage>(personSearchQuery.data),
+    [personSearchQuery.data],
+  );
+  const searchPeople = searchMode === 'character'
+    ? characterPages.flatMap((page) => page.items)
+    : personPages.flatMap((page) => page.items);
+  const activeSearchQuery = searchMode === 'subject'
+    ? searchQuery
+    : searchMode === 'character'
+      ? characterSearchQuery
+      : personSearchQuery;
+  const searchTotal = searchMode === 'subject'
+    ? searchPages[0]?.total ?? 0
+    : searchPeople.length > 0
+      ? (searchMode === 'character'
+        ? characterPages[0]?.total ?? 0
+        : personPages[0]?.total ?? 0)
+      : 0;
   const selectedCalendarDay = useMemo(
     () =>
       calendarDays.find((day) => day.id === selectedDay) ??
@@ -226,27 +279,44 @@ export default function ExploreScreen() {
         }}
       />
       <View style={styles.body}>
-        {keyword ? (
-          <SearchResults
-            key="search-results"
-            draft={draft}
-            hasNextPage={searchQuery.hasNextPage}
-            isError={searchQuery.isError}
-            isFetchNextPageError={searchQuery.isFetchNextPageError}
-            isFetchingNextPage={searchQuery.isFetchingNextPage}
-            isPending={searchQuery.isPending}
-            isRefetching={searchQuery.isRefetching}
-            keyword={keyword}
-            onChangeDraft={updateDraft}
-            onChangeSubjectType={setSelectedSearchType}
-            onLoadMore={() => void searchQuery.fetchNextPage()}
-            onRetry={() => void searchQuery.refetch()}
-            onRefresh={() => void searchQuery.refetch()}
-            onSubmit={submitSearch}
-            subjects={searchSubjects}
-            subjectType={selectedSearchType}
-            total={searchTotal}
-          />
+      {keyword ? (
+        <SearchResults
+          key="search-results"
+          draft={draft}
+          hasNextPage={activeSearchQuery.hasNextPage}
+          isError={activeSearchQuery.isError}
+          isFetchNextPageError={activeSearchQuery.isFetchNextPageError}
+          isFetchingNextPage={activeSearchQuery.isFetchingNextPage}
+          isPending={activeSearchQuery.isPending}
+          isRefetching={activeSearchQuery.isRefetching}
+          keyword={keyword}
+          onChangeDraft={updateDraft}
+          onChangeSearchType={(value) => {
+            if (value === 100) {
+              setSearchMode('character');
+            } else if (value === 101) {
+              setSearchMode('person');
+            } else {
+              setSearchMode('subject');
+              setSelectedSearchType(value);
+            }
+          }}
+          onLoadMore={() => void activeSearchQuery.fetchNextPage()}
+          onRetry={() => void activeSearchQuery.refetch()}
+          onRefresh={() => void activeSearchQuery.refetch()}
+          onSubmit={submitSearch}
+          people={searchPeople}
+          searchMode={searchMode}
+          subjects={searchSubjects}
+          selectedSearchType={
+            searchMode === 'character'
+              ? 100
+              : searchMode === 'person'
+                ? 101
+                : selectedSearchType
+          }
+          total={searchTotal}
+        />
         ) : (
           <ScrollView
             key="explore-overview"
@@ -598,6 +668,52 @@ function CalendarCard({ item }: { item: DiscoverSubject }) {
   );
 }
 
+function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
+  const { styles } = useThemedStyles();
+  const pathname = item.kind === 'character' ? '/character/[id]' : '/person/[id]';
+
+  return (
+    <View style={[styles.resultItem, styles.firstResultItem, styles.lastResultItem]}>
+      <Pressable
+        accessibilityHint="打开人物详情"
+        accessibilityLabel={`${item.name}，${item.kind === 'character' ? '角色' : '人物'}`}
+        accessibilityRole="button"
+        onPress={() =>
+          router.push({ pathname, params: { id: String(item.id) } })
+        }
+        style={({ pressed }) => [styles.resultRow, pressed && styles.pressed]}
+      >
+        <View style={styles.resultCover}>
+          <Text style={styles.coverFallback}>{item.name.slice(0, 1)}</Text>
+          {item.imageUrl ? (
+            <Image
+              contentFit="cover"
+              recyclingKey={item.imageUrl}
+              source={item.imageUrl}
+              style={StyleSheet.absoluteFill}
+              transition={120}
+            />
+          ) : null}
+        </View>
+        <View style={styles.resultMain}>
+          <Text numberOfLines={2} style={styles.resultTitle}>
+            {item.name}
+          </Text>
+          <Text numberOfLines={1} style={styles.resultMeta}>
+            {item.categories.join(' · ') || (item.kind === 'character' ? '角色' : '人物')}
+          </Text>
+          {item.metadata ? (
+            <Text numberOfLines={2} style={styles.resultMeta}>
+              {item.metadata}
+            </Text>
+          ) : null}
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function SearchResults({
   draft,
   hasNextPage,
@@ -608,13 +724,15 @@ function SearchResults({
   isRefetching,
   keyword,
   onChangeDraft,
-  onChangeSubjectType,
+  onChangeSearchType,
   onLoadMore,
   onRetry,
   onRefresh,
   onSubmit,
+  people,
+  searchMode,
   subjects,
-  subjectType,
+  selectedSearchType,
   total,
 }: {
   draft: string;
@@ -626,21 +744,23 @@ function SearchResults({
   isRefetching: boolean;
   keyword: string;
   onChangeDraft: (value: string) => void;
-  onChangeSubjectType: (subjectType: number) => void;
+  onChangeSearchType: (subjectType: number) => void;
   onLoadMore: () => void;
   onRetry: () => void;
   onRefresh: () => void;
   onSubmit: () => void;
+  people: PublicPersonSummary[];
+  searchMode: SearchMode;
   subjects: DiscoverSubject[];
-  subjectType: number;
+  selectedSearchType: number;
   total: number;
 }) {
   const { styles } = useThemedStyles();
 
   return (
-    <FlatList
+    <FlatList<SearchResult>
       contentContainerStyle={styles.searchContent}
-      data={subjects}
+      data={searchMode === 'subject' ? subjects : people}
       keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled"
       keyExtractor={(item) => String(item.id)}
@@ -678,15 +798,22 @@ function SearchResults({
           />
           <SubjectTypeTabs
             contentContainerStyle={styles.subjectTypeTabs}
-            onChange={onChangeSubjectType}
-            selectedType={subjectType}
+            onChange={onChangeSearchType}
+            selectedType={selectedSearchType}
+            types={SEARCH_TYPES}
           />
           <View style={styles.sectionHeader}>
             <View>
               <Text style={styles.sectionTitle}>搜索结果</Text>
               <Text style={styles.sectionMeta}>
-                {getSubjectTypeLabel(subjectType)} · “{keyword}” ·{' '}
-                {total ? `${total} 个条目` : '查询中'}
+                {searchMode === 'subject'
+                  ? getSubjectTypeLabel(selectedSearchType)
+                  : searchMode === 'character'
+                    ? '角色'
+                    : '人物'} · “{keyword}” ·{' '}
+                {total
+                  ? `${total} 个${searchMode === 'subject' ? '条目' : searchMode === 'character' ? '角色' : '人物'}`
+                  : '查询中'}
               </Text>
             </View>
           </View>
@@ -708,7 +835,12 @@ function SearchResults({
           refreshing={isRefetching && !isPending}
         />
       }
-      renderItem={({ index, item }) => (
+      renderItem={({ index, item }) => {
+        if ('kind' in item) {
+          return <PersonSearchResultRow item={item} />;
+        }
+
+        return (
         <View
           style={[
             styles.resultItem,
@@ -758,7 +890,8 @@ function SearchResults({
               <Text style={styles.chevron}>›</Text>
             </Pressable>
         </View>
-      )}
+        );
+      }}
       showsVerticalScrollIndicator={false}
       style={styles.searchList}
     />

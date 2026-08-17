@@ -54,7 +54,11 @@ export function useBangumiRankedSubjects(subjectType = 2) {
   });
 }
 
-export function useBangumiSearch(keyword: string, subjectType: number) {
+export function useBangumiSearch(
+  keyword: string,
+  subjectType: number,
+  enabled = true,
+) {
   return useInfiniteQuery<
     DiscoverSubjectPage,
     Error,
@@ -62,7 +66,7 @@ export function useBangumiSearch(keyword: string, subjectType: number) {
     ReturnType<typeof queryKeys.subjectSearch>,
     number
   >({
-    enabled: keyword.trim().length > 0,
+    enabled: enabled && keyword.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>

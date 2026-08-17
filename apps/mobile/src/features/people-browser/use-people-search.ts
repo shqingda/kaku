@@ -9,7 +9,11 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import type { PeopleKind, PeopleSearchPage } from './model';
 
-export function usePeopleSearch(kind: PeopleKind, keyword: string) {
+export function usePeopleSearch(
+  kind: PeopleKind,
+  keyword: string,
+  enabled = true,
+) {
   const normalizedKeyword = keyword.trim();
 
   return useInfiniteQuery<
@@ -19,7 +23,7 @@ export function usePeopleSearch(kind: PeopleKind, keyword: string) {
     ReturnType<typeof queryKeys.peopleSearch>,
     number
   >({
-    enabled: normalizedKeyword.length > 0,
+    enabled: enabled && normalizedKeyword.length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
