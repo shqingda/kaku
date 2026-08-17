@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useIsRestoring } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -27,6 +27,7 @@ import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
 import { useTheme } from '@/features/theme/theme-provider';
+import { markFirstContent } from '@/lib/startup-timing';
 
 export default function HomeScreen() {
   const colors = useTheme();
@@ -52,6 +53,11 @@ function HomeContent() {
   const [selectedTrackingType, setSelectedTrackingType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
+
+  // 首屏指标：记录首页首次布局的时间点。
+  useLayoutEffect(() => {
+    markFirstContent();
+  }, []);
   const animeQuery = usePublicUserCollections(username, 2, 'doing');
   const bookQuery = usePublicUserCollections(username, 1, 'doing');
   const musicQuery = usePublicUserCollections(username, 3, 'doing');

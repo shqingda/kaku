@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
+import { getFirstContentDelayMs } from '@/lib/startup-timing';
 import {
   clearDiagnosticRecords,
   type DiagnosticRecord,
@@ -132,6 +133,15 @@ export default function DiagnosticsScreen() {
                 Kaku 只记录最近 10 次界面错误，并会隐藏令牌、授权参数和本机用户名。除非你主动共享，否则不会上传。
               </Text>
             </View>
+          </View>
+
+          <View style={styles.timingCard}>
+            <Text style={styles.timingLabel}>本次启动到首页首屏</Text>
+            <Text style={styles.timingValue}>
+              {getFirstContentDelayMs() === undefined
+                ? '未记录（首页尚未打开）'
+                : `${getFirstContentDelayMs()} ms`}
+            </Text>
           </View>
 
           {records.length === 0 ? (
@@ -259,6 +269,15 @@ const createStyles = (colors: ThemeColors) =>
     },
     emptyTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
     emptyText: { color: colors.muted, fontSize: 13, marginTop: 7 },
+    timingCard: {
+      backgroundColor: colors.surface,
+      borderCurve: 'continuous',
+      borderRadius: 22,
+      marginTop: 14,
+      padding: 18,
+    },
+    timingLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+    timingValue: { color: colors.ink, fontSize: 22, fontWeight: '800', marginTop: 6 },
     headingRow: {
       alignItems: 'center',
       flexDirection: 'row',
