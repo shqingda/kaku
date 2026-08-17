@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 
 import type { AuthDependencies } from '../auth/routes.ts';
 import type { Env } from '../env.ts';
+import { getPublicCache, servePublicCached } from '../public-cache.ts';
 import {
   BangumiPeopleListError,
   getBangumiPeople,
@@ -49,28 +50,30 @@ export function registerPeopleBrowserRoutes(
       );
     }
 
-    try {
-      const result = await getBangumiPeople({
-        fetcher,
-        gender,
-        kind: kind as PublicPersonKind,
-        page,
-        sort: sort as PeopleSort,
-        type,
-      });
-      context.header(
-        'Cache-Control',
-        'public, max-age=300, stale-while-revalidate=1800',
-      );
-      return context.json(result);
-    } catch (error) {
-      if (error instanceof BangumiPeopleListError) {
-        return context.json(
-          { error: 'bangumi_people_unavailable', message: error.message },
-          error.status >= 500 ? 503 : 502,
+    return servePublicCached(context, getPublicCache(), 300, async () => {
+      try {
+        const result = await getBangumiPeople({
+          fetcher,
+          gender,
+          kind: kind as PublicPersonKind,
+          page,
+          sort: sort as PeopleSort,
+          type,
+        });
+        context.header(
+          'Cache-Control',
+          'public, max-age=300, stale-while-revalidate=1800',
         );
+        return context.json(result);
+      } catch (error) {
+        if (error instanceof BangumiPeopleListError) {
+          return context.json(
+            { error: 'bangumi_people_unavailable', message: error.message },
+            error.status >= 500 ? 503 : 502,
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   });
 }

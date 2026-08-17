@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 
 import type { AuthDependencies } from '../auth/routes.ts';
 import type { Env } from '../env.ts';
+import { getPublicCache, servePublicCached } from '../public-cache.ts';
 import {
   BangumiBlogListError,
   type BlogType,
@@ -39,25 +40,27 @@ export function registerBlogRoutes(
       );
     }
 
-    try {
-      const result = await getBangumiBlogs({
-        fetcher,
-        page,
-        type: type as BlogType,
-      });
-      context.header(
-        'Cache-Control',
-        'public, max-age=300, stale-while-revalidate=1800',
-      );
-      return context.json(result);
-    } catch (error) {
-      if (error instanceof BangumiBlogListError) {
-        return context.json(
-          { error: 'bangumi_blogs_unavailable', message: error.message },
-          error.status >= 500 ? 503 : 502,
+    return servePublicCached(context, getPublicCache(), 300, async () => {
+      try {
+        const result = await getBangumiBlogs({
+          fetcher,
+          page,
+          type: type as BlogType,
+        });
+        context.header(
+          'Cache-Control',
+          'public, max-age=300, stale-while-revalidate=1800',
         );
+        return context.json(result);
+      } catch (error) {
+        if (error instanceof BangumiBlogListError) {
+          return context.json(
+            { error: 'bangumi_blogs_unavailable', message: error.message },
+            error.status >= 500 ? 503 : 502,
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   });
 }

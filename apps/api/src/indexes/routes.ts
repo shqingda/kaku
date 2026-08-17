@@ -9,6 +9,7 @@ import {
   isAuthenticationResponse,
 } from '../auth/session-service.ts';
 import type { Env } from '../env.ts';
+import { getPublicCache, servePublicCached } from '../public-cache.ts';
 import {
   BangumiIndexListError,
   BangumiIndexWriteError,
@@ -57,26 +58,28 @@ export function registerIndexRoutes(
       );
     }
 
-    try {
-      const result = await getBangumiIndexes({
-        fetcher,
-        page,
-        sort: sort as IndexSort,
-      });
-      context.header(
-        'Cache-Control',
-        'public, max-age=300, stale-while-revalidate=1800',
-      );
-      return context.json(result);
-    } catch (error) {
-      if (error instanceof BangumiIndexListError) {
-        return context.json(
-          { error: 'bangumi_indexes_unavailable', message: error.message },
-          error.status >= 500 ? 503 : 502,
+    return servePublicCached(context, getPublicCache(), 300, async () => {
+      try {
+        const result = await getBangumiIndexes({
+          fetcher,
+          page,
+          sort: sort as IndexSort,
+        });
+        context.header(
+          'Cache-Control',
+          'public, max-age=300, stale-while-revalidate=1800',
         );
+        return context.json(result);
+      } catch (error) {
+        if (error instanceof BangumiIndexListError) {
+          return context.json(
+            { error: 'bangumi_indexes_unavailable', message: error.message },
+            error.status >= 500 ? 503 : 502,
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   });
 
   async function withIndexWrite(

@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 
 import type { AuthDependencies } from '../auth/routes.ts';
 import type { Env } from '../env.ts';
+import { getPublicCache, servePublicCached } from '../public-cache.ts';
 import { BangumiRankingError } from '../rankings/bangumi-client.ts';
 import { getBangumiChannelSubjects } from './bangumi-client.ts';
 
@@ -23,25 +24,27 @@ export function registerChannelRoutes(
       );
     }
 
-    try {
-      const channel = await getBangumiChannelSubjects({
-        fetcher,
-        subjectType,
-      });
-      context.header(
-        'Cache-Control',
-        'public, max-age=300, stale-while-revalidate=1800',
-      );
-      return context.json(channel);
-    } catch (error) {
-      if (error instanceof BangumiRankingError) {
-        return context.json(
-          { error: 'bangumi_channel_unavailable', message: error.message },
-          error.status >= 500 ? 503 : 502,
+    return servePublicCached(context, getPublicCache(), 300, async () => {
+      try {
+        const channel = await getBangumiChannelSubjects({
+          fetcher,
+          subjectType,
+        });
+        context.header(
+          'Cache-Control',
+          'public, max-age=300, stale-while-revalidate=1800',
         );
-      }
+        return context.json(channel);
+      } catch (error) {
+        if (error instanceof BangumiRankingError) {
+          return context.json(
+            { error: 'bangumi_channel_unavailable', message: error.message },
+            error.status >= 500 ? 503 : 502,
+          );
+        }
 
-      throw error;
-    }
+        throw error;
+      }
+    });
   });
 }

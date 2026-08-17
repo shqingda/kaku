@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 
 import type { AuthDependencies } from '../auth/routes.ts';
 import type { Env } from '../env.ts';
+import { getPublicCache, servePublicCached } from '../public-cache.ts';
 import { BangumiBrowseError, browseBangumiSubjects } from './bangumi-client.ts';
 
 const SUPPORTED_TYPES = new Set([1, 2, 3, 4, 6]);
@@ -33,25 +34,27 @@ export function registerBrowseRoutes(
       return context.json({ error: 'invalid_browse_query', message: '分类筛选条件无效。' }, 400);
     }
 
-    try {
-      const result = await browseBangumiSubjects({
-        fetcher,
-        page,
-        sort,
-        subjectType,
-        tags,
-        year,
-      });
-      context.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=1800');
-      return context.json(result);
-    } catch (error) {
-      if (error instanceof BangumiBrowseError) {
-        return context.json(
-          { error: 'bangumi_browse_unavailable', message: error.message },
-          error.status >= 500 ? 503 : 502,
-        );
+    return servePublicCached(context, getPublicCache(), 300, async () => {
+      try {
+        const result = await browseBangumiSubjects({
+          fetcher,
+          page,
+          sort,
+          subjectType,
+          tags,
+          year,
+        });
+        context.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=1800');
+        return context.json(result);
+      } catch (error) {
+        if (error instanceof BangumiBrowseError) {
+          return context.json(
+            { error: 'bangumi_browse_unavailable', message: error.message },
+            error.status >= 500 ? 503 : 502,
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   });
 }
