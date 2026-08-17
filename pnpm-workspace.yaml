@@ -58,5 +58,6 @@ minimumReleaseAgeExclude:
   - wrangler@4.118.0
 
 allowBuilds:
+  dtrace-provider: false
   esbuild: true
   workerd: true
