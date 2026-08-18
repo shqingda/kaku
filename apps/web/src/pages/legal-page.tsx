@@ -2,13 +2,15 @@ const content = {
   privacy: {
     eyebrow: 'Privacy',
     title: '隐私政策',
-    intro: 'Kaku 只处理提供产品功能所必需的数据，并尽可能让授权、存储与退出过程保持清楚。',
+    intro: 'Kaku 只处理提供产品功能所必需的数据。下面的说明试图准确描述数据如何流动、存储在哪里，以及你如何撤回访问。',
     sections: [
-      ['我们处理的信息', '当你连接 Bangumi 时，Kaku 会处理 Bangumi 用户 ID、昵称、头像、收藏状态、章节进度和评分。Kaku 不接收或保存你的 Bangumi 密码。'],
-      ['授权凭据', 'Bangumi OAuth 授权凭据在服务端加密存储，仅用于代表你向 Bangumi 请求已授权的功能。移动端只保存 Kaku 会话凭据。'],
-      ['基础设施', 'Kaku 使用 Cloudflare Workers 与 D1 提供登录交接、会话管理和必要的数据代理。基础设施可能记录用于安全与故障排查的短期请求元数据。'],
-      ['你的控制权', '你可以退出当前设备、移除其他设备会话，或断开 Bangumi。断开后，Kaku 会删除保存的 Bangumi 凭据与所有 Kaku 会话。'],
-      ['数据出售', 'Kaku 不出售个人数据，也不会将收藏与兴趣数据用于第三方广告画像。'],
+      ['我们处理的信息', '连接 Bangumi 后，Kaku 会代表你访问并展示 Bangumi 用户 ID、昵称、头像、收藏状态、章节进度、评分与好友动态。Kaku 从不接收或保存你的 Bangumi 密码。'],
+      ['授权与凭据', '登录通过系统浏览器在 Bangumi 官方页面完成。Bangumi OAuth 授权凭据加密保存在 Kaku 的服务器（Cloudflare D1 数据库）中，仅用于代表你向 Bangumi 请求已授权的功能。移动端只保存 Kaku 自己的会话凭据。'],
+      ['数据如何流动', '评论、收藏、动态、通知等内容只在你使用 App 时实时转发给 Bangumi 或从 Bangumi 读取，不会写入 Kaku 的数据库，也不会被分析、标记或建立兴趣画像。界面错误记录只保存在你的设备本地，不会自动上传。'],
+      ['会话与设备', 'Kaku 会记录当前登录设备，以便你在账户页查看并撤销其他设备会话。撤销会话或断开 Bangumi 后，Kaku 会删除对应的授权凭据与所有会话。'],
+      ['基础设施与缓存', 'Kaku 使用 Cloudflare Workers、D1 与边缘缓存提供登录交接、会话管理和公开数据代理。Cloudflare 可能记录用于安全与故障排查的短期请求元数据（如 IP、设备信息与时间），不包含内容正文。边缘缓存只包含条目、榜单等公开数据，不含个人信息。'],
+      ['你的控制权', '你可以在 App 内断开 Bangumi（删除全部凭据与会话）、退出当前设备或撤销其他设备会话、清除本地界面错误记录。我们不出售个人数据，也不将收藏与兴趣用于第三方广告画像。'],
+      ['联系开发者', '关于本政策或数据处理的问题，可以通过 GitHub Issues 或支持页联系开发者。'],
     ],
   },
   terms: {
@@ -29,7 +31,7 @@ export function LegalPage({ type }: { type: keyof typeof content }) {
   const page = content[type];
   return (
     <section className="legal-page section-pad">
-      <div className="legal-heading"><span className="eyebrow">{page.eyebrow}</span><h1>{page.title}</h1><p>{page.intro}</p><small>最后更新：2026 年 8 月 5 日</small></div>
+      <div className="legal-heading"><span className="eyebrow">{page.eyebrow}</span><h1>{page.title}</h1><p>{page.intro}</p><small>最后更新：2026 年 8 月 18 日</small></div>
       <div className="legal-content">
         {page.sections.map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}
       </div>

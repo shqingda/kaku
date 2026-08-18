@@ -2,17 +2,17 @@ import { ProductPreview } from '../components/product-preview';
 
 const features = [
   {
-    icon: '⌁',
+    index: '01',
     title: '收藏，进度与评分',
     copy: '想看、在看、看过、搁置与抛弃完整对应 Bangumi。每次更新都同步到你的真实账户。',
   },
   {
-    icon: '▦',
+    index: '02',
     title: '章节不再是表格',
     copy: '格子与列表两种视图，长篇作品自动分段。点进每一集，都能继续读讨论。',
   },
   {
-    icon: '◌',
+    index: '03',
     title: '讨论仍然属于社区',
     copy: '吐槽箱、评论、讨论版与回复关系保持原意，用更适合手机的方式呈现。',
   },
@@ -51,7 +51,7 @@ export function HomePage() {
         <div className="feature-grid">
           {features.map((feature) => (
             <article className="feature-card" key={feature.title}>
-              <span aria-hidden="true" className="feature-icon">{feature.icon}</span>
+              <span aria-hidden="true" className="feature-icon">{feature.index}</span>
               <h3>{feature.title}</h3>
               <p>{feature.copy}</p>
             </article>

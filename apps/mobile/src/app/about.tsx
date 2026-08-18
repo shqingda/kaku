@@ -2,6 +2,7 @@ import { useMemo, type ComponentProps } from 'react';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
@@ -22,7 +23,8 @@ const WEBSITE_URL = 'https://kaku-web.shqingda.workers.dev';
 type AboutLink = {
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
-  url: string;
+  url?: string;
+  route?: string;
 };
 
 const productLinks: AboutLink[] = [
@@ -47,7 +49,7 @@ const legalLinks: AboutLink[] = [
   {
     icon: { android: 'privacy_tip', ios: 'hand.raised', web: 'privacy_tip' },
     label: '隐私政策',
-    url: `${WEBSITE_URL}/privacy`,
+    route: '/privacy',
   },
   {
     icon: { android: 'description', ios: 'doc.text', web: 'description' },
@@ -105,6 +107,7 @@ export default function AboutScreen() {
 }
 
 function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLink[] }) {
+  const router = useRouter();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -114,7 +117,11 @@ function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLi
           accessibilityLabel={link.label}
           accessibilityRole="link"
           key={link.label}
-          onPress={() => void openExternalUrl(link.url)}
+          onPress={() =>
+            link.route
+              ? router.push(link.route as Href)
+              : void openExternalUrl(link.url ?? '')
+          }
           style={({ pressed }) => [
             styles.row,
             index > 0 && styles.rowBorder,
@@ -131,11 +138,11 @@ function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLi
           </View>
           <Text style={styles.rowLabel}>{link.label}</Text>
           <SymbolView
-            name={{
-              android: 'open_in_new',
-              ios: 'arrow.up.right',
-              web: 'open_in_new',
-            }}
+            name={
+              link.route
+                ? { android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }
+                : { android: 'open_in_new', ios: 'arrow.up.right', web: 'open_in_new' }
+            }
             size={13}
             tintColor={colors.subtle}
           />
