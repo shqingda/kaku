@@ -58,7 +58,7 @@ jobs:
           pnpm exec eas build:list --platform android --limit 5 --json 2>/dev/null > /tmp/eas-list.json
           APK_URL=$(node -e "
             const builds = require('/tmp/eas-list.json');
-            const hit = builds.find(b => b.status === 'finished' && b.artifacts?.buildUrl);
+            const hit = builds.find(b => b.status?.toUpperCase() === 'FINISHED' && b.artifacts?.buildUrl);
             if (!hit) { console.error('No finished build with artifact URL found'); process.exit(1); }
             console.log('Reusing build ' + hit.id);
             console.log(hit.artifacts.buildUrl);
