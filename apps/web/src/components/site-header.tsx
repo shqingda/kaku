@@ -1,48 +1,48 @@
-const navigation = [
-  { href: '/#features', label: '功能' },
-  { href: '/pricing', label: '免费' },
-  { href: '/#privacy', label: '隐私' },
-  { href: '/support', label: '支持' },
-];
+import { GitHubIcon, MonitorIcon, MoonIcon, SunIcon } from './icons';
+import { useI18n, useThemeMode } from '../i18n';
 
 export function SiteHeader() {
-  const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+  const { lang, setLang, t } = useI18n();
+  const { mode, cycleMode } = useThemeMode();
+  const themeIcon =
+    mode === 'light' ? <SunIcon /> : mode === 'dark' ? <MoonIcon /> : <MonitorIcon />;
 
   return (
     <header className="site-header">
-      <a aria-label="Kaku 首页" className="brand" href="/">
+      <a aria-label="Kaku" className="brand" href="/">
         <img alt="" aria-hidden="true" className="brand-mark" height="32" src="/kaku-icon.png" width="32" />
         <span>Kaku</span>
       </a>
-      <nav aria-label="主导航" className="site-nav">
-        {navigation.map((item) => (
-          <a
-            aria-current={item.href === currentPath ? 'page' : undefined}
-            href={item.href}
-            key={item.href}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <a className="nav-cta" href="/pricing">免费测试</a>
-      <details className="mobile-menu">
-        <summary>
-          <span aria-hidden="true" className="menu-icon"><i /><i /><i /></span>
-          <span className="visually-hidden">打开或关闭导航菜单</span>
-        </summary>
-        <nav aria-label="移动端导航">
-          {navigation.map((item) => (
-            <a
-              aria-current={item.href === currentPath ? 'page' : undefined}
-              href={item.href}
-              key={item.href}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </details>
+      <div className="header-tools" role="group" aria-label={t.header.switchTheme}>
+        <a
+          aria-label={t.header.github}
+          className="tool-button"
+          href="https://github.com/shqingda/kaku"
+          rel="noreferrer"
+          target="_blank"
+          title={t.header.github}
+        >
+          <GitHubIcon />
+        </a>
+        <button
+          aria-label={t.header.switchLanguage}
+          className="tool-button tool-button-text"
+          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+          title={t.header.switchLanguage}
+          type="button"
+        >
+          {lang === 'zh' ? 'EN' : '中文'}
+        </button>
+        <button
+          aria-label={`${t.header.switchTheme}（${t.header.themeNames[mode]}）`}
+          className="tool-button"
+          onClick={cycleMode}
+          title={`${t.header.switchTheme}（${t.header.themeNames[mode]}）`}
+          type="button"
+        >
+          {themeIcon}
+        </button>
+      </div>
     </header>
   );
 }

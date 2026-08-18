@@ -1,57 +1,44 @@
 import { ProductPreview } from '../components/product-preview';
-
-const features = [
-  {
-    index: '01',
-    title: '收藏，进度与评分',
-    copy: '想看、在看、看过、搁置与抛弃完整对应 Bangumi。每次更新都同步到你的真实账户。',
-  },
-  {
-    index: '02',
-    title: '章节不再是表格',
-    copy: '格子与列表两种视图，长篇作品自动分段。点进每一集，都能继续读讨论。',
-  },
-  {
-    index: '03',
-    title: '讨论仍然属于社区',
-    copy: '吐槽箱、评论、讨论版与回复关系保持原意，用更适合手机的方式呈现。',
-  },
-];
+import { useI18n } from '../i18n';
 
 export function HomePage() {
+  const { t } = useI18n();
+
   return (
     <>
       <section className="hero section-pad">
         <div className="hero-copy">
-          <div className="pill"><span aria-hidden="true" /> iOS 与 Android 测试中</div>
-          <h1>把每一部喜欢，<br /><em>留在一个安静的地方。</em></h1>
-          <p>Kaku 是一个为移动端重新设计的 Bangumi 第三方客户端。收藏、追踪、评分与讨论，都更轻、更快，也更像原生 App。</p>
+          <div className="pill"><span aria-hidden="true" />{t.home.pill}</div>
+          <h1>{t.home.heroTitle1}<br /><em>{t.home.heroTitle2}</em></h1>
+          <p>{t.home.heroSub}</p>
           <div className="hero-actions">
-            <a className="button primary" href="/pricing">免费测试</a>
-            <a className="button secondary" href="#features">了解 Kaku <span aria-hidden="true">↓</span></a>
+            <a className="button primary" href="#features">{t.home.heroPrimary}</a>
+            <a className="button secondary" href="https://github.com/shqingda/kaku" rel="noreferrer" target="_blank">{t.home.heroSecondary}</a>
           </div>
-          <div className="platform-note"><span aria-hidden="true">●</span> iPhone · Android · macOS 计划中</div>
+          <div className="platform-note"><span aria-hidden="true">●</span>{t.home.platformNote}</div>
         </div>
         <ProductPreview />
       </section>
 
-      <section className="trust-strip" aria-label="产品特点">
-        <span>真实 Bangumi 数据</span><i aria-hidden="true" />
-        <span>系统浏览器授权</span><i aria-hidden="true" />
-        <span>跨设备登录</span><i aria-hidden="true" />
-        <span>独立开发</span>
+      <section className="trust-strip" aria-label={t.home.features.title1}>
+        {t.home.trust.map((item, index) => (
+          <span key={item}>
+            {item}
+            {index < t.home.trust.length - 1 && <i aria-hidden="true" />}
+          </span>
+        ))}
       </section>
 
       <section className="feature-section section-pad" id="features">
         <div className="section-heading">
-          <span className="eyebrow">熟悉，但更顺手</span>
-          <h2>少一点操作，<br />多一点作品本身。</h2>
-          <p>功能尊重 Bangumi 原版，交互则从移动端重新思考。没有为了“粘性”制造的负担。</p>
+          <span className="eyebrow">{t.home.features.eyebrow}</span>
+          <h2>{t.home.features.title1}<br />{t.home.features.title2}</h2>
+          <p>{t.home.features.sub}</p>
         </div>
         <div className="feature-grid">
-          {features.map((feature) => (
+          {t.home.features.items.map((feature, index) => (
             <article className="feature-card" key={feature.title}>
-              <span aria-hidden="true" className="feature-icon">{feature.index}</span>
+              <span aria-hidden="true" className="feature-icon">{String(index + 1).padStart(2, '0')}</span>
               <h3>{feature.title}</h3>
               <p>{feature.copy}</p>
             </article>
@@ -62,34 +49,41 @@ export function HomePage() {
       <section className="sync-section section-pad">
         <div className="sync-card">
           <div className="sync-copy">
-            <span className="eyebrow">一个账户，多台设备</span>
-            <h2>换一块屏幕，<br />不用重新开始。</h2>
-            <p>使用 Bangumi 官方授权登录。密码不会经过 Kaku；收藏、进度与评分直接同步到你的 Bangumi 账户。</p>
-            <a className="text-link" href="/privacy">了解隐私设计 <span aria-hidden="true">→</span></a>
+            <span className="eyebrow">{t.home.sync.eyebrow}</span>
+            <h2>{t.home.sync.title1}<br />{t.home.sync.title2}</h2>
+            <p>{t.home.sync.copy}</p>
+            <a className="text-link" href="/privacy">{t.home.sync.privacyLink} <span aria-hidden="true">→</span></a>
           </div>
           <div className="sync-visual" aria-hidden="true">
-            <div className="device-card device-ios"><b>iPhone</b><span>刚刚同步</span><i>17 / 28</i></div>
+            <div className="device-card device-ios"><b>iPhone</b><span>Synced</span><i>17 / 28</i></div>
             <div className="sync-orbit"><span>↻</span></div>
-            <div className="device-card device-android"><b>Android</b><span>在线</span><i>17 / 28</i></div>
+            <div className="device-card device-android"><b>Android</b><span>Online</span><i>17 / 28</i></div>
           </div>
         </div>
       </section>
 
-      <section className="privacy-section section-pad" id="privacy">
-        <div aria-hidden="true" className="privacy-mark">⌁</div>
-        <span className="eyebrow">隐私不是附加功能</span>
-        <h2>你的密码，从不交给 Kaku。</h2>
-        <p>登录在系统浏览器与 Bangumi 官方页面完成。Kaku 只保存完成同步所需的加密授权凭据，并允许你随时断开全部设备。</p>
-        <div className="privacy-points"><span>不保存 Bangumi 密码</span><span>令牌加密存储</span><span>可撤销设备会话</span></div>
+      <section className="faq-section section-pad" id="faq">
+        <div className="section-heading">
+          <span className="eyebrow">{t.home.faq.eyebrow}</span>
+          <h2>{t.home.faq.title}</h2>
+        </div>
+        <div className="faq-list">
+          {t.home.faq.items.map((item) => (
+            <details key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
       <section className="closing-section section-pad">
         <div>
-          <span className="eyebrow">正在认真做出来</span>
-          <h2>下一集，继续。</h2>
-          <p>Kaku 正在 iOS 与 Android 上测试，当前全部功能免费开放。</p>
+          <span className="eyebrow">{t.home.closing.eyebrow}</span>
+          <h2>{t.home.closing.title}</h2>
+          <p>{t.home.closing.copy}</p>
         </div>
-        <a className="button light" href="/pricing">了解免费使用</a>
+        <a className="button light" href="#faq">{t.home.closing.cta}</a>
       </section>
     </>
   );
