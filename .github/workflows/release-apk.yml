@@ -39,6 +39,8 @@ jobs:
 
       - name: Start EAS build
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           pnpm exec eas build \
             --profile "${{ github.event.inputs.channel }}" \
@@ -49,6 +51,8 @@ jobs:
 
       - name: Wait for build and collect artifact URL
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           BUILD_ID=$(node -e "const b=require('/tmp/eas-build.json');process.stdout.write(b[0].id)")
           echo "build-id=$BUILD_ID" >> "$GITHUB_OUTPUT"
