@@ -78,7 +78,7 @@ module.exports = {
         {
           url: 'https://sentry.io',
           project: 'kaku',
-          org: process.env.SENTRY_ORG || 'kaku',
+          organization: process.env.SENTRY_ORG,
           authToken: process.env.SENTRY_AUTH_TOKEN,
           uploadSourceMaps: Boolean(process.env.SENTRY_AUTH_TOKEN),
         },
