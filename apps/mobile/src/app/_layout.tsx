@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import '@/lib/sentry';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { DARK_COLORS, LIGHT_COLORS } from '@/constants/theme';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';

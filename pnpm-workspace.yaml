@@ -58,6 +58,7 @@ minimumReleaseAgeExclude:
   - wrangler@4.118.0
 
 allowBuilds:
+  '@sentry/cli': true
   dtrace-provider: false
   esbuild: true
   workerd: true

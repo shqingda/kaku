@@ -73,6 +73,16 @@ module.exports = {
           granularPermissions: ['photo'],
         },
       ],
+      [
+        '@sentry/react-native',
+        {
+          url: 'https://sentry.io',
+          project: 'kaku',
+          org: process.env.SENTRY_ORG || 'kaku',
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+          uploadSourceMaps: Boolean(process.env.SENTRY_AUTH_TOKEN),
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
