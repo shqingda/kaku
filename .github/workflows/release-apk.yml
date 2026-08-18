@@ -57,15 +57,20 @@ jobs:
           BUILD_ID=$(node -e "const b=require('/tmp/eas-build.json');process.stdout.write(b[0].id)")
           echo "build-id=$BUILD_ID" >> "$GITHUB_OUTPUT"
           for i in $(seq 1 60); do
-            STATUS=$(pnpm exec eas build:view "$BUILD_ID" --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const b=JSON.parse(d);process.stdout.write(b.status+'|'+(b.artifacts?.buildUrl||''))})")
+            STATUS=$(pnpm exec eas build:view "$BUILD_ID" --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const b=JSON.parse(d);process.stdout.write((b.status||'')+'|'+(b.artifacts?.buildUrl||''))})")
             STATE=$(echo "$STATUS" | cut -d'|' -f1)
             URL=$(echo "$STATUS" | cut -d'|' -f2)
+            LOWERCASE_STATE=$(echo "$STATE" | tr '[:upper:]' '[:lower:]')
             echo "poll $i: $STATE"
-            if [ "$STATE" = "finished" ]; then
+            if [ "$LOWERCASE_STATE" = "finished" ]; then
+              if [ -z "$URL" ]; then
+                echo "::error::Build finished but no artifact URL was provided"
+                exit 1
+              fi
               echo "apk-url=$URL" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            if [ "$STATE" = "errored" ] || [ "$STATE" = "cancelled" ]; then
+            if [ "$LOWERCASE_STATE" = "errored" ] || [ "$LOWERCASE_STATE" = "cancelled" ]; then
               echo "::error::EAS build ended with state $STATE"
               exit 1
             fi
