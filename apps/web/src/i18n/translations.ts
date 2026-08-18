@@ -21,7 +21,6 @@ type Translation = {
     heroPrimary: string;
     heroSecondary: string;
     platformNote: string;
-    trust: string[];
     features: {
       eyebrow: string;
       title1: string;
@@ -88,7 +87,6 @@ const zh: Translation = {
     heroPrimary: '了解 Kaku',
     heroSecondary: '在 GitHub 上关注',
     platformNote: 'iPhone · Android · 免费测试中',
-    trust: ['真实 Bangumi 数据', '系统浏览器授权', '跨设备登录', '独立开发'],
     features: {
       eyebrow: '熟悉，但更顺手',
       title1: '少一点操作，',
@@ -281,7 +279,6 @@ const en: Translation = {
     heroPrimary: 'Learn more',
     heroSecondary: 'Follow on GitHub',
     platformNote: 'iPhone · Android · Free in testing',
-    trust: ['Real Bangumi data', 'System-browser sign-in', 'Sign in across devices', 'Independent development'],
     features: {
       eyebrow: 'Familiar, yet smoother',
       title1: 'Less to operate,',

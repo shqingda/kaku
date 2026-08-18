@@ -75,13 +75,22 @@ export function useThemeMode() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolveTheme(mode);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      'content',
+      resolveTheme(mode) === 'dark' ? '#141413' : '#f7f6f2',
+    );
   }, [mode]);
 
   useEffect(() => {
     if (mode !== 'system') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
-      document.documentElement.dataset.theme = media.matches ? 'dark' : 'light';
+      const theme = media.matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = theme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute(
+        'content',
+        theme === 'dark' ? '#141413' : '#f7f6f2',
+      );
     };
     apply();
     media.addEventListener('change', apply);

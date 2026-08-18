@@ -20,15 +20,6 @@ export function HomePage() {
         <ProductPreview />
       </section>
 
-      <section className="trust-strip" aria-label={t.home.features.title1}>
-        {t.home.trust.map((item, index) => (
-          <span key={item}>
-            {item}
-            {index < t.home.trust.length - 1 && <i aria-hidden="true" />}
-          </span>
-        ))}
-      </section>
-
       <section className="feature-section section-pad" id="features">
         <div className="section-heading">
           <span className="eyebrow">{t.home.features.eyebrow}</span>
