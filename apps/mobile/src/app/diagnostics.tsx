@@ -19,6 +19,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { getFirstContentDelayMs } from '@/lib/startup-timing';
+import Sentry from '@/lib/sentry';
 import {
   clearDiagnosticRecords,
   type DiagnosticRecord,
@@ -52,6 +53,7 @@ export default function DiagnosticsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string>();
+  const isSentryEnabled = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN);
 
   const loadRecords = useCallback(async () => {
     setIsError(false);
@@ -142,6 +144,31 @@ export default function DiagnosticsScreen() {
                 ? '未记录（首页尚未打开）'
                 : `${getFirstContentDelayMs()} ms`}
             </Text>
+          </View>
+
+          <View style={styles.sentryCard}>
+            <Text style={styles.timingLabel}>线上崩溃监控（Sentry）</Text>
+            <Text style={styles.sentryState}>
+              {isSentryEnabled
+                ? '已启用（配置了 DSN）'
+                : '未启用（未配置 DSN，只会在本机记录错误）'}
+            </Text>
+            {isSentryEnabled ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  Sentry.captureMessage('Kaku 诊断测试上报', {
+                    tags: { source: 'diagnostics' },
+                  })
+                }
+                style={({ pressed }) => [
+                  styles.sentryButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.sentryButtonText}>发送测试上报</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {records.length === 0 ? (
@@ -278,6 +305,25 @@ const createStyles = (colors: ThemeColors) =>
     },
     timingLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' },
     timingValue: { color: colors.ink, fontSize: 22, fontWeight: '800', marginTop: 6 },
+    sentryCard: {
+      backgroundColor: colors.surface,
+      borderCurve: 'continuous',
+      borderRadius: 22,
+      marginTop: 14,
+      padding: 18,
+    },
+    sentryState: { color: colors.muted, fontSize: 13, marginTop: 4 },
+    sentryButton: {
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      backgroundColor: colors.accentSoft,
+      borderRadius: 12,
+      justifyContent: 'center',
+      marginTop: 12,
+      minHeight: 40,
+      paddingHorizontal: 14,
+    },
+    sentryButtonText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
     headingRow: {
       alignItems: 'center',
       flexDirection: 'row',
