@@ -6,12 +6,16 @@ import type { DiscussionReply } from './model';
 export function useReplyNavigation(replies: DiscussionReply[]) {
   const listRef = useRef<FlatList<DiscussionReply>>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [highlightedReplyId, setHighlightedReplyId] = useState<string>();
 
   useEffect(
     () => () => {
       if (highlightTimerRef.current) {
         clearTimeout(highlightTimerRef.current);
+      }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
       }
     },
     [],
@@ -55,7 +59,10 @@ export function useReplyNavigation(replies: DiscussionReply[]) {
         animated: false,
         offset: averageItemLength * index,
       });
-      setTimeout(
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+      retryTimerRef.current = setTimeout(
         () =>
           listRef.current?.scrollToIndex({
             animated: true,
