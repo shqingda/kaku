@@ -1,0 +1,28 @@
+appId: com.shqingda.kaku
+name: Open subject comments
+tags:
+  - smoke
+---
+# 覆盖：搜索 → 打开条目 → 进入吐槽箱 → 评论可见
+- launchApp
+- tapOn: "搜索条目"
+- inputText: "葬送的芙莉莲"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "葬送的芙莉莲.*"
+    timeout: 15000
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: "吐槽箱"
+    direction: DOWN
+- tapOn: "吐槽箱"
+- extendedWaitUntil:
+    visible: "吐槽箱"
+    timeout: 10000
+- assertVisible: "发表吐槽"

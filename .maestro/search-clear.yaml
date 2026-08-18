@@ -1,0 +1,19 @@
+appId: com.shqingda.kaku
+name: Search then clear
+tags:
+  - smoke
+---
+# 覆盖：综合页搜索 → 结果可见 → 清空 → 回到概览（不再叠屏/闪屏）
+- launchApp
+- tapOn: "搜索条目"
+- inputText: "葬送的芙莉莲"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "搜索结果"
+    timeout: 15000
+- assertVisible: "芙莉莲.*"
+# iOS 输入框自带清除按钮（a11y "Clear text"）；Android 无此按钮，optional 跳过
+- tapOn:
+    text: "Clear text"
+    optional: true
+- assertVisible: "最近搜索"
