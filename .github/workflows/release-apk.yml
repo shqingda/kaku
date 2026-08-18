@@ -11,6 +11,14 @@ on:
         options:
           - preview
           - production
+      reuse_existing:
+        description: '复用 EAS 最近一次成功的构建（跳过云端构建，快速验证发布链路）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 concurrency:
   group: release-apk-${{ github.ref }}
@@ -40,7 +48,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Find existing build
+        id: find
+        if: github.event.inputs.reuse_existing == 'true'
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          pnpm exec eas build:list --platform android --limit 5 --json 2>/dev/null > /tmp/eas-list.json
+          APK_URL=$(node -e "
+            const builds = require('/tmp/eas-list.json');
+            const hit = builds.find(b => b.status === 'finished' && b.artifacts?.buildUrl);
+            if (!hit) { console.error('No finished build with artifact URL found'); process.exit(1); }
+            console.log('Reusing build ' + hit.id);
+            console.log(hit.artifacts.buildUrl);
+          " | tail -1)
+          if [ -z "$APK_URL" ]; then
+            echo "::error::No finished build found to reuse"
+            exit 1
+          fi
+          echo "apk-url=$APK_URL" >> "$GITHUB_OUTPUT"
+
       - name: Start EAS build
+        if: github.event.inputs.reuse_existing != 'true'
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -53,6 +83,8 @@ jobs:
           cat /tmp/eas-build.json
 
       - name: Wait for build and collect artifact URL
+        id: build
+        if: github.event.inputs.reuse_existing != 'true'
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -81,11 +113,12 @@ jobs:
           done
           echo "::error::Timed out waiting for EAS build"
           exit 1
-        id: build
 
       - name: Download APK
         run: |
-          curl -sL -o kaku.apk "${{ steps.build.outputs.apk-url }}"
+          APK_URL="${{ steps.build.outputs.apk-url || steps.find.outputs.apk-url }}"
+          echo "Downloading from: $APK_URL"
+          curl -sL -o kaku.apk "$APK_URL"
           ls -la kaku.apk
 
       - name: Create GitHub release
@@ -94,5 +127,4 @@ jobs:
           tag_name: android-${{ github.event.inputs.channel }}-${{ github.run_number }}
           name: Kaku Android (${{ github.event.inputs.channel }})
           files: kaku.apk
-          generate_release_notes: true
           draft: false
