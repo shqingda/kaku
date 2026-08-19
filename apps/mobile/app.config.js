@@ -14,6 +14,11 @@ function buildSuffix(profile) {
 
 const suffix = buildSuffix(EAS_BUILD_PROFILE);
 
+// 真机只需要 arm64-v8a（覆盖 99% 现代设备）。
+// 保留 development 全架构是为了本地模拟器（x86_64）。
+// 这能把 preview/production 的 APK 减小约 40%。
+const ANDROID_ABI_FILTERS = ['arm64-v8a'];
+
 module.exports = {
   expo: {
     name: 'Kaku',
@@ -39,6 +44,8 @@ module.exports = {
       },
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
+      abiFilters:
+        EAS_BUILD_PROFILE === 'development' ? undefined : ANDROID_ABI_FILTERS,
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
@@ -53,6 +60,7 @@ module.exports = {
     plugins: [
       'expo-router',
       'expo-image',
+      ['expo-camera', { barcodeScannerEnabled: false }],
       [
         'expo-splash-screen',
         {
