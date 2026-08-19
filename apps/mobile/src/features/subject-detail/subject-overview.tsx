@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
 import type { CatalogSubject } from '@/features/catalog/model';
@@ -145,9 +146,23 @@ export function SubjectOverview({
       {tags.length > 0 ? (
         <View style={styles.tagList}>
           {tags.map((tag, index) => (
-            <View key={`${tag}-${index}`} style={styles.tag}>
+            <Pressable
+              accessibilityLabel={`按标签 ${tag} 浏览`}
+              accessibilityRole="link"
+              key={`${tag}-${index}`}
+              onPress={() =>
+                router.push({
+                  pathname: '/browse',
+                  params: { tag },
+                })
+              }
+              style={({ pressed }) => [
+                styles.tag,
+                pressed && styles.tagPressed,
+              ]}
+            >
               <Text style={styles.tagText}>{tag}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       ) : null}
@@ -224,5 +239,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
+  tagPressed: { opacity: 0.6 },
   tagText: { color: colors.accent, fontSize: 11, fontWeight: '700' },
 });

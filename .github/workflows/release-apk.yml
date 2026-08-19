@@ -129,6 +129,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}-{1}', github.event.inputs.channel, github.run_number) }}
-          name: Kaku Android (${{ github.event.inputs.channel }})
+          name: Kaku Android ${{ github.event.inputs.channel }} (1.0.0+${{ github.run_number }})
           files: kaku.apk
           draft: false

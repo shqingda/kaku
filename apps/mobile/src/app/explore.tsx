@@ -397,6 +397,18 @@ export default function ExploreScreen() {
                 onPress={() => router.push('/people')}
                 title="人物"
               />
+              <ExploreEntry
+                icon={{ android: 'label', ios: 'tag', web: 'label' }}
+                meta="按标签浏览作品"
+                onPress={() => router.push('/tags')}
+                title="标签"
+              />
+              <ExploreEntry
+                icon={{ android: 'history_edu', ios: 'book', web: 'history_edu' }}
+                meta="维基修订与更新记录"
+                onPress={() => router.push('/wiki')}
+                title="维基"
+              />
             </View>
             {selectedSearchType === 2 ? (
               <>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -11,16 +11,19 @@ import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
+import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 
 export default function FriendTimelineScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
+  const [composerVisible, setComposerVisible] = useState(false);
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [timelineQuery.data],
@@ -33,6 +36,22 @@ export default function FriendTimelineScreen() {
         contentContainerStyle={styles.content}
         data={items}
         keyExtractor={(item) => String(item.id)}
+        ListHeaderComponent={
+          <View style={styles.publishRow}>
+            <Pressable
+              accessibilityLabel="发布动态"
+              accessibilityRole="button"
+              hitSlop={HIT_SLOP}
+              onPress={() => setComposerVisible(true)}
+              style={({ pressed }) => [
+                styles.publishButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.publishText}>发布动态</Text>
+            </Pressable>
+          </View>
+        }
         ListEmptyComponent={
           <TimelineState
             colors={colors}
@@ -75,6 +94,10 @@ export default function FriendTimelineScreen() {
           <FriendTimelineRow hasDivider={index > 0} item={item} />
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <TimelineComposer
+        onClose={() => setComposerVisible(false)}
+        visible={composerVisible}
       />
     </SafeAreaView>
   );
@@ -130,8 +153,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     margin: 20,
     overflow: 'hidden',
     paddingHorizontal: 18,
+    paddingBottom: 8,
   },
-  state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 42 },
+  publishRow: {
+    paddingBottom: 4,
+    paddingTop: 14,
+  },
+  publishButton: {
+    alignItems: 'center',
+    backgroundColor: colors.ink,
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  publishText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
+  state: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 42,
+  },
   stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
   stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
   retryButton: { alignItems: 'center', justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 16 },
