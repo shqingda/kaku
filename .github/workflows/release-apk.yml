@@ -19,6 +19,10 @@ on:
         options:
           - 'false'
           - 'true'
+      tag:
+        description: 'Release tag（留空自动生成 android-<channel>-<run_number>）'
+        required: false
+        default: ''
 
 concurrency:
   group: release-apk-${{ github.ref }}
@@ -124,7 +128,7 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-${{ github.event.inputs.channel }}-${{ github.run_number }}
+          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}-{1}', github.event.inputs.channel, github.run_number) }}
           name: Kaku Android (${{ github.event.inputs.channel }})
           files: kaku.apk
           draft: false
