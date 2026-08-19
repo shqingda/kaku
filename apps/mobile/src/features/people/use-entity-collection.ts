@@ -8,6 +8,7 @@ import {
   type EntityCollectionKind,
 } from '@/infrastructure/kaku/entity-collections-client';
 import { queryKeys } from '@/lib/query-keys';
+import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useEntityCollection(
   kind: EntityCollectionKind,
@@ -21,8 +22,9 @@ export function useEntityCollection(
       getEntityCollection(request, kind, entityId, signal),
     queryKey: queryKeys.entityCollection(session?.user.id, kind, entityId),
     meta: { private: true },
-    retry: false,
+    retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
+    retryDelay: bangumiRetryDelay,
   });
 }
 

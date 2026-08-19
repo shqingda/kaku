@@ -6,6 +6,7 @@ import {
   savePersonalCollection,
 } from '@/infrastructure/kaku/collections-client';
 import { queryKeys } from '@/lib/query-keys';
+import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type {
   PersonalCollection,
   PersonalCollectionUpdate,
@@ -21,8 +22,9 @@ export function usePersonalCollection(subjectId: number) {
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
     meta: { private: true },
     refetchOnWindowFocus: 'always',
-    retry: false,
+    retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
+    retryDelay: bangumiRetryDelay,
   });
 }
 

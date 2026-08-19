@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -37,7 +38,7 @@ export function FriendAction({
       onError: (error) => {
         Alert.alert(
           shouldAdd ? '没有加为好友' : '没有移除好友',
-          error.message,
+          userErrorMessage(error),
         );
       },
       onSuccess: (nowFriend) => {

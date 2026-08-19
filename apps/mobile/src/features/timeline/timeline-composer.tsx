@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -173,7 +174,7 @@ export function TimelineComposer({
 
         {createTimeline.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {createTimeline.error.message}
+            {userErrorMessage(createTimeline.error)}
           </Text>
         ) : null}
       </View>

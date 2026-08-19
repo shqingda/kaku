@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
@@ -32,7 +33,7 @@ export function ProfileOverflow({
       onError: (error) => {
         Alert.alert(
           shouldBlock ? '没有屏蔽该用户' : '没有取消屏蔽',
-          error.message,
+          userErrorMessage(error),
         );
       },
     });

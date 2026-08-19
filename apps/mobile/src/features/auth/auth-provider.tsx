@@ -21,6 +21,7 @@ import {
   refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
 import { isPrivateQuery } from '@/lib/query-persistence';
+import { userErrorMessage } from '@/lib/user-error-message';
 
 import {
   canRefreshSession,
@@ -52,15 +53,11 @@ const AuthSessionContext = createContext<AuthSessionValue | null>(null);
 const AuthActionsContext = createContext<AuthActionsValue | null>(null);
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    if (error.name === 'TimeoutError') {
-      return '登录服务响应超时，请稍后重试。';
-    }
-
-    return error.message;
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return '登录服务响应超时，请稍后重试。';
   }
 
-  return '登录没有完成，请稍后重试。';
+  return userErrorMessage(error, '登录没有完成，请稍后重试。');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

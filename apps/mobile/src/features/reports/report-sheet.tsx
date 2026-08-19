@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -216,7 +217,7 @@ export function ReportSheet({
         </Pressable>
         {createReport.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {createReport.error.message}
+            {userErrorMessage(createReport.error)}
           </Text>
         ) : null}
       </View>

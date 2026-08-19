@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useIsOffline } from '@/lib/use-connectivity';
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
@@ -319,7 +320,7 @@ export default function SubjectScreen() {
           <View style={styles.personalState}>
             <Text style={styles.personalStateTitle}>收藏盒同步失败</Text>
             <Text style={styles.personalStateText}>
-              {collectionQuery.error.message}
+              {userErrorMessage(collectionQuery.error)}
             </Text>
             <Pressable
               accessibilityRole="button"

@@ -6,6 +6,7 @@ import {
   setIndexCollection,
 } from '@/infrastructure/kaku/indexes-client';
 import { queryKeys } from '@/lib/query-keys';
+import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useIndexCollection(indexId: number) {
   const { request, session } = useAuth();
@@ -15,8 +16,9 @@ export function useIndexCollection(indexId: number) {
     queryFn: ({ signal }) => getIndexCollection(request, indexId, signal),
     meta: { private: true },
     queryKey: queryKeys.indexCollection(session?.user.id, indexId),
-    retry: false,
+    retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
+    retryDelay: bangumiRetryDelay,
   });
 }
 

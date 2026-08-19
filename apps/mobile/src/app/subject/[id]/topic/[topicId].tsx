@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -104,7 +105,7 @@ export default function TopicScreen() {
             if (Number.isInteger(postId)) {
               deleteReply.mutate(postId, {
                 onError: (error) =>
-                  Alert.alert('回复没有删除', error.message),
+                  Alert.alert('回复没有删除', userErrorMessage(error)),
               });
             }
           },

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -92,6 +93,51 @@ export function CollectionBoxSheet({
   const progressDigits = String(item.totalEpisodes).length;
   const progressTotalWidth = 22 + progressDigits * 10;
 
+  const baselineRef = useRef<CollectionBoxDraft | null>(null);
+
+  const isDirty = useMemo(() => {
+    const baseline = baselineRef.current;
+    if (!baseline) {
+      return false;
+    }
+    return (
+      (status ?? undefined) !== (baseline.collectionStatus ?? undefined) ||
+      Number(watchedCount) !== baseline.watchedCount ||
+      rating !== baseline.rating ||
+      comment !== baseline.comment ||
+      isPrivate !== baseline.isPrivate ||
+      Number(readChapterCount) !== baseline.readChapterCount ||
+      Number(readVolumeCount) !== baseline.readVolumeCount ||
+      tagDraft.trim().length > 0 ||
+      JSON.stringify(tags) !== JSON.stringify(baseline.tags)
+    );
+  }, [
+    status,
+    watchedCount,
+    rating,
+    comment,
+    isPrivate,
+    readChapterCount,
+    readVolumeCount,
+    tags,
+    tagDraft,
+  ]);
+
+  function requestClose() {
+    if (isDirty) {
+      Alert.alert(
+        '放弃未保存的修改？',
+        '收藏盒里的改动还没有保存，关闭后不会保留。',
+        [
+          { style: 'cancel', text: '继续编辑' },
+          { style: 'destructive', text: '放弃修改', onPress: onClose },
+        ],
+      );
+      return;
+    }
+    onClose();
+  }
+
   useEffect(() => {
     if (!visible) {
       return;
@@ -106,6 +152,16 @@ export function CollectionBoxSheet({
     setReadVolumeCount(String(item.readVolumeCount ?? 0));
     setTags(item.tags ?? []);
     setTagDraft('');
+    baselineRef.current = {
+      collectionStatus: item.collectionStatus ?? undefined,
+      comment: item.comment ?? '',
+      isPrivate: item.isPrivate ?? false,
+      rating: item.rating,
+      readChapterCount: item.readChapterCount ?? 0,
+      readVolumeCount: item.readVolumeCount ?? 0,
+      tags: item.tags ?? [],
+      watchedCount: item.watchedEpisodeNumbers.length,
+    };
   }, [
     item.collectionStatus,
     item.rating,
@@ -168,7 +224,7 @@ export function CollectionBoxSheet({
   }
 
   return (
-    <AppSheet onClose={onClose} visible={visible}>
+    <AppSheet onClose={requestClose} visible={visible}>
       <View
         style={{
           flexShrink: 1,
@@ -183,7 +239,7 @@ export function CollectionBoxSheet({
             accessibilityLabel="关闭收藏盒"
             accessibilityRole="button"
             hitSlop={8}
-            onPress={onClose}
+            onPress={requestClose}
             style={({ pressed }) => [
               styles.closeButton,
               pressed && styles.pressed,

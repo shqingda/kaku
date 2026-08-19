@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
@@ -158,7 +159,7 @@ export function EntityDetailScreen({
     } catch (error) {
       Alert.alert(
         '收藏没有保存',
-        error instanceof Error ? error.message : '请稍后重试。',
+        error instanceof Error ? userErrorMessage(error) : '请稍后重试。',
       );
     }
   }
@@ -195,7 +196,7 @@ export function EntityDetailScreen({
           if (Number.isInteger(commentId)) {
             deleteReply.mutate(commentId, {
               onError: (error) =>
-                Alert.alert('评论没有删除', error.message),
+                Alert.alert('评论没有删除', userErrorMessage(error)),
             });
           }
         },

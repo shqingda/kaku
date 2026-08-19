@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import {
   parseDeviceSessions,
@@ -25,7 +26,7 @@ export function useDeviceSessions() {
     },
     queryKey: deviceSessionsKey(session?.user.id),
     meta: { private: true },
-    retry: false,
+    retry: shouldRetryBangumiQuery,
   });
 }
 

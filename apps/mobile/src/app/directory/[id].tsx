@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import {
@@ -96,7 +97,7 @@ export default function PublicIndexScreen() {
         {
           onPress: () => {
             deleteIndex.mutate(indexId, {
-              onError: (error) => Alert.alert('目录没有删除', error.message),
+              onError: (error) => Alert.alert('目录没有删除', userErrorMessage(error)),
               onSuccess: () => router.back(),
             });
           },
@@ -132,7 +133,7 @@ export default function PublicIndexScreen() {
 
     const collected = collectionQuery.data === true;
     setCollection.mutate(!collected, {
-      onError: (error) => Alert.alert('收藏没有保存', error.message),
+      onError: (error) => Alert.alert('收藏没有保存', userErrorMessage(error)),
     });
   }
 

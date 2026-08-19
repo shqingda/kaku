@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -110,7 +111,7 @@ export default function EpisodeScreen() {
             const postId = Number(reply.id);
             if (Number.isInteger(postId)) {
               deleteReply.mutate(postId, {
-                onError: (error) => Alert.alert('回复没有删除', error.message),
+                onError: (error) => Alert.alert('回复没有删除', userErrorMessage(error)),
               });
             }
           },
@@ -239,7 +240,7 @@ export default function EpisodeScreen() {
     } catch (error) {
       Alert.alert(
         '进度没有保存',
-        error instanceof Error ? error.message : '请稍后重试。',
+        error instanceof Error ? userErrorMessage(error) : '请稍后重试。',
       );
     }
   }

@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -86,7 +87,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
             const postId = Number(reply.id);
             if (Number.isInteger(postId)) {
               deleteReply.mutate(postId, {
-                onError: (error) => Alert.alert('回复没有删除', error.message),
+                onError: (error) => Alert.alert('回复没有删除', userErrorMessage(error)),
               });
             }
           },

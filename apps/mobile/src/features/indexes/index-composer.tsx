@@ -1,3 +1,4 @@
+import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -219,7 +220,7 @@ export function IndexComposer({
 
         {mutation.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {mutation.error.message}
+            {userErrorMessage(mutation.error)}
           </Text>
         ) : null}
       </View>

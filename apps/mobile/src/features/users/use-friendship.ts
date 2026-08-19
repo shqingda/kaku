@@ -6,6 +6,7 @@ import {
   setUserFriend,
 } from '@/infrastructure/kaku/friends-client';
 import { queryKeys } from '@/lib/query-keys';
+import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useUserFriendship(username: string) {
   const { request, session } = useAuth();
@@ -16,8 +17,9 @@ export function useUserFriendship(username: string) {
       getUserFriendship(request, username.trim(), signal),
     meta: { private: true },
     queryKey: queryKeys.userFriendship(session?.user.id, username.trim()),
-    retry: false,
+    retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
+    retryDelay: bangumiRetryDelay,
   });
 }
 
