@@ -298,7 +298,10 @@ function ChannelState({ action, text, title }: {
           accessibilityLabel={`重试${title}`}
           accessibilityRole="button"
           onPress={action}
-          style={styles.retry}
+          style={({ pressed }) => [
+            styles.retry,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>

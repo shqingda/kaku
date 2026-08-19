@@ -6,6 +6,7 @@ import {
   router,
   Stack,
   useLocalSearchParams,
+  usePathname,
 } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -19,6 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -44,6 +46,7 @@ export default function PublicIndexScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
+  const pathname = usePathname();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const indexId = parsePositiveIntegerRouteParam(id);
@@ -115,7 +118,13 @@ export default function PublicIndexScreen() {
         '收藏会保存到你的 Bangumi 账户。',
         [
           { style: 'cancel', text: '取消' },
-          { onPress: () => router.push('/account'), text: '去登录' },
+          {
+            onPress: () => {
+              rememberReturnTo(pathname);
+              router.push('/account');
+            },
+            text: '去登录',
+          },
         ],
       );
       return;

@@ -77,9 +77,10 @@ export default function CalendarScreen() {
                     accessibilityState={{ selected: isSelected }}
                     key={day.id}
                     onPress={() => setSelectedDay(day.id)}
-                    style={[
+                    style={({ pressed }) => [
                       styles.dayTab,
                       isSelected && styles.dayTabSelected,
+                      pressed && styles.pressed,
                     ]}
                   >
                     <Text
@@ -206,7 +207,14 @@ function CalendarState({
       {loading ? <ActivityIndicator color={colors.accent} /> : null}
       <Text style={styles.stateText}>{text}</Text>
       {action ? (
-        <Pressable onPress={action} style={styles.retryButton}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={action}
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && styles.pressed,
+          ]}
+        >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>
       ) : null}
@@ -331,4 +339,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 9,
   },
   retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  pressed: { opacity: 0.62 },
 });

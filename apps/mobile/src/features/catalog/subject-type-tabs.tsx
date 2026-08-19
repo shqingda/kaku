@@ -44,7 +44,11 @@ export function SubjectTypeTabs({
               playSelectionHaptic();
               onChange(type.id);
             }}
-            style={[styles.tab, isSelected && styles.selectedTab]}
+            style={({ pressed }) => [
+              styles.tab,
+              isSelected && styles.selectedTab,
+              pressed && styles.pressed,
+            ]}
           >
             <Text
               maxFontSizeMultiplier={1.3}
@@ -71,6 +75,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
   },
   selectedTab: { backgroundColor: colors.ink },
+  pressed: { opacity: 0.6 },
   tabText: {
     color: colors.muted,
     fontSize: 13,

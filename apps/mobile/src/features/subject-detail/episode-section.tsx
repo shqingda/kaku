@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CatalogEpisode } from '@/features/catalog/model';
 
@@ -76,6 +77,7 @@ export function EpisodeSection({
                   }
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActive }}
+                  hitSlop={HIT_SLOP}
                   key={nextLayout}
                   onPress={() => setLayout(nextLayout)}
                   style={({ pressed }) => [
@@ -124,6 +126,7 @@ export function EpisodeSection({
                 }`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
+                hitSlop={HIT_SLOP}
                 key={start}
                 onPress={() => setRangeIndex(index)}
                 style={({ pressed }) => [

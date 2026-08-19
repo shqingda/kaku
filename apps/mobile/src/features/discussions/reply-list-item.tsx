@@ -71,6 +71,7 @@ export const ReplyListItem = memo(function ReplyListItem({
                     recyclingKey={reply.authorAvatarUrl}
                     source={reply.authorAvatarUrl}
                     style={StyleSheet.absoluteFill}
+                    transition={120}
                   />
                 ) : null}
               </View>

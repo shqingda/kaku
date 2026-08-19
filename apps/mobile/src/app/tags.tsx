@@ -157,7 +157,14 @@ function TagState({ error, loading, onRetry }: {
         {error ? 'Bangumi 偶尔会响应较慢，请稍后重试。' : '换一种条目类型看看。'}
       </Text>
       {error ? (
-        <Pressable onPress={onRetry} style={styles.retry}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={({ pressed }) => [
+            styles.retry,
+            pressed && styles.pressed,
+          ]}
+        >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>
       ) : null}

@@ -267,10 +267,11 @@ function FilterButton({ label, onPress, selected, wide = false }: {
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.filter,
         wide && styles.kindTab,
         selected && styles.filterSelected,
+        pressed && styles.pressed,
       ]}
     >
       <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
@@ -297,11 +298,15 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
     ]}>
       <Link asChild href={{ pathname, params: { id: String(item.id) } }}>
         <Pressable
+          accessibilityRole="button"
           android_ripple={{ color: colors.track }}
-          style={StyleSheet.flatten([
-            styles.row,
-            hasDivider && styles.rowDivider,
-          ])}
+          style={({ pressed }) => [
+            StyleSheet.flatten([
+              styles.row,
+              hasDivider && styles.rowDivider,
+            ]),
+            pressed && styles.rowPressed,
+          ]}
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarFallback}>{item.name.slice(0, 1)}</Text>
@@ -383,6 +388,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   row: { alignItems: 'center', flexDirection: 'row', minHeight: 122, paddingVertical: 16 },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
+  rowPressed: { opacity: 0.6 },
   avatar: {
     alignItems: 'center',
     backgroundColor: colors.accentSoft,

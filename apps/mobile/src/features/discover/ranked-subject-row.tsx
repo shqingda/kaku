@@ -1,7 +1,6 @@
 import { Image } from 'expo-image';
 import { useMemo } from 'react';
 import {
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -55,7 +54,7 @@ export function RankedSubjectRow({
             recyclingKey={item.coverUrl}
             source={item.coverUrl}
             style={StyleSheet.absoluteFill}
-            transition={Platform.OS === 'ios' ? 120 : 0}
+            transition={120}
           />
         ) : null}
       </View>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { type Href, router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { takeReturnTo } from '@/lib/auth-redirect';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function AuthCallbackScreen() {
@@ -27,7 +28,10 @@ export default function AuthCallbackScreen() {
     }
 
     void completeSignIn(`kaku://auth/callback?code=${encodeURIComponent(code)}`)
-      .then(() => router.replace('/'))
+      .then(() => {
+        const target = takeReturnTo();
+        router.dismissTo((target ?? '/') as Href);
+      })
       .catch((caughtError: unknown) => {
         setError(
           caughtError instanceof Error

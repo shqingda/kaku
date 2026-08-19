@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -32,6 +33,7 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 export default function DirectoriesScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const pathname = usePathname();
   const [sort, setSort] = useState<IndexSort>('latest');
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -53,7 +55,13 @@ export default function DirectoriesScreen() {
       '目录会保存在你的 Bangumi 账户。',
       [
         { style: 'cancel', text: '取消' },
-        { onPress: () => router.push('/account'), text: '去登录' },
+        {
+          onPress: () => {
+            rememberReturnTo(pathname);
+            router.push('/account');
+          },
+          text: '去登录',
+        },
       ],
     );
   }
@@ -106,7 +114,11 @@ export default function DirectoriesScreen() {
                     accessibilityState={{ selected }}
                     key={item.id}
                     onPress={() => setSort(item.id)}
-                    style={[styles.filter, selected && styles.filterSelected]}
+                    style={({ pressed }) => [
+                      styles.filter,
+                      selected && styles.filterSelected,
+                      pressed && styles.pressed,
+                    ]}
                   >
                     <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
                       {item.label}

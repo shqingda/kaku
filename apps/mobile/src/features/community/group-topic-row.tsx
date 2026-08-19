@@ -51,6 +51,7 @@ export function GroupTopicRow({
             recyclingKey={topic.authorAvatarUrl}
             source={topic.authorAvatarUrl}
             style={StyleSheet.absoluteFill}
+            transition={120}
           />
         ) : null}
       </View>

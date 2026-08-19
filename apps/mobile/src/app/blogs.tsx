@@ -85,7 +85,11 @@ export default function GlobalBlogsScreen() {
                     accessibilityState={{ selected }}
                     key={item.id}
                     onPress={() => setFilter(item.id)}
-                    style={[styles.filter, selected && styles.filterSelected]}
+                    style={({ pressed }) => [
+                      styles.filter,
+                      selected && styles.filterSelected,
+                      pressed && styles.pressed,
+                    ]}
                   >
                     <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
                       {item.label}

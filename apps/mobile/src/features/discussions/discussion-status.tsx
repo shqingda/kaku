@@ -40,7 +40,10 @@ export function DiscussionStatus({
           accessibilityLabel="重试加载讨论"
           accessibilityRole="button"
           onPress={onRetry}
-          style={styles.retryButton}
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.retry}>重试</Text>
         </Pressable>
@@ -63,4 +66,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   text: { color: colors.muted, flex: 1, fontSize: 13 },
   retryButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 56 },
   retry: { color: colors.accent, fontSize: 13, fontWeight: '700', marginLeft: 12 },
+  pressed: { opacity: 0.62 },
 });

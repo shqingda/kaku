@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -28,6 +29,7 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 export default function SubjectDiscussionsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const pathname = usePathname();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -53,7 +55,13 @@ export default function SubjectDiscussionsScreen() {
       '话题会发布到你的 Bangumi 账户。',
       [
         { style: 'cancel', text: '取消' },
-        { onPress: () => router.push('/account'), text: '去登录' },
+        {
+          onPress: () => {
+            rememberReturnTo(pathname);
+            router.push('/account');
+          },
+          text: '去登录',
+        },
       ],
     );
   }

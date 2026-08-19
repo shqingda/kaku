@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { HIT_SLOP } from '@/constants/design';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -444,8 +445,12 @@ export function EntityDetailScreen({
               </View>
             </>
           }
-          onRefresh={onRetry}
-          refreshing={isRefreshing}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={onRetry}
+              refreshing={isRefreshing}
+            />
+          }
           renderItem={({ item }) => (
             <EntityRelationRow item={item} kind={kind} />
           )}

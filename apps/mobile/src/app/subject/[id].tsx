@@ -4,7 +4,6 @@ import { SymbolView } from 'expo-symbols';
 import {
   Platform,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { useIsOffline } from '@/lib/use-connectivity';
 import { useAuth } from '@/features/auth/auth-provider';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
   getSubjectDetailLabels,
@@ -138,6 +139,8 @@ export default function SubjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isOffline = useIsOffline();
+  const bannerOffset = isOffline ? 48 : 8;
   const { session } = useAuth();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const subjectId = parsePositiveIntegerRouteParam(id);
@@ -184,10 +187,10 @@ export default function SubjectScreen() {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
-        <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+        <FloatingBackButton onPress={goBack} top={insets.top + bannerOffset} />
         <FloatingHomeButton
           onPress={() => router.dismissTo('/')}
-          top={insets.top + 8}
+          top={insets.top + bannerOffset}
         />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>正在读取条目</Text>
@@ -201,10 +204,10 @@ export default function SubjectScreen() {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
-        <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+        <FloatingBackButton onPress={goBack} top={insets.top + bannerOffset} />
         <FloatingHomeButton
           onPress={() => router.dismissTo('/')}
-          top={insets.top + 8}
+          top={insets.top + bannerOffset}
         />
         <View style={styles.errorState}>
           <Text style={styles.errorTitle}>条目读取失败</Text>
@@ -272,10 +275,10 @@ export default function SubjectScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + 12 },
+          { paddingTop: insets.top + bannerOffset + 4 },
         ]}
         refreshControl={
-          <RefreshControl
+          <AppRefreshControl
             onRefresh={() =>
               void Promise.all([
                 catalogQuery.refetch(),
@@ -291,7 +294,6 @@ export default function SubjectScreen() {
                 collectionQuery.isRefetching) &&
               !catalogQuery.isPending
             }
-            tintColor={colors.accent}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -322,7 +324,10 @@ export default function SubjectScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => void collectionQuery.refetch()}
-              style={styles.personalRetry}
+              style={({ pressed }) => [
+                styles.personalRetry,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={styles.personalRetryText}>重试</Text>
             </Pressable>
@@ -485,10 +490,10 @@ export default function SubjectScreen() {
           total={reviewsPage?.total}
         />
       </ScrollView>
-      <FloatingBackButton onPress={goBack} top={insets.top + 8} />
+      <FloatingBackButton onPress={goBack} top={insets.top + bannerOffset} />
       <FloatingHomeButton
         onPress={() => router.dismissTo('/')}
-        top={insets.top + 8}
+        top={insets.top + bannerOffset}
       />
     </View>
   );

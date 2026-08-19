@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 import type { PersonalCollectionUpdate } from '@/features/collections/model';
 import {
   getCollectionStatusLabel,
@@ -39,6 +40,7 @@ export function CollectionControls({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const pathname = usePathname();
   const { session } = useAuth();
   const subjectType = item.type ?? 2;
   const supportsProgress =
@@ -166,7 +168,13 @@ export function CollectionControls({
       '收藏状态、进度和评分会保存到你的 Bangumi 账户。',
       [
         { style: 'cancel', text: '取消' },
-        { onPress: () => router.push('/account'), text: '去登录' },
+        {
+          onPress: () => {
+            rememberReturnTo(pathname);
+            router.push('/account');
+          },
+          text: '去登录',
+        },
       ],
     );
   }

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 
 type CatalogStatusBannerProps = {
@@ -41,6 +42,7 @@ export function CatalogStatusBanner({
       {isError ? (
         <Pressable
           accessibilityRole="button"
+          hitSlop={HIT_SLOP}
           onPress={onRetry}
           style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
         >

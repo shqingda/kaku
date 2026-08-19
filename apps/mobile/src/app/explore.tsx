@@ -438,9 +438,10 @@ export default function ExploreScreen() {
                             accessibilityState={{ selected: isSelected }}
                             key={day.id}
                             onPress={() => setSelectedDay(day.id)}
-                            style={[
+                            style={({ pressed }) => [
                               styles.dayTab,
                               isSelected && styles.dayTabSelected,
+                              pressed && styles.pressed,
                             ]}
                           >
                             <Text
@@ -649,7 +650,7 @@ function CalendarCard({ item }: { item: DiscoverSubject }) {
             recyclingKey={item.coverUrl}
             source={item.coverUrl}
             style={StyleSheet.absoluteFill}
-            transition={140}
+            transition={120}
           />
         ) : null}
       </View>

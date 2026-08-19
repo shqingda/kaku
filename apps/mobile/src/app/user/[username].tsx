@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -255,6 +256,7 @@ export default function PublicUserScreen() {
                     <Pressable
                       accessibilityLabel="发布动态"
                       accessibilityRole="button"
+                      hitSlop={HIT_SLOP}
                       onPress={() => setComposerVisible(true)}
                       style={({ pressed }) => [
                         styles.timelinePublishButton,

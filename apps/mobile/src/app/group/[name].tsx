@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 import { HIT_SLOP } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
@@ -24,6 +25,7 @@ export default function GroupScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { name } = useLocalSearchParams<{ name: string }>();
+  const pathname = usePathname();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const groupQuery = usePublicGroup(name);
@@ -49,7 +51,13 @@ export default function GroupScreen() {
       '话题会发布到你的 Bangumi 账户。',
       [
         { style: 'cancel', text: '取消' },
-        { onPress: () => router.push('/account'), text: '去登录' },
+        {
+          onPress: () => {
+            rememberReturnTo(pathname);
+            router.push('/account');
+          },
+          text: '去登录',
+        },
       ],
     );
   }

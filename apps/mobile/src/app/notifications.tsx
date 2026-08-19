@@ -5,6 +5,7 @@ import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { NotificationRow } from '@/features/notifications/notification-row';
 import {
   useMarkNotificationsRead,
@@ -59,8 +60,12 @@ export default function NotificationsScreen() {
             onRetry={() => void notificationsQuery.refetch()}
           />
         }
-        onRefresh={() => void notificationsQuery.refetch()}
-        refreshing={notificationsQuery.isRefetching}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void notificationsQuery.refetch()}
+            refreshing={notificationsQuery.isRefetching}
+          />
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <NotificationRow

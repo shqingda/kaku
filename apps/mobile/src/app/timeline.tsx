@@ -11,6 +11,7 @@ import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
@@ -61,9 +62,13 @@ export default function FriendTimelineScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={() => void timelineQuery.refetch()}
-        refreshing={
-          timelineQuery.isRefetching && !timelineQuery.isFetchingNextPage
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void timelineQuery.refetch()}
+            refreshing={
+              timelineQuery.isRefetching && !timelineQuery.isFetchingNextPage
+            }
+          />
         }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
@@ -105,7 +110,10 @@ function TimelineState({
           accessibilityLabel="重试加载好友动态"
           accessibilityRole="button"
           onPress={onRetry}
-          style={styles.retryButton}
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.retryText}>重试</Text>
         </Pressable>

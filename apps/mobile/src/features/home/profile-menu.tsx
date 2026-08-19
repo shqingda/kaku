@@ -123,6 +123,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
               contentFit="cover"
               source={session.user.avatarUrl}
               style={styles.avatar}
+              transition={120}
             />
           ) : (
             <SymbolView
@@ -198,6 +199,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
                     contentFit="cover"
                     source={session.user.avatarUrl}
                     style={StyleSheet.absoluteFill}
+                    transition={120}
                   />
                 ) : (
                   <SymbolView

@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import {
@@ -165,8 +166,12 @@ export default function CommunityScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onRefresh={refreshCommunity}
-        refreshing={isRefreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={refreshCommunity}
+            refreshing={isRefreshing}
+          />
+        }
         renderItem={({ index, item }) => (
           <View
             style={[

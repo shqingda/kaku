@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { HIT_SLOP } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { BrowseSort } from '@/features/browse/model';
 import { useBrowseSubjects } from '@/features/browse/use-browse-subjects';
@@ -128,7 +129,11 @@ export default function BrowseScreen() {
                   accessibilityState={{ selected: sort === item.id }}
                   key={item.id}
                   onPress={() => setSort(item.id)}
-                  style={[styles.sort, sort === item.id && styles.sortSelected]}
+                  style={({ pressed }) => [
+                    styles.sort,
+                    sort === item.id && styles.sortSelected,
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <Text style={[styles.sortText, sort === item.id && styles.sortTextSelected]}>
                     {item.label}
@@ -164,6 +169,7 @@ export default function BrowseScreen() {
               <Pressable
                 accessibilityLabel="应用筛选条件"
                 accessibilityRole="button"
+                hitSlop={HIT_SLOP}
                 onPress={applyFilters}
                 style={({ pressed }) => [
                   styles.applyButton,

@@ -1,7 +1,7 @@
 import { useMemo, useState, type ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { takeReturnTo } from '@/lib/auth-redirect';
 import {
   useDeviceSessions,
   useRevokeDeviceSession,
@@ -56,7 +57,8 @@ export default function AccountScreen() {
 
   async function handleSignIn() {
     if (await signIn()) {
-      router.replace('/');
+      const target = takeReturnTo();
+      router.dismissTo((target ?? '/') as Href);
     }
   }
 
@@ -161,6 +163,7 @@ export default function AccountScreen() {
                     contentFit="cover"
                     source={session.user.avatarUrl}
                     style={StyleSheet.absoluteFill}
+                    transition={120}
                   />
                 ) : null}
               </View>
