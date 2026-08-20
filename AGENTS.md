@@ -20,3 +20,24 @@ This repository is both a product and a learning project.
   module-level functions marked `'worklet'`, or inline code. Component-scope helper
   functions are NOT reliably workletized under React Compiler — never call them from
   a worklet; inline the logic or move it to a module.
+
+## Releasing Android (发版)
+
+Before any deployment, read `RELEASE.md` — it documents both release paths.
+
+- **日常迭代发 preview**：use the local split-ABI build script
+  `bash scripts/build-split-apks.sh android-1.0.0-<n>` — it does NOT consume the
+  monthly EAS free-build quota. Produces 4 per-ABI APKs (50–62MB) with debug signing
+  (users must uninstall the previous build first). ~10–15 min on the local machine.
+- **正式上架 Play**：use EAS cloud `production` profile (AAB, EAS signing, Sentry
+  source maps). Via GitHub Actions workflow `Release Android APK` (needs repo secret
+  `EXPO_TOKEN`).
+- **EAS quota** is limited per month (resets ~Sep 1). When exhausted, cloud builds
+  fail; fall back to the local script.
+- **Proxy gotcha**: unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy
+  ALL_PROXY` before `git push` or EAS uploads, otherwise connections hang.
+- ABI control uses RN's `-PreactNativeArchitectures` (Expo SDK 57 removed
+  `android.abiFilters` / `expo-build-properties` ABI support — do not re-add them).
+- Local builds disable Sentry source-map upload but inline the DSN (crash reporting
+  still works); EAS builds upload source maps.
+- Release notes are written in English.
