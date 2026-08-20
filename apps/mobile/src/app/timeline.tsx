@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Stack } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -47,22 +48,6 @@ export default function FriendTimelineScreen() {
         onScroll={handleScroll}
         ref={listRef}
         scrollEventThrottle={80}
-        ListHeaderComponent={
-          <View style={styles.publishRow}>
-            <Pressable
-              accessibilityLabel="发布动态"
-              accessibilityRole="button"
-              hitSlop={HIT_SLOP}
-              onPress={() => setComposerVisible(true)}
-              style={({ pressed }) => [
-                styles.publishButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.publishText}>发布动态</Text>
-            </Pressable>
-          </View>
-        }
         ListEmptyComponent={
           <TimelineState
             colors={colors}
@@ -110,6 +95,24 @@ export default function FriendTimelineScreen() {
         onClose={() => setComposerVisible(false)}
         visible={composerVisible}
       />
+      <Pressable
+        accessibilityLabel="发布动态"
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={() => setComposerVisible(true)}
+        style={({ pressed }) => [
+          styles.publishFab,
+          pressed && styles.pressed,
+        ]}
+      >
+        <SymbolView
+          name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
+          size={16}
+          tintColor={colors.surface}
+          weight="semibold"
+        />
+        <Text style={styles.publishFabText}>发布</Text>
+      </Pressable>
       <ScrollToTopButton onPress={scrollToTop} visible={showsScrollToTop} />
     </SafeAreaView>
   );
@@ -167,18 +170,27 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 8,
   },
-  publishRow: {
-    paddingBottom: 4,
-    paddingTop: 14,
-  },
-  publishButton: {
+  publishFab: {
     alignItems: 'center',
     backgroundColor: colors.ink,
-    borderRadius: 12,
+    borderCurve: 'continuous',
+    borderRadius: 999,
+    bottom: 84,
+    elevation: Platform.OS === 'android' ? 8 : 0,
+    flexDirection: 'row',
+    gap: 6,
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    position: 'absolute',
+    right: 20,
+    shadowColor: '#000000',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    zIndex: 15,
   },
-  publishText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
+  publishFabText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
   state: {
     alignItems: 'center',
     paddingHorizontal: 20,

@@ -14,10 +14,10 @@ function buildSuffix(profile) {
 
 const suffix = buildSuffix(EAS_BUILD_PROFILE);
 
-// 真机只需要 arm64-v8a（覆盖 99% 现代设备）。
-// 保留 development 全架构是为了本地模拟器（x86_64）。
-// 这能把 preview/production 的 APK 减小约 40%。
-const ANDROID_ABI_FILTERS = ['arm64-v8a'];
+// 拆架构构建（preview-split-* profile）时，每个 APK 只包含一种 CPU 架构，
+// 大小约 40MB，用户按设备架构下载对应版本。
+// 未设置 EAS_ABI（development / production）时保留全架构。
+const EAS_ABI = process.env.EAS_ABI;
 
 module.exports = {
   expo: {
@@ -44,8 +44,7 @@ module.exports = {
       },
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
-      abiFilters:
-        EAS_BUILD_PROFILE === 'development' ? undefined : ANDROID_ABI_FILTERS,
+      abiFilters: EAS_ABI ? [EAS_ABI] : undefined,
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
