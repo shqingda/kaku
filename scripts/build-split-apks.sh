@@ -14,6 +14,11 @@ TAG="${1:-android-1.0.0-$(date +%Y%m%d%H%M)}"
 
 cd "$MOBILE_DIR"
 
+echo "==> 导出 EXPO_PUBLIC_* 环境变量（让 JS bundle 内联 DSN 等）"
+set -a
+. ./.env 2>/dev/null || true
+set +a
+
 echo "==> 同步原生工程（expo prebuild）"
 pnpm exec expo prebuild --platform android --no-install >/dev/null
 
