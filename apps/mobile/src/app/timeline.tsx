@@ -14,6 +14,8 @@ import type { ThemeColors } from '@/constants/theme';
 import { HIT_SLOP } from '@/constants/design';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -24,6 +26,12 @@ export default function FriendTimelineScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
   const [composerVisible, setComposerVisible] = useState(false);
+  const {
+    handleScroll,
+    ref: listRef,
+    scrollToTop,
+    visible: showsScrollToTop,
+  } = useScrollToTopButton();
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [timelineQuery.data],
@@ -36,6 +44,9 @@ export default function FriendTimelineScreen() {
         contentContainerStyle={styles.content}
         data={items}
         keyExtractor={(item) => String(item.id)}
+        onScroll={handleScroll}
+        ref={listRef}
+        scrollEventThrottle={80}
         ListHeaderComponent={
           <View style={styles.publishRow}>
             <Pressable
@@ -99,6 +110,7 @@ export default function FriendTimelineScreen() {
         onClose={() => setComposerVisible(false)}
         visible={composerVisible}
       />
+      <ScrollToTopButton onPress={scrollToTop} visible={showsScrollToTop} />
     </SafeAreaView>
   );
 }

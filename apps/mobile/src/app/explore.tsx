@@ -42,6 +42,8 @@ import type {
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { SectionAction } from '@/features/shared/section-action';
 import { RecentSearches } from '@/features/search/recent-searches';
@@ -104,6 +106,13 @@ export default function ExploreScreen() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
   const clearSearchFrameRef = useRef<number | null>(null);
+  const {
+    handleScroll: handleOverviewScroll,
+    ref: overviewScrollRef,
+    scrollToTop: scrollOverviewToTop,
+    setVisible: setOverviewScrollVisible,
+    visible: overviewScrollVisible,
+  } = useScrollToTopButton();
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const searchQuery = useBangumiSearch(
@@ -323,6 +332,9 @@ export default function ExploreScreen() {
             contentContainerStyle={styles.content}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
+            onScroll={handleOverviewScroll}
+            ref={overviewScrollRef}
+            scrollEventThrottle={80}
             refreshControl={
               <AppRefreshControl
                 onRefresh={refreshOverview}
@@ -498,6 +510,10 @@ export default function ExploreScreen() {
           </ScrollView>
         )}
       </View>
+      <ScrollToTopButton
+        onPress={scrollOverviewToTop}
+        visible={overviewScrollVisible}
+      />
     </SafeAreaView>
   );
 }
