@@ -14,11 +14,6 @@ function buildSuffix(profile) {
 
 const suffix = buildSuffix(EAS_BUILD_PROFILE);
 
-// 拆架构构建（preview-split-* profile）时，每个 APK 只包含一种 CPU 架构，
-// 大小约 40MB，用户按设备架构下载对应版本。
-// 未设置 EAS_ABI（development / production）时保留全架构。
-const EAS_ABI = process.env.EAS_ABI;
-
 module.exports = {
   expo: {
     name: 'Kaku',
@@ -44,7 +39,6 @@ module.exports = {
       },
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
-      abiFilters: EAS_ABI ? [EAS_ABI] : undefined,
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',

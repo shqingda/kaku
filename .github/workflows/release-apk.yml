@@ -3,6 +3,14 @@ name: Release Android APK
 on:
   workflow_dispatch:
     inputs:
+      channel:
+        description: 'EAS build profile (preview = 独立安装包)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
       tag:
         description: 'Release tag（留空自动生成 android-<run_number>）'
         required: false
@@ -16,13 +24,9 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
 
     steps:
       - name: Check out repository
@@ -40,32 +44,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Pin ABI in app config
-        run: |
-          node -e "
-            const fs = require('fs');
-            const p = 'apps/mobile/app.config.js';
-            let s = fs.readFileSync(p, 'utf8');
-            const before = s.includes('abiFilters: [\"${{ matrix.abi }}\"]');
-            if (!before) {
-              s = s.replace(/abiFilters: EAS_ABI \? \[EAS_ABI\] : undefined/, 'abiFilters: [\"${{ matrix.abi }}\"]');
-              fs.writeFileSync(p, s);
-            }
-          "
-
-      - name: Start EAS build (${{ matrix.abi }})
+      - name: Start EAS build
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           pnpm exec eas build \
-            --profile "preview-split-${{ matrix.abi }}" \
+            --profile "${{ github.event.inputs.channel }}" \
             --platform android \
             --non-interactive \
             --json > /tmp/eas-build.json
           cat /tmp/eas-build.json
 
       - name: Wait for build and collect artifact URL
+        id: build
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -93,41 +85,16 @@ jobs:
           done
           echo "::error::Timed out waiting for EAS build"
           exit 1
-        id: build
 
       - name: Download APK
         run: |
-          curl -sL -o "kaku-${{ matrix.abi }}.apk" "${{ steps.build.outputs.apk-url }}"
-          ls -la "kaku-${{ matrix.abi }}.apk"
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: kaku-${{ matrix.abi }}
-          path: kaku-${{ matrix.abi }}.apk
-          retention-days: 7
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all APKs
-        uses: actions/download-artifact@v4
-        with:
-          path: apks
-          merge-multiple: true
-
-      - name: List downloaded APKs
-        run: ls -la apks
+          curl -sL -o kaku.apk "${{ steps.build.outputs.apk-url }}"
+          ls -la kaku.apk
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}', github.run_number) }}
-          name: Kaku Android (1.0.0+${{ github.run_number }})
-          files: apks/kaku-*.apk
+          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}-{1}', github.event.inputs.channel, github.run_number) }}
+          name: Kaku Android ${{ github.event.inputs.channel }} (1.0.0+${{ github.run_number }})
+          files: kaku.apk
           draft: false

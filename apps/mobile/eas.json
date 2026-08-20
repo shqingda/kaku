@@ -14,34 +14,6 @@
         "buildType": "apk"
       }
     },
-    "preview-split-arm64-v8a": {
-      "distribution": "internal",
-      "env": { "EAS_ABI": "arm64-v8a" },
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview-split-armeabi-v7a": {
-      "distribution": "internal",
-      "env": { "EAS_ABI": "armeabi-v7a" },
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview-split-x86": {
-      "distribution": "internal",
-      "env": { "EAS_ABI": "x86" },
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview-split-x86_64": {
-      "distribution": "internal",
-      "env": { "EAS_ABI": "x86_64" },
-      "android": {
-        "buildType": "apk"
-      }
-    },
     "production": {
       "autoIncrement": true
     }
