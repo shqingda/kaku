@@ -40,6 +40,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Pin ABI in app config
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = 'apps/mobile/app.config.js';
+            let s = fs.readFileSync(p, 'utf8');
+            const before = s.includes('abiFilters: [\"${{ matrix.abi }}\"]');
+            if (!before) {
+              s = s.replace(/abiFilters: EAS_ABI \? \[EAS_ABI\] : undefined/, 'abiFilters: [\"${{ matrix.abi }}\"]');
+              fs.writeFileSync(p, s);
+            }
+          "
+
       - name: Start EAS build (${{ matrix.abi }})
         working-directory: apps/mobile
         env:
