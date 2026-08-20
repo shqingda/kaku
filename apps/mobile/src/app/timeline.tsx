@@ -15,8 +15,6 @@ import type { ThemeColors } from '@/constants/theme';
 import { HIT_SLOP } from '@/constants/design';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
-import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -27,12 +25,6 @@ export default function FriendTimelineScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
   const [composerVisible, setComposerVisible] = useState(false);
-  const {
-    handleScroll,
-    ref: listRef,
-    scrollToTop,
-    visible: showsScrollToTop,
-  } = useScrollToTopButton();
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [timelineQuery.data],
@@ -45,9 +37,6 @@ export default function FriendTimelineScreen() {
         contentContainerStyle={styles.content}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        onScroll={handleScroll}
-        ref={listRef}
-        scrollEventThrottle={80}
         ListEmptyComponent={
           <TimelineState
             colors={colors}
@@ -95,25 +84,26 @@ export default function FriendTimelineScreen() {
         onClose={() => setComposerVisible(false)}
         visible={composerVisible}
       />
-      <Pressable
-        accessibilityLabel="发布动态"
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => setComposerVisible(true)}
-        style={({ pressed }) => [
-          styles.publishFab,
-          pressed && styles.pressed,
-        ]}
-      >
-        <SymbolView
-          name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
-          size={16}
-          tintColor={colors.surface}
-          weight="semibold"
-        />
-        <Text style={styles.publishFabText}>发布</Text>
-      </Pressable>
-      <ScrollToTopButton onPress={scrollToTop} visible={showsScrollToTop} />
+      <View style={styles.publishFabLayer} pointerEvents="box-none">
+        <Pressable
+          accessibilityLabel="发布动态"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => setComposerVisible(true)}
+          style={({ pressed }) => [
+            styles.publishFab,
+            pressed && styles.pressed,
+          ]}
+        >
+          <SymbolView
+            name={{ android: 'edit', ios: 'square.and.pencil', web: 'edit' }}
+            size={16}
+            tintColor={colors.surface}
+            weight="semibold"
+          />
+          <Text style={styles.publishFabText}>发布动态</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -170,25 +160,29 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 8,
   },
+  publishFabLayer: {
+    alignItems: 'center',
+    bottom: 28,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: 15,
+  },
   publishFab: {
     alignItems: 'center',
     backgroundColor: colors.ink,
     borderCurve: 'continuous',
     borderRadius: 999,
-    bottom: 84,
     elevation: Platform.OS === 'android' ? 8 : 0,
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
     minHeight: 44,
-    paddingHorizontal: 16,
-    position: 'absolute',
-    right: 20,
+    paddingHorizontal: 18,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
-    zIndex: 15,
   },
   publishFabText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
   state: {
