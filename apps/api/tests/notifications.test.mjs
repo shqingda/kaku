@@ -131,6 +131,42 @@ test('notification actions cover the full Bangumi type range', async () => {
   assert.equal(actions[11], '向你发送了一条通知');
 });
 
+test('character, person and blog notifications map to their targets', async () => {
+  const cases = [
+    { type: 5, expected: { id: 881, kind: 'character', replyId: 12 } },
+    { type: 6, expected: { id: 882, kind: 'character', replyId: 13 } },
+    { type: 25, expected: { id: 883, kind: 'character', replyId: undefined } },
+    { type: 13, expected: { id: 113, kind: 'person', replyId: 14 } },
+    { type: 26, expected: { id: 114, kind: 'person', replyId: undefined } },
+    { type: 7, expected: { id: 771, kind: 'blog', replyId: 15 } },
+    { type: 8, expected: { id: 772, kind: 'blog', replyId: 16 } },
+    { type: 29, expected: { id: 773, kind: 'blog', replyId: undefined } },
+  ];
+
+  const fetcher = async () =>
+    Response.json({
+      data: cases.map(({ expected, type }, index) => ({
+        createdAt: 1_785_940_000,
+        id: 200 + index,
+        mainID: expected.id,
+        relatedID: expected.replyId ?? 0,
+        sender: { avatar: {}, nickname: 's', username: 'sender' },
+        title: '',
+        type,
+        unread: false,
+      })),
+      total: cases.length,
+    });
+
+  const result = await getBangumiNotifications({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  const targets = result.items.map((item) => item.target);
+  assert.deepEqual(targets, cases.map(({ expected }) => expected));
+});
+
 test('marking notifications read forwards selected ids without exposing OAuth', async () => {
   const fetcher = async (input, init) => {
     assert.equal(String(input), 'https://next.bgm.tv/p1/clear-notify');

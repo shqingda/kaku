@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -37,11 +37,13 @@ export default function SubjectReviewScreen() {
 export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { id, reviewId } = useLocalSearchParams<{
+  const { id, reviewId, replyId } = useLocalSearchParams<{
     id?: string;
     reviewId?: string;
+    replyId?: string;
   }>();
   const numericReviewId = parsePositiveIntegerRouteParam(reviewId ?? id);
+  const numericReplyId = parsePositiveIntegerRouteParam(replyId);
   const { isSigningIn, session, signIn } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
@@ -51,7 +53,21 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const appliedReplyRef = useRef(false);
   const contentLabel = kind === 'blog' ? '日志' : '评论';
+
+  useEffect(() => {
+    if (appliedReplyRef.current) {
+      return;
+    }
+
+    if (!numericReplyId || replies.length === 0) {
+      return;
+    }
+
+    appliedReplyRef.current = true;
+    replyNavigation.openReply(String(numericReplyId));
+  }, [numericReplyId, replies.length, replyNavigation]);
 
   async function openComposer(reply?: DiscussionReply) {
     if (!session) {
