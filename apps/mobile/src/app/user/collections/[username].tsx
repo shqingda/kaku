@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -23,6 +23,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useSavePersonalCollection } from '@/features/collections/use-personal-collection';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
@@ -64,8 +65,7 @@ export default function PublicUserCollectionsScreen() {
     username: string;
   }>();
   const { session } = useAuth();
-  const listRef = useRef<FlatList<PublicUserCollection>>(null);
-  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
+  const listRef = useScrollToTopButton();
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
@@ -111,7 +111,7 @@ export default function PublicUserCollectionsScreen() {
         }}
       />
       <FlatList
-        ref={listRef}
+        ref={listRef.ref}
         contentContainerStyle={styles.content}
         data={collections}
         initialNumToRender={12}
@@ -169,7 +169,7 @@ export default function PublicUserCollectionsScreen() {
             <CollectionStatusTabs
               onChange={(nextStatus) => {
                 setCollectionStatus(nextStatus);
-                listRef.current?.scrollToOffset({ animated: false, offset: 0 });
+                listRef.ref.current?.scrollToOffset({ animated: false, offset: 0 });
               }}
               selectedStatus={collectionStatus}
               subjectType={subjectType}
@@ -191,12 +191,7 @@ export default function PublicUserCollectionsScreen() {
         }}
         onEndReachedThreshold={0.45}
         onRefresh={() => void collectionsQuery.refetch()}
-        onScroll={(event) => {
-          const shouldShow = event.nativeEvent.contentOffset.y > 720;
-          setShowsScrollToTop((current) =>
-            current === shouldShow ? current : shouldShow,
-          );
-        }}
+        onScroll={listRef.handleScroll}
         refreshing={
           collectionsQuery.isRefetching && !collectionsQuery.isPending
         }
@@ -230,8 +225,8 @@ export default function PublicUserCollectionsScreen() {
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={() => listRef.current?.scrollToOffset({ animated: true, offset: 0 })}
-        visible={showsScrollToTop}
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

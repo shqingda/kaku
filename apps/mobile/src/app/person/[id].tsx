@@ -6,7 +6,10 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function PersonScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, replyId } = useLocalSearchParams<{
+    id: string;
+    replyId?: string;
+  }>();
   const personId = parsePositiveIntegerRouteParam(id);
   const personQuery = usePerson(personId ?? 0);
 
@@ -17,6 +20,7 @@ export default function PersonScreen() {
   return (
     <EntityDetailScreen
       data={personQuery.data}
+      initialReplyId={replyId}
       isError={personQuery.isError}
       isPending={personQuery.isPending}
       isRefreshing={personQuery.isRefetching && !personQuery.isPending}

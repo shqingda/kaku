@@ -14,6 +14,21 @@ const targetSchema = z.discriminatedUnion('kind', [
     kind: z.literal('subject-topic'),
     replyId: z.number().int().positive().optional(),
   }),
+  z.object({
+    id: z.number().int().positive(),
+    kind: z.literal('character'),
+    replyId: z.number().int().positive().optional(),
+  }),
+  z.object({
+    id: z.number().int().positive(),
+    kind: z.literal('person'),
+    replyId: z.number().int().positive().optional(),
+  }),
+  z.object({
+    id: z.number().int().positive(),
+    kind: z.literal('blog'),
+    replyId: z.number().int().positive().optional(),
+  }),
   z.object({ kind: z.literal('user'), username: z.string() }),
 ]);
 

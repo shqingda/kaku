@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -14,6 +14,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import type {
   PublicUserEntityCollection,
@@ -32,8 +33,7 @@ export default function PublicUserEntitiesScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const [kind, setKind] = useState<PublicUserEntityKind>('character');
-  const listRef = useRef<FlatList<PublicUserEntityCollection>>(null);
-  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
+  const listRef = useScrollToTopButton();
   const entitiesQuery = usePublicUserEntities(username, kind);
   const entities = entitiesQuery.data?.items ?? [];
 
@@ -41,7 +41,7 @@ export default function PublicUserEntitiesScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '角色与人物' }} />
       <FlatList
-        ref={listRef}
+        ref={listRef.ref}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
         data={entities}
@@ -103,12 +103,7 @@ export default function PublicUserEntitiesScreen() {
           </View>
         }
         numColumns={2}
-        onScroll={(event) => {
-          const shouldShow = event.nativeEvent.contentOffset.y > 720;
-          setShowsScrollToTop((current) =>
-            current === shouldShow ? current : shouldShow,
-          );
-        }}
+        onScroll={listRef.handleScroll}
         refreshControl={
           <AppRefreshControl
             onRefresh={() => void entitiesQuery.refetch()}
@@ -134,8 +129,8 @@ export default function PublicUserEntitiesScreen() {
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={() => listRef.current?.scrollToOffset({ animated: true, offset: 0 })}
-        visible={showsScrollToTop}
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );
