@@ -32,6 +32,8 @@ import { useDeleteEpisodeReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -76,6 +78,7 @@ export default function EpisodeScreen() {
   const deleteReply = useDeleteEpisodeReply(catalogEpisode?.id ?? 0);
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
 
   async function openComposer(reply?: DiscussionReply) {
     if (!session) {
@@ -275,6 +278,8 @@ export default function EpisodeScreen() {
             !commentsQuery.isPending
           }
           removeClippedSubviews={Platform.OS === 'android'}
+          onScroll={scrollToTop.handleScroll}
+          scrollEventThrottle={80}
           ListEmptyComponent={
             commentsQuery.isPending ||
             (commentsQuery.isError && !commentsQuery.data) ? null : (
@@ -438,6 +443,11 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
+      <ScrollToTopButton
+        bottom={104}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
+      />
     </SafeAreaView>
   );
 }

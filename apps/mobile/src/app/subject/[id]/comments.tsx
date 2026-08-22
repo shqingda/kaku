@@ -9,6 +9,8 @@ import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -24,6 +26,7 @@ export default function SubjectCommentsScreen() {
     [commentsQuery.data],
   );
   const total = commentsQuery.data?.pages[0]?.total ?? 0;
+  const scrollToTop = useScrollToTopButton();
 
   if (!subjectId) {
     return <InvalidRouteState message="这个吐槽箱链接缺少有效条目编号。" />;
@@ -33,6 +36,7 @@ export default function SubjectCommentsScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '吐槽箱' }} />
       <FlatList
+        ref={scrollToTop.ref}
         contentContainerStyle={styles.content}
         data={comments}
         keyExtractor={(comment) => comment.id}
@@ -88,6 +92,7 @@ export default function SubjectCommentsScreen() {
         }}
         onEndReachedThreshold={0.45}
         onRefresh={() => void commentsQuery.refetch()}
+        onScroll={scrollToTop.handleScroll}
         refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
         renderItem={({ index, item }) => (
           <View style={[styles.card, index === 0 && styles.firstCard]}>
@@ -118,6 +123,11 @@ export default function SubjectCommentsScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={80}
+      />
+      <ScrollToTopButton
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

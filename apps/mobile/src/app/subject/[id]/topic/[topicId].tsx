@@ -29,6 +29,8 @@ import { ReportButton } from '@/features/reports/report-button';
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -55,6 +57,7 @@ export default function TopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
   useEffect(() => {
@@ -204,6 +207,8 @@ export default function TopicScreen() {
           ref={replyNavigation.listRef}
           refreshing={topicQuery.isRefetching && !topicQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
+          onScroll={scrollToTop.handleScroll}
+          scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
               floor={index + 1}
@@ -291,6 +296,11 @@ export default function TopicScreen() {
             : { id: 0, label: '', type: REPORT_TYPES.subjectReply }
         }
         visible={reportTarget !== null}
+      />
+      <ScrollToTopButton
+        bottom={104}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

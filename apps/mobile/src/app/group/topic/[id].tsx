@@ -31,6 +31,8 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -49,6 +51,7 @@ export default function GroupTopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
   useEffect(() => {
@@ -200,6 +203,8 @@ export default function GroupTopicScreen() {
           }
           ref={replyNavigation.listRef}
           removeClippedSubviews={Platform.OS === 'android'}
+          onScroll={scrollToTop.handleScroll}
+          scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
               floor={index + 1}
@@ -266,6 +271,11 @@ export default function GroupTopicScreen() {
         replyingTo={replyingTo}
         target={{ id: numericTopicId, kind: 'group-topic' }}
         visible={composerVisible}
+      />
+      <ScrollToTopButton
+        bottom={104}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

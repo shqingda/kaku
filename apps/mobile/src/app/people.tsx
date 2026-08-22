@@ -313,6 +313,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
             {item.imageUrl ? (
               <Image
                 contentFit="cover"
+                contentPosition="top"
                 recyclingKey={item.imageUrl}
                 source={item.imageUrl}
                 style={StyleSheet.absoluteFill}
@@ -342,7 +343,12 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
                 <Text style={styles.commentText}>{item.commentCount}</Text>
               </View>
             ) : null}
-            <Text style={styles.chevron}>›</Text>
+            <SymbolView
+              name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
+              size={15}
+              tintColor={colors.subtle}
+              weight="semibold"
+            />
           </View>
         </Pressable>
       </Link>
@@ -403,9 +409,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
   categories: { color: colors.accentRich, fontSize: 12, fontWeight: '700', marginTop: 7 },
   rowMeta: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  trailing: { alignItems: 'flex-end', alignSelf: 'stretch', justifyContent: 'space-between', marginLeft: 8, paddingVertical: 5 },
+  trailing: { alignItems: 'flex-end', gap: 8, marginLeft: 8 },
   commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   commentText: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
-  chevron: { color: colors.subtle, fontSize: 26, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });

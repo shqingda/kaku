@@ -24,6 +24,8 @@ import { useDeleteReviewReply } from '@/features/discussions/use-delete-reply';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -53,6 +55,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
   const contentLabel = kind === 'blog' ? '日志' : '评论';
 
@@ -184,6 +187,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           ref={replyNavigation.listRef}
           refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
+          onScroll={scrollToTop.handleScroll}
+          scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
               floor={index + 1}
@@ -250,6 +255,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         replyingTo={replyingTo}
         target={{ id: numericReviewId, kind: 'review' }}
         visible={composerVisible}
+      />
+      <ScrollToTopButton
+        bottom={104}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

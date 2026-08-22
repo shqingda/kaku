@@ -11,9 +11,11 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 export function ScrollToTopButton({
+  bottom = 24,
   onPress,
   visible,
 }: {
+  bottom?: number;
   onPress: () => void;
   visible: boolean;
 }) {
@@ -35,6 +37,7 @@ export function ScrollToTopButton({
       style={[
         styles.container,
         {
+          bottom,
           opacity: progress,
           transform: [
             {
@@ -72,7 +75,6 @@ export function ScrollToTopButton({
 
 const styles = StyleSheet.create({
   container: {
-    bottom: 24,
     position: 'absolute',
     right: 20,
     zIndex: 20,
