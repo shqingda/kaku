@@ -15,7 +15,9 @@ This repository is both a product and a learning project.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.
 - Let Codex handle staging, commits, and pushes. Before every commit, inspect the
   complete diff, exclude generated or sensitive files, run the relevant checks,
-  and summarize the resulting commit and remote branch.
+  and summarize the resulting commit and remote branch. The user has opted in to
+  automatic commits by default: after completing a change, commit it without
+  waiting for confirmation (push still requires an explicit request).
 - Worklets: gesture and animation callbacks run on the UI runtime and may only call
   module-level functions marked `'worklet'`, or inline code. Component-scope helper
   functions are NOT reliably workletized under React Compiler — never call them from
