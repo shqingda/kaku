@@ -289,6 +289,12 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // <Link asChild> 的 Slot 不接受数组 style，必须 flatten 成单一对象，
+  // 否则 flexDirection 会丢失导致整个行变成竖排。
+  const rowStyle = StyleSheet.flatten([
+    styles.row,
+    hasDivider && styles.rowDivider,
+  ]);
   const pathname = item.kind === 'character' ? '/character/[id]' : '/person/[id]';
   return (
     <View style={[
@@ -299,14 +305,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
       <Link asChild href={{ pathname, params: { id: String(item.id) } }}>
         <Pressable
           accessibilityRole="button"
-          android_ripple={{ color: colors.track }}
-          style={({ pressed }) => [
-            StyleSheet.flatten([
-              styles.row,
-              hasDivider && styles.rowDivider,
-            ]),
-            pressed && styles.rowPressed,
-          ]}
+          style={rowStyle}
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarFallback}>{item.name.slice(0, 1)}</Text>
@@ -322,7 +321,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
             ) : null}
           </View>
           <View style={styles.rowMain}>
-            <Text numberOfLines={2} style={styles.rowTitle}>{item.name}</Text>
+            <Text numberOfLines={1} style={styles.rowTitle}>{item.name}</Text>
             {item.categories.length > 0 ? (
               <Text numberOfLines={1} style={styles.categories}>
                 {item.categories.join(' · ')}
@@ -331,8 +330,6 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
             <Text numberOfLines={2} style={styles.rowMeta}>
               {item.metadata || (item.kind === 'character' ? '虚构角色' : '现实人物')}
             </Text>
-          </View>
-          <View style={styles.trailing}>
             {item.commentCount > 0 ? (
               <View style={styles.commentCount}>
                 <SymbolView
@@ -340,16 +337,17 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
                   size={11}
                   tintColor={colors.subtle}
                 />
-                <Text style={styles.commentText}>{item.commentCount}</Text>
+                <Text style={styles.commentText}>{item.commentCount} 条评论</Text>
               </View>
             ) : null}
-            <SymbolView
-              name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
-              size={15}
-              tintColor={colors.subtle}
-              weight="semibold"
-            />
           </View>
+          <SymbolView
+            name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
+            size={14}
+            tintColor={colors.subtle}
+            weight="semibold"
+            style={styles.chevron}
+          />
         </Pressable>
       </Link>
     </View>
@@ -392,25 +390,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  row: { alignItems: 'center', flexDirection: 'row', minHeight: 122, paddingVertical: 16 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 98, paddingVertical: 12 },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
-  rowPressed: { opacity: 0.6 },
   avatar: {
     alignItems: 'center',
     backgroundColor: colors.accentSoft,
-    borderRadius: 18,
-    height: 86,
+    borderRadius: 12,
+    flexShrink: 0,
+    height: 74,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: 70,
+    width: 58,
   },
-  avatarFallback: { color: colors.accent, fontSize: 20, fontWeight: '800' },
-  rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
-  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  categories: { color: colors.accentRich, fontSize: 12, fontWeight: '700', marginTop: 7 },
-  rowMeta: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  trailing: { alignItems: 'flex-end', gap: 8, marginLeft: 8 },
-  commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  commentText: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
+  avatarFallback: { color: colors.accent, fontSize: 18, fontWeight: '800' },
+  rowMain: { flex: 1, marginLeft: 13, minWidth: 0 },
+  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
+  categories: { color: colors.accentRich, fontSize: 12, fontWeight: '700', marginTop: 4 },
+  rowMeta: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 4 },
+  commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4, marginTop: 6 },
+  commentText: { color: colors.subtle, fontSize: 11, fontWeight: '600' },
+  chevron: { marginLeft: 8 },
   pressed: { opacity: 0.62 },
 });
