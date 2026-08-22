@@ -114,38 +114,6 @@ function notificationTarget(
     };
   }
 
-  if (
-    notification.type === 5 ||
-    notification.type === 6 ||
-    notification.type === 25
-  ) {
-    return {
-      id: notification.mainID,
-      kind: 'character',
-      replyId: notification.relatedID || undefined,
-    };
-  }
-
-  if (notification.type === 13 || notification.type === 26) {
-    return {
-      id: notification.mainID,
-      kind: 'person',
-      replyId: notification.relatedID || undefined,
-    };
-  }
-
-  if (
-    notification.type === 7 ||
-    notification.type === 8 ||
-    notification.type === 29
-  ) {
-    return {
-      id: notification.mainID,
-      kind: 'blog',
-      replyId: notification.relatedID || undefined,
-    };
-  }
-
   if (notification.type === 14 || notification.type === 15) {
     return { kind: 'user', username: notification.sender.username };
   }

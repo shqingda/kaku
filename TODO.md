@@ -26,11 +26,11 @@
 
 ## 发布工程
 
-- [x] 真机冒烟：运行 `.maestro/public-browse-smoke.yaml`（启动、搜索、打开条目、返回），作为不写远端数据的首条真机冒烟测试。Maestro MCP 已配置。真机（iPhone 17 Pro）跑通；修复：iOS 真机冷启动后 `inputText` 不可靠，改为 `setClipboard` + `pasteText`。
+- [ ] 真机冒烟：运行 `.maestro/public-browse-smoke.yaml`（启动、搜索、打开条目、返回），作为不写远端数据的首条真机冒烟测试。Maestro MCP 已配置。
 - [ ] 配置 Apple / Google 商店凭据并发布商店：iOS 需 App Store Connect API key（或 Apple ID 交互登录），Android 需 Google Play 服务账号 JSON；凭据就绪后分别执行生产构建与 `eas submit`。
 - [ ] 商店素材：应用截图（真机/模拟器截 6 张：首页、条目详情、章节列表、收藏盒、搜索、深色模式）、商店描述文案（中英文已草拟于对话记录）、隐私政策 URL 已就绪（官网 `/privacy`）。
-- [x] 通知点击跳转补全：角色（类型 5/6/25）、人物（13/26）、日志（7/8/29）通知映射为 `character`/`person`/`blog` target 并深链到对应楼层（实体页弹评论层、日志页滚动定位）；API 映射、移动端 schema 与导航均已实现并有测试，待 API worker 重新部署后真机验证。
-- [x] 列表性能：browse/rankings 的 `renderItem` 改 `useCallback`、行组件 `memo`（`BrowseCard`、新增 `RankingRow`）；browse/rankings/entities/collections 统一迁移到共享 hook `useScrollToTopButton`，`onScroll` 用 ref 守卫节流（值不变时跳过 setState）。真机已滚动验证。
+- [ ] 通知点击跳转补全：角色/人物/日志类通知目前点了不跳转。
+- [ ] 列表性能：长列表 `renderItem` 改 `useCallback` + 行组件 `memo`（browse/rankings 受益最大），`onScroll` 的 setState 节流。
 
 ## 其它说明
 

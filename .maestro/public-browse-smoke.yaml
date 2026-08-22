@@ -6,8 +6,7 @@ tags:
 - launchApp
 - assertVisible: Kaku
 - tapOn: 搜索条目
-- setClipboard: 葬送的芙莉莲
-- pasteText
+- inputText: 葬送的芙莉莲
 - pressKey: Enter
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"

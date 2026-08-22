@@ -37,33 +37,6 @@ function openTarget(target: NotificationTarget | undefined) {
     return;
   }
 
-  if (target.kind === 'character' || target.kind === 'person') {
-    router.push({
-      pathname:
-        target.kind === 'character' ? '/character/[id]' : '/person/[id]',
-      params: {
-        id: String(target.id),
-        ...(target.replyId
-          ? { replyId: String(target.replyId) }
-          : {}),
-      },
-    });
-    return;
-  }
-
-  if (target.kind === 'blog') {
-    router.push({
-      pathname: '/blog/[id]',
-      params: {
-        id: String(target.id),
-        ...(target.replyId
-          ? { replyId: String(target.replyId) }
-          : {}),
-      },
-    });
-    return;
-  }
-
   router.push({
     pathname: '/user/[username]',
     params: { username: target.username },

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -27,7 +27,6 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 
 const SORTS: Array<{ id: BrowseSort; label: string }> = [
   { id: 'rank', label: '排名' },
@@ -69,15 +68,12 @@ export default function BrowseScreen() {
     setTag(nextTag || undefined);
     setSort('rank');
   }, [initialTag, type]);
-  const listRef = useScrollToTopButton();
+  const listRef = useRef<FlatList<DiscoverSubject>>(null);
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const browseQuery = useBrowseSubjects({ sort, subjectType, tag, year });
   const items = useMemo(
     () => browseQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [browseQuery.data],
-  );
-  const renderItem = useCallback(
-    ({ item }: { item: DiscoverSubject }) => <BrowseCard item={item} />,
-    [],
   );
 
   function applyFilters() {
@@ -91,7 +87,7 @@ export default function BrowseScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '分类浏览' }} />
       <FlatList
-        ref={listRef.ref}
+        ref={listRef}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.content}
         data={items}
@@ -201,7 +197,12 @@ export default function BrowseScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onScroll={listRef.handleScroll}
+        onScroll={(event) => {
+          const nextVisible = event.nativeEvent.contentOffset.y > 720;
+          setShowsScrollToTop((current) =>
+            current === nextVisible ? current : nextVisible,
+          );
+        }}
         scrollEventThrottle={80}
         refreshControl={
           <AppRefreshControl
@@ -209,18 +210,20 @@ export default function BrowseScreen() {
             refreshing={browseQuery.isRefetching && !browseQuery.isPending}
           />
         }
-        renderItem={renderItem}
+        renderItem={({ item }) => <BrowseCard item={item} />}
         showsVerticalScrollIndicator={false}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={() =>
+          listRef.current?.scrollToOffset({ animated: true, offset: 0 })
+        }
+        visible={showsScrollToTop}
       />
     </SafeAreaView>
   );
 }
 
-const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject }) {
+function BrowseCard({ item }: { item: DiscoverSubject }) {
   const { styles } = useThemedStyles();
 
   return (
@@ -241,7 +244,7 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
       <Text style={styles.cardMeta}>{item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}</Text>
     </Pressable>
   );
-});
+}
 
 function BrowseState({ error, loading, onRetry }: { error: boolean; loading: boolean; onRetry: () => void }) {
   const { styles } = useThemedStyles();

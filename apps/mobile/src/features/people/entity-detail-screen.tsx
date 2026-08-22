@@ -1,7 +1,7 @@
 import { userErrorMessage } from '@/lib/user-error-message';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -49,7 +49,6 @@ import { useEntityComments } from './use-public-entity';
 
 export function EntityDetailScreen({
   data,
-  initialReplyId,
   isError,
   isPending,
   isRefreshing,
@@ -57,7 +56,6 @@ export function EntityDetailScreen({
   onRetry,
 }: {
   data?: PublicEntityDetail;
-  initialReplyId?: string;
   isError: boolean;
   isPending: boolean;
   isRefreshing: boolean;
@@ -97,14 +95,6 @@ export function EntityDetailScreen({
   } = useReplyNavigation(comments);
   // 打开评论弹层后要定位到的回复：等弹层入场动画结束再滚动，避免硬编码等待时间。
   const pendingReplyIdRef = useRef<string | undefined>(undefined);
-  // 通知深链：等实体数据就绪（entityId 有效）再打开评论弹层。
-  useEffect(() => {
-    if (!initialReplyId || !data) {
-      return;
-    }
-    pendingReplyIdRef.current = initialReplyId;
-    setCommentsVisible(true);
-  }, [data, initialReplyId]);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);

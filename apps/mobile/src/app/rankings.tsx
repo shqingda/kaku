@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -20,10 +20,9 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
-import type { DiscoverSubject, DiscoverSubjectPage } from '@/features/discover/model';
+import type { DiscoverSubjectPage } from '@/features/discover/model';
 import { readInfinitePages } from '@/lib/query-data';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -44,7 +43,8 @@ export default function RankingsScreen() {
   }, [type]);
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
-  const listRef = useScrollToTopButton();
+  const listRef = useRef<FlatList>(null);
+  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const pages = useMemo(
     () => readInfinitePages<DiscoverSubjectPage>(rankingQuery.data),
     [rankingQuery.data],
@@ -57,22 +57,6 @@ export default function RankingsScreen() {
     [pages],
   );
   const total = pages[0]?.total;
-  const openSubject = useCallback((id: number) => {
-    router.push({ pathname: '/subject/[id]', params: { id: String(id) } });
-  }, []);
-  const renderItem = useCallback(
-    ({ index, item }: { index: number; item: DiscoverSubject }) => (
-      <RankingRow
-        isFirst={index === 0}
-        isLast={index === subjects.length - 1}
-        item={item}
-        onPressItem={openSubject}
-        position={index + 1}
-        styles={styles}
-      />
-    ),
-    [openSubject, styles, subjects.length],
-  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -84,7 +68,7 @@ export default function RankingsScreen() {
         }}
       />
       <FlatList
-        ref={listRef.ref}
+        ref={listRef}
         contentContainerStyle={styles.content}
         data={subjects}
         initialNumToRender={Platform.OS === 'android' ? 6 : 12}
@@ -149,7 +133,12 @@ export default function RankingsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
-        onScroll={listRef.handleScroll}
+        onScroll={(event) => {
+          const nextVisible = event.nativeEvent.contentOffset.y > 720;
+          setShowsScrollToTop((current) =>
+            current === nextVisible ? current : nextVisible,
+          );
+        }}
         scrollEventThrottle={80}
         removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={
@@ -158,51 +147,40 @@ export default function RankingsScreen() {
             refreshing={rankingQuery.isRefetching && !rankingQuery.isPending}
           />
         }
-        renderItem={renderItem}
+        renderItem={({ index, item }) => (
+          <View
+            style={[
+              styles.item,
+              index === 0 && styles.firstItem,
+              index === subjects.length - 1 && styles.lastItem,
+            ]}
+          >
+            <RankedSubjectRow
+              hasDivider={index > 0}
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: '/subject/[id]',
+                  params: { id: String(item.id) },
+                })
+              }
+              position={index + 1}
+            />
+          </View>
+        )}
         showsVerticalScrollIndicator={false}
         updateCellsBatchingPeriod={Platform.OS === 'android' ? 60 : 40}
         windowSize={Platform.OS === 'android' ? 5 : 7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={() =>
+          listRef.current?.scrollToOffset({ animated: true, offset: 0 })
+        }
+        visible={showsScrollToTop}
       />
     </SafeAreaView>
   );
 }
-
-const RankingRow = memo(function RankingRow({
-  isFirst,
-  isLast,
-  item,
-  onPressItem,
-  position,
-  styles,
-}: {
-  isFirst: boolean;
-  isLast: boolean;
-  item: DiscoverSubject;
-  onPressItem: (id: number) => void;
-  position: number;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  return (
-    <View
-      style={[
-        styles.item,
-        isFirst && styles.firstItem,
-        isLast && styles.lastItem,
-      ]}
-    >
-      <RankedSubjectRow
-        hasDivider={position > 1}
-        item={item}
-        onPress={() => onPressItem(item.id)}
-        position={position}
-      />
-    </View>
-  );
-});
 
 function RankingState({
   action,

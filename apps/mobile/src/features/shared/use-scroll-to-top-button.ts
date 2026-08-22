@@ -9,17 +9,11 @@ export function useScrollToTopButton() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ref = useRef<any>(null);
   const [visible, setVisible] = useState(false);
-  // 值未变化时直接跳过 setState，滚动事件不再触发多余渲染调度。
-  const visibleRef = useRef(false);
 
   const handleScroll = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
       const nextVisible = event.nativeEvent.contentOffset.y > SHOW_THRESHOLD;
-      if (visibleRef.current === nextVisible) {
-        return;
-      }
-      visibleRef.current = nextVisible;
-      setVisible(nextVisible);
+      setVisible((current) => (current === nextVisible ? current : nextVisible));
     },
     [],
   );
