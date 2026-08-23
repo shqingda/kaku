@@ -16,14 +16,14 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.33",
+    "hono": "^4.13.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260801.1",
+    "@cloudflare/workers-types": "^5.20260822.1",
     "drizzle-kit": "^0.31.10",
     "miniflare": "5.20260730.0-alpha",
     "typescript": "~7.0.2",
-    "wrangler": "^4.118.0"
+    "wrangler": "^4.125.0"
   }
 }
