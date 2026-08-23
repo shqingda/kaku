@@ -10,10 +10,11 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MOBILE_DIR="$REPO_DIR/apps/mobile"
 OUT_DIR="$MOBILE_DIR/dist-split"
 ABIS=(arm64-v8a armeabi-v7a x86 x86_64)
-VERSION="$(node -e "process.stdout.write(require('./app.config.js').expo.version)")"
-TAG="${1:-v${VERSION}}"
 
 cd "$MOBILE_DIR"
+
+VERSION="$(node -e "process.stdout.write(require('./app.config.js').expo.version)")"
+TAG="${1:-v${VERSION}}"
 
 echo "==> 导出 EXPO_PUBLIC_* 环境变量（让 JS bundle 内联 DSN 等）"
 set -a
