@@ -15,6 +15,13 @@
       "when": 1785858394369,
       "tag": "0001_fair_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787501772616,
+      "tag": "0002_user_preferences",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 最后更新：2026-08-20。
+> 最后更新：2026-08-24。
 
 ## 暂时隐藏
 
@@ -10,6 +10,44 @@
 
 - [ ] 加入/退出小组：Bangumi P1 公开接口没有小组成员写操作（官网靠服务端表单），前端生成的 P1 客户端（bangumi/frontend `packages/client`）中亦无对应端点。待上游开放后实现，不要臆测端点。好友添加/移除（`PUT/DELETE /p1/friends/{username}`）已按官方端点实现。
 - [ ] 删除自己的动态：`DELETE /p1/timeline/{id}` 端点虽在 P1 spec 中，但官方 iOS 客户端（Bangumi-iOS）与官网均未实现删除 UI，实测返回 5xx。已移除 Kaku 的删除入口，API 路由与测试保留待上游恢复。
+
+
+## Kaku 自有增值功能（非桌面端）
+
+- [x] 本地笔记：条目详情页可保存仅本机可见的笔记/吐槽/补番计划，不依赖 Bangumi，不影响收藏同步（本次已实现）。
+- [ ] 用户偏好云同步：D1 `user_preferences` 与 `GET/PUT /me/preferences` 已落地，待移动端接入设置页后完成端到端。
+- [ ] 本地/云端统计与年度报告：基于用户收藏和进度数据生成。
+- [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
+- [ ] 推送通知：需要 APNs / FCM、用户授权，以及 Queue + Cron 轮询。
+- [ ] 离线增强：当前已有公开查询缓存，可继续做条目详情/章节离线包。
+- [ ] 多设备偏好/搜索历史/最近浏览同步：D1 已可承载，待移动端接入。
+- [ ] 小组件 / 快捷指令：iOS Widget、Android App Widget。
+- [ ] 多数据源/跨站数据增强：需要先完善领域模型抽象，暂缓。
+
+## 工程化增强
+
+- [x] D1 用户偏好数据表与迁移：`user_preferences`，含 `locale` / `theme`。
+- [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
+- [x] D1 定时清理：`scheduled` 清理过期 OAuth transaction、handoff、session，Cron 每天 03:00。
+- [x] 测试补充：本地笔记 model、preferences routes、maintenance cleanup。
+- [ ] API 鉴权/错误处理收拢：抽公共 middleware / helper，减少各 domain 重复样板。
+- [ ] HTML 抓取监控：为 5 个 HTML 抓取模块增加结构化告警 / 解析失败指标。
+- [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
+- [ ] KV 远程配置：公共缓存、功能开关、上游 URL 或抓取配置。
+- [ ] 服务端限流：先做轻量级限流，再评估 Durable Objects。
+- [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
+- [ ] CI 增加覆盖率门槛或专门的抓取回归 job。
+
+## Cloudflare 免费版扩展计划（不产生费用）
+
+- [x] D1：新增 `user_preferences` 表，免费版可用。
+- [x] Cron Triggers：每天清理过期认证数据，免费版可用。
+- [ ] KV：公共列表 / 远程配置缓存，免费版有读写额度，注意控制 TTL 与写入频率。
+- [ ] R2：导出文件、报告、抓取快照，免费版有容量，仅按需使用。
+- [ ] Queues：批量刷新、推送通知、导出任务，免费版有配额，需评估用量。
+- [ ] Cache API 已用：继续作为边缘热缓存，优先于 KV 写。
+- [ ] Durable Objects：暂缓，免费版限制/复杂度较高，不是当前瓶颈。
+- [ ] Browser Rendering：暂缓，可能超出免费版合理用量且不一定必要。
 
 ## 已完成
 

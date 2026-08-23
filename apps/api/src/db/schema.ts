@@ -48,3 +48,12 @@ export const sessions = sqliteTable('sessions', {
     .notNull()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
+
+export const userPreferences = sqliteTable('user_preferences', {
+  locale: text('locale').notNull().default('system'),
+  theme: text('theme').notNull().default('system'),
+  updatedAt: integer('updated_at').notNull(),
+  userId: integer('user_id')
+    .primaryKey()
+    .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
+});

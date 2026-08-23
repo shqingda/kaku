@@ -15,6 +15,10 @@ import { registerIndexRoutes } from './indexes/routes.ts';
 import { registerNotificationRoutes } from './notifications/routes.ts';
 import { registerPeopleBrowserRoutes } from './people-browser/routes.ts';
 import {
+  type PreferencesDependencies,
+  registerPreferenceRoutes,
+} from './preferences/routes.ts';
+import {
   type RankingDependencies,
   registerRankingRoutes,
 } from './rankings/routes.ts';
@@ -23,7 +27,7 @@ import { registerTimelineRoutes } from './timeline/routes.ts';
 import { registerTagRoutes } from './tags/routes.ts';
 import { registerWikiRoutes } from './wiki/routes.ts';
 
-type AppDependencies = AuthDependencies & RankingDependencies;
+type AppDependencies = AuthDependencies & PreferencesDependencies & RankingDependencies;
 
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
@@ -45,6 +49,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerIndexRoutes(app, dependencies);
   registerNotificationRoutes(app, dependencies);
   registerPeopleBrowserRoutes(app, dependencies);
+  registerPreferenceRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
   registerReportRoutes(app, dependencies);
   registerTagRoutes(app, dependencies);

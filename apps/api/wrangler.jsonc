@@ -7,6 +7,9 @@
   "vars": {
     "BANGUMI_REDIRECT_URI": "https://kaku-api.shqingda.workers.dev/auth/bangumi/callback"
   },
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",

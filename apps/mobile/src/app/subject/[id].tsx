@@ -38,6 +38,7 @@ import { CommentPreviewSection } from '@/features/subject-detail/comment-preview
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
 import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
+import { SubjectNotePanel } from '@/features/notes/subject-note-panel';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -347,6 +348,8 @@ export default function SubjectScreen() {
           year={year}
           showsEpisodes={tracksWatchProgress && totalEpisodes > 0}
         />
+
+        <SubjectNotePanel subjectId={subjectId} title={title} />
 
           <View style={styles.detailEntries}>
             {detailLabels.characters ? (
