@@ -332,6 +332,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   airedEpisodeCell: {
     backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
+    borderWidth: 1,
   },
   pressedEpisodeCell: { opacity: 0.72, transform: [{ scale: 0.9 }] },
   episodeNumber: { color: colors.muted, fontSize: 14, fontWeight: '700' },
