@@ -84,9 +84,9 @@ bash scripts/build-split-apks.sh android-1.0.0-6
 
 ## 版本号
 
-- 当前 app 版本 `1.0.0`（`apps/mobile/app.config.js`）
+- 当前 app 版本 `1.0.7`（`apps/mobile/app.config.js`，发版时先改这里）
 - EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
-- Release tag 建议统一 `android-1.0.0-<序号>`（本地脚本的第一个参数）
+- 本地脚本默认用版本号作为 tag/标题：`v<app 版本>`（如 `v1.0.7`，第一个参数可覆盖；标题不再写死，参考 waku 的 releases）
 
 ## 上架（Play）
 

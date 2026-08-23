@@ -3,14 +3,15 @@
 # 不消耗 EAS 云端构建额度。产物用 debug 签名（与本机之前安装的 preview 签名不同，需卸载重装）。
 #
 # 用法：
-#   bash scripts/build-split-apks.sh [tag]   # 例如 android-1.0.0-5
+#   bash scripts/build-split-apks.sh [tag]   # 例如 v1.0.7（默认取 app.config.js 里的版本并加 v 前缀）
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MOBILE_DIR="$REPO_DIR/apps/mobile"
 OUT_DIR="$MOBILE_DIR/dist-split"
 ABIS=(arm64-v8a armeabi-v7a x86 x86_64)
-TAG="${1:-android-1.0.0-$(date +%Y%m%d%H%M)}"
+VERSION="$(node -e "process.stdout.write(require('./app.config.js').expo.version)")"
+TAG="${1:-v${VERSION}}"
 
 cd "$MOBILE_DIR"
 
@@ -37,8 +38,8 @@ done
 
 echo "==> 发布 tag=$TAG"
 gh release create "$TAG" "$OUT_DIR"/kaku-*.apk --repo shqingda/kaku \
-  --title "Kaku Android (1.0.0) split by ABI" \
-  --notes "Kaku Android APKs split by CPU architecture. Pick the build matching your device:
+  --title "$TAG" \
+  --notes "Kaku Android v${VERSION} preview APKs split by CPU architecture. Pick the build matching your device:
 
 - **kaku-arm64-v8a.apk** — most phones from 2021 onwards
 - **kaku-armeabi-v7a.apk** — older 32-bit devices

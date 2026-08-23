@@ -18,7 +18,7 @@ module.exports = {
   expo: {
     name: 'Kaku',
     slug: 'kaku',
-    version: '1.0.0',
+    version: '1.0.7',
     orientation: 'portrait',
     icon: './assets/images/kaku-icon.png',
     scheme: 'kaku',
