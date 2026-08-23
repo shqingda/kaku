@@ -23,7 +23,7 @@ echo "==> 同步原生工程（expo prebuild）"
 pnpm exec expo prebuild --platform android --no-install >/dev/null
 
 echo "==> 禁用本地 Sentry sourcemap 上传（保留给 EAS 云端构建）"
-sed -i '' 's/^apply from: new File(\["node", ".*sentry.gradle.kts")/\/\/ sentry disabled for local build/' android/app/build.gradle
+sed -i '' 's#^apply from: new File(\["node".*#// sentry disabled for local build#' android/app/build.gradle
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
