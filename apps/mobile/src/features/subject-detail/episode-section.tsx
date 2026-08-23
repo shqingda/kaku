@@ -17,6 +17,10 @@ import {
   createEpisodeRanges,
   getInitialEpisodeRangeIndex,
 } from './episode-ranges';
+import {
+  isEpisodeAired,
+  todayDateString,
+} from './episode-airing';
 
 type EpisodeLayout = 'grid' | 'list';
 
@@ -44,6 +48,7 @@ export function EpisodeSection({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isTrack = kind === 'track';
+  const todayDate = todayDateString();
   const [layout, setLayout] = useState<EpisodeLayout>(
     isTrack ? 'list' : 'grid',
   );
@@ -156,30 +161,16 @@ export function EpisodeSection({
           : `点击${isTrack ? '曲目' : '章节'}进入详情`}
       </Text>
 
-      {tracksWatchProgress ? (
-        <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View
-              style={[styles.legendSwatch, styles.watchedEpisodeCell]}
-            />
-            <Text style={styles.legendLabel}>已看</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View
-              style={[styles.legendSwatch, styles.pendingEpisodeCell]}
-            />
-            <Text style={styles.legendLabel}>未看</Text>
-          </View>
-        </View>
-      ) : null}
-
       {layout === 'grid' ? (
         <View style={styles.episodeGrid}>
           {visibleEpisodeNumbers.map((episodeNumber) => {
             const isWatched =
               tracksWatchProgress &&
               watchedEpisodeNumbers.includes(episodeNumber);
-            const isPending = tracksWatchProgress && !isWatched;
+            const airDate =
+              episodesByNumber.get(episodeNumber)?.airDate ??
+              fallbackAirDates[episodeNumber - 1];
+            const isAired = !isWatched && isEpisodeAired(airDate, todayDate);
 
             return (
               <Pressable
@@ -196,7 +187,7 @@ export function EpisodeSection({
                 style={({ pressed }) => [
                   styles.episodeCell,
                   isWatched && styles.watchedEpisodeCell,
-                  isPending && styles.pendingEpisodeCell,
+                  isAired && styles.airedEpisodeCell,
                   pressed && styles.pressedEpisodeCell,
                 ]}
               >
@@ -204,6 +195,7 @@ export function EpisodeSection({
                   style={[
                     styles.episodeNumber,
                     isWatched && styles.watchedEpisodeNumber,
+                    isAired && styles.airedEpisodeNumber,
                   ]}
                 >
                   {episodeNumber}
@@ -218,17 +210,15 @@ export function EpisodeSection({
             const isWatched =
               tracksWatchProgress &&
               watchedEpisodeNumbers.includes(episodeNumber);
-            const isPending = tracksWatchProgress && !isWatched;
             const episode = episodesByNumber.get(episodeNumber);
+            const airDate =
+              episode?.airDate ?? fallbackAirDates[episodeNumber - 1];
+            const isAired = !isWatched && isEpisodeAired(airDate, todayDate);
 
             return (
               <Pressable
                 accessibilityLabel={`第 ${episodeNumber} ${
                   isTrack ? '曲' : '集'
-                }${
-                  tracksWatchProgress
-                    ? `，${isWatched ? '已看' : '未看'}`
-                    : ''
                 }，点击进入详情`}
                 accessibilityRole="button"
                 key={episodeNumber}
@@ -243,13 +233,14 @@ export function EpisodeSection({
                   style={[
                     styles.episodeStatus,
                     isWatched && styles.watchedEpisodeCell,
-                    isPending && styles.pendingEpisodeCell,
+                    isAired && styles.airedEpisodeCell,
                   ]}
                 >
                   <Text
                     style={[
                       styles.episodeNumber,
                       isWatched && styles.watchedEpisodeNumber,
+                      isAired && styles.airedEpisodeNumber,
                     ]}
                   >
                     {episodeNumber}
@@ -264,21 +255,10 @@ export function EpisodeSection({
                     {isTrack
                       ? episode?.duration || '时长待定'
                       : `${formatAirDate(
-                          episode?.airDate ??
-                            fallbackAirDates[episodeNumber - 1],
+                          airDate,
                         )} 放送${episode?.duration ? ` · ${episode.duration}` : ''}`}
                   </Text>
                 </View>
-                {tracksWatchProgress ? (
-                  <Text
-                    style={[
-                      styles.watchStatus,
-                      isWatched && styles.watchedStatusText,
-                    ]}
-                  >
-                    {isWatched ? '已看' : '未看'}
-                  </Text>
-                ) : null}
                 <View style={styles.replyCount}>
                   <Text style={styles.replyCountText}>
                     {episode?.discussionCount ?? 0}
@@ -307,26 +287,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionHint: { color: colors.subtle, fontSize: 12, marginTop: 9 },
-  legend: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
-  },
-  legendItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  legendSwatch: {
-    backgroundColor: colors.surfaceAlt,
-    borderColor: 'transparent',
-    borderRadius: 5,
-    borderWidth: 2,
-    height: 12,
-    width: 12,
-  },
-  legendLabel: { color: colors.muted, fontSize: 11, fontWeight: '600' },
   ranges: { gap: 7, paddingTop: 14 },
   range: {
     backgroundColor: colors.surfaceAlt,
@@ -369,10 +329,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 44,
   },
   watchedEpisodeCell: { backgroundColor: colors.accent },
-  pendingEpisodeCell: { borderColor: colors.inputBorder },
+  airedEpisodeCell: {
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
+  },
   pressedEpisodeCell: { opacity: 0.72, transform: [{ scale: 0.9 }] },
   episodeNumber: { color: colors.muted, fontSize: 14, fontWeight: '700' },
   watchedEpisodeNumber: { color: colors.surface },
+  airedEpisodeNumber: { color: colors.accentRich },
   episodeList: { marginTop: 10 },
   episodeRow: {
     alignItems: 'center',
@@ -397,14 +361,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   episodeRowMain: { flex: 1, marginLeft: 12 },
   episodeRowTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
   episodeAirDate: { color: colors.subtle, fontSize: 11, marginTop: 4 },
-  watchStatus: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 8,
-    marginRight: 8,
-  },
-  watchedStatusText: { color: colors.accent },
   replyCount: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
