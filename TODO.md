@@ -14,7 +14,7 @@
 
 ## Kaku 自有增值功能（非桌面端）
 
-- [x] 本地笔记：条目详情页可保存仅本机可见的笔记/吐槽/补番计划，不依赖 Bangumi，不影响收藏同步（本次已实现）。
+- [ ] 本地笔记：本轮已移除，暂不继续做；如未来要做需要重新设计交互与存储。
 - [ ] 用户偏好云同步：D1 `user_preferences` 与 `GET/PUT /me/preferences` 已落地，待移动端接入设置页后完成端到端。
 - [ ] 本地/云端统计与年度报告：基于用户收藏和进度数据生成。
 - [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
@@ -28,8 +28,8 @@
 
 - [x] D1 用户偏好数据表与迁移：`user_preferences`，含 `locale` / `theme`。
 - [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
-- [x] D1 定时清理：`scheduled` 清理过期 OAuth transaction、handoff、session，Cron 每天 03:00。
-- [x] 测试补充：本地笔记 model、preferences routes、maintenance cleanup。
+- [x] D1 定时清理：`scheduled` 仅清理已过期的 OAuth transaction、handoff、refresh session，Cron 每天 03:00；不会删除仍有效的登录会话。
+- [x] 测试补充：preferences routes、maintenance cleanup。
 - [ ] API 鉴权/错误处理收拢：抽公共 middleware / helper，减少各 domain 重复样板。
 - [ ] HTML 抓取监控：为 5 个 HTML 抓取模块增加结构化告警 / 解析失败指标。
 - [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
@@ -41,7 +41,7 @@
 ## Cloudflare 免费版扩展计划（不产生费用）
 
 - [x] D1：新增 `user_preferences` 表，免费版可用。
-- [x] Cron Triggers：每天清理过期认证数据，免费版可用。
+- [x] Cron Triggers：每天清理已过期的认证数据，免费版可用。
 - [ ] KV：公共列表 / 远程配置缓存，免费版有读写额度，注意控制 TTL 与写入频率。
 - [ ] R2：导出文件、报告、抓取快照，免费版有容量，仅按需使用。
 - [ ] Queues：批量刷新、推送通知、导出任务，免费版有配额，需评估用量。
@@ -72,5 +72,6 @@
 
 ## 其它说明
 
+- 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
 - EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n>`，正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
