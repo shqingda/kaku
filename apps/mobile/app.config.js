@@ -12,7 +12,20 @@ function buildSuffix(profile) {
   return '';
 }
 
+function buildChannel(profile) {
+  if (!profile) return 'debug';
+  if (profile === 'development') return 'dev';
+  if (profile === 'preview') return 'preview';
+  return 'production';
+}
+
 const suffix = buildSuffix(EAS_BUILD_PROFILE);
+const channel = buildChannel(EAS_BUILD_PROFILE);
+const iconDirectory = './assets/images/app-icons';
+const lightIcon = `${iconDirectory}/kaku-${channel}-light.png`;
+const darkIcon = `${iconDirectory}/kaku-${channel}-dark.png`;
+const foregroundIcon = `${iconDirectory}/kaku-${channel}-foreground.png`;
+const monochromeIcon = `${iconDirectory}/kaku-${channel}-monochrome.png`;
 const sentryPlugin =
   process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG
     ? [
@@ -34,11 +47,15 @@ module.exports = {
     slug: 'kaku',
     version: '1.0.7',
     orientation: 'portrait',
-    icon: './assets/images/kaku-icon.png',
+    icon: lightIcon,
     scheme: 'kaku',
     userInterfaceStyle: 'automatic',
     ios: {
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
+      icon: {
+        dark: darkIcon,
+        light: lightIcon,
+      },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription: '允许 Kaku 扫描二维码连接开发服务器。',
@@ -47,10 +64,11 @@ module.exports = {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: '#C96878',
-        foregroundImage: './assets/images/kaku-mark-safe.png',
-        monochromeImage: './assets/images/kaku-mark-safe.png',
+        backgroundColor: '#FFF9F6',
+        foregroundImage: foregroundIcon,
+        monochromeImage: monochromeIcon,
       },
+      icon: lightIcon,
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
       permissions: [

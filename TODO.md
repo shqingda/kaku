@@ -4,7 +4,7 @@
 
 ## 设计与体验
 
-- [ ] Kaku 图标重新设计：遵从 apple-design，浅色/深色两套主题，外部背景为白色/黑色，内部图标基于 Bangumi 主题色；旧图标（含 mask）必须保留，选用两套不同 hash 不互相覆盖。当前暂时保留原版图标，待设计方案确定后再做。
+- [x] Kaku 图标重新设计：遵从 apple-design，浅色/深色两套主题，外部背景为白色/黑色，内部图标基于 Bangumi 主题色；旧图标（含 mask）已按内容 hash 保存在 `assets/images/app-icons/legacy/`，新正式版与 Debug/Dev/Preview 渠道图标互不覆盖。
 - [x] 富文本图片显示修复：小组话题/讨论版/单集评论/长评（日志）板块的 `[img]` 标记现在会渲染为可全屏预览的图片卡片（`parseBangumiContent` 提取图片块 + `BangumiRichBody`/`BangumiText` 渲染，长评与话题正文的适配器不再提前剥掉图片标记）。
 - [ ] 富文本输入增强：已支持插入 Bangumi 官方表情（回复/话题/动态均可在光标处插入，选择器包含 ASCII 颜文字与 `(bgm01)`–`(bgm123)`，采用多列分组网格 + 弹簧展开动画）；图片仍因上游没有公开上传端点而无法从 App 直接上传，只能继续以 `[img]外链[/img]` 形式展示。
 
@@ -90,4 +90,3 @@
 - 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
 - EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n>`，正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
-
