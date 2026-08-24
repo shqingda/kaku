@@ -26,6 +26,7 @@ type PreferencesContextValue = {
   isReady: boolean;
   preferences: AppPreferences;
   retryCloudSync: () => Promise<void>;
+  setSyncEnabled: (enabled: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
   syncing: boolean;
 };
@@ -57,6 +58,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const pushToCloud = useCallback(
     async (next: AppPreferences) => {
+      if (!next.syncEnabled) {
+        return;
+      }
       setSyncing(true);
       try {
         const response = await request('/me/preferences', {
@@ -68,6 +72,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         const synced: AppPreferences = {
           theme: cloud.theme,
           updatedAt: cloud.updatedAt ?? Date.now(),
+          syncEnabled: next.syncEnabled,
         };
         preferencesRef.current = synced;
         setPreferences(synced);
@@ -85,6 +90,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   );
 
   const syncFromCloud = useCallback(async () => {
+    if (!preferencesRef.current.syncEnabled) {
+      return;
+    }
     setSyncing(true);
     try {
       const response = await request('/me/preferences');
@@ -118,27 +126,59 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback(
     (theme: ThemePreference) => {
-      const next: AppPreferences = { theme, updatedAt: Date.now() };
+      const next: AppPreferences = {
+        theme,
+        updatedAt: Date.now(),
+        syncEnabled: preferencesRef.current.syncEnabled,
+      };
       preferencesRef.current = next;
       setPreferences(next);
       void saveAppPreferences(next);
-      if (session) {
+      if (session && next.syncEnabled) {
         void pushToCloud(next);
       }
     },
     [pushToCloud, session],
   );
 
+  const setSyncEnabled = useCallback(
+    (enabled: boolean) => {
+      const next: AppPreferences = {
+        theme: preferencesRef.current.theme,
+        updatedAt: preferencesRef.current.updatedAt,
+        syncEnabled: enabled,
+      };
+      preferencesRef.current = next;
+      setPreferences(next);
+      void saveAppPreferences(next);
+      if (enabled) {
+        setCloudError(null);
+        if (session) {
+          void syncFromCloud();
+        }
+      }
+    },
+    [session, syncFromCloud],
+  );
+
   const retryCloudSync = useCallback(async () => {
-    if (!session || !cloudError) {
+    if (!session || !cloudError || !preferencesRef.current.syncEnabled) {
       return;
     }
     await syncFromCloud();
   }, [cloudError, session, syncFromCloud]);
 
   const value = useMemo(
-    () => ({ cloudError, isReady, preferences, retryCloudSync, setTheme, syncing }),
-    [cloudError, isReady, preferences, retryCloudSync, setTheme, syncing],
+    () => ({
+      cloudError,
+      isReady,
+      preferences,
+      retryCloudSync,
+      setSyncEnabled,
+      setTheme,
+      syncing,
+    }),
+    [cloudError, isReady, preferences, retryCloudSync, setSyncEnabled, setTheme, syncing],
   );
 
   return (

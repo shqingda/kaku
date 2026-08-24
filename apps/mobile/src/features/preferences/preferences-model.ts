@@ -9,6 +9,8 @@ export type AppPreferences = {
   theme: ThemePreference;
   // 本地偏好最后保存时刻（epoch ms）。null 表示从未在“本机”修改过。
   updatedAt: number | null;
+  // 设备级隐私开关：是否允许在登录设备间同步偏好（不随云端同步本身）。
+  syncEnabled: boolean;
 };
 
 export type CloudPreferences = {
@@ -21,6 +23,7 @@ export type CloudPreferences = {
 export const DEFAULT_APP_PREFERENCES: AppPreferences = {
   theme: 'system',
   updatedAt: null,
+  syncEnabled: true,
 };
 
 export function parseAppPreferences(value: unknown): AppPreferences {
@@ -38,8 +41,12 @@ export function parseAppPreferences(value: unknown): AppPreferences {
     candidate.updatedAt > 0
       ? candidate.updatedAt
       : null;
+  const syncEnabled =
+    typeof candidate.syncEnabled === 'boolean'
+      ? candidate.syncEnabled
+      : DEFAULT_APP_PREFERENCES.syncEnabled;
 
-  return { theme, updatedAt };
+  return { theme, updatedAt, syncEnabled };
 }
 
 export function resolveTheme(
@@ -79,7 +86,11 @@ export function mergePreferences(
 
   if (cloudIsNewer) {
     return {
-      applied: { theme: cloud.theme, updatedAt: cloudUpdatedAt },
+      applied: {
+        theme: cloud.theme,
+        updatedAt: cloudUpdatedAt,
+        syncEnabled: local.syncEnabled,
+      },
       pushToCloud: false,
     };
   }

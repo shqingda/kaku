@@ -8,6 +8,10 @@ import {
   resolveTheme,
 } from '../src/features/preferences/preferences-model.ts';
 
+function localPrefs(theme, updatedAt, syncEnabled = true) {
+  return { theme, updatedAt, syncEnabled };
+}
+
 test('parseAppPreferences returns defaults for garbage input', () => {
   assert.deepEqual(parseAppPreferences(null), DEFAULT_APP_PREFERENCES);
   assert.deepEqual(parseAppPreferences(undefined), DEFAULT_APP_PREFERENCES);
@@ -15,6 +19,7 @@ test('parseAppPreferences returns defaults for garbage input', () => {
   assert.deepEqual(parseAppPreferences({ theme: 'neon' }), {
     theme: 'system',
     updatedAt: null,
+    syncEnabled: true,
   });
 });
 
@@ -22,11 +27,20 @@ test('parseAppPreferences keeps valid values and drops bad timestamps', () => {
   assert.deepEqual(parseAppPreferences({ theme: 'dark', updatedAt: 12 }), {
     theme: 'dark',
     updatedAt: 12,
+    syncEnabled: true,
   });
   assert.deepEqual(parseAppPreferences({ theme: 'light', updatedAt: -1 }), {
     theme: 'light',
     updatedAt: null,
+    syncEnabled: true,
   });
+});
+
+test('parseAppPreferences preserves an explicit sync flag and resumes stale records', () => {
+  assert.deepEqual(
+    parseAppPreferences({ theme: 'dark', updatedAt: 7, syncEnabled: false }),
+    { theme: 'dark', updatedAt: 7, syncEnabled: false },
+  );
 });
 
 test('resolveTheme follows the system scheme only in system mode', () => {
@@ -38,7 +52,7 @@ test('resolveTheme follows the system scheme only in system mode', () => {
 });
 
 test('mergePreferences keeps fresh local values and pushes them to the cloud', () => {
-  const local = { theme: 'dark', updatedAt: 200 };
+  const local = localPrefs('dark', 200);
   const result = mergePreferences(local, {
     locale: 'system',
     theme: 'light',
@@ -51,32 +65,32 @@ test('mergePreferences keeps fresh local values and pushes them to the cloud', (
 
 test('mergePreferences adopts newer cloud values without pushing back', () => {
   const result = mergePreferences(
-    { theme: 'system', updatedAt: 100 },
+    localPrefs('system', 100),
     { locale: 'zh', theme: 'dark', updatedAt: 200 },
   );
 
-  assert.deepEqual(result.applied, { theme: 'dark', updatedAt: 200 });
+  assert.deepEqual(result.applied, localPrefs('dark', 200));
   assert.equal(result.pushToCloud, false);
 });
 
 test('mergePreferences treats an empty local record as older than any cloud record', () => {
   const result = mergePreferences(
-    { theme: 'system', updatedAt: null },
+    localPrefs('system', null),
     { locale: 'system', theme: 'light', updatedAt: 10 },
   );
 
-  assert.deepEqual(result.applied, { theme: 'light', updatedAt: 10 });
+  assert.deepEqual(result.applied, localPrefs('light', 10));
   assert.equal(result.pushToCloud, false);
 });
 
 test('mergePreferences pushes an untouched local record only when the cloud saved one', () => {
-  const untouched = { theme: 'system', updatedAt: null };
+  const untouched = localPrefs('system', null);
   assert.deepEqual(mergePreferences(untouched, null), {
     applied: untouched,
     pushToCloud: false,
   });
 
-  const touched = { theme: 'dark', updatedAt: 5 };
+  const touched = localPrefs('dark', 5);
   assert.deepEqual(mergePreferences(touched, null), {
     applied: touched,
     pushToCloud: true,
@@ -85,10 +99,20 @@ test('mergePreferences pushes an untouched local record only when the cloud save
 
 test('mergePreferences stays quiet when both records share the same timestamp', () => {
   const result = mergePreferences(
-    { theme: 'light', updatedAt: 100 },
+    localPrefs('light', 100),
     { locale: 'system', theme: 'light', updatedAt: 100 },
   );
 
-  assert.deepEqual(result.applied, { theme: 'light', updatedAt: 100 });
+  assert.deepEqual(result.applied, localPrefs('light', 100));
+  assert.equal(result.pushToCloud, false);
+});
+
+test('mergePreferences keeps the device-level sync flag when adopting cloud values', () => {
+  const result = mergePreferences(
+    localPrefs('system', 0, false),
+    { locale: 'system', theme: 'dark', updatedAt: 300 },
+  );
+
+  assert.deepEqual(result.applied, localPrefs('dark', 300, false));
   assert.equal(result.pushToCloud, false);
 });

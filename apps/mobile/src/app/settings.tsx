@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Host, Switch } from '@expo/ui';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
@@ -37,8 +38,14 @@ export default function SettingsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { session } = useAuth();
-  const { cloudError, preferences, retryCloudSync, setTheme, syncing } =
-    usePreferences();
+  const {
+    cloudError,
+    preferences,
+    retryCloudSync,
+    setSyncEnabled,
+    setTheme,
+    syncing,
+  } = usePreferences();
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -103,74 +110,50 @@ export default function SettingsScreen() {
           {session ? (
             <>
               <View style={styles.syncRow}>
-                {syncing ? (
-                  <View style={styles.syncIcon}>
-                    <ActivityIndicator color={colors.accent} size="small" />
-                  </View>
-                ) : (
-                  <SymbolView
-                    name={
-                      cloudError
-                        ? {
-                            android: 'error',
-                            ios: 'exclamationmark.triangle.fill',
-                            web: 'error',
-                          }
-                        : {
-                            android: 'check_circle',
-                            ios: 'checkmark.circle.fill',
-                            web: 'check_circle',
-                          }
-                    }
-                    size={20}
-                    tintColor={cloudError ? colors.accent : colors.accentRich}
-                    weight="semibold"
-                  />
-                )}
                 <View style={styles.syncCopy}>
                   <Text style={styles.syncTitle}>云同步</Text>
-                  <Text style={styles.syncDescription}>
-                    {syncing
-                      ? '正在同步偏好…'
-                      : cloudError
-                        ? '同步没有完成，更改仍保存在本机。'
-                        : '已开启，外观偏好会自动同步到你的其他设备。'}
-                  </Text>
-                </View>
-                {cloudError && !syncing ? (
                   <Pressable
-                    accessibilityLabel="重试偏好同步"
                     accessibilityRole="button"
-                    hitSlop={8}
+                    disabled={!preferences.syncEnabled || syncing || !cloudError}
                     onPress={() => void retryCloudSync()}
                     style={({ pressed }) => pressed && styles.pressed}
                   >
-                    <Text style={styles.syncRetry}>重试</Text>
+                    <Text
+                      style={[
+                        styles.syncDescription,
+                        cloudError && !syncing && styles.syncDescriptionError,
+                      ]}
+                    >
+                      {!preferences.syncEnabled
+                        ? '已关闭，外观偏好只保存在本机。'
+                        : syncing
+                          ? '正在同步…'
+                          : cloudError
+                            ? '上次同步失败，点此重试。'
+                            : '已开启，自动同步到你的其他设备。'}
+                    </Text>
                   </Pressable>
-                ) : null}
+                </View>
+                <Host>
+                  <Switch
+                    testID="preference-sync-switch"
+                    value={preferences.syncEnabled}
+                    onValueChange={setSyncEnabled}
+                  />
+                </Host>
               </View>
               <View style={styles.rowDivider} />
               <Text style={styles.explainText}>
-                更改外观后会先保存在本机，随后在后台同步到云端。
+                目前仅同步外观主题；搜索历史、浏览记录不会上传。
               </Text>
             </>
           ) : (
             <>
               <View style={styles.syncRow}>
-                <SymbolView
-                  name={{
-                    android: 'cloud',
-                    ios: 'icloud',
-                    web: 'cloud',
-                  }}
-                  size={20}
-                  tintColor={colors.subtle}
-                  weight="semibold"
-                />
                 <View style={styles.syncCopy}>
                   <Text style={styles.syncTitle}>设备间同步</Text>
                   <Text style={styles.syncDescription}>
-                    登录后，外观偏好会在你的设备之间同步。
+                    登录后可在你的设备之间同步外观偏好。
                   </Text>
                 </View>
                 <Pressable
@@ -185,7 +168,7 @@ export default function SettingsScreen() {
               </View>
               <View style={styles.rowDivider} />
               <Text style={styles.explainText}>
-                仅同步设置偏好，不会上传搜索历史或浏览记录。
+                仅同步外观主题，不会上传搜索历史或浏览记录。
               </Text>
             </>
           )}
@@ -231,15 +214,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: 11,
     minHeight: 68,
   },
-  syncIcon: {
-    alignItems: 'center',
-    height: 20,
-    justifyContent: 'center',
-    width: 20,
-  },
   syncCopy: { flex: 1 },
   syncTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
   syncDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
+  syncDescriptionError: { color: colors.accent },
   syncRetry: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   explainText: {
     color: colors.muted,
