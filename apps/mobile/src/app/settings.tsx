@@ -134,7 +134,7 @@ export default function SettingsScreen() {
                     </Text>
                   </Pressable>
                 </View>
-                <Host>
+                <Host matchContents>
                   <Switch
                     testID="preference-sync-switch"
                     value={preferences.syncEnabled}
