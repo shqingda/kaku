@@ -379,13 +379,13 @@ export default function AccountScreen() {
             <View style={styles.menuGroup}>
               <AccountMenuRow
                 colors={colors}
-                description="外观、主题与偏好同步"
+                description="深色、浅色与云端同步"
                 icon={{
-                  android: 'settings',
-                  ios: 'gear',
-                  web: 'settings',
+                  android: 'cloud',
+                  ios: 'icloud',
+                  web: 'cloud',
                 }}
-                label="设置"
+                label="外观与同步"
                 onPress={() => router.push('/settings')}
               />
               <AccountMenuRow

@@ -147,7 +147,7 @@ function RootNavigator() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '设置',
+              title: '外观与同步',
             }}
           />
           <Stack.Screen

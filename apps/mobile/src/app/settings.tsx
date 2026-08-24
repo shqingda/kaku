@@ -108,69 +108,57 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>偏好同步</Text>
         <View style={styles.group}>
           {session ? (
-            <>
-              <View style={styles.syncRow}>
-                <View style={styles.syncCopy}>
-                  <Text style={styles.syncTitle}>云同步</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={!preferences.syncEnabled || syncing || !cloudError}
-                    onPress={() => void retryCloudSync()}
-                    style={({ pressed }) => pressed && styles.pressed}
-                  >
-                    <Text
-                      style={[
-                        styles.syncDescription,
-                        cloudError && !syncing && styles.syncDescriptionError,
-                      ]}
-                    >
-                      {!preferences.syncEnabled
-                        ? '已关闭，外观偏好只保存在本机。'
-                        : syncing
-                          ? '正在同步…'
-                          : cloudError
-                            ? '上次同步失败，点此重试。'
-                            : '已开启，自动同步到你的其他设备。'}
-                    </Text>
-                  </Pressable>
-                </View>
-                <Host matchContents>
-                  <Switch
-                    testID="preference-sync-switch"
-                    value={preferences.syncEnabled}
-                    onValueChange={setSyncEnabled}
-                  />
-                </Host>
-              </View>
-              <View style={styles.rowDivider} />
-              <Text style={styles.explainText}>
-                目前仅同步外观主题；搜索历史、浏览记录不会上传。
-              </Text>
-            </>
-          ) : (
-            <>
-              <View style={styles.syncRow}>
-                <View style={styles.syncCopy}>
-                  <Text style={styles.syncTitle}>设备间同步</Text>
-                  <Text style={styles.syncDescription}>
-                    登录后可在你的设备之间同步外观偏好。
-                  </Text>
-                </View>
+            <View style={styles.syncRow}>
+              <View style={styles.syncCopy}>
+                <Text style={styles.syncTitle}>云同步</Text>
                 <Pressable
-                  accessibilityLabel="前往登录"
                   accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={() => router.push('/account')}
+                  disabled={!preferences.syncEnabled || syncing || !cloudError}
+                  onPress={() => void retryCloudSync()}
                   style={({ pressed }) => pressed && styles.pressed}
                 >
-                  <Text style={styles.syncRetry}>去登录</Text>
+                  <Text
+                    style={[
+                      styles.syncDescription,
+                      cloudError && !syncing && styles.syncDescriptionError,
+                    ]}
+                  >
+                    {!preferences.syncEnabled
+                      ? '已关闭，外观偏好只保存在本机。'
+                      : syncing
+                        ? '正在同步…'
+                        : cloudError
+                          ? '上次同步失败，点此重试。'
+                          : '已开启，自动同步到你的其他设备。'}
+                  </Text>
                 </Pressable>
               </View>
-              <View style={styles.rowDivider} />
-              <Text style={styles.explainText}>
-                仅同步外观主题，不会上传搜索历史或浏览记录。
-              </Text>
-            </>
+              <Host matchContents>
+                <Switch
+                  testID="preference-sync-switch"
+                  value={preferences.syncEnabled}
+                  onValueChange={setSyncEnabled}
+                />
+              </Host>
+            </View>
+          ) : (
+            <View style={styles.syncRow}>
+              <View style={styles.syncCopy}>
+                <Text style={styles.syncTitle}>设备间同步</Text>
+                <Text style={styles.syncDescription}>
+                  登录后可在你的设备之间同步外观偏好。
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="前往登录"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => router.push('/account')}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <Text style={styles.syncRetry}>去登录</Text>
+              </Pressable>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -219,11 +207,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   syncDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   syncDescriptionError: { color: colors.accent },
   syncRetry: { color: colors.accent, fontSize: 13, fontWeight: '800' },
-  explainText: {
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    paddingVertical: 12,
-  },
   pressed: { opacity: 0.62 },
 });
