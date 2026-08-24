@@ -7,13 +7,15 @@ import {
   getBangumiEmojiUrl,
   parseBangumiEmoji,
 } from '@/lib/bangumi-emoji';
-import type { BangumiContentBlock } from '@/lib/bangumi-content';
+import { parseBangumiContent, type BangumiContentBlock } from '@/lib/bangumi-content';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
+import { BangumiPostImage } from './bangumi-post-image';
+
 // 内联渲染 Bangumi 表情包（(bgmNN) 与 ASCII 颜文字）：表情以原生 Image 内嵌在
 // Text 里，随文字基线对齐、正常换行。无表情时退化为纯 Text。
-export function BangumiText({
+function BangumiEmojiText({
   children,
   style,
 }: {
@@ -49,9 +51,9 @@ export function BangumiText({
   );
 }
 
-// 渲染回复正文：普通文本走 BangumiText，[quote] 引用块渲染成块引用样式
-// （左侧竖线 + 弱化颜色），不破坏正文排版。
-export function BangumiContentText({
+// 富文本块渲染：文本（含表情）走 BangumiEmojiText，[quote] 渲染成块引用
+// 样式（左侧竖线 + 弱化颜色），[img] 渲染为可全屏查看的图片。
+function BangumiRichBody({
   blocks,
   style,
 }: {
@@ -61,19 +63,6 @@ export function BangumiContentText({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  if (blocks.length === 0) {
-    return null;
-  }
-
-  const hasQuote = blocks.some((block) => block.type === 'quote');
-  if (!hasQuote) {
-    return (
-      <BangumiText style={style}>
-        {blocks.map((block) => block.value).join('')}
-      </BangumiText>
-    );
-  }
-
   const flattened = StyleSheet.flatten(style);
   const containerStyle = flattened?.marginTop
     ? { marginTop: flattened.marginTop }
@@ -82,19 +71,75 @@ export function BangumiContentText({
 
   return (
     <View style={containerStyle}>
-      {blocks.map((block, index) =>
-        block.type === 'quote' ? (
-          <View key={index} style={styles.quote}>
-            <BangumiText style={styles.quoteText}>{block.value}</BangumiText>
-          </View>
-        ) : (
-          <BangumiText key={index} style={textStyle}>
-            {block.value}
-          </BangumiText>
-        ),
-      )}
+      {blocks.map((block, index) => {
+        switch (block.type) {
+          case 'quote':
+            return (
+              <View key={index} style={styles.quote}>
+                <BangumiEmojiText style={styles.quoteText}>
+                  {block.value}
+                </BangumiEmojiText>
+              </View>
+            );
+          case 'image':
+            return <BangumiPostImage key={index} uri={block.value} />;
+          default:
+            return (
+              <BangumiEmojiText key={index} style={textStyle}>
+                {block.value}
+              </BangumiEmojiText>
+            );
+        }
+      })}
     </View>
   );
+}
+
+// 渲染直接来自接口的正文（小组话题、长评等）：普通文本走表情内联，
+// 含 [quote]/[img] 时走富文本块。
+export function BangumiText({
+  children,
+  style,
+}: {
+  children: string;
+  style?: StyleProp<TextStyle>;
+}) {
+  const blocks = useMemo(() => parseBangumiContent(children), [children]);
+  const hasRichBlocks = blocks.some(
+    (block) => block.type === 'image' || block.type === 'quote',
+  );
+
+  if (!hasRichBlocks) {
+    return <BangumiEmojiText style={style}>{children}</BangumiEmojiText>;
+  }
+
+  return <BangumiRichBody blocks={blocks} style={style} />;
+}
+
+// 渲染回复正文：已解析块的序列（讨论/单集评论 Adapter 输出）。
+export function BangumiContentText({
+  blocks,
+  style,
+}: {
+  blocks: BangumiContentBlock[];
+  style?: StyleProp<TextStyle>;
+}) {
+  if (blocks.length === 0) {
+    return null;
+  }
+
+  const hasRichBlocks = blocks.some(
+    (block) => block.type === 'quote' || block.type === 'image',
+  );
+  if (!hasRichBlocks) {
+    return (
+      <BangumiEmojiText style={style}>
+        {blocks.map((block) => block.value).join('')}
+      </BangumiEmojiText>
+    );
+  }
+
+  return <BangumiRichBody blocks={blocks} style={style} />;
 }
 
 function createStyles(colors: ThemeColors) {

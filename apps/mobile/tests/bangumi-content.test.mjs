@@ -39,3 +39,33 @@ test('parseBangumiContent strips inner bbcode inside quotes', () => {
     { type: 'quote', value: '加粗引用' },
   ]);
 });
+
+test('parseBangumiContent extracts http(s) images as image blocks', () => {
+  assert.deepEqual(
+    parseBangumiContent('看图 [img]https://lain.bgm.tv/pic/a.jpg[/img] 不错'),
+    [
+      { type: 'text', value: '看图' },
+      { type: 'image', value: 'https://lain.bgm.tv/pic/a.jpg' },
+      { type: 'text', value: '不错' },
+    ],
+  );
+});
+
+test('parseBangumiContent keeps image and quote block order', () => {
+  assert.deepEqual(
+    parseBangumiContent(
+      '[img]https://img.bgm.tv/pic/b.png[/img][quote]引用[/quote]',
+    ),
+    [
+      { type: 'image', value: 'https://img.bgm.tv/pic/b.png' },
+      { type: 'quote', value: '引用' },
+    ],
+  );
+});
+
+test('parseBangumiContent ignores non-http image targets and plain text', () => {
+  assert.deepEqual(
+    parseBangumiContent('[img]javascript:alert(1)[/img] 文本'),
+    [{ type: 'text', value: 'javascript:alert(1) 文本' }],
+  );
+});

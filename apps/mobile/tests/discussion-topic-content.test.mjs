@@ -33,7 +33,7 @@ test('将可靠识别的首条楼主回复提升为话题正文', () => {
     replyCount: 2,
   });
 
-  assert.equal(content.body, '正文');
+  assert.equal(content.body, '[b]正文[/b]');
   assert.deepEqual(
     content.replies.map((item) => item.id),
     ['101', '102'],

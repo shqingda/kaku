@@ -1,6 +1,5 @@
 import type { ReviewsProvider } from '@/features/reviews/model';
 import {
-  cleanBangumiContent,
   mapBangumiReplies,
 } from '../discussions/adapter';
 
@@ -32,7 +31,7 @@ export const bangumiReviewsProvider: ReviewsProvider = {
     const { blog, comments } = await getBangumiReview(reviewId, signal);
     return mapBangumiReviewDetail(
       blog,
-      cleanBangumiContent(blog.content),
+      blog.content,
       mapBangumiReplies(comments),
     );
   },

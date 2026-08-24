@@ -106,7 +106,8 @@ export function mapBangumiTopicContent(
 ): Pick<DiscussionTopic, 'body' | 'replies'> {
   const replies = mapBangumiReplies(topic.replies);
   const firstReply = topic.replies[0];
-  const body = firstReply ? cleanBangumiContent(firstReply.content) : '';
+  // 保留原始 bbcode（含 [img]/[quote]），由 BangumiText 渲染富文本块。
+  const body = firstReply ? firstReply.content : '';
   const isTopicBody =
     body.length > 0 &&
     firstReply?.creatorID === topic.creatorID &&
