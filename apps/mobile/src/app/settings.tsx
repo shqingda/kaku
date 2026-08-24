@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
 
@@ -100,32 +101,93 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>偏好同步</Text>
         <View style={styles.group}>
           {session ? (
-            syncing ? (
+            <>
               <View style={styles.syncRow}>
-                <ActivityIndicator color={colors.accent} size="small" />
-                <Text style={styles.syncText}>正在同步偏好…</Text>
+                {syncing ? (
+                  <View style={styles.syncIcon}>
+                    <ActivityIndicator color={colors.accent} size="small" />
+                  </View>
+                ) : (
+                  <SymbolView
+                    name={
+                      cloudError
+                        ? {
+                            android: 'error',
+                            ios: 'exclamationmark.triangle.fill',
+                            web: 'error',
+                          }
+                        : {
+                            android: 'check_circle',
+                            ios: 'checkmark.circle.fill',
+                            web: 'check_circle',
+                          }
+                    }
+                    size={20}
+                    tintColor={cloudError ? colors.accent : colors.accentRich}
+                    weight="semibold"
+                  />
+                )}
+                <View style={styles.syncCopy}>
+                  <Text style={styles.syncTitle}>云同步</Text>
+                  <Text style={styles.syncDescription}>
+                    {syncing
+                      ? '正在同步偏好…'
+                      : cloudError
+                        ? '同步没有完成，更改仍保存在本机。'
+                        : '已开启，外观偏好会自动同步到你的其他设备。'}
+                  </Text>
+                </View>
+                {cloudError && !syncing ? (
+                  <Pressable
+                    accessibilityLabel="重试偏好同步"
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    onPress={() => void retryCloudSync()}
+                    style={({ pressed }) => pressed && styles.pressed}
+                  >
+                    <Text style={styles.syncRetry}>重试</Text>
+                  </Pressable>
+                ) : null}
               </View>
-            ) : cloudError ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void retryCloudSync()}
-                style={({ pressed }) => [
-                  styles.syncRow,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.syncError}>{cloudError}</Text>
-                <Text style={styles.syncRetry}>点此重试</Text>
-              </Pressable>
-            ) : (
-              <Text style={styles.syncText}>
-                外观偏好保存在本机，并自动同步到你的其他设备。
+              <View style={styles.rowDivider} />
+              <Text style={styles.explainText}>
+                更改外观后会先保存在本机，随后在后台同步到云端。
               </Text>
-            )
+            </>
           ) : (
-            <Text style={styles.syncText}>
-              登录 Kaku 后，外观偏好会在你的设备之间同步。
-            </Text>
+            <>
+              <View style={styles.syncRow}>
+                <SymbolView
+                  name={{
+                    android: 'cloud',
+                    ios: 'icloud',
+                    web: 'cloud',
+                  }}
+                  size={20}
+                  tintColor={colors.subtle}
+                  weight="semibold"
+                />
+                <View style={styles.syncCopy}>
+                  <Text style={styles.syncTitle}>设备间同步</Text>
+                  <Text style={styles.syncDescription}>
+                    登录后，外观偏好会在你的设备之间同步。
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityLabel="前往登录"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => router.push('/account')}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text style={styles.syncRetry}>去登录</Text>
+                </Pressable>
+              </View>
+              <View style={styles.rowDivider} />
+              <Text style={styles.explainText}>
+                仅同步设置偏好，不会上传搜索历史或浏览记录。
+              </Text>
+            </>
           )}
         </View>
       </ScrollView>
@@ -166,11 +228,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   syncRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
-    minHeight: 64,
+    gap: 11,
+    minHeight: 68,
   },
-  syncText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
-  syncError: { color: colors.accent, flex: 1, fontSize: 13, lineHeight: 19 },
+  syncIcon: {
+    alignItems: 'center',
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  syncCopy: { flex: 1 },
+  syncTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  syncDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   syncRetry: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  explainText: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    paddingVertical: 12,
+  },
   pressed: { opacity: 0.62 },
 });

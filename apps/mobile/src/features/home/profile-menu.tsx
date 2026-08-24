@@ -252,6 +252,19 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
             <MenuItem
               colors={colors}
               icon={{
+                android: 'dark_mode',
+                ios: 'circle.lefthalf.filled',
+                web: 'dark_mode',
+              }}
+              label="设置"
+              onPress={() => {
+                closeMenu();
+                router.push('/settings');
+              }}
+            />
+            <MenuItem
+              colors={colors}
+              icon={{
                 android: 'settings',
                 ios: 'gearshape',
                 web: 'settings',
