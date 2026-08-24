@@ -4,9 +4,9 @@
 
 ## 设计与体验
 
-- [ ] Kaku 图标重新设计：遵从 apple-design，浅色/深色两套主题，外部背景为白色/黑色，内部图标基于 Bangumi 主题色；旧图标（含 mask）必须保留，选用两套不同 hash 不互相覆盖。
+- [x] Kaku 图标重新设计：遵从 apple-design，浅色/深色两套主题，外部背景为白色/黑色，内部图标基于 Bangumi 主题色；旧图标（含 mask）保留在 `assets/images`（`kaku-icon.png`、`kaku-mark.png`、`kaku-mark-safe.png`），新图标使用独立文件名（`kaku-icon-light/dark.png` 等）不会互相覆盖；已生成浅色/深色两套 PNG，当前默认使用浅色（Android 自适应图标白底粉 K），深色 PNG 可直接用于商店素材或后续 iOS 18 深色图标接入。
 - [x] 富文本图片显示修复：小组话题/讨论版/单集评论/长评（日志）板块的 `[img]` 标记现在会渲染为可全屏预览的图片卡片（`parseBangumiContent` 提取图片块 + `BangumiRichBody`/`BangumiText` 渲染，长评与话题正文的适配器不再提前剥掉图片标记）。
-- [ ] 富文本输入增强：写评论/话题/回复时支持插入图片与 Bangumi 官方表情。上游没有公开上传端点，难度较大，先设计/验证方案再动手（不要臆测端点）。
+- [ ] 富文本输入增强：已支持插入 Bangumi 官方表情（回复/话题/动态均可在光标处插入，选择器包含 ASCII 颜文字与 `(bgm01)`–`(bgm123)`）；图片仍因上游没有公开上传端点而无法从 App 直接上传，只能继续以 `[img]外链[/img]` 形式展示。
 
 ## 暂时隐藏
 

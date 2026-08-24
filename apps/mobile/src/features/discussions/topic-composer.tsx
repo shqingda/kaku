@@ -13,6 +13,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { BangumiEmojiToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
+import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -44,8 +46,14 @@ export function TopicComposer({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const titleInputRef = useRef<TextInput>(null);
+  const contentInputRef = useRef<TextInput>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const { insertEmoji, onSelectionChange } = useBangumiEmojiInsertion(
+    contentInputRef,
+    content,
+    setContent,
+  );
   // 两个 mutation 都注册（hook 顺序稳定），提交时按目标类型选择。
   const createSubjectTopic = useCreateSubjectTopic(
     target.kind === 'subject' ? target.subjectId : 0,
@@ -189,6 +197,8 @@ export function TopicComposer({
           maxLength={MAX_CONTENT_LENGTH}
           multiline
           onChangeText={setContent}
+          onSelectionChange={onSelectionChange}
+          ref={contentInputRef}
           placeholder="友善地描述你想讨论的内容…"
           placeholderTextColor={colors.subtle}
           scrollEnabled
@@ -196,6 +206,8 @@ export function TopicComposer({
           textAlignVertical="top"
           value={content}
         />
+
+        <BangumiEmojiToolbar onInsert={insertEmoji} />
 
         <View style={styles.footer}>
           <Text style={styles.hint}>发布时完成一次 Bangumi 安全验证</Text>

@@ -1,6 +1,6 @@
 // Bangumi 表情包：把 bbcode 里的 (bgmNN) 与 ASCII 颜文字映射到图片地址，
 // 供 BangumiText 内联渲染。映射规则与官网 bangumi/frontend 的 bbcode 一致。
-const ASCII_EMOJI = [
+export const ASCII_EMOJI = [
   '(=A=)',
   '(=w=)',
   '(-w=)',
