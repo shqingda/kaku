@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { BangumiEmojiToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
+import { BangumiComposerPreview } from '@/features/emoji-picker/bangumi-composer-preview';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { confirmDiscard } from '@/features/shared/confirm-discard';
@@ -206,6 +207,8 @@ export function TopicComposer({
           textAlignVertical="top"
           value={content}
         />
+
+        <BangumiComposerPreview content={content} />
 
         <BangumiEmojiToolbar onInsert={insertEmoji} />
 

@@ -9,7 +9,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 
-import { MIN_TOUCH_SIZE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
@@ -154,11 +153,11 @@ export function BangumiEmojiToolbar({
         >
           <SymbolView
             name={{
-              android: expanded ? 'keyboard_arrow_down' : 'mood',
-              ios: expanded ? 'chevron.down' : 'face.smiling',
-              web: expanded ? 'keyboard_arrow_down' : 'mood',
+              android: expanded ? 'keyboard_arrow_up' : 'mood',
+              ios: expanded ? 'chevron.up' : 'face.smiling',
+              web: expanded ? 'keyboard_arrow_up' : 'mood',
             }}
-            size={18}
+            size={16}
             tintColor={expanded ? colors.accent : colors.muted}
             weight="semibold"
           />
@@ -188,22 +187,22 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      minHeight: 36,
+      minHeight: 32,
     },
     toggleButton: {
       alignItems: 'center',
-      borderRadius: 10,
+      borderRadius: 9,
       flexDirection: 'row',
-      gap: 6,
-      minHeight: MIN_TOUCH_SIZE,
-      paddingHorizontal: 10,
+      gap: 4,
+      minHeight: 32,
+      paddingHorizontal: 8,
     },
     toggleButtonActive: {
-      backgroundColor: colors.accentSoft,
+      backgroundColor: colors.surfaceSoft,
     },
     toggleText: {
       color: colors.muted,
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
     },
     toggleTextActive: {
@@ -224,16 +223,16 @@ const createStyles = (colors: ThemeColors) =>
     },
     tab: {
       backgroundColor: colors.surfaceSoft,
-      borderRadius: 14,
-      paddingHorizontal: 12,
-      paddingVertical: 7,
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
     },
     tabSelected: {
       backgroundColor: colors.accentSoft,
     },
     tabText: {
       color: colors.muted,
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
     },
     tabTextSelected: {
@@ -254,7 +253,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       aspectRatio: 1,
       justifyContent: 'center',
-      padding: 4,
+      padding: 3,
       width: `${100 / GRID_COLUMNS}%`,
     },
     cellPressed: {
@@ -263,8 +262,8 @@ const createStyles = (colors: ThemeColors) =>
       opacity: 0.7,
     },
     image: {
-      height: 36,
-      width: 36,
+      height: 28,
+      width: 28,
     },
     pressed: { opacity: 0.62 },
   });
