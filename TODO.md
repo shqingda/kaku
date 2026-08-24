@@ -11,10 +11,8 @@
 - [ ] 加入/退出小组：Bangumi P1 公开接口没有小组成员写操作（官网靠服务端表单），前端生成的 P1 客户端（bangumi/frontend `packages/client`）中亦无对应端点。待上游开放后实现，不要臆测端点。好友添加/移除（`PUT/DELETE /p1/friends/{username}`）已按官方端点实现。
 - [ ] 删除自己的动态：`DELETE /p1/timeline/{id}` 端点虽在 P1 spec 中，但官方 iOS 客户端（Bangumi-iOS）与官网均未实现删除 UI，实测返回 5xx。已移除 Kaku 的删除入口，API 路由与测试保留待上游恢复。
 
+## Kaku 自有增值功能
 
-## Kaku 自有增值功能（非桌面端）
-
-- [ ] 本地笔记：本轮已移除，暂不继续做；如未来要做需要重新设计交互与存储。
 - [ ] 用户偏好云同步：D1 `user_preferences` 与 `GET/PUT /me/preferences` 已落地，待移动端接入设置页后完成端到端。
 - [ ] 本地/云端统计与年度报告：基于用户收藏和进度数据生成。
 - [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
@@ -23,6 +21,8 @@
 - [ ] 多设备偏好/搜索历史/最近浏览同步：D1 已可承载，待移动端接入。
 - [ ] 小组件 / 快捷指令：iOS Widget、Android App Widget。
 - [ ] 多数据源/跨站数据增强：需要先完善领域模型抽象，暂缓。
+
+
 
 ## 工程化增强
 
@@ -38,6 +38,8 @@
 - [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
 - [ ] CI 增加覆盖率门槛或专门的抓取回归 job。
 
+
+
 ## Cloudflare 免费版扩展计划（不产生费用）
 
 - [x] D1：新增 `user_preferences` 表，免费版可用。
@@ -48,6 +50,8 @@
 - [ ] Cache API 已用：继续作为边缘热缓存，优先于 KV 写。
 - [ ] Durable Objects：暂缓，免费版限制/复杂度较高，不是当前瓶颈。
 - [ ] Browser Rendering：暂缓，可能超出免费版合理用量且不一定必要。
+
+
 
 ## 已完成
 
@@ -62,6 +66,8 @@
 - [x] 分类浏览 tab 弹回 bug 修复（`browse.tsx` useEffect 依赖误含 `subjectType`）。
 - [x] 项目迁移到 `/Users/shqingda/Projects/kaku`。
 
+
+
 ## 发布工程
 
 - [x] 真机冒烟：运行 `.maestro/public-browse-smoke.yaml`（启动、搜索、打开条目、返回），作为不写远端数据的首条真机冒烟测试。Maestro MCP 已配置。真机（iPhone 17 Pro）跑通；修复：iOS 真机冷启动后 `inputText` 不可靠，改为 `setClipboard` + `pasteText`。
@@ -70,8 +76,11 @@
 - [x] 通知点击跳转补全：角色（类型 5/6/25）、人物（13/26）、日志（7/8/29）通知映射为 `character`/`person`/`blog` target 并深链到对应楼层（实体页弹评论层、日志页滚动定位）；API 映射、移动端 schema 与导航均已实现并有测试，待 API worker 重新部署后真机验证。
 - [x] 列表性能：browse/rankings 的 `renderItem` 改 `useCallback`、行组件 `memo`（`BrowseCard`、新增 `RankingRow`）；browse/rankings/entities/collections 统一迁移到共享 hook `useScrollToTopButton`，`onScroll` 用 ref 守卫节流（值不变时跳过 setState）。真机已滚动验证。
 
+
+
 ## 其它说明
 
 - 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
 - EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n>`，正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
+

@@ -7,13 +7,13 @@ Native 与 TypeScript 构建。
 
 Kaku 目前包含移动端、服务端 API 与产品官网三个应用：
 
-| 应用 | 说明 | 状态 |
-| --- | --- | --- |
-| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中 |
-| `apps/api` | OAuth、会话与登录后写入代理 | Cloudflare Workers 运行中 |
-| `apps/web` | 产品介绍、政策与支持页面 | Cloudflare Workers 运行中 |
 
-macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先采用 Electron。
+| 应用            | 说明                        | 状态                     |
+| ------------- | ------------------------- | ---------------------- |
+| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中      |
+| `apps/api`    | OAuth、会话与登录后写入代理          | Cloudflare Workers 运行中 |
+| `apps/web`    | 产品介绍、政策与支持页面              | Cloudflare Workers 运行中 |
+
 
 ## 主要功能
 
@@ -36,6 +36,8 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 - 个人评分与 Bangumi 账户同步
 - 多设备会话查看、单设备退出与全部断开
 
+
+
 ### 评论与社区
 
 - 吐槽箱与长评
@@ -53,6 +55,8 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 
 ## 技术架构
 
+
+
 ### Mobile
 
 - Expo SDK 57、React Native 0.86、React 19
@@ -61,6 +65,8 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 - Zod 校验外部数据
 - Expo SecureStore 保存 Kaku 会话
 
+
+
 ### API
 
 - Hono on Cloudflare Workers
@@ -68,6 +74,8 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 - Bangumi OAuth 2.0
 - AES-GCM 加密保存 Bangumi 授权凭据
 - 短期 access session 与轮换 refresh session
+
+
 
 ### Web
 
@@ -85,7 +93,11 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 - Bangumi token 使用 AES-GCM 加密后写入 D1；Kaku refresh token 仅保存哈希。
 - 用户可以撤销单台设备会话，或断开 Bangumi 并删除全部 Kaku 会话与凭据。
 
+
+
 ## 开发环境
+
+
 
 ### 前置要求
 
@@ -94,11 +106,15 @@ macOS 客户端尚未开始实现。若后续进入桌面端开发，将优先�
 - iOS：Xcode 与 iOS Simulator
 - Android：Android SDK，或启用 USB 调试的 Android 设备
 
+
+
 ### 安装依赖
 
 ```bash
 pnpm install
 ```
+
+
 
 ### 启动移动端
 
@@ -112,6 +128,8 @@ Metro 启动后可按 `i` 打开 iOS 模拟器。首次安装或原生依赖变�
 pnpm --filter @kaku/mobile ios
 pnpm --filter @kaku/mobile android
 ```
+
+
 
 ### 启动 API
 
@@ -127,11 +145,15 @@ pnpm dev:api
 openssl rand -base64 32
 ```
 
+
+
 ### 启动官网
 
 ```bash
 pnpm dev:web
 ```
+
+
 
 ## 验证
 
@@ -165,6 +187,8 @@ apps/
 └── web/                     产品官网、政策与支持页面
 ```
 
+
+
 ## 部署
 
 应用部署前应先完成本地检查，并通过 Wrangler 的官方 OAuth 登录。不要在命令、源码或提交记录中写入密钥。
@@ -174,3 +198,4 @@ pnpm --filter @kaku/api db:migrate:remote
 pnpm --filter @kaku/api deploy:worker
 pnpm --filter @kaku/web deploy
 ```
+
