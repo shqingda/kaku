@@ -3,17 +3,21 @@ import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, Platform, useColorScheme } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/lib/sentry';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { DARK_COLORS, LIGHT_COLORS } from '@/constants/theme';
+import { PreferencesProvider } from '@/features/preferences/preferences-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
 import { OfflineBanner } from '@/features/shared/offline-banner';
-import { ThemeProvider } from '@/features/theme/theme-provider';
+import {
+  ThemeProvider,
+  useTheme,
+  useThemeScheme,
+} from '@/features/theme/theme-provider';
 import {
   bangumiRetryDelay,
   shouldRetryBangumiQuery,
@@ -26,7 +30,6 @@ import {
 import { queryPersister } from '@/lib/query-persister';
 
 export default function RootLayout() {
-  const colors = useColorScheme() === 'dark' ? DARK_COLORS : LIGHT_COLORS;
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -68,40 +71,57 @@ export default function RootLayout() {
         }}
       >
         <AuthProvider>
-          <ThemeProvider>
-          <StatusBar style="auto" />
-          <Stack
-            screenOptions={{
-              ...(Platform.OS === 'ios'
-                ? {
-                    unstable_headerLeftItems: () => [
-                      {
-                        element: <HeaderBackButton />,
-                        hidesSharedBackground: true,
-                        type: 'custom' as const,
-                      },
-                    ],
-                    unstable_headerRightItems: () => [
-                      {
-                        element: <HeaderHomeButton />,
-                        hidesSharedBackground: true,
-                        type: 'custom' as const,
-                      },
-                    ],
-                  }
-                : {
-                    // Android/web: without a custom headerLeft the native
-                    // stack draws its own ~24dp back arrow, which dwarfs the
-                    // 19pt SymbolView used everywhere else.
-                    headerLeft: () => <HeaderBackButton />,
-                    headerRight: () => <HeaderHomeButton />,
-                  }),
-              headerShown: false,
-              headerStyle: { backgroundColor: colors.surface },
-              headerTintColor: colors.ink,
-              headerTitleStyle: { color: colors.ink },
-            }}
-          >
+          <PreferencesProvider>
+            <ThemeProvider>
+              <RootNavigator />
+            </ThemeProvider>
+          </PreferencesProvider>
+        </AuthProvider>
+        </PersistQueryClientProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
+  );
+}
+
+function RootNavigator() {
+  const colors = useTheme();
+  const scheme = useThemeScheme();
+
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          ...(Platform.OS === 'ios'
+            ? {
+                unstable_headerLeftItems: () => [
+                  {
+                    element: <HeaderBackButton />,
+                    hidesSharedBackground: true,
+                    type: 'custom' as const,
+                  },
+                ],
+                unstable_headerRightItems: () => [
+                  {
+                    element: <HeaderHomeButton />,
+                    hidesSharedBackground: true,
+                    type: 'custom' as const,
+                  },
+                ],
+              }
+            : {
+                // Android/web: without a custom headerLeft the native
+                // stack draws its own ~24dp back arrow, which dwarfs the
+                // 19pt SymbolView used everywhere else.
+                headerLeft: () => <HeaderBackButton />,
+                headerRight: () => <HeaderHomeButton />,
+              }),
+          headerShown: false,
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.ink,
+          headerTitleStyle: { color: colors.ink },
+        }}
+      >
           <Stack.Screen name="index" />
           <Stack.Screen
             name="timeline"
@@ -119,6 +139,15 @@ export default function RootLayout() {
               headerShown: true,
               headerShadowVisible: false,
               title: '账户',
+            }}
+          />
+          <Stack.Screen
+            name="settings"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '设置',
             }}
           />
           <Stack.Screen
@@ -463,11 +492,7 @@ export default function RootLayout() {
             }}
           />
           </Stack>
-          <OfflineBanner />
-        </ThemeProvider>
-        </AuthProvider>
-        </PersistQueryClientProvider>
-      </GestureHandlerRootView>
-    </AppErrorBoundary>
+      <OfflineBanner />
+    </>
   );
 }

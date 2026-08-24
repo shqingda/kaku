@@ -375,11 +375,23 @@ export default function AccountScreen() {
         )}
         {!isLoading ? (
           <>
-            <Text style={styles.menuSectionTitle}>本地存储</Text>
+            <Text style={styles.menuSectionTitle}>设置与本地</Text>
             <View style={styles.menuGroup}>
               <AccountMenuRow
                 colors={colors}
+                description="外观、主题与偏好同步"
+                icon={{
+                  android: 'settings',
+                  ios: 'gear',
+                  web: 'settings',
+                }}
+                label="设置"
+                onPress={() => router.push('/settings')}
+              />
+              <AccountMenuRow
+                colors={colors}
                 description="公开缓存、图片与最近记录"
+                hasDivider
                 icon={{
                   android: 'delete_sweep',
                   ios: 'trash',

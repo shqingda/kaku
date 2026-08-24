@@ -13,7 +13,8 @@
 
 ## Kaku 自有增值功能
 
-- [ ] 用户偏好云同步：D1 `user_preferences` 与 `GET/PUT /me/preferences` 已落地，待移动端接入设置页后完成端到端。
+- [x] 用户偏好云同步（主题部分）：设置页（账户 → 设置：跟随系统/浅色/深色）已接入 `GET/PUT /me/preferences`，本地立即生效、登录后自动同步/回拉、失败显式重试；本地偏好存 `expo-sqlite/kv-store`，重启保持。
+- [ ] 用户偏好云同步（locale）：`locale` 字段暂未接入移动端，需要先有 i18n 基建；API 与 D1 已支持。
 - [ ] 本地/云端统计与年度报告：基于用户收藏和进度数据生成。
 - [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
 - [ ] 推送通知：需要 APNs / FCM、用户授权，以及 Queue + Cron 轮询。
