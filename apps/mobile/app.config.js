@@ -20,7 +20,7 @@ module.exports = {
     slug: 'kaku',
     version: '1.0.7',
     orientation: 'portrait',
-    icon: './assets/images/kaku-icon-light.png',
+    icon: './assets/images/kaku-icon.png',
     scheme: 'kaku',
     userInterfaceStyle: 'automatic',
     ios: {
@@ -33,9 +33,9 @@ module.exports = {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: '#FFFFFF',
-        foregroundImage: './assets/images/kaku-mark-light-safe.png',
-        monochromeImage: './assets/images/kaku-mark-monochrome.png',
+        backgroundColor: '#C96878',
+        foregroundImage: './assets/images/kaku-mark-safe.png',
+        monochromeImage: './assets/images/kaku-mark-safe.png',
       },
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
@@ -48,7 +48,7 @@ module.exports = {
     },
     web: {
       output: 'static',
-      favicon: './assets/images/kaku-icon-light.png',
+      favicon: './assets/images/kaku-icon.png',
     },
     plugins: [
       'expo-router',
@@ -57,12 +57,12 @@ module.exports = {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: '#C96878',
           dark: {
             backgroundColor: '#0E0E10',
-            image: './assets/images/kaku-mark-dark.png',
+            image: './assets/images/kaku-mark.png',
           },
-          image: './assets/images/kaku-mark-light.png',
+          image: './assets/images/kaku-mark.png',
           imageWidth: 116,
         },
       ],
