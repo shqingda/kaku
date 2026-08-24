@@ -13,6 +13,20 @@ function buildSuffix(profile) {
 }
 
 const suffix = buildSuffix(EAS_BUILD_PROFILE);
+const sentryPlugin =
+  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG
+    ? [
+        [
+          '@sentry/react-native',
+          {
+            url: 'https://sentry.io',
+            project: 'kaku',
+            organization: process.env.SENTRY_ORG,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+          },
+        ],
+      ]
+    : [];
 
 module.exports = {
   expo: {
@@ -74,16 +88,7 @@ module.exports = {
           granularPermissions: ['photo'],
         },
       ],
-      [
-        '@sentry/react-native',
-        {
-          url: 'https://sentry.io',
-          project: 'kaku',
-          organization: process.env.SENTRY_ORG,
-          authToken: process.env.SENTRY_AUTH_TOKEN,
-          uploadSourceMaps: Boolean(process.env.SENTRY_AUTH_TOKEN),
-        },
-      ],
+      ...sentryPlugin,
     ],
     experiments: {
       typedRoutes: true,
