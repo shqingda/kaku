@@ -22,6 +22,11 @@ SIZE = 1024
 SCALE = 4
 
 BADGE_COLOR = "#3A3A3C"
+ANDROID_BADGE_RIGHT = 1024
+ANDROID_TEXT_RIGHT = 800
+ANDROID_BADGE_TOP = 626
+ANDROID_BADGE_HEIGHT = 190
+ANDROID_BADGE_LEFT_PADDING = 44
 CHANNELS = {
     "production": None,
     "debug": "DEBUG",
@@ -98,23 +103,29 @@ def add_badge(
     text_height = bounds[3] - bounds[1]
 
     if adaptive:
-        right = 940
-        top = 626
-        height = 190
-        horizontal_padding = 44
+        right = ANDROID_BADGE_RIGHT
+        top = ANDROID_BADGE_TOP
+        height = ANDROID_BADGE_HEIGHT
+        left = (
+            ANDROID_TEXT_RIGHT
+            - (text_width // SCALE)
+            - ANDROID_BADGE_LEFT_PADDING
+        )
+        text_x = left + ANDROID_BADGE_LEFT_PADDING
     else:
         right = 1024
         top = 626
         height = 230
         horizontal_padding = 54
+        left = right - (text_width // SCALE) - horizontal_padding * 2
+        text_x = left + horizontal_padding
 
-    left = right - (text_width // SCALE) - horizontal_padding * 2
     draw.rectangle(
         (scaled(left), scaled(top), scaled(right), scaled(top + height)),
         fill=BADGE_COLOR,
     )
 
-    x = scaled(left + horizontal_padding)
+    x = scaled(text_x)
     y = scaled(top + height // 2) - text_height // 2 - bounds[1]
     draw.text((x, y), label, font=label_font, fill="#FFFFFF")
 
@@ -159,13 +170,19 @@ def make_android_monochrome(channel: str) -> None:
         bounds = draw.textbbox((0, 0), label, font=label_font)
         text_width = bounds[2] - bounds[0]
         text_height = bounds[3] - bounds[1]
-        right, top, height, horizontal_padding = 940, 626, 190, 44
-        left = right - (text_width // SCALE) - horizontal_padding * 2
+        right = ANDROID_BADGE_RIGHT
+        top = ANDROID_BADGE_TOP
+        height = ANDROID_BADGE_HEIGHT
+        left = (
+            ANDROID_TEXT_RIGHT
+            - (text_width // SCALE)
+            - ANDROID_BADGE_LEFT_PADDING
+        )
         draw.rectangle(
             (scaled(left), scaled(top), scaled(right), scaled(top + height)),
             fill=255,
         )
-        x = scaled(left + horizontal_padding)
+        x = scaled(left + ANDROID_BADGE_LEFT_PADDING)
         y = scaled(top + height // 2) - text_height // 2 - bounds[1]
         draw.text((x, y), label, font=label_font, fill=0)
 
