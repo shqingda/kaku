@@ -71,7 +71,7 @@ test('collection overview exports honest text and provider-neutral JSON', () => 
   assert.equal(
     buildCollectionOverviewShareText(overview, 'kaku'),
     [
-      'Kaku 收藏分析',
+      'Kaku 收藏数据',
       '@kaku · 共 4 部',
       '',
       '动画 3 部（75%）',

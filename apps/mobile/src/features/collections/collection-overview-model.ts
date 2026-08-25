@@ -87,7 +87,7 @@ export function buildCollectionOverviewShareText(
   );
 
   return [
-    'Kaku 收藏分析',
+    'Kaku 收藏数据',
     `@${username} · 共 ${overview.total.toLocaleString('zh-CN')} 部`,
     '',
     ...rows,

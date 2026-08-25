@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { ThemeColors } from '@/constants/theme';
-import { useTheme } from '@/features/theme/theme-provider';
+import type { ThemeColors } from "@/constants/theme";
+import { useTheme } from "@/features/theme/theme-provider";
 
 export type HorizontalBarDatum = {
   id: number | string;
@@ -14,7 +14,7 @@ export function HorizontalBarChart({
   denominator,
   items,
   onItemPress,
-  valueSuffix = '部',
+  valueSuffix = "部",
 }: {
   denominator: number;
   items: HorizontalBarDatum[];
@@ -27,8 +27,9 @@ export function HorizontalBarChart({
   return (
     <View accessibilityRole="summary">
       {items.map((item, index) => {
-        const percentage = denominator > 0 ? (item.value / denominator) * 100 : 0;
-        const percentageText = percentage.toLocaleString('zh-CN', {
+        const percentage =
+          denominator > 0 ? (item.value / denominator) * 100 : 0;
+        const percentageText = percentage.toLocaleString("zh-CN", {
           maximumFractionDigits: 1,
         });
         const content = (
@@ -38,11 +39,17 @@ export function HorizontalBarChart({
                 {item.label}
               </Text>
               <Text selectable style={styles.value}>
-                {item.value.toLocaleString('zh-CN')} {valueSuffix} · {percentageText}%
+                {item.value.toLocaleString("zh-CN")} {valueSuffix} ·{" "}
+                {percentageText}%
               </Text>
             </View>
             <View style={styles.track}>
-              <View style={[styles.fill, { width: `${Math.min(percentage, 100)}%` }]} />
+              <View
+                style={[
+                  styles.fill,
+                  { width: `${Math.min(percentage, 100)}%` },
+                ]}
+              />
             </View>
           </>
         );
@@ -74,43 +81,44 @@ export function HorizontalBarChart({
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  row: {
-    justifyContent: 'center',
-    minHeight: 72,
-    paddingVertical: 13,
-  },
-  divider: {
-    borderTopColor: colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  heading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  label: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-  value: {
-    color: colors.subtle,
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-  },
-  track: {
-    backgroundColor: colors.track,
-    borderCurve: 'continuous',
-    borderRadius: 4,
-    height: 8,
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  fill: {
-    backgroundColor: colors.accent,
-    borderCurve: 'continuous',
-    borderRadius: 4,
-    height: '100%',
-    minWidth: 0,
-  },
-  pressed: { opacity: 0.62 },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      justifyContent: "center",
+      minHeight: 58,
+      paddingVertical: 10,
+    },
+    divider: {
+      borderTopColor: colors.divider,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    heading: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+    },
+    label: { color: colors.ink, fontSize: 13, fontWeight: "700" },
+    value: {
+      color: colors.subtle,
+      fontSize: 11,
+      fontVariant: ["tabular-nums"],
+      fontWeight: "700",
+    },
+    track: {
+      backgroundColor: colors.track,
+      borderCurve: "continuous",
+      borderRadius: 4,
+      height: 6,
+      marginTop: 9,
+      overflow: "hidden",
+    },
+    fill: {
+      backgroundColor: colors.accent,
+      borderCurve: "continuous",
+      borderRadius: 4,
+      height: "100%",
+      minWidth: 0,
+    },
+    pressed: { opacity: 0.62 },
+  });

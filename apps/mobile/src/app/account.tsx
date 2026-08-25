@@ -238,27 +238,15 @@ export default function AccountScreen() {
               />
               <AccountMenuRow
                 colors={colors}
-                description="类型、状态与待开始进度"
+                description="收藏结构与最近浏览"
                 hasDivider
                 icon={{
                   android: 'donut_large',
                   ios: 'chart.pie',
                   web: 'donut_large',
                 }}
-                label="收藏分析"
+                label="我的数据"
                 onPress={() => router.push('/collection-overview')}
-              />
-              <AccountMenuRow
-                colors={colors}
-                description="近期条目与类型偏好"
-                hasDivider
-                icon={{
-                  android: 'insights',
-                  ios: 'chart.bar.xaxis',
-                  web: 'insights',
-                }}
-                label="浏览足迹"
-                onPress={() => router.push('/footprint')}
               />
               <AccountMenuRow
                 colors={colors}

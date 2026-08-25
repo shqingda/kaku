@@ -162,7 +162,7 @@ function RootNavigator() {
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '收藏分析',
+              title: '我的数据',
             }}
           />
           <Stack.Screen

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { router } from 'expo-router';
+import { useMemo, useState } from "react";
+import { router } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
@@ -10,41 +10,47 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { ThemeColors } from '@/constants/theme';
-import { useAuth } from '@/features/auth/auth-provider';
-import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
-import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
+import type { ThemeColors } from "@/constants/theme";
+import { useAuth } from "@/features/auth/auth-provider";
+import { SubjectTypeTabs } from "@/features/catalog/subject-type-tabs";
+import { getSubjectTypeLabel } from "@/features/catalog/subject-types";
 import {
   buildCollectionOverview,
   buildCollectionOverviewJson,
   buildCollectionOverviewShareText,
   buildCollectionStatusAnalysis,
-} from '@/features/collections/collection-overview-model';
-import { HorizontalBarChart } from '@/features/insights/horizontal-bar-chart';
-import { AppState } from '@/features/shared/app-state';
-import { useTheme } from '@/features/theme/theme-provider';
-import { usePublicUserCollections } from '@/features/users/use-public-user';
-import type { CollectionStatus } from '@/features/watching/model';
+} from "@/features/collections/collection-overview-model";
+import { buildBrowsingFootprint } from "@/features/history/browsing-footprint-model";
+import { useRecentSubjects } from "@/features/history/recent-subjects-provider";
+import { HorizontalBarChart } from "@/features/insights/horizontal-bar-chart";
+import { useTheme } from "@/features/theme/theme-provider";
+import { usePublicUserCollections } from "@/features/users/use-public-user";
+import type { CollectionStatus } from "@/features/watching/model";
 
 const COLLECTION_TYPES = [2, 1, 3, 4, 6] as const;
 const COLLECTION_STATUSES: CollectionStatus[] = [
-  'completed',
-  'doing',
-  'wish',
-  'onHold',
-  'dropped',
+  "completed",
+  "doing",
+  "wish",
+  "onHold",
+  "dropped",
 ];
 
-export default function CollectionOverviewScreen() {
+export default function PersonalDataScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isSharing, setIsSharing] = useState(false);
   const [selectedSubjectType, setSelectedSubjectType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
-  const username = session?.user.username ?? '';
+  const recentSubjects = useRecentSubjects();
+  const footprint = useMemo(
+    () => buildBrowsingFootprint(recentSubjects.items),
+    [recentSubjects.items],
+  );
+  const username = session?.user.username ?? "";
   const animeQuery = usePublicUserCollections(username, 2);
   const bookQuery = usePublicUserCollections(username, 1);
   const musicQuery = usePublicUserCollections(username, 3);
@@ -53,35 +59,29 @@ export default function CollectionOverviewScreen() {
   const completedQuery = usePublicUserCollections(
     username,
     selectedSubjectType,
-    'completed',
+    "completed",
   );
   const doingQuery = usePublicUserCollections(
     username,
     selectedSubjectType,
-    'doing',
+    "doing",
   );
   const wishQuery = usePublicUserCollections(
     username,
     selectedSubjectType,
-    'wish',
+    "wish",
   );
   const onHoldQuery = usePublicUserCollections(
     username,
     selectedSubjectType,
-    'onHold',
+    "onHold",
   );
   const droppedQuery = usePublicUserCollections(
     username,
     selectedSubjectType,
-    'dropped',
+    "dropped",
   );
-  const typeQueries = [
-    animeQuery,
-    bookQuery,
-    musicQuery,
-    gameQuery,
-    realQuery,
-  ];
+  const typeQueries = [animeQuery, bookQuery, musicQuery, gameQuery, realQuery];
   const statusQueries = [
     completedQuery,
     doingQuery,
@@ -90,18 +90,11 @@ export default function CollectionOverviewScreen() {
     droppedQuery,
   ];
   const allQueries = [...typeQueries, ...statusQueries];
-  const isPending = typeQueries.some((query) => query.isPending);
-  const hasError = typeQueries.some((query) => query.isError);
-  const hasCompleteData = typeQueries.every(
+  const hasCompleteTypeData = typeQueries.every(
     (query) => query.data?.pages[0]?.total !== undefined,
   );
   const hasCompleteStatusData = statusQueries.every(
     (query) => query.data?.pages[0]?.total !== undefined,
-  );
-  const hasStatusError = statusQueries.some((query) => query.isError);
-  const isStatusPending = statusQueries.some((query) => query.isPending);
-  const isRefreshing = allQueries.some(
-    (query) => query.isRefetching && !query.isPending,
   );
   const overview = buildCollectionOverview(
     COLLECTION_TYPES.map((subjectType, index) => ({
@@ -116,84 +109,43 @@ export default function CollectionOverviewScreen() {
       total: statusQueries[index].data?.pages[0]?.total ?? 0,
     })),
   );
-  const selectedSubjectTypeLabel = getSubjectTypeLabel(selectedSubjectType);
+  const selectedTypeLabel = getSubjectTypeLabel(selectedSubjectType);
+  const selectedTypeTotal =
+    overview.items.find((item) => item.subjectType === selectedSubjectType)
+      ?.total ?? 0;
+  const primaryBrowseType = footprint.typeCounts[0]?.label ?? "—";
+  const isRefreshing =
+    recentSubjects.syncing ||
+    allQueries.some((query) => query.isRefetching && !query.isPending);
 
   function refresh() {
-    void Promise.all(allQueries.map((query) => query.refetch()));
+    void recentSubjects.refreshFromCloud();
+    if (session) void Promise.all(allQueries.map((query) => query.refetch()));
   }
 
   function retryStatusAnalysis() {
     void Promise.all(statusQueries.map((query) => query.refetch()));
   }
 
-  async function shareOverview(format: 'json' | 'text') {
+  async function shareOverview(format: "json" | "text") {
     setIsSharing(true);
     try {
       await Share.share({
         message:
-          format === 'json'
+          format === "json"
             ? buildCollectionOverviewJson(overview, username)
             : buildCollectionOverviewShareText(overview, username),
-        title: format === 'json' ? 'Kaku 收藏分析 JSON' : 'Kaku 收藏分析',
+        title: format === "json" ? "Kaku 我的数据 JSON" : "Kaku 我的数据",
       });
     } catch {
-      Alert.alert('暂时无法分享', '系统分享面板没有打开，请稍后重试。');
+      Alert.alert("暂时无法分享", "系统分享面板没有打开，请稍后重试。");
     } finally {
       setIsSharing(false);
     }
   }
 
-  if (isAuthLoading) {
-    return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <View style={styles.stateContainer}>
-          <AppState text="正在读取账户信息。" title="准备收藏分析" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!session) {
-    return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <View style={styles.stateContainer}>
-          <AppState
-            action={() => router.push('/account')}
-            actionLabel="前往登录"
-            text="连接 Bangumi 后，Kaku 才能读取你的公开收藏总数。"
-            title="需要登录"
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (isPending && !hasCompleteData) {
-    return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <View style={styles.stateContainer}>
-          <AppState text="正在汇总五类公开收藏。" title="生成收藏分析" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!hasCompleteData) {
-    return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <View style={styles.stateContainer}>
-          <AppState
-            action={refresh}
-            text="部分收藏没有读取成功，请检查网络后重试。已有缓存不会被清除。"
-            title="分析暂不完整"
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView edges={['bottom']} style={styles.screen}>
+    <SafeAreaView edges={["bottom"]} style={styles.screen}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -207,141 +159,187 @@ export default function CollectionOverviewScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.eyebrow}>KAKU COLLECTIONS</Text>
+        <Text style={styles.eyebrow}>KAKU DATA</Text>
         <Text accessibilityRole="header" style={styles.title}>
-          你的收藏分析
+          我的数据
         </Text>
         <Text style={styles.description}>
-          看清收藏构成、进行中和待开始。只读取公开总数，不下载完整列表。
+          收藏结构与最近探索，只呈现当前公开数据和最近 10 条浏览。
         </Text>
 
-        {hasError ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={refresh}
-            style={({ pressed }) => [
-              styles.warning,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.warningText}>
-              刷新失败，当前展示上次缓存 · 点此重试
-            </Text>
-          </Pressable>
-        ) : null}
-
-        <View style={styles.totalCard}>
-          <Text maxFontSizeMultiplier={1.2} style={styles.totalValue}>
-            {overview.total.toLocaleString('zh-CN')}
-          </Text>
-          <Text style={styles.totalLabel}>全部公开收藏</Text>
-          <Text style={styles.totalMeta}>@{username} · 五种媒体类型</Text>
-        </View>
-
-        <View style={styles.breakdownCard}>
-          <Text style={styles.cardTitle}>类型分布</Text>
-          <Text style={styles.cardDescription}>全部公开收藏中的媒体类型占比</Text>
-          <HorizontalBarChart
-            denominator={overview.total}
-            items={overview.items.map((item) => ({
-              id: item.subjectType,
-              label: item.label,
-              value: item.total,
-            }))}
-            onItemPress={(item) =>
-                router.push({
-                  pathname: '/user/collections/[username]',
-                  params: {
-                    type: String(item.id),
-                    username,
-                  },
-                })
-            }
+        <View style={styles.section}>
+          <SectionHeader
+            description="公开收藏的结构与当前进度"
+            styles={styles}
+            title="收藏"
           />
-        </View>
-
-        <View style={styles.analysisCard}>
-          <Text style={styles.cardTitle}>收藏状态</Text>
-          <Text style={styles.cardDescription}>
-            切换类型，查看完成、进行中和待开始的分布
-          </Text>
-          <SubjectTypeTabs
-            contentContainerStyle={styles.statusTabs}
-            onChange={setSelectedSubjectType}
-            selectedType={selectedSubjectType}
-          />
-
-          {isStatusPending && !hasCompleteStatusData ? (
-            <View style={styles.inlineState}>
-              <ActivityIndicator color={colors.accent} />
-              <Text style={styles.inlineStateText}>
-                正在读取{selectedSubjectTypeLabel}收藏状态…
-              </Text>
-            </View>
-          ) : !hasCompleteStatusData ? (
+          {isAuthLoading ? (
+            <InlineLoading styles={styles} text="正在读取账户信息…" />
+          ) : !session ? (
             <Pressable
               accessibilityRole="button"
-              onPress={retryStatusAnalysis}
+              onPress={() => router.push("/account")}
               style={({ pressed }) => [
-                styles.statusError,
+                styles.loginPrompt,
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.warningText}>
-                状态数据暂时不完整 · 点此重试
+              <Text style={styles.loginTitle}>登录后查看收藏数据</Text>
+              <Text style={styles.loginText}>
+                连接 Bangumi，只读取你的公开收藏总数。
               </Text>
             </Pressable>
+          ) : typeQueries.some((query) => query.isPending) &&
+            !hasCompleteTypeData ? (
+            <InlineLoading styles={styles} text="正在汇总公开收藏…" />
+          ) : !hasCompleteTypeData ? (
+            <RetryNotice
+              onPress={() =>
+                void Promise.all(typeQueries.map((query) => query.refetch()))
+              }
+              styles={styles}
+              text="收藏数据暂时不完整 · 点此重试"
+            />
           ) : (
             <>
-              {hasStatusError ? (
-                <Pressable
-                  accessibilityRole="button"
+              {typeQueries.some((query) => query.isError) ? (
+                <RetryNotice
+                  onPress={() =>
+                    void Promise.all(
+                      typeQueries.map((query) => query.refetch()),
+                    )
+                  }
+                  styles={styles}
+                  text="刷新失败，当前展示上次缓存 · 点此重试"
+                />
+              ) : null}
+              <SubjectTypeTabs
+                contentContainerStyle={styles.typeTabs}
+                onChange={setSelectedSubjectType}
+                selectedType={selectedSubjectType}
+              />
+              {statusQueries.some((query) => query.isPending) &&
+              !hasCompleteStatusData ? (
+                <InlineLoading
+                  styles={styles}
+                  text={`正在读取${selectedTypeLabel}状态…`}
+                />
+              ) : !hasCompleteStatusData ? (
+                <RetryNotice
                   onPress={retryStatusAnalysis}
+                  styles={styles}
+                  text="状态数据暂时不完整 · 点此重试"
+                />
+              ) : (
+                <>
+                  {statusQueries.some((query) => query.isError) ? (
+                    <RetryNotice
+                      onPress={retryStatusAnalysis}
+                      styles={styles}
+                      text="状态刷新失败，当前展示缓存 · 点此重试"
+                    />
+                  ) : null}
+                  <DataSummary
+                    facts={[
+                      {
+                        label: "已完成",
+                        value: statusAnalysis.completed.toLocaleString("zh-CN"),
+                      },
+                      {
+                        label: "搁置",
+                        value:
+                          statusAnalysis.items
+                            .find((item) => item.status === "onHold")
+                            ?.total.toLocaleString("zh-CN") ?? "0",
+                      },
+                      {
+                        label: "放弃",
+                        value:
+                          statusAnalysis.items
+                            .find((item) => item.status === "dropped")
+                            ?.total.toLocaleString("zh-CN") ?? "0",
+                      },
+                    ]}
+                    metrics={[
+                      {
+                        label: `${selectedTypeLabel}收藏`,
+                        value: selectedTypeTotal.toLocaleString("zh-CN"),
+                      },
+                      {
+                        label: "进行中",
+                        value: statusAnalysis.active.toLocaleString("zh-CN"),
+                      },
+                      {
+                        label: "待开始",
+                        value: statusAnalysis.backlog.toLocaleString("zh-CN"),
+                      },
+                    ]}
+                    styles={styles}
+                  />
+                  <Text style={styles.subsectionTitle}>状态分布</Text>
+                  {statusAnalysis.total ? (
+                    <HorizontalBarChart
+                      denominator={statusAnalysis.total}
+                      items={statusAnalysis.items
+                        .filter((item) => item.total > 0)
+                        .map((item) => ({
+                          id: item.status,
+                          label: item.label,
+                          value: item.total,
+                        }))}
+                      onItemPress={(item) =>
+                        router.push({
+                          pathname: "/user/collections/[username]",
+                          params: {
+                            status: String(item.id),
+                            type: String(selectedSubjectType),
+                            username,
+                          },
+                        })
+                      }
+                    />
+                  ) : (
+                    <Text style={styles.emptyChartText}>
+                      暂无{selectedTypeLabel}收藏
+                    </Text>
+                  )}
+                </>
+              )}
+              <View style={styles.divider} />
+              <View style={styles.subsectionHeading}>
+                <View>
+                  <Text style={styles.subsectionTitle}>媒体构成</Text>
+                  <Text style={styles.subsectionDescription}>
+                    共 {overview.total.toLocaleString("zh-CN")} 部公开收藏
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityLabel="分享收藏数据，长按导出 JSON"
+                  accessibilityRole="button"
+                  disabled={isSharing}
+                  onPress={() => void shareOverview("text")}
+                  onLongPress={() => void shareOverview("json")}
                   style={({ pressed }) => [
-                    styles.statusError,
-                    pressed && styles.pressed,
+                    styles.shareButton,
+                    (pressed || isSharing) && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.warningText}>
-                    刷新失败，当前展示上次缓存 · 点此重试
-                  </Text>
+                  <Text style={styles.shareButtonText}>分享</Text>
                 </Pressable>
-              ) : null}
-              <View style={styles.progressMetrics}>
-                <ProgressMetric
-                  detail="已开始条目"
-                  label="完成率"
-                  styles={styles}
-                  value={`${statusAnalysis.completionRate.toLocaleString('zh-CN', { maximumFractionDigits: 1 })}%`}
-                />
-                <ProgressMetric
-                  detail={selectedSubjectTypeLabel}
-                  label="进行中"
-                  styles={styles}
-                  value={statusAnalysis.active.toLocaleString('zh-CN')}
-                />
-                <ProgressMetric
-                  detail="愿望与搁置"
-                  label="待开始"
-                  styles={styles}
-                  value={statusAnalysis.backlog.toLocaleString('zh-CN')}
-                />
               </View>
               <HorizontalBarChart
-                denominator={statusAnalysis.total}
-                items={statusAnalysis.items.map((item) => ({
-                  id: item.status,
-                  label: item.label,
-                  value: item.total,
-                }))}
+                denominator={overview.total}
+                items={overview.items
+                  .filter((item) => item.total > 0)
+                  .map((item) => ({
+                    id: item.subjectType,
+                    label: item.label,
+                    value: item.total,
+                  }))}
                 onItemPress={(item) =>
                   router.push({
-                    pathname: '/user/collections/[username]',
-                    params: {
-                      status: String(item.id),
-                      type: String(selectedSubjectType),
-                      username,
-                    },
+                    pathname: "/user/collections/[username]",
+                    params: { type: String(item.id), username },
                   })
                 }
               />
@@ -349,243 +347,344 @@ export default function CollectionOverviewScreen() {
           )}
         </View>
 
-        <View style={styles.exportCard}>
-          <Text style={styles.cardTitle}>导出与分享</Text>
-          <Text style={styles.exportDescription}>
-            只包含上方五类总数，不包含收藏条目、备注或私密数据。
-          </Text>
-          <View style={styles.exportActions}>
-            <Pressable
-              accessibilityLabel="分享收藏分析摘要"
-              accessibilityRole="button"
-              disabled={isSharing}
-              onPress={() => void shareOverview('text')}
-              style={({ pressed }) => [
-                styles.exportPrimary,
-                (pressed || isSharing) && styles.pressed,
-              ]}
-            >
-              <Text style={styles.exportPrimaryText}>分享摘要</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="导出收藏分析 JSON"
-              accessibilityRole="button"
-              disabled={isSharing}
-              onPress={() => void shareOverview('json')}
-              style={({ pressed }) => [
-                styles.exportSecondary,
-                (pressed || isSharing) && styles.pressed,
-              ]}
-            >
-              <Text style={styles.exportSecondaryText}>导出 JSON</Text>
-            </Pressable>
-          </View>
+        <View style={styles.section}>
+          <SectionHeader
+            description="同步后的最近 10 条浏览，不代表完整历史"
+            styles={styles}
+            title="最近浏览"
+          />
+          {recentSubjects.cloudError ? (
+            <RetryNotice
+              onPress={() => void recentSubjects.retryCloudSync()}
+              styles={styles}
+              text="最近浏览同步失败 · 点此重试"
+            />
+          ) : null}
+          {recentSubjects.items.length ? (
+            <>
+              <DataSummary
+                facts={[
+                  {
+                    label: "最近记录",
+                    value: footprint.latestViewedAt
+                      ? new Intl.DateTimeFormat("zh-CN", {
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }).format(new Date(footprint.latestViewedAt))
+                      : "—",
+                  },
+                ]}
+                metrics={[
+                  {
+                    label: "近期条目",
+                    value: String(footprint.uniqueSubjects),
+                  },
+                  {
+                    label: "媒体类型",
+                    value: String(footprint.typeCounts.length),
+                  },
+                  { label: "主要类型", value: primaryBrowseType },
+                ]}
+                styles={styles}
+              />
+              <Text style={styles.subsectionTitle}>类型分布</Text>
+              <HorizontalBarChart
+                denominator={recentSubjects.items.length}
+                items={footprint.typeCounts.map((item) => ({
+                  id: item.type,
+                  label: item.label,
+                  value: item.count,
+                }))}
+                valueSuffix="条"
+              />
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>还没有最近浏览</Text>
+              <Text style={styles.emptyText}>
+                打开几个条目后，这里会整理你的近期探索。
+              </Text>
+            </View>
+          )}
         </View>
-
         <Text style={styles.footnote}>
-          收藏可见性由 Bangumi 决定。下拉可重新读取；点击图表条目可查看对应列表。
+          收藏可见性由 Bangumi 决定；最近浏览可在“外观与同步”中管理。
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function ProgressMetric({
-  detail,
-  label,
+function SectionHeader({
+  description,
   styles,
-  value,
+  title,
 }: {
-  detail: string;
-  label: string;
+  description: string;
   styles: ReturnType<typeof createStyles>;
-  value: string;
+  title: string;
 }) {
   return (
-    <View style={styles.progressMetric}>
-      <Text maxFontSizeMultiplier={1.2} selectable style={styles.progressValue}>
-        {value}
-      </Text>
-      <Text style={styles.progressLabel}>{label}</Text>
-      <Text numberOfLines={1} style={styles.progressDetail}>{detail}</Text>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionDescription}>{description}</Text>
     </View>
+  );
+}
+
+function DataSummary({
+  facts,
+  metrics,
+  styles,
+}: {
+  facts: Array<{ label: string; value: string }>;
+  metrics: Array<{ label: string; value: string }>;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <View style={styles.summaryPanel}>
+      <View style={styles.metrics}>
+        {metrics.map((metric, index) => (
+          <View key={metric.label} style={styles.metricGroup}>
+            {index > 0 ? <View style={styles.metricDivider} /> : null}
+            <View style={styles.metric}>
+              <Text numberOfLines={1} selectable style={styles.metricValue}>
+                {metric.value}
+              </Text>
+              <Text numberOfLines={1} style={styles.metricLabel}>
+                {metric.label}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+      {facts.length ? (
+        <>
+          <View style={styles.summaryDivider} />
+          <View style={styles.facts}>
+            {facts.map((fact) => (
+              <View key={fact.label} style={styles.fact}>
+                <Text style={styles.factLabel}>{fact.label}</Text>
+                <Text numberOfLines={1} selectable style={styles.factValue}>
+                  {fact.value}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+function InlineLoading({
+  styles,
+  text,
+}: {
+  styles: ReturnType<typeof createStyles>;
+  text: string;
+}) {
+  return (
+    <View style={styles.inlineState}>
+      <ActivityIndicator />
+      <Text style={styles.inlineStateText}>{text}</Text>
+    </View>
+  );
+}
+
+function RetryNotice({
+  onPress,
+  styles,
+  text,
+}: {
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  text: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.notice, pressed && styles.pressed]}
+    >
+      <Text style={styles.noticeText}>{text}</Text>
+    </Pressable>
   );
 }
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
-    stateContainer: { flex: 1, justifyContent: 'center', padding: 24 },
     content: { padding: 24, paddingBottom: 40 },
     eyebrow: {
       color: colors.accent,
-      fontSize: 11,
-      fontWeight: '800',
-      letterSpacing: 1.2,
+      fontSize: 10,
+      fontWeight: "800",
+      letterSpacing: 1.1,
     },
     title: {
       color: colors.ink,
-      fontSize: 28,
-      fontWeight: '900',
-      letterSpacing: -0.7,
-      lineHeight: 34,
-      marginTop: 8,
+      fontSize: 24,
+      fontWeight: "900",
+      letterSpacing: -0.5,
+      lineHeight: 30,
+      marginTop: 7,
     },
     description: {
       color: colors.subtle,
       fontSize: 13,
       lineHeight: 20,
-      marginTop: 10,
+      marginTop: 8,
       maxWidth: 350,
     },
-    warning: {
-      backgroundColor: colors.accentSoft,
-      borderRadius: 14,
-      marginTop: 20,
-      paddingHorizontal: 14,
-      paddingVertical: 11,
-    },
-    warningText: {
-      color: colors.accentRich,
-      fontSize: 12,
-      fontWeight: '700',
-      lineHeight: 18,
-    },
-    totalCard: {
+    section: {
       backgroundColor: colors.surface,
-      borderCurve: 'continuous',
-      borderRadius: 24,
-      marginTop: 28,
-      minHeight: 180,
-      padding: 22,
-    },
-    totalValue: {
-      color: colors.ink,
-      fontSize: 50,
-      fontWeight: '900',
-      letterSpacing: -1.8,
-      lineHeight: 58,
-    },
-    totalLabel: {
-      color: colors.ink,
-      fontSize: 16,
-      fontWeight: '800',
-      marginTop: 8,
-    },
-    totalMeta: { color: colors.subtle, fontSize: 12, marginTop: 6 },
-    breakdownCard: {
-      backgroundColor: colors.surface,
-      borderCurve: 'continuous',
-      borderRadius: 24,
-      marginTop: 12,
-      paddingHorizontal: 20,
-      paddingVertical: 20,
-    },
-    cardTitle: {
-      color: colors.ink,
-      fontSize: 17,
-      fontWeight: '800',
-      marginBottom: 6,
-    },
-    cardDescription: {
-      color: colors.subtle,
-      fontSize: 12,
-      lineHeight: 18,
-      marginBottom: 4,
-    },
-    analysisCard: {
-      backgroundColor: colors.surface,
-      borderCurve: 'continuous',
-      borderRadius: 24,
-      marginTop: 12,
+      borderCurve: "continuous",
+      borderRadius: 22,
+      marginTop: 18,
       padding: 20,
     },
-    statusTabs: { paddingVertical: 14 },
-    inlineState: {
-      alignItems: 'center',
-      gap: 10,
-      justifyContent: 'center',
-      minHeight: 150,
-    },
-    inlineStateText: { color: colors.subtle, fontSize: 12 },
-    statusError: {
-      backgroundColor: colors.accentSoft,
-      borderCurve: 'continuous',
-      borderRadius: 14,
-      marginBottom: 8,
-      paddingHorizontal: 14,
-      paddingVertical: 11,
-    },
-    progressMetrics: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-    progressMetric: {
-      backgroundColor: colors.background,
-      borderCurve: 'continuous',
-      borderRadius: 16,
-      flex: 1,
-      minHeight: 104,
-      padding: 12,
-    },
-    progressValue: {
-      color: colors.ink,
-      fontSize: 24,
-      fontVariant: ['tabular-nums'],
-      fontWeight: '900',
-      letterSpacing: -0.5,
-    },
-    progressLabel: {
-      color: colors.ink,
-      fontSize: 12,
-      fontWeight: '800',
-      marginTop: 7,
-    },
-    progressDetail: { color: colors.muted, fontSize: 10, marginTop: 3 },
-    exportCard: {
-      backgroundColor: colors.surface,
-      borderCurve: 'continuous',
-      borderRadius: 24,
-      marginTop: 12,
-      padding: 20,
-    },
-    exportDescription: {
+    sectionHeader: { marginBottom: 16 },
+    sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: "800" },
+    sectionDescription: {
       color: colors.subtle,
-      fontSize: 12,
-      lineHeight: 18,
+      fontSize: 11,
+      lineHeight: 17,
       marginTop: 4,
     },
-    exportActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
-    exportPrimary: {
-      alignItems: 'center',
-      backgroundColor: colors.accent,
-      borderRadius: 15,
-      flex: 1,
-      justifyContent: 'center',
-      minHeight: 48,
-      paddingHorizontal: 14,
+    typeTabs: { paddingBottom: 16 },
+    summaryPanel: {
+      backgroundColor: colors.surfaceSoft,
+      borderCurve: "continuous",
+      borderRadius: 18,
+      padding: 16,
     },
-    exportPrimaryText: {
-      color: colors.surface,
+    metrics: { alignItems: "center", flexDirection: "row" },
+    metricGroup: { alignItems: "center", flex: 1, flexDirection: "row" },
+    metric: { alignItems: "center", flex: 1, minWidth: 0 },
+    metricValue: {
+      color: colors.ink,
+      fontSize: 21,
+      fontVariant: ["tabular-nums"],
+      fontWeight: "800",
+      letterSpacing: -0.4,
+    },
+    metricLabel: {
+      color: colors.subtle,
+      fontSize: 10,
+      fontWeight: "600",
+      marginTop: 5,
+    },
+    metricDivider: {
+      backgroundColor: colors.track,
+      height: 34,
+      width: StyleSheet.hairlineWidth,
+    },
+    summaryDivider: {
+      backgroundColor: colors.track,
+      height: StyleSheet.hairlineWidth,
+      marginVertical: 16,
+    },
+    facts: { flexDirection: "row", gap: 10 },
+    fact: { flex: 1 },
+    factLabel: { color: colors.subtle, fontSize: 10, fontWeight: "600" },
+    factValue: {
+      color: colors.ink,
+      fontSize: 13,
+      fontWeight: "700",
+      marginTop: 5,
+    },
+    subsectionTitle: {
+      color: colors.ink,
       fontSize: 14,
-      fontWeight: '800',
+      fontWeight: "800",
+      marginTop: 18,
     },
-    exportSecondary: {
-      alignItems: 'center',
+    subsectionDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
+    subsectionHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    divider: {
+      backgroundColor: colors.track,
+      height: StyleSheet.hairlineWidth,
+      marginVertical: 2,
+    },
+    shareButton: {
+      alignItems: "center",
       backgroundColor: colors.accentSoft,
-      borderRadius: 15,
-      flex: 1,
-      justifyContent: 'center',
-      minHeight: 48,
-      paddingHorizontal: 14,
+      borderCurve: "continuous",
+      borderRadius: 12,
+      justifyContent: "center",
+      minHeight: 36,
+      paddingHorizontal: 13,
     },
-    exportSecondaryText: {
+    shareButtonText: {
       color: colors.accentRich,
-      fontSize: 14,
-      fontWeight: '800',
+      fontSize: 12,
+      fontWeight: "800",
+    },
+    inlineState: {
+      alignItems: "center",
+      gap: 9,
+      justifyContent: "center",
+      minHeight: 116,
+    },
+    inlineStateText: { color: colors.subtle, fontSize: 12 },
+    notice: {
+      backgroundColor: colors.accentSoft,
+      borderCurve: "continuous",
+      borderRadius: 13,
+      marginBottom: 12,
+      paddingHorizontal: 13,
+      paddingVertical: 10,
+    },
+    noticeText: {
+      color: colors.accentRich,
+      fontSize: 11,
+      fontWeight: "700",
+      lineHeight: 17,
+    },
+    loginPrompt: {
+      backgroundColor: colors.surfaceSoft,
+      borderCurve: "continuous",
+      borderRadius: 16,
+      padding: 16,
+    },
+    loginTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" },
+    loginText: {
+      color: colors.subtle,
+      fontSize: 11,
+      lineHeight: 17,
+      marginTop: 4,
+    },
+    emptyState: {
+      backgroundColor: colors.surfaceSoft,
+      borderCurve: "continuous",
+      borderRadius: 16,
+      padding: 16,
+    },
+    emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" },
+    emptyText: {
+      color: colors.subtle,
+      fontSize: 11,
+      lineHeight: 17,
+      marginTop: 4,
+    },
+    emptyChartText: {
+      color: colors.muted,
+      fontSize: 11,
+      lineHeight: 17,
+      paddingVertical: 16,
     },
     footnote: {
       color: colors.muted,
-      fontSize: 11,
-      lineHeight: 18,
-      marginTop: 16,
+      fontSize: 10,
+      lineHeight: 16,
+      marginTop: 14,
       paddingHorizontal: 4,
     },
     pressed: { opacity: 0.62 },
