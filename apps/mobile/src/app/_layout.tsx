@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/lib/sentry';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';
 import { SearchHistoryProvider } from '@/features/search/search-history-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
@@ -60,26 +61,28 @@ export default function RootLayout() {
     <AppErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{
-          buster: QUERY_CACHE_BUSTER,
-          dehydrateOptions: {
-            shouldDehydrateMutation: () => false,
-            shouldDehydrateQuery: shouldPersistPublicQuery,
-          },
-          maxAge: QUERY_CACHE_MAX_AGE,
-          persister: queryPersister,
-        }}
-      >
-        <AuthProvider>
-          <SearchHistoryProvider>
+          client={queryClient}
+          persistOptions={{
+            buster: QUERY_CACHE_BUSTER,
+            dehydrateOptions: {
+              shouldDehydrateMutation: () => false,
+              shouldDehydrateQuery: shouldPersistPublicQuery,
+            },
+            maxAge: QUERY_CACHE_MAX_AGE,
+            persister: queryPersister,
+          }}
+        >
+          <AuthProvider>
             <PreferencesProvider>
-              <ThemeProvider>
-                <RootNavigator />
-              </ThemeProvider>
+              <SearchHistoryProvider>
+                <RecentSubjectsProvider>
+                  <ThemeProvider>
+                    <RootNavigator />
+                  </ThemeProvider>
+                </RecentSubjectsProvider>
+              </SearchHistoryProvider>
             </PreferencesProvider>
-          </SearchHistoryProvider>
-        </AuthProvider>
+          </AuthProvider>
         </PersistQueryClientProvider>
       </GestureHandlerRootView>
     </AppErrorBoundary>

@@ -26,6 +26,10 @@ import {
   type RankingDependencies,
   registerRankingRoutes,
 } from './rankings/routes.ts';
+import {
+  type RecentSubjectsDependencies,
+  registerRecentSubjectsRoutes,
+} from './recent-subjects/routes.ts';
 import { registerReportRoutes } from './reports/routes.ts';
 import {
   registerSearchHistoryRoutes,
@@ -39,6 +43,7 @@ type AppDependencies = AuthDependencies &
   ConfigDependencies &
   PreferencesDependencies &
   RankingDependencies &
+  RecentSubjectsDependencies &
   SearchHistoryDependencies;
 
 export function createApp(dependencies: AppDependencies = {}) {
@@ -64,6 +69,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerPeopleBrowserRoutes(app, dependencies);
   registerPreferenceRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
+  registerRecentSubjectsRoutes(app, dependencies);
   registerReportRoutes(app, dependencies);
   registerSearchHistoryRoutes(app, dependencies);
   registerTagRoutes(app, dependencies);

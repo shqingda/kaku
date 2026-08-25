@@ -1,65 +1,35 @@
 import Storage from 'expo-sqlite/kv-store';
 
 import {
-  addRecentSubject,
   RECENT_SUBJECT_LIMIT,
-  type RecentSubject,
+  parseRecentSubjectsRecord,
+  type RecentSubjectsRecord,
 } from './recent-subjects-model';
 
 const RECENT_SUBJECTS_KEY = 'kaku-recent-subjects';
 
-function isRecentSubject(value: unknown): value is RecentSubject {
-  if (!value || typeof value !== 'object') return false;
-
-  const subject = value as Partial<RecentSubject>;
-  return (
-    Number.isInteger(subject.id) &&
-    Number(subject.id) > 0 &&
-    typeof subject.title === 'string' &&
-    Boolean(subject.title.trim()) &&
-    Number.isInteger(subject.type) &&
-    typeof subject.viewedAt === 'number' &&
-    Number.isFinite(subject.viewedAt) &&
-    (subject.coverUrl === undefined || typeof subject.coverUrl === 'string')
-  );
-}
-
-export async function loadRecentSubjects() {
+export async function loadRecentSubjects(): Promise<RecentSubjectsRecord> {
   try {
     const value = await Storage.getItem(RECENT_SUBJECTS_KEY);
-    if (!value) return [];
+    if (!value) return { items: [], updatedAt: null };
 
     const parsed: unknown = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter(isRecentSubject)
-      .filter(
-        (item, index, items) =>
-          items.findIndex((candidate) => candidate.id === item.id) === index,
-      )
-      .slice(0, RECENT_SUBJECT_LIMIT);
+    return parseRecentSubjectsRecord(parsed);
   } catch {
-    return [];
+    return { items: [], updatedAt: null };
   }
 }
 
-export async function rememberRecentSubject(subject: RecentSubject) {
+export async function saveRecentSubjects(record: RecentSubjectsRecord) {
   try {
-    const current = await loadRecentSubjects();
     await Storage.setItem(
       RECENT_SUBJECTS_KEY,
-      JSON.stringify(addRecentSubject(current, subject)),
+      JSON.stringify({
+        items: record.items.slice(0, RECENT_SUBJECT_LIMIT),
+        updatedAt: record.updatedAt,
+      }),
     );
   } catch {
     // Browsing history is optional and must never block a subject page.
-  }
-}
-
-export async function clearRecentSubjects() {
-  try {
-    await Storage.removeItem(RECENT_SUBJECTS_KEY);
-  } catch {
-    // Clearing local convenience data remains best-effort.
   }
 }

@@ -7,6 +7,7 @@ import { SymbolView } from 'expo-symbols';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { usePreferences } from '@/features/preferences/preferences-provider';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import type { ThemePreference } from '@/features/preferences/preferences-model';
@@ -48,6 +49,7 @@ export default function SettingsScreen() {
     setTheme,
     syncing,
   } = usePreferences();
+  const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
 
   return (
@@ -191,12 +193,47 @@ export default function SettingsScreen() {
                       ? '正在同步…'
                       : searchHistory.cloudError
                         ? '上次同步失败，点此重试。'
+                        : !preferences.syncEnabled
+                          ? '云同步已关闭，只保存在本机。'
                         : '最多 8 条，可在搜索页或清理本地数据时清除。'}
                   </Text>
                 </Pressable>
               </View>
               <SymbolView
                 name={{ android: 'history', ios: 'clock', web: 'history' }}
+                size={18}
+                tintColor={colors.subtle}
+              />
+            </View>
+          ) : null}
+          {session ? (
+            <View style={[styles.syncRow, styles.rowDivider]}>
+              <View style={styles.syncCopy}>
+                <Text style={styles.syncTitle}>最近浏览</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!recentSubjects.cloudError || recentSubjects.syncing}
+                  onPress={() => void recentSubjects.retryCloudSync()}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text
+                    style={[
+                      styles.syncDescription,
+                      recentSubjects.cloudError && styles.syncDescriptionError,
+                    ]}
+                  >
+                    {recentSubjects.syncing
+                      ? '正在同步…'
+                      : recentSubjects.cloudError
+                        ? '上次同步失败，点此重试。'
+                        : !preferences.syncEnabled
+                          ? '云同步已关闭，只保存在本机。'
+                          : '最多 10 条，可在发现页或清理本地数据时清除。'}
+                  </Text>
+                </Pressable>
+              </View>
+              <SymbolView
+                name={{ android: 'visibility', ios: 'eye', web: 'visibility' }}
                 size={18}
                 tintColor={colors.subtle}
               />

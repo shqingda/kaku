@@ -31,7 +31,7 @@ import {
   useSubjectComments,
   useSubjectReviews,
 } from '@/features/reviews/use-subject-reviews';
-import { rememberRecentSubject } from '@/features/history/recent-subjects';
+import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { HeaderIconButton } from '@/features/shared/header-icon-button';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
@@ -143,6 +143,7 @@ export default function SubjectScreen() {
   const isOffline = useIsOffline();
   const bannerOffset = isOffline ? 48 : 8;
   const { session } = useAuth();
+  const { rememberSubject: rememberRecentSubject } = useRecentSubjects();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const subjectId = parsePositiveIntegerRouteParam(id);
   const catalogQuery = useCatalogSubject(subjectId ?? 0);
@@ -163,14 +164,14 @@ export default function SubjectScreen() {
   useEffect(() => {
     if (!catalogSubject) return;
 
-    void rememberRecentSubject({
+    rememberRecentSubject({
       coverUrl: catalogSubject.coverUrl,
       id: catalogSubject.id,
       title: catalogSubject.title,
       type: catalogSubject.type,
       viewedAt: Date.now(),
     });
-  }, [catalogSubject]);
+  }, [catalogSubject, rememberRecentSubject]);
 
   function goBack() {
     if (router.canGoBack()) {

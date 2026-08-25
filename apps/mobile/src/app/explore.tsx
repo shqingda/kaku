@@ -49,18 +49,14 @@ import { SectionAction } from '@/features/shared/section-action';
 import { RecentSearches } from '@/features/search/recent-searches';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
+import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { RecentSubjectsSection } from '@/features/history/recent-subjects-section';
-import type { RecentSubject } from '@/features/history/recent-subjects-model';
 import type {
   PeopleKind,
   PeopleSearchPage,
   PublicPersonSummary,
 } from '@/features/people-browser/model';
 import { usePeopleSearch } from '@/features/people-browser/use-people-search';
-import {
-  clearRecentSubjects,
-  loadRecentSubjects,
-} from '@/features/history/recent-subjects';
 import {
   useBangumiCalendar,
   useBangumiRankedSubjects,
@@ -105,7 +101,12 @@ export default function ExploreScreen() {
     refreshFromCloud: refreshSearchHistory,
     syncIfStale: syncSearchHistoryIfStale,
   } = useSearchHistory();
-  const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
+  const {
+    clearHistory: clearRecentSubjects,
+    items: recentSubjects,
+    refreshFromCloud: refreshRecentSubjects,
+    syncIfStale: syncRecentSubjectsIfStale,
+  } = useRecentSubjects();
   const clearSearchFrameRef = useRef<number | null>(null);
   const {
     handleScroll: handleOverviewScroll,
@@ -199,18 +200,9 @@ export default function ExploreScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-
       void syncSearchHistoryIfStale();
-
-      void loadRecentSubjects().then((items) => {
-        if (active) setRecentSubjects(items);
-      });
-
-      return () => {
-        active = false;
-      };
-    }, [syncSearchHistoryIfStale]),
+      void syncRecentSubjectsIfStale();
+    }, [syncRecentSubjectsIfStale, syncSearchHistoryIfStale]),
   );
 
   function rememberSearch(nextKeyword: string) {
@@ -235,7 +227,6 @@ export default function ExploreScreen() {
   }
 
   function clearBrowsingHistory() {
-    setRecentSubjects([]);
     void clearRecentSubjects();
   }
 
@@ -255,6 +246,7 @@ export default function ExploreScreen() {
   }
 
   function refreshOverview() {
+    void refreshRecentSubjects();
     void refreshSearchHistory();
     void rankedQuery.refetch();
     if (selectedSearchType === 2) void calendarQuery.refetch();
