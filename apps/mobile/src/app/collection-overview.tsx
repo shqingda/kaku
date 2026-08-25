@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   RefreshControl,
@@ -14,21 +15,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import {
   buildCollectionOverview,
   buildCollectionOverviewJson,
   buildCollectionOverviewShareText,
+  buildCollectionStatusAnalysis,
 } from '@/features/collections/collection-overview-model';
+import { HorizontalBarChart } from '@/features/insights/horizontal-bar-chart';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
+import type { CollectionStatus } from '@/features/watching/model';
 
 const COLLECTION_TYPES = [2, 1, 3, 4, 6] as const;
+const COLLECTION_STATUSES: CollectionStatus[] = [
+  'completed',
+  'doing',
+  'wish',
+  'onHold',
+  'dropped',
+];
 
 export default function CollectionOverviewScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isSharing, setIsSharing] = useState(false);
+  const [selectedSubjectType, setSelectedSubjectType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
   const animeQuery = usePublicUserCollections(username, 2);
@@ -36,30 +50,80 @@ export default function CollectionOverviewScreen() {
   const musicQuery = usePublicUserCollections(username, 3);
   const gameQuery = usePublicUserCollections(username, 4);
   const realQuery = usePublicUserCollections(username, 6);
-  const queries = [
+  const completedQuery = usePublicUserCollections(
+    username,
+    selectedSubjectType,
+    'completed',
+  );
+  const doingQuery = usePublicUserCollections(
+    username,
+    selectedSubjectType,
+    'doing',
+  );
+  const wishQuery = usePublicUserCollections(
+    username,
+    selectedSubjectType,
+    'wish',
+  );
+  const onHoldQuery = usePublicUserCollections(
+    username,
+    selectedSubjectType,
+    'onHold',
+  );
+  const droppedQuery = usePublicUserCollections(
+    username,
+    selectedSubjectType,
+    'dropped',
+  );
+  const typeQueries = [
     animeQuery,
     bookQuery,
     musicQuery,
     gameQuery,
     realQuery,
   ];
-  const isPending = queries.some((query) => query.isPending);
-  const hasError = queries.some((query) => query.isError);
-  const hasCompleteData = queries.every(
+  const statusQueries = [
+    completedQuery,
+    doingQuery,
+    wishQuery,
+    onHoldQuery,
+    droppedQuery,
+  ];
+  const allQueries = [...typeQueries, ...statusQueries];
+  const isPending = typeQueries.some((query) => query.isPending);
+  const hasError = typeQueries.some((query) => query.isError);
+  const hasCompleteData = typeQueries.every(
     (query) => query.data?.pages[0]?.total !== undefined,
   );
-  const isRefreshing = queries.some(
+  const hasCompleteStatusData = statusQueries.every(
+    (query) => query.data?.pages[0]?.total !== undefined,
+  );
+  const hasStatusError = statusQueries.some((query) => query.isError);
+  const isStatusPending = statusQueries.some((query) => query.isPending);
+  const isRefreshing = allQueries.some(
     (query) => query.isRefetching && !query.isPending,
   );
   const overview = buildCollectionOverview(
     COLLECTION_TYPES.map((subjectType, index) => ({
       subjectType,
-      total: queries[index].data?.pages[0]?.total ?? 0,
+      total: typeQueries[index].data?.pages[0]?.total ?? 0,
     })),
   );
+  const statusAnalysis = buildCollectionStatusAnalysis(
+    selectedSubjectType,
+    COLLECTION_STATUSES.map((status, index) => ({
+      status,
+      total: statusQueries[index].data?.pages[0]?.total ?? 0,
+    })),
+  );
+  const selectedSubjectTypeLabel = getSubjectTypeLabel(selectedSubjectType);
 
   function refresh() {
-    void Promise.all(queries.map((query) => query.refetch()));
+    void Promise.all(allQueries.map((query) => query.refetch()));
+  }
+
+  function retryStatusAnalysis() {
+    void Promise.all(statusQueries.map((query) => query.refetch()));
   }
 
   async function shareOverview(format: 'json' | 'text') {
@@ -70,7 +134,7 @@ export default function CollectionOverviewScreen() {
           format === 'json'
             ? buildCollectionOverviewJson(overview, username)
             : buildCollectionOverviewShareText(overview, username),
-        title: format === 'json' ? 'Kaku 收藏概览 JSON' : 'Kaku 收藏概览',
+        title: format === 'json' ? 'Kaku 收藏分析 JSON' : 'Kaku 收藏分析',
       });
     } catch {
       Alert.alert('暂时无法分享', '系统分享面板没有打开，请稍后重试。');
@@ -83,7 +147,7 @@ export default function CollectionOverviewScreen() {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <View style={styles.stateContainer}>
-          <AppState text="正在读取账户信息。" title="准备收藏概览" />
+          <AppState text="正在读取账户信息。" title="准备收藏分析" />
         </View>
       </SafeAreaView>
     );
@@ -108,7 +172,7 @@ export default function CollectionOverviewScreen() {
     return (
       <SafeAreaView edges={['bottom']} style={styles.screen}>
         <View style={styles.stateContainer}>
-          <AppState text="正在汇总五类公开收藏。" title="生成收藏概览" />
+          <AppState text="正在汇总五类公开收藏。" title="生成收藏分析" />
         </View>
       </SafeAreaView>
     );
@@ -121,7 +185,7 @@ export default function CollectionOverviewScreen() {
           <AppState
             action={refresh}
             text="部分收藏没有读取成功，请检查网络后重试。已有缓存不会被清除。"
-            title="概览暂不完整"
+            title="分析暂不完整"
           />
         </View>
       </SafeAreaView>
@@ -145,10 +209,10 @@ export default function CollectionOverviewScreen() {
       >
         <Text style={styles.eyebrow}>KAKU COLLECTIONS</Text>
         <Text accessibilityRole="header" style={styles.title}>
-          你的收藏概览
+          你的收藏分析
         </Text>
         <Text style={styles.description}>
-          基于 Bangumi 当前公开收藏总数汇总，不下载完整列表，也不把它包装成年度报告。
+          看清收藏构成、进行中和待开始。只读取公开总数，不下载完整列表。
         </Text>
 
         {hasError ? (
@@ -176,49 +240,113 @@ export default function CollectionOverviewScreen() {
 
         <View style={styles.breakdownCard}>
           <Text style={styles.cardTitle}>类型分布</Text>
-          {overview.items.map((item, index) => (
-            <Pressable
-              accessibilityHint={`打开全部${item.label}收藏`}
-              accessibilityLabel={`${item.label}收藏 ${item.total} 部`}
-              accessibilityRole="button"
-              key={item.subjectType}
-              onPress={() =>
+          <Text style={styles.cardDescription}>全部公开收藏中的媒体类型占比</Text>
+          <HorizontalBarChart
+            denominator={overview.total}
+            items={overview.items.map((item) => ({
+              id: item.subjectType,
+              label: item.label,
+              value: item.total,
+            }))}
+            onItemPress={(item) =>
                 router.push({
                   pathname: '/user/collections/[username]',
                   params: {
-                    type: String(item.subjectType),
+                    type: String(item.id),
                     username,
                   },
                 })
-              }
+            }
+          />
+        </View>
+
+        <View style={styles.analysisCard}>
+          <Text style={styles.cardTitle}>收藏状态</Text>
+          <Text style={styles.cardDescription}>
+            切换类型，查看完成、进行中和待开始的分布
+          </Text>
+          <SubjectTypeTabs
+            contentContainerStyle={styles.statusTabs}
+            onChange={setSelectedSubjectType}
+            selectedType={selectedSubjectType}
+          />
+
+          {isStatusPending && !hasCompleteStatusData ? (
+            <View style={styles.inlineState}>
+              <ActivityIndicator color={colors.accent} />
+              <Text style={styles.inlineStateText}>
+                正在读取{selectedSubjectTypeLabel}收藏状态…
+              </Text>
+            </View>
+          ) : !hasCompleteStatusData ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={retryStatusAnalysis}
               style={({ pressed }) => [
-                styles.typeRow,
-                index > 0 && styles.typeRowDivider,
+                styles.statusError,
                 pressed && styles.pressed,
               ]}
             >
-              <View style={styles.typeHeading}>
-                <Text style={styles.typeLabel}>{item.label}</Text>
-                <Text style={styles.typeValue}>
-                  {item.total.toLocaleString('zh-CN')} 部
-                </Text>
-              </View>
-              <View style={styles.track}>
-                <View
-                  style={[
-                    styles.fill,
-                    { width: `${item.percentage}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.percentage}>
-                {item.percentage.toLocaleString('zh-CN', {
-                  maximumFractionDigits: 1,
-                })}
-                %
+              <Text style={styles.warningText}>
+                状态数据暂时不完整 · 点此重试
               </Text>
             </Pressable>
-          ))}
+          ) : (
+            <>
+              {hasStatusError ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={retryStatusAnalysis}
+                  style={({ pressed }) => [
+                    styles.statusError,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.warningText}>
+                    刷新失败，当前展示上次缓存 · 点此重试
+                  </Text>
+                </Pressable>
+              ) : null}
+              <View style={styles.progressMetrics}>
+                <ProgressMetric
+                  detail="已开始条目"
+                  label="完成率"
+                  styles={styles}
+                  value={`${statusAnalysis.completionRate.toLocaleString('zh-CN', { maximumFractionDigits: 1 })}%`}
+                />
+                <ProgressMetric
+                  detail={selectedSubjectTypeLabel}
+                  label="进行中"
+                  styles={styles}
+                  value={statusAnalysis.active.toLocaleString('zh-CN')}
+                />
+                <ProgressMetric
+                  detail="愿望与搁置"
+                  label="待开始"
+                  styles={styles}
+                  value={statusAnalysis.backlog.toLocaleString('zh-CN')}
+                />
+              </View>
+              <HorizontalBarChart
+                denominator={statusAnalysis.total}
+                items={statusAnalysis.items.map((item) => ({
+                  id: item.status,
+                  label: item.label,
+                  value: item.total,
+                }))}
+                onItemPress={(item) =>
+                  router.push({
+                    pathname: '/user/collections/[username]',
+                    params: {
+                      status: String(item.id),
+                      type: String(selectedSubjectType),
+                      username,
+                    },
+                  })
+                }
+              />
+            </>
+          )}
         </View>
 
         <View style={styles.exportCard}>
@@ -228,7 +356,7 @@ export default function CollectionOverviewScreen() {
           </Text>
           <View style={styles.exportActions}>
             <Pressable
-              accessibilityLabel="分享收藏概览摘要"
+              accessibilityLabel="分享收藏分析摘要"
               accessibilityRole="button"
               disabled={isSharing}
               onPress={() => void shareOverview('text')}
@@ -240,7 +368,7 @@ export default function CollectionOverviewScreen() {
               <Text style={styles.exportPrimaryText}>分享摘要</Text>
             </Pressable>
             <Pressable
-              accessibilityLabel="导出收藏概览 JSON"
+              accessibilityLabel="导出收藏分析 JSON"
               accessibilityRole="button"
               disabled={isSharing}
               onPress={() => void shareOverview('json')}
@@ -255,10 +383,32 @@ export default function CollectionOverviewScreen() {
         </View>
 
         <Text style={styles.footnote}>
-          收藏可见性由 Bangumi 决定。下拉可重新读取；点击任一类型可查看完整列表。
+          收藏可见性由 Bangumi 决定。下拉可重新读取；点击图表条目可查看对应列表。
         </Text>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function ProgressMetric({
+  detail,
+  label,
+  styles,
+  value,
+}: {
+  detail: string;
+  label: string;
+  styles: ReturnType<typeof createStyles>;
+  value: string;
+}) {
+  return (
+    <View style={styles.progressMetric}>
+      <Text maxFontSizeMultiplier={1.2} selectable style={styles.progressValue}>
+        {value}
+      </Text>
+      <Text style={styles.progressLabel}>{label}</Text>
+      <Text numberOfLines={1} style={styles.progressDetail}>{detail}</Text>
+    </View>
   );
 }
 
@@ -303,6 +453,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     totalCard: {
       backgroundColor: colors.surface,
+      borderCurve: 'continuous',
       borderRadius: 24,
       marginTop: 28,
       minHeight: 180,
@@ -324,6 +475,7 @@ const createStyles = (colors: ThemeColors) =>
     totalMeta: { color: colors.subtle, fontSize: 12, marginTop: 6 },
     breakdownCard: {
       backgroundColor: colors.surface,
+      borderCurve: 'continuous',
       borderRadius: 24,
       marginTop: 12,
       paddingHorizontal: 20,
@@ -335,33 +487,61 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: '800',
       marginBottom: 6,
     },
-    typeRow: { minHeight: 92, paddingVertical: 15 },
-    typeRowDivider: {
-      borderTopColor: colors.divider,
-      borderTopWidth: StyleSheet.hairlineWidth,
+    cardDescription: {
+      color: colors.subtle,
+      fontSize: 12,
+      lineHeight: 18,
+      marginBottom: 4,
     },
-    typeHeading: {
+    analysisCard: {
+      backgroundColor: colors.surface,
+      borderCurve: 'continuous',
+      borderRadius: 24,
+      marginTop: 12,
+      padding: 20,
+    },
+    statusTabs: { paddingVertical: 14 },
+    inlineState: {
       alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      gap: 10,
+      justifyContent: 'center',
+      minHeight: 150,
     },
-    typeLabel: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-    typeValue: { color: colors.muted, fontSize: 13, fontWeight: '700' },
-    track: {
-      backgroundColor: colors.track,
-      borderRadius: 3,
-      height: 6,
-      marginTop: 13,
-      overflow: 'hidden',
+    inlineStateText: { color: colors.subtle, fontSize: 12 },
+    statusError: {
+      backgroundColor: colors.accentSoft,
+      borderCurve: 'continuous',
+      borderRadius: 14,
+      marginBottom: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
     },
-    fill: {
-      backgroundColor: colors.accent,
-      borderRadius: 3,
-      height: '100%',
+    progressMetrics: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+    progressMetric: {
+      backgroundColor: colors.background,
+      borderCurve: 'continuous',
+      borderRadius: 16,
+      flex: 1,
+      minHeight: 104,
+      padding: 12,
     },
-    percentage: { color: colors.subtle, fontSize: 11, marginTop: 6 },
+    progressValue: {
+      color: colors.ink,
+      fontSize: 24,
+      fontVariant: ['tabular-nums'],
+      fontWeight: '900',
+      letterSpacing: -0.5,
+    },
+    progressLabel: {
+      color: colors.ink,
+      fontSize: 12,
+      fontWeight: '800',
+      marginTop: 7,
+    },
+    progressDetail: { color: colors.muted, fontSize: 10, marginTop: 3 },
     exportCard: {
       backgroundColor: colors.surface,
+      borderCurve: 'continuous',
       borderRadius: 24,
       marginTop: 12,
       padding: 20,

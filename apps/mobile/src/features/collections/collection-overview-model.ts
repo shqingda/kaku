@@ -1,4 +1,8 @@
-import { getSubjectTypeLabel } from '../catalog/subject-types.ts';
+import type { CollectionStatus } from '../watching/model.ts';
+import {
+  getCollectionStatusLabel,
+  getSubjectTypeLabel,
+} from '../catalog/subject-types.ts';
 
 export type CollectionTypeTotal = {
   subjectType: number;
@@ -8,6 +12,25 @@ export type CollectionTypeTotal = {
 export type CollectionOverview = {
   items: Array<
     CollectionTypeTotal & {
+      label: string;
+      percentage: number;
+    }
+  >;
+  total: number;
+};
+
+export type CollectionStatusTotal = {
+  status: CollectionStatus;
+  total: number;
+};
+
+export type CollectionStatusAnalysis = {
+  active: number;
+  backlog: number;
+  completed: number;
+  completionRate: number;
+  items: Array<
+    CollectionStatusTotal & {
       label: string;
       percentage: number;
     }
@@ -30,6 +53,30 @@ export function buildCollectionOverview(
   };
 }
 
+export function buildCollectionStatusAnalysis(
+  subjectType: number,
+  statusTotals: CollectionStatusTotal[],
+): CollectionStatusAnalysis {
+  const total = statusTotals.reduce((sum, item) => sum + item.total, 0);
+  const getTotal = (status: CollectionStatus) =>
+    statusTotals.find((item) => item.status === status)?.total ?? 0;
+  const completed = getTotal('completed');
+  const startedTotal = total - getTotal('wish');
+
+  return {
+    active: getTotal('doing'),
+    backlog: getTotal('wish') + getTotal('onHold'),
+    completed,
+    completionRate: startedTotal > 0 ? (completed / startedTotal) * 100 : 0,
+    items: statusTotals.map((item) => ({
+      ...item,
+      label: getCollectionStatusLabel(subjectType, item.status),
+      percentage: total > 0 ? (item.total / total) * 100 : 0,
+    })),
+    total,
+  };
+}
+
 export function buildCollectionOverviewShareText(
   overview: CollectionOverview,
   username: string,
@@ -40,7 +87,7 @@ export function buildCollectionOverviewShareText(
   );
 
   return [
-    'Kaku 收藏概览',
+    'Kaku 收藏分析',
     `@${username} · 共 ${overview.total.toLocaleString('zh-CN')} 部`,
     '',
     ...rows,

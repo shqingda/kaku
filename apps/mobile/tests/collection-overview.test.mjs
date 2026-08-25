@@ -5,6 +5,7 @@ import {
   buildCollectionOverview,
   buildCollectionOverviewJson,
   buildCollectionOverviewShareText,
+  buildCollectionStatusAnalysis,
 } from '../src/features/collections/collection-overview-model.ts';
 
 test('collection overview totals media types and keeps their input order', () => {
@@ -20,6 +21,32 @@ test('collection overview totals media types and keeps their input order', () =>
     { label: '书籍', percentage: 30, subjectType: 1, total: 30 },
     { label: '游戏', percentage: 10, subjectType: 4, total: 10 },
   ]);
+});
+
+test('collection status analysis exposes useful progress and backlog metrics', () => {
+  const analysis = buildCollectionStatusAnalysis(2, [
+    { status: 'completed', total: 60 },
+    { status: 'doing', total: 10 },
+    { status: 'wish', total: 20 },
+    { status: 'onHold', total: 5 },
+    { status: 'dropped', total: 5 },
+  ]);
+
+  assert.equal(analysis.total, 100);
+  assert.equal(analysis.completed, 60);
+  assert.equal(analysis.active, 10);
+  assert.equal(analysis.backlog, 25);
+  assert.equal(analysis.completionRate, 75);
+  assert.deepEqual(
+    analysis.items.map(({ label, percentage }) => ({ label, percentage })),
+    [
+      { label: '看过', percentage: 60 },
+      { label: '在看', percentage: 10 },
+      { label: '想看', percentage: 20 },
+      { label: '搁置', percentage: 5 },
+      { label: '抛弃', percentage: 5 },
+    ],
+  );
 });
 
 test('collection overview returns zero percentages for an empty collection', () => {
@@ -44,7 +71,7 @@ test('collection overview exports honest text and provider-neutral JSON', () => 
   assert.equal(
     buildCollectionOverviewShareText(overview, 'kaku'),
     [
-      'Kaku 收藏概览',
+      'Kaku 收藏分析',
       '@kaku · 共 4 部',
       '',
       '动画 3 部（75%）',

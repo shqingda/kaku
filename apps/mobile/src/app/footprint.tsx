@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { buildBrowsingFootprint } from '@/features/history/browsing-footprint-model';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
+import { HorizontalBarChart } from '@/features/insights/horizontal-bar-chart';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function FootprintScreen() {
@@ -32,13 +33,19 @@ export default function FootprintScreen() {
               <Metric label="活跃日期" value={footprint.activeDays} styles={styles} />
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>近期偏好</Text>
-              {footprint.typeCounts.map((item) => (
-                <View key={item.type} style={styles.typeRow}>
-                  <Text style={styles.typeLabel}>{item.label}</Text>
-                  <Text style={styles.typeCount}>{item.count} 部</Text>
-                </View>
-              ))}
+              <Text style={styles.cardTitle}>近期类型分布</Text>
+              <Text style={styles.cardDescription}>
+                最近 {items.length} 条浏览记录中的媒体类型占比
+              </Text>
+              <HorizontalBarChart
+                denominator={items.length}
+                items={footprint.typeCounts.map((item) => ({
+                  id: item.type,
+                  label: item.label,
+                  value: item.count,
+                }))}
+                valueSuffix="条"
+              />
               {footprint.latestViewedAt ? (
                 <Text style={styles.latest}>
                   最近浏览于{' '}
@@ -87,16 +94,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   title: { color: colors.ink, fontSize: 28, fontWeight: '900', letterSpacing: -0.7, lineHeight: 34, marginTop: 8 },
   description: { color: colors.subtle, fontSize: 13, lineHeight: 20, marginTop: 10, maxWidth: 340 },
   metrics: { flexDirection: 'row', gap: 12, marginTop: 28 },
-  metricCard: { backgroundColor: colors.surface, borderRadius: 20, flex: 1, minHeight: 122, padding: 18 },
-  metricValue: { color: colors.ink, fontSize: 38, fontWeight: '900', letterSpacing: -1.3, lineHeight: 45 },
+  metricCard: { backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 20, flex: 1, minHeight: 122, padding: 18 },
+  metricValue: { color: colors.ink, fontSize: 38, fontVariant: ['tabular-nums'], fontWeight: '900', letterSpacing: -1.3, lineHeight: 45 },
   metricLabel: { color: colors.subtle, fontSize: 12, fontWeight: '700', marginTop: 10 },
-  card: { backgroundColor: colors.surface, borderRadius: 20, marginTop: 12, padding: 20 },
+  card: { backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 20, marginTop: 12, padding: 20 },
   cardTitle: { color: colors.ink, fontSize: 17, fontWeight: '800', marginBottom: 12 },
-  typeRow: { alignItems: 'center', borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 44 },
-  typeLabel: { color: colors.ink, fontSize: 14, fontWeight: '700' },
-  typeCount: { color: colors.subtle, fontSize: 13 },
+  cardDescription: { color: colors.subtle, fontSize: 12, lineHeight: 18, marginBottom: 4, marginTop: -6 },
   latest: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 12 },
-  emptyCard: { backgroundColor: colors.surface, borderRadius: 20, marginTop: 28, padding: 22 },
+  emptyCard: { backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 20, marginTop: 28, padding: 22 },
   emptyTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' },
   emptyText: { color: colors.subtle, fontSize: 13, lineHeight: 20, marginTop: 6 },
 });

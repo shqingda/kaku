@@ -238,14 +238,14 @@ export default function AccountScreen() {
               />
               <AccountMenuRow
                 colors={colors}
-                description="总量与媒体类型分布"
+                description="类型、状态与待开始进度"
                 hasDivider
                 icon={{
                   android: 'donut_large',
                   ios: 'chart.pie',
                   web: 'donut_large',
                 }}
-                label="收藏概览"
+                label="收藏分析"
                 onPress={() => router.push('/collection-overview')}
               />
               <AccountMenuRow
