@@ -10,6 +10,11 @@
   "triggers": {
     "crons": ["0 3 * * *"]
   },
+  "kv_namespaces": [
+    {
+      "binding": "KAKU_CONFIG"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

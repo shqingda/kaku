@@ -9,6 +9,10 @@ import { registerBlogRoutes } from './blogs/routes.ts';
 import { registerChannelRoutes } from './channels/routes.ts';
 import { registerBrowseRoutes } from './browse/routes.ts';
 import { registerCollectionRoutes } from './collections/routes.ts';
+import {
+  type ConfigDependencies,
+  registerConfigRoutes,
+} from './config/routes.ts';
 import { registerDiscussionRoutes } from './discussions/routes.ts';
 import { registerFriendRoutes } from './friends/routes.ts';
 import { registerIndexRoutes } from './indexes/routes.ts';
@@ -27,7 +31,10 @@ import { registerTimelineRoutes } from './timeline/routes.ts';
 import { registerTagRoutes } from './tags/routes.ts';
 import { registerWikiRoutes } from './wiki/routes.ts';
 
-type AppDependencies = AuthDependencies & PreferencesDependencies & RankingDependencies;
+type AppDependencies = AuthDependencies &
+  ConfigDependencies &
+  PreferencesDependencies &
+  RankingDependencies;
 
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
@@ -44,6 +51,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerBrowseRoutes(app, dependencies);
   registerChannelRoutes(app, dependencies);
   registerCollectionRoutes(app, dependencies);
+  registerConfigRoutes(app, dependencies);
   registerDiscussionRoutes(app, dependencies);
   registerFriendRoutes(app, dependencies);
   registerIndexRoutes(app, dependencies);

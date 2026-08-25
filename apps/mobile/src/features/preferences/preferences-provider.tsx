@@ -10,7 +10,11 @@ import {
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildPreferencesBody, parseCloudPreferences } from '@/infrastructure/kaku/preferences-client';
+import { usePublicConfig } from '@/features/config/use-public-config';
+import {
+  buildPreferencesBody,
+  parseCloudPreferences,
+} from '@/infrastructure/kaku/preferences-client';
 import { userErrorMessage } from '@/lib/user-error-message';
 
 import { loadAppPreferences, saveAppPreferences } from './app-preferences';
@@ -23,6 +27,7 @@ import {
 
 type PreferencesContextValue = {
   cloudError: string | null;
+  cloudSyncAvailable: boolean;
   isReady: boolean;
   preferences: AppPreferences;
   retryCloudSync: () => Promise<void>;
@@ -35,6 +40,9 @@ const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { request, session } = useAuth();
+  const configQuery = usePublicConfig();
+  const cloudSyncAvailable =
+    configQuery.data?.config.features.preferenceCloudSync ?? true;
   const [preferences, setPreferences] = useState<AppPreferences>(DEFAULT_APP_PREFERENCES);
   const [isReady, setIsReady] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
@@ -58,7 +66,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const pushToCloud = useCallback(
     async (next: AppPreferences) => {
-      if (!next.syncEnabled) {
+      if (!next.syncEnabled || !cloudSyncAvailable) {
         return;
       }
       setSyncing(true);
@@ -86,11 +94,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         setSyncing(false);
       }
     },
-    [request],
+    [cloudSyncAvailable, request],
   );
 
   const syncFromCloud = useCallback(async () => {
-    if (!preferencesRef.current.syncEnabled) {
+    if (!preferencesRef.current.syncEnabled || !cloudSyncAvailable) {
       return;
     }
     setSyncing(true);
@@ -114,7 +122,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     } finally {
       setSyncing(false);
     }
-  }, [pushToCloud, request]);
+  }, [cloudSyncAvailable, pushToCloud, request]);
 
   useEffect(() => {
     if (!session) {
@@ -134,11 +142,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       preferencesRef.current = next;
       setPreferences(next);
       void saveAppPreferences(next);
-      if (session && next.syncEnabled) {
+      if (session && next.syncEnabled && cloudSyncAvailable) {
         void pushToCloud(next);
       }
     },
-    [pushToCloud, session],
+    [cloudSyncAvailable, pushToCloud, session],
   );
 
   const setSyncEnabled = useCallback(
@@ -151,26 +159,32 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       preferencesRef.current = next;
       setPreferences(next);
       void saveAppPreferences(next);
-      if (enabled) {
+      if (enabled && cloudSyncAvailable) {
         setCloudError(null);
         if (session) {
           void syncFromCloud();
         }
       }
     },
-    [session, syncFromCloud],
+    [cloudSyncAvailable, session, syncFromCloud],
   );
 
   const retryCloudSync = useCallback(async () => {
-    if (!session || !cloudError || !preferencesRef.current.syncEnabled) {
+    if (
+      !session ||
+      !cloudError ||
+      !preferencesRef.current.syncEnabled ||
+      !cloudSyncAvailable
+    ) {
       return;
     }
     await syncFromCloud();
-  }, [cloudError, session, syncFromCloud]);
+  }, [cloudError, cloudSyncAvailable, session, syncFromCloud]);
 
   const value = useMemo(
     () => ({
       cloudError,
+      cloudSyncAvailable,
       isReady,
       preferences,
       retryCloudSync,
@@ -178,7 +192,16 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       setTheme,
       syncing,
     }),
-    [cloudError, isReady, preferences, retryCloudSync, setSyncEnabled, setTheme, syncing],
+    [
+      cloudError,
+      cloudSyncAvailable,
+      isReady,
+      preferences,
+      retryCloudSync,
+      setSyncEnabled,
+      setTheme,
+      syncing,
+    ],
   );
 
   return (

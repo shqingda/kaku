@@ -40,6 +40,7 @@ export default function SettingsScreen() {
   const { session } = useAuth();
   const {
     cloudError,
+    cloudSyncAvailable,
     preferences,
     retryCloudSync,
     setSyncEnabled,
@@ -113,7 +114,12 @@ export default function SettingsScreen() {
                 <Text style={styles.syncTitle}>云同步</Text>
                 <Pressable
                   accessibilityRole="button"
-                  disabled={!preferences.syncEnabled || syncing || !cloudError}
+                  disabled={
+                    !cloudSyncAvailable ||
+                    !preferences.syncEnabled ||
+                    syncing ||
+                    !cloudError
+                  }
                   onPress={() => void retryCloudSync()}
                   style={({ pressed }) => pressed && styles.pressed}
                 >
@@ -123,7 +129,9 @@ export default function SettingsScreen() {
                       cloudError && !syncing && styles.syncDescriptionError,
                     ]}
                   >
-                    {!preferences.syncEnabled
+                    {!cloudSyncAvailable
+                      ? 'Kaku 云同步服务暂时关闭，本机设置不受影响。'
+                      : !preferences.syncEnabled
                       ? '已关闭，外观偏好只保存在本机。'
                       : syncing
                         ? '正在同步…'
@@ -135,6 +143,7 @@ export default function SettingsScreen() {
               </View>
               <Host matchContents>
                 <Switch
+                  disabled={!cloudSyncAvailable}
                   testID="preference-sync-switch"
                   value={preferences.syncEnabled}
                   onValueChange={setSyncEnabled}
