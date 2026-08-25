@@ -1,4 +1,5 @@
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicBlogPage } from './model.ts';
 
 const BANGUMI_WEB_URL = 'https://bgm.tv';
@@ -150,6 +151,11 @@ export async function getBangumiBlogs({
 
   const result = parseBangumiBlogPage(html, page);
   if (result.items.length === 0 && page === 1) {
+    reportHtmlParseFailure({
+      page,
+      parser: 'blogs',
+      url: response.url || `${BANGUMI_WEB_URL}${path}`,
+    });
     throw new BangumiBlogListError(502, 'Bangumi 日志页面结构已变化。');
   }
   return result;

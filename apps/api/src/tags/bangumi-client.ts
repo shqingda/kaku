@@ -1,4 +1,5 @@
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicTagPage } from './model.ts';
 
 const BANGUMI_WEB_URL = 'https://bgm.tv';
@@ -124,6 +125,7 @@ export async function getBangumiTags({
 
   const result = parseBangumiTagPage(await readBoundedHtml(response), page);
   if (result.items.length === 0 && page === 1) {
+    reportHtmlParseFailure({ page, parser: 'tags', url });
     throw new BangumiTagListError(502, 'Bangumi 标签页面结构已变化。');
   }
   return result;

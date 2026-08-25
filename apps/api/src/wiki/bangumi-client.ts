@@ -1,4 +1,5 @@
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicWikiRevisionFeed } from './model.ts';
 
 const BANGUMI_WIKI_URL = 'https://bgm.tv/wiki';
@@ -140,6 +141,7 @@ export async function getBangumiWikiFeed({
 
       const result = parseBangumiWikiFeed(await readBoundedHtml(response));
       if (result.items.length === 0) {
+        reportHtmlParseFailure({ parser: 'wiki', url });
         throw new BangumiWikiFeedError(502, 'Bangumi 维基页面结构已变化。');
       }
       return result;

@@ -1,4 +1,5 @@
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type {
   PublicPeoplePage,
   PublicPersonKind,
@@ -177,6 +178,7 @@ export async function getBangumiPeople({
 
   const result = parseBangumiPeoplePage(html, page);
   if (result.items.length === 0 && page === 1) {
+    reportHtmlParseFailure({ page, parser: 'people', url });
     throw new BangumiPeopleListError(502, 'Bangumi 人物页面结构已变化。');
   }
   return result;

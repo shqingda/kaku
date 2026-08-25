@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicIndexPage } from './model.ts';
 
 const BANGUMI_INDEX_URL = 'https://bgm.tv/index/browser';
@@ -367,6 +368,7 @@ export async function getBangumiIndexes({
 
   const result = parseBangumiIndexPage(html, page);
   if (result.items.length === 0 && page === 1) {
+    reportHtmlParseFailure({ page, parser: 'indexes', url });
     throw new BangumiIndexListError(502, 'Bangumi 目录页面结构已变化。');
   }
   return result;

@@ -2,11 +2,11 @@ import type { Context, Hono } from 'hono';
 
 import { getValidBangumiAccessToken } from '../auth/bangumi-token-service.ts';
 import type { AuthDependencies } from '../auth/routes.ts';
-import { getAuthStore, mapBangumiAuthError } from '../auth/route-helpers.ts';
 import {
-  authenticateRequest,
-  isAuthenticationResponse,
-} from '../auth/session-service.ts';
+  authenticateContext,
+  mapBangumiAuthError,
+} from '../auth/route-helpers.ts';
+import { isAuthenticationResponse } from '../auth/session-service.ts';
 import type { Env } from '../env.ts';
 import {
   BangumiFriendsError,
@@ -45,8 +45,11 @@ export function registerFriendRoutes(
       );
     }
 
-    const store = getAuthStore(context.env, dependencies.createStore);
-    const authentication = await authenticateRequest(context, store, now());
+    const { authentication, store } = await authenticateContext(
+      context,
+      dependencies.createStore,
+      now,
+    );
 
     if (isAuthenticationResponse(authentication)) {
       return authentication;
@@ -123,8 +126,11 @@ export function registerFriendRoutes(
   );
 
   app.get('/me/blocklist', async (context) => {
-    const store = getAuthStore(context.env, dependencies.createStore);
-    const authentication = await authenticateRequest(context, store, now());
+    const { authentication, store } = await authenticateContext(
+      context,
+      dependencies.createStore,
+      now,
+    );
 
     if (isAuthenticationResponse(authentication)) {
       return authentication;
