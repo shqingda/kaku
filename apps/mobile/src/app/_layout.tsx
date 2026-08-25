@@ -157,6 +157,15 @@ function RootNavigator() {
             }}
           />
           <Stack.Screen
+            name="collection-overview"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '收藏概览',
+            }}
+          />
+          <Stack.Screen
             name="footprint"
             options={{
               headerBackButtonDisplayMode: 'minimal',

@@ -9,10 +9,12 @@ import { useTheme } from '@/features/theme/theme-provider';
 // 失败永不隐藏在空白背后：标题 + 说明 + 显式重试按钮。
 export function AppState({
   action,
+  actionLabel = '重试',
   text,
   title,
 }: {
   action?: () => void;
+  actionLabel?: string;
   text: string;
   title: string;
 }) {
@@ -31,7 +33,7 @@ export function AppState({
       <Text style={styles.stateText}>{text}</Text>
       {action ? (
         <Pressable
-          accessibilityLabel={`重试${title}`}
+          accessibilityLabel={actionLabel}
           accessibilityRole="button"
           onPress={action}
           style={({ pressed }) => [
@@ -39,7 +41,7 @@ export function AppState({
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.retryText}>重试</Text>
+          <Text style={styles.retryText}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>
