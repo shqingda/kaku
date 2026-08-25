@@ -102,6 +102,8 @@ export default function ExploreScreen() {
     addSearch,
     clearHistory: clearSearchHistory,
     items: recentSearches,
+    refreshFromCloud: refreshSearchHistory,
+    syncIfStale: syncSearchHistoryIfStale,
   } = useSearchHistory();
   const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
   const clearSearchFrameRef = useRef<number | null>(null);
@@ -199,6 +201,8 @@ export default function ExploreScreen() {
     useCallback(() => {
       let active = true;
 
+      void syncSearchHistoryIfStale();
+
       void loadRecentSubjects().then((items) => {
         if (active) setRecentSubjects(items);
       });
@@ -206,7 +210,7 @@ export default function ExploreScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [syncSearchHistoryIfStale]),
   );
 
   function rememberSearch(nextKeyword: string) {
@@ -251,8 +255,14 @@ export default function ExploreScreen() {
   }
 
   function refreshOverview() {
+    void refreshSearchHistory();
     void rankedQuery.refetch();
     if (selectedSearchType === 2) void calendarQuery.refetch();
+  }
+
+  function refreshSearchResults() {
+    void refreshSearchHistory();
+    void activeSearchQuery.refetch();
   }
 
   return (
@@ -290,7 +300,7 @@ export default function ExploreScreen() {
           }}
           onLoadMore={() => void activeSearchQuery.fetchNextPage()}
           onRetry={() => void activeSearchQuery.refetch()}
-          onRefresh={() => void activeSearchQuery.refetch()}
+          onRefresh={refreshSearchResults}
           onSubmit={submitSearch}
           people={searchPeople}
           searchMode={searchMode}

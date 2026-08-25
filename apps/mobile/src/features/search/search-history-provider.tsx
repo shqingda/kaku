@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { parseSearchHistoryResponse } from '@/infrastructure/kaku/search-history-client';
@@ -24,9 +25,13 @@ type SearchHistoryContextValue = {
   clearHistory: () => Promise<void>;
   cloudError: string | null;
   items: string[];
+  refreshFromCloud: () => Promise<void>;
   retryCloudSync: () => Promise<void>;
+  syncIfStale: () => Promise<void>;
   syncing: boolean;
 };
+
+const PULL_DEDUPLICATION_MS = 2_000;
 
 const SearchHistoryContext =
   createContext<SearchHistoryContextValue | null>(null);
@@ -41,6 +46,8 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const recordRef = useRef(record);
+  const lastPullAtRef = useRef(0);
+  const pullPromiseRef = useRef<Promise<void> | null>(null);
   const writeChainRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
@@ -94,7 +101,7 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
     [pushToCloud],
   );
 
-  const syncFromCloud = useCallback(async () => {
+  const performCloudSync = useCallback(async () => {
     if (!session) return;
     setSyncing(true);
     try {
@@ -114,13 +121,49 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
     }
   }, [enqueuePush, request, session]);
 
+  const pullFromCloud = useCallback(
+    (force = false) => {
+      if (!session) return Promise.resolve();
+      if (pullPromiseRef.current) return pullPromiseRef.current;
+      if (
+        !force &&
+        Date.now() - lastPullAtRef.current < PULL_DEDUPLICATION_MS
+      ) {
+        return Promise.resolve();
+      }
+
+      lastPullAtRef.current = Date.now();
+      const task = performCloudSync().finally(() => {
+        pullPromiseRef.current = null;
+      });
+      pullPromiseRef.current = task;
+      return task;
+    },
+    [performCloudSync, session],
+  );
+
   useEffect(() => {
     if (!session) {
       setCloudError(null);
       return;
     }
-    if (ready) void syncFromCloud();
-  }, [ready, session, syncFromCloud]);
+    if (ready) void pullFromCloud(true);
+  }, [pullFromCloud, ready, session]);
+
+  useEffect(() => {
+    let previousState = AppState.currentState;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const becameActive =
+        previousState !== 'active' && nextState === 'active';
+      previousState = nextState;
+
+      if (becameActive && ready && session) {
+        void pullFromCloud();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [pullFromCloud, ready, session]);
 
   const updateLocal = useCallback(
     (items: string[]) => {
@@ -154,7 +197,9 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
       clearHistory,
       cloudError,
       items: record.items,
-      retryCloudSync: syncFromCloud,
+      refreshFromCloud: () => pullFromCloud(true),
+      retryCloudSync: () => pullFromCloud(true),
+      syncIfStale: () => pullFromCloud(false),
       syncing,
     }),
     [
@@ -162,7 +207,7 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
       clearHistory,
       cloudError,
       record.items,
-      syncFromCloud,
+      pullFromCloud,
       syncing,
     ],
   );
