@@ -157,6 +157,15 @@ function RootNavigator() {
             }}
           />
           <Stack.Screen
+            name="footprint"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '浏览足迹',
+            }}
+          />
+          <Stack.Screen
             name="about"
             options={{
               headerBackButtonDisplayMode: 'minimal',

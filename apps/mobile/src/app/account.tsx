@@ -238,6 +238,18 @@ export default function AccountScreen() {
               />
               <AccountMenuRow
                 colors={colors}
+                description="近期条目与类型偏好"
+                hasDivider
+                icon={{
+                  android: 'insights',
+                  ios: 'chart.bar.xaxis',
+                  web: 'insights',
+                }}
+                label="浏览足迹"
+                onPress={() => router.push('/footprint')}
+              />
+              <AccountMenuRow
+                colors={colors}
                 description="版本、帮助与隐私"
                 hasDivider
                 icon={{
