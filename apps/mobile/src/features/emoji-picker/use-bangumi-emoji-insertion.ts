@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { TextInput, TextInputSelectionChangeEvent } from 'react-native';
 
+import { insertAtSelection } from '@/features/rich-text/rich-text-input';
+
 export function useBangumiEmojiInsertion(
   inputRef: RefObject<TextInput | null>,
   content: string,
   setContent: Dispatch<SetStateAction<string>>,
+  maxLength: number,
 ) {
   const selectionRef = useRef({ start: 0, end: 0 });
   const contentRef = useRef(content);
@@ -21,27 +24,25 @@ export function useBangumiEmojiInsertion(
     [],
   );
 
-  const insertEmoji = useCallback(
-    (sticker: string) => {
+  const insertText = useCallback(
+    (text: string) => {
       const current = contentRef.current;
-      const focused = inputRef.current?.isFocused() ?? false;
-      const { start, end } = focused
-        ? selectionRef.current
-        : { start: current.length, end: current.length };
-      const from = Math.min(start, end);
-      const to = Math.max(start, end);
+      const result = insertAtSelection(current, text, selectionRef.current, maxLength);
+      if (!result) {
+        return false;
+      }
 
-      const next = current.slice(0, from) + sticker + current.slice(to);
-      contentRef.current = next;
-      setContent(next);
+      contentRef.current = result.content;
+      selectionRef.current = result.selection;
+      setContent(result.content);
 
-      const nextCursor = from + sticker.length;
       requestAnimationFrame(() => {
-        inputRef.current?.setSelection(nextCursor, nextCursor);
+        inputRef.current?.setSelection(result.selection.start, result.selection.end);
       });
+      return true;
     },
-    [inputRef, setContent],
+    [inputRef, maxLength, setContent],
   );
 
-  return { insertEmoji, onSelectionChange };
+  return { insertText, onSelectionChange };
 }

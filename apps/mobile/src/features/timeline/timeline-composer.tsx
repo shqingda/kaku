@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { BangumiEmojiToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
+import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { confirmDiscard } from '@/features/shared/confirm-discard';
@@ -34,10 +34,11 @@ export function TimelineComposer({
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
-  const { insertEmoji, onSelectionChange } = useBangumiEmojiInsertion(
+  const { insertText, onSelectionChange } = useBangumiEmojiInsertion(
     inputRef,
     content,
     setContent,
+    MAX_CONTENT_LENGTH,
   );
   const createTimeline = useCreateTimelineSay();
   const hasUnsavedChanges = Boolean(content.trim());
@@ -162,7 +163,7 @@ export function TimelineComposer({
           value={content}
         />
 
-        <BangumiEmojiToolbar onInsert={insertEmoji} />
+        <BangumiRichTextToolbar onInsert={insertText} />
 
         <View style={styles.footer}>
           <View style={styles.verificationHint}>
