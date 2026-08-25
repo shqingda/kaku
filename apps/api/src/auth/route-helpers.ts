@@ -22,11 +22,10 @@ export async function authenticateContext(
   createStore?: (database: D1Database) => AuthStore,
   now: () => number = Date.now,
 ) {
-  return authenticateRequest(
-    context,
-    getAuthStore(context.env, createStore),
-    now(),
-  );
+  const store = getAuthStore(context.env, createStore);
+  const authentication = await authenticateRequest(context, store, now());
+
+  return { authentication, store };
 }
 
 export function mapBangumiAuthError(

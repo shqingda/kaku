@@ -36,7 +36,7 @@ export function registerRecentSubjectsRoutes(
     createD1RecentSubjectsStore(env.DB);
 
   app.get('/me/recent-subjects', async (context) => {
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,
@@ -62,7 +62,7 @@ export function registerRecentSubjectsRoutes(
       );
     }
 
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,

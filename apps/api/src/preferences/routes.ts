@@ -53,7 +53,7 @@ export function registerPreferenceRoutes(
   const now = dependencies.now ?? Date.now;
 
   app.get('/me/preferences', async (context) => {
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,
@@ -93,7 +93,7 @@ export function registerPreferenceRoutes(
       );
     }
 
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,

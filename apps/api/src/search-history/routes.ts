@@ -28,7 +28,7 @@ export function registerSearchHistoryRoutes(
     createD1SearchHistoryStore(env.DB);
 
   app.get('/me/search-history', async (context) => {
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,
@@ -54,7 +54,7 @@ export function registerSearchHistoryRoutes(
       );
     }
 
-    const authentication = await authenticateContext(
+    const { authentication } = await authenticateContext(
       context,
       dependencies.createStore,
       now,

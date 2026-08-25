@@ -38,7 +38,7 @@
 - [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
 - [x] D1 定时清理：`scheduled` 仅清理已过期的 OAuth transaction、handoff、refresh session，Cron 每天 03:00；不会删除仍有效的登录会话。
 - [x] 测试补充：preferences routes、maintenance cleanup。
-- [ ] API 鉴权/错误处理收拢：新增 `authenticateContext` 收拢 store 创建、时间注入与 session 校验，新搜索历史路由及 preferences 已迁移；其余 domain 仍需渐进迁移，避免一次性重写。
+- [ ] API 鉴权/错误处理收拢：`authenticateContext` 统一返回当前 authentication 与同一 auth store，已迁移 preferences、搜索历史、最近浏览和举报；其余 domain 仍需渐进迁移，避免一次性重写。
 - [ ] HTML 抓取监控：为 5 个 HTML 抓取模块增加结构化告警 / 解析失败指标。
 - [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。
@@ -55,7 +55,7 @@
 - [x] KV：用于低频公共远程配置，`/config` 先走 Cache API（5 分钟）再读 KV，避免每次请求消耗 KV 额度；namespace 绑定采用 Wrangler 自动配置，部署时创建，不进行高频写入。
 - [ ] R2：导出文件、报告、抓取快照，免费版有容量，仅按需使用。
 - [ ] Queues：批量刷新、推送通知、导出任务，免费版有配额，需评估用量。
-- [ ] Cache API 已用：继续作为边缘热缓存，优先于 KV 写。
+- [x] Cache API 已用：公开 `/config` 先走 5 分钟边缘热缓存，再读低频 KV 配置，避免每次请求消耗 KV 读取额度。
 - [ ] Durable Objects：暂缓，免费版限制/复杂度较高，不是当前瓶颈。
 - [ ] Browser Rendering：暂缓，可能超出免费版合理用量且不一定必要。
 
