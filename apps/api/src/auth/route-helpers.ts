@@ -5,6 +5,7 @@ import { BangumiOAuthError } from './bangumi-client.ts';
 import { BangumiReauthorizationRequiredError } from './bangumi-token-service.ts';
 import { createD1AuthStore } from './store.ts';
 import type { AuthStore } from './store.ts';
+import { authenticateRequest } from './session-service.ts';
 
 // 鉴权路由共享的两段样板：store 的创建（测试注入 / 生产 D1）与 OAuth /
 // 重新授权两类共有错误的 HTTP 映射。各 feature 自身的上游错误映射并不相同，
@@ -14,6 +15,18 @@ export function getAuthStore(
   createStore?: (database: D1Database) => AuthStore,
 ): AuthStore {
   return createStore ? createStore(env.DB) : createD1AuthStore(env.DB);
+}
+
+export async function authenticateContext(
+  context: Context<{ Bindings: Env }>,
+  createStore?: (database: D1Database) => AuthStore,
+  now: () => number = Date.now,
+) {
+  return authenticateRequest(
+    context,
+    getAuthStore(context.env, createStore),
+    now(),
+  );
 }
 
 export function mapBangumiAuthError(

@@ -23,7 +23,7 @@ import {
 } from '@/features/auth/use-device-sessions';
 import { useNotifications } from '@/features/notifications/use-notifications';
 import { clearRecentSubjects } from '@/features/history/recent-subjects';
-import { clearRecentSearches } from '@/features/search/search-history';
+import { useSearchHistory } from '@/features/search/search-history-provider';
 import { useTheme } from '@/features/theme/theme-provider';
 import { queryPersister } from '@/lib/query-persister';
 import { clearDiagnosticRecords } from '@/lib/diagnostic-log';
@@ -54,6 +54,7 @@ export default function AccountScreen() {
   const sessionsQuery = useDeviceSessions();
   const revokeSession = useRevokeDeviceSession();
   const notificationsQuery = useNotifications();
+  const { clearHistory: clearSearchHistory } = useSearchHistory();
 
   async function handleSignIn() {
     if (await signIn()) {
@@ -86,7 +87,7 @@ export default function AccountScreen() {
 
       const results = await Promise.allSettled([
         queryPersister.removeClient(),
-        clearRecentSearches(),
+        clearSearchHistory(),
         clearRecentSubjects(),
         clearDiagnosticRecords(),
         Image.clearMemoryCache(),
@@ -100,7 +101,7 @@ export default function AccountScreen() {
 
       Alert.alert(
         '已清理',
-        '公开缓存、图片、最近记录和诊断信息已从本机移除。',
+        '公开缓存、图片、最近记录和诊断信息已清理；搜索历史也会同步清除。',
       );
     } finally {
       setIsClearingLocalData(false);
@@ -110,7 +111,7 @@ export default function AccountScreen() {
   function confirmClearLocalData() {
     Alert.alert(
       '清理本地数据？',
-      '将删除公开内容缓存、图片缓存、最近搜索、最近浏览和诊断记录。不会退出登录，也不会修改 Bangumi 收藏。',
+      '将删除公开内容缓存、图片缓存、最近搜索、最近浏览和诊断记录。最近搜索会从其他 Kaku 设备同步清除；不会退出登录，也不会修改 Bangumi 收藏。',
       [
         { style: 'cancel', text: '取消' },
         {

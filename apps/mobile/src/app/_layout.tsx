@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import '@/lib/sentry';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';
+import { SearchHistoryProvider } from '@/features/search/search-history-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
 import { HeaderHomeButton } from '@/features/shared/header-home-button';
@@ -71,11 +72,13 @@ export default function RootLayout() {
         }}
       >
         <AuthProvider>
-          <PreferencesProvider>
-            <ThemeProvider>
-              <RootNavigator />
-            </ThemeProvider>
-          </PreferencesProvider>
+          <SearchHistoryProvider>
+            <PreferencesProvider>
+              <ThemeProvider>
+                <RootNavigator />
+              </ThemeProvider>
+            </PreferencesProvider>
+          </SearchHistoryProvider>
         </AuthProvider>
         </PersistQueryClientProvider>
       </GestureHandlerRootView>

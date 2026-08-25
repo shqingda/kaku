@@ -8,6 +8,7 @@ import { SymbolView } from 'expo-symbols';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePreferences } from '@/features/preferences/preferences-provider';
+import { useSearchHistory } from '@/features/search/search-history-provider';
 import type { ThemePreference } from '@/features/preferences/preferences-model';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
@@ -47,6 +48,7 @@ export default function SettingsScreen() {
     setTheme,
     syncing,
   } = usePreferences();
+  const searchHistory = useSearchHistory();
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -106,7 +108,7 @@ export default function SettingsScreen() {
           })}
         </View>
 
-        <Text style={styles.sectionTitle}>偏好同步</Text>
+        <Text style={styles.sectionTitle}>同步</Text>
         <View style={styles.group}>
           {session ? (
             <View style={styles.syncRow}>
@@ -169,6 +171,37 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           )}
+          {session ? (
+            <View style={[styles.syncRow, styles.rowDivider]}>
+              <View style={styles.syncCopy}>
+                <Text style={styles.syncTitle}>最近搜索</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!searchHistory.cloudError || searchHistory.syncing}
+                  onPress={() => void searchHistory.retryCloudSync()}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text
+                    style={[
+                      styles.syncDescription,
+                      searchHistory.cloudError && styles.syncDescriptionError,
+                    ]}
+                  >
+                    {searchHistory.syncing
+                      ? '正在同步…'
+                      : searchHistory.cloudError
+                        ? '上次同步失败，点此重试。'
+                        : '最多 8 条，可在搜索页或清理本地数据时清除。'}
+                  </Text>
+                </Pressable>
+              </View>
+              <SymbolView
+                name={{ android: 'history', ios: 'clock', web: 'history' }}
+                size={18}
+                tintColor={colors.subtle}
+              />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

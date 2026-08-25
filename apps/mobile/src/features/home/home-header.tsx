@@ -11,11 +11,7 @@ import {
 
 import type { ThemeColors } from '@/constants/theme';
 import type { AuthSession } from '@/features/auth/model';
-import {
-  addRecentSearch,
-  loadRecentSearches,
-  saveRecentSearches,
-} from '@/features/search/search-history';
+import { useSearchHistory } from '@/features/search/search-history-provider';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -24,6 +20,7 @@ import { ProfileMenu } from './profile-menu';
 export function HomeHeader({ session }: { session: AuthSession | null }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { addSearch } = useSearchHistory();
   const [searchDraft, setSearchDraft] = useState('');
 
   function submitSearch() {
@@ -34,9 +31,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
     }
 
     Keyboard.dismiss();
-    void loadRecentSearches().then((current) =>
-      saveRecentSearches(addRecentSearch(current, keyword)),
-    );
+    addSearch(keyword);
     router.push({ pathname: '/explore', params: { q: keyword } });
   }
 

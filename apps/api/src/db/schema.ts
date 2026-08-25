@@ -57,3 +57,11 @@ export const userPreferences = sqliteTable('user_preferences', {
     .primaryKey()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
+
+export const userSearchHistory = sqliteTable('user_search_history', {
+  items: text('items').notNull().default('[]'),
+  updatedAt: integer('updated_at').notNull(),
+  userId: integer('user_id')
+    .primaryKey()
+    .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
+});

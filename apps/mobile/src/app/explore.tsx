@@ -47,12 +47,7 @@ import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { SectionAction } from '@/features/shared/section-action';
 import { RecentSearches } from '@/features/search/recent-searches';
-import {
-  addRecentSearch,
-  clearRecentSearches,
-  loadRecentSearches,
-  saveRecentSearches,
-} from '@/features/search/search-history';
+import { useSearchHistory } from '@/features/search/search-history-provider';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { RecentSubjectsSection } from '@/features/history/recent-subjects-section';
 import type { RecentSubject } from '@/features/history/recent-subjects-model';
@@ -103,7 +98,11 @@ export default function ExploreScreen() {
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
   const [searchMode, setSearchMode] = useState<SearchMode>('subject');
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const {
+    addSearch,
+    clearHistory: clearSearchHistory,
+    items: recentSearches,
+  } = useSearchHistory();
   const [recentSubjects, setRecentSubjects] = useState<RecentSubject[]>([]);
   const clearSearchFrameRef = useRef<number | null>(null);
   const {
@@ -179,18 +178,6 @@ export default function ExploreScreen() {
     [calendarDays, selectedDay],
   );
 
-  useEffect(() => {
-    let active = true;
-
-    void loadRecentSearches().then((items) => {
-      if (active) setRecentSearches(items);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   // 首页再次提交搜索时，Expo Router 会复用已挂载的 Explore 屏并只更新
   // query 参数；useState 的初始值不会重新计算，因此把新 q 同步回本地
   // state。搜索历史由首页提交时写入，这里不再重复记录。
@@ -223,11 +210,7 @@ export default function ExploreScreen() {
   );
 
   function rememberSearch(nextKeyword: string) {
-    setRecentSearches((current) => {
-      const next = addRecentSearch(current, nextKeyword);
-      void saveRecentSearches(next);
-      return next;
-    });
+    addSearch(nextKeyword);
   }
 
   function submitSearch() {
@@ -245,11 +228,6 @@ export default function ExploreScreen() {
     setKeyword(nextKeyword);
     rememberSearch(nextKeyword);
     Keyboard.dismiss();
-  }
-
-  function clearSearchHistory() {
-    setRecentSearches([]);
-    void clearRecentSearches();
   }
 
   function clearBrowsingHistory() {

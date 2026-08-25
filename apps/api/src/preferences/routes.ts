@@ -2,9 +2,8 @@ import type { Hono } from 'hono';
 import { z } from 'zod';
 
 import type { AuthDependencies } from '../auth/routes.ts';
-import { getAuthStore } from '../auth/route-helpers.ts';
+import { authenticateContext } from '../auth/route-helpers.ts';
 import {
-  authenticateRequest,
   isAuthenticationResponse,
 } from '../auth/session-service.ts';
 import type { Env } from '../env.ts';
@@ -54,8 +53,11 @@ export function registerPreferenceRoutes(
   const now = dependencies.now ?? Date.now;
 
   app.get('/me/preferences', async (context) => {
-    const store = getAuthStore(context.env, dependencies.createStore);
-    const authentication = await authenticateRequest(context, store, now());
+    const authentication = await authenticateContext(
+      context,
+      dependencies.createStore,
+      now,
+    );
 
     if (isAuthenticationResponse(authentication)) {
       return authentication;
@@ -91,8 +93,11 @@ export function registerPreferenceRoutes(
       );
     }
 
-    const store = getAuthStore(context.env, dependencies.createStore);
-    const authentication = await authenticateRequest(context, store, now());
+    const authentication = await authenticateContext(
+      context,
+      dependencies.createStore,
+      now,
+    );
 
     if (isAuthenticationResponse(authentication)) {
       return authentication;

@@ -25,7 +25,7 @@
 - [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
 - [ ] 推送通知：需要 APNs / FCM、用户授权，以及 Queue + Cron 轮询。
 - [ ] 离线增强：当前已有公开查询缓存，可继续做条目详情/章节离线包。
-- [ ] 多设备偏好/搜索历史/最近浏览同步：D1 已可承载，待移动端接入。
+- [ ] 多设备偏好/搜索历史/最近浏览同步：主题偏好与最近搜索已接入；最近搜索本地即时更新、登录后按时间戳合并，最多 8 条，可跨设备清除，失败在设置页显式重试。最近浏览仍只保存在本机。
 - [ ] 小组件 / 快捷指令：iOS Widget、Android App Widget。
 - [ ] 多数据源/跨站数据增强：需要先完善领域模型抽象，暂缓。
 
@@ -37,7 +37,7 @@
 - [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
 - [x] D1 定时清理：`scheduled` 仅清理已过期的 OAuth transaction、handoff、refresh session，Cron 每天 03:00；不会删除仍有效的登录会话。
 - [x] 测试补充：preferences routes、maintenance cleanup。
-- [ ] API 鉴权/错误处理收拢：抽公共 middleware / helper，减少各 domain 重复样板。
+- [ ] API 鉴权/错误处理收拢：新增 `authenticateContext` 收拢 store 创建、时间注入与 session 校验，新搜索历史路由及 preferences 已迁移；其余 domain 仍需渐进迁移，避免一次性重写。
 - [ ] HTML 抓取监控：为 5 个 HTML 抓取模块增加结构化告警 / 解析失败指标。
 - [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。

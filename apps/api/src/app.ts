@@ -27,6 +27,10 @@ import {
   registerRankingRoutes,
 } from './rankings/routes.ts';
 import { registerReportRoutes } from './reports/routes.ts';
+import {
+  registerSearchHistoryRoutes,
+  type SearchHistoryDependencies,
+} from './search-history/routes.ts';
 import { registerTimelineRoutes } from './timeline/routes.ts';
 import { registerTagRoutes } from './tags/routes.ts';
 import { registerWikiRoutes } from './wiki/routes.ts';
@@ -34,7 +38,8 @@ import { registerWikiRoutes } from './wiki/routes.ts';
 type AppDependencies = AuthDependencies &
   ConfigDependencies &
   PreferencesDependencies &
-  RankingDependencies;
+  RankingDependencies &
+  SearchHistoryDependencies;
 
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
@@ -60,6 +65,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerPreferenceRoutes(app, dependencies);
   registerRankingRoutes(app, dependencies);
   registerReportRoutes(app, dependencies);
+  registerSearchHistoryRoutes(app, dependencies);
   registerTagRoutes(app, dependencies);
   registerTimelineRoutes(app, dependencies);
   registerWikiRoutes(app, dependencies);
