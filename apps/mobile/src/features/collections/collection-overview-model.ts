@@ -29,3 +29,43 @@ export function buildCollectionOverview(
     total,
   };
 }
+
+export function buildCollectionOverviewShareText(
+  overview: CollectionOverview,
+  username: string,
+) {
+  const rows = overview.items.map(
+    (item) =>
+      `${item.label} ${item.total.toLocaleString('zh-CN')} 部（${item.percentage.toLocaleString('zh-CN', { maximumFractionDigits: 1 })}%）`,
+  );
+
+  return [
+    'Kaku 收藏概览',
+    `@${username} · 共 ${overview.total.toLocaleString('zh-CN')} 部`,
+    '',
+    ...rows,
+    '',
+    '数据来自 Bangumi 当前公开收藏总数。',
+  ].join('\n');
+}
+
+export function buildCollectionOverviewJson(
+  overview: CollectionOverview,
+  username: string,
+) {
+  return JSON.stringify(
+    {
+      source: 'bangumi-public-collection-totals',
+      total: overview.total,
+      types: overview.items.map(({ label, subjectType, total }) => ({
+        label,
+        subjectType,
+        total,
+      })),
+      username,
+      version: 1,
+    },
+    null,
+    2,
+  );
+}

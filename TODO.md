@@ -23,7 +23,7 @@
 - [ ] 用户偏好云同步（locale）：`locale` 字段暂未接入移动端，需要先有 i18n 基建；API 与 D1 已支持。
 - [ ] 本地/云端统计与年度报告：已新增“收藏概览”，用 Bangumi 各媒体类型接口返回的完整 `total` 汇总总量与类型分布，只读取每类第一页；年度趋势与进度报告仍需完整历史数据后再做。
 - [x] 本地浏览足迹摘要：基于同步后的最近 10 条浏览记录展示近期条目数、活跃日期和类型偏好；明确标注数据范围，不伪装成完整年度报告，也不增加云端数据采集。
-- [ ] 导入/导出收藏与笔记：导出 JSON/CSV，产物可放 R2。
+- [ ] 导入/导出收藏与笔记：收藏概览已支持通过系统分享页导出可读摘要或 provider-neutral JSON，且明确不含条目与私密数据；完整收藏/笔记 JSON、CSV 与可选 R2 仍待实现。
 - [ ] 推送通知：需要 APNs / FCM、用户授权，以及 Queue + Cron 轮询。
 - [ ] 离线增强：当前已有公开查询缓存，可继续做条目详情/章节离线包。
 - [x] 多设备偏好/搜索历史/最近浏览同步：主题偏好、最近搜索与最近浏览均已接入；最近浏览本地即时更新，登录后合并各设备的 10 条轻量快照，并在前台恢复、进入发现页和下拉刷新时回拉；清空操作跨设备传播，失败在设置页显式重试。设备级云同步开关会同时闸停三类云端读写。
@@ -38,8 +38,8 @@
 - [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
 - [x] D1 定时清理：`scheduled` 仅清理已过期的 OAuth transaction、handoff、refresh session，Cron 每天 03:00；不会删除仍有效的登录会话。
 - [x] 测试补充：preferences routes、maintenance cleanup。
-- [ ] API 鉴权/错误处理收拢：`authenticateContext` 统一返回当前 authentication 与同一 auth store，已迁移 preferences、搜索历史、最近浏览和举报；其余 domain 仍需渐进迁移，避免一次性重写。
-- [ ] HTML 抓取监控：为 5 个 HTML 抓取模块增加结构化告警 / 解析失败指标。
+- [ ] API 鉴权/错误处理收拢：`authenticateContext` 统一返回当前 authentication 与同一 auth store，已迁移 preferences、搜索历史、最近浏览、举报、通知、好友与屏蔽；collections、timeline、discussions、indexes 仍需渐进迁移。
+- [x] HTML 抓取监控：blogs、indexes、people、tags、wiki 首页解析为空时写入统一 `bangumi_html_parse_failure` 结构化错误日志，仅含 parser、host、path、page，不记录 HTML、查询参数或用户数据。
 - [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。
 - [ ] 服务端限流：先做轻量级限流，再评估 Durable Objects。

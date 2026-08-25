@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildCollectionOverview } from '../src/features/collections/collection-overview-model.ts';
+import {
+  buildCollectionOverview,
+  buildCollectionOverviewJson,
+  buildCollectionOverviewShareText,
+} from '../src/features/collections/collection-overview-model.ts';
 
 test('collection overview totals media types and keeps their input order', () => {
   const overview = buildCollectionOverview([
@@ -29,4 +33,34 @@ test('collection overview returns zero percentages for an empty collection', () 
     overview.items.map((item) => item.percentage),
     [0, 0],
   );
+});
+
+test('collection overview exports honest text and provider-neutral JSON', () => {
+  const overview = buildCollectionOverview([
+    { subjectType: 2, total: 3 },
+    { subjectType: 1, total: 1 },
+  ]);
+
+  assert.equal(
+    buildCollectionOverviewShareText(overview, 'kaku'),
+    [
+      'Kaku 收藏概览',
+      '@kaku · 共 4 部',
+      '',
+      '动画 3 部（75%）',
+      '书籍 1 部（25%）',
+      '',
+      '数据来自 Bangumi 当前公开收藏总数。',
+    ].join('\n'),
+  );
+  assert.deepEqual(JSON.parse(buildCollectionOverviewJson(overview, 'kaku')), {
+    source: 'bangumi-public-collection-totals',
+    total: 4,
+    types: [
+      { label: '动画', subjectType: 2, total: 3 },
+      { label: '书籍', subjectType: 1, total: 1 },
+    ],
+    username: 'kaku',
+    version: 1,
+  });
 });

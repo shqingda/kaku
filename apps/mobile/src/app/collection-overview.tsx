@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import {
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -12,7 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildCollectionOverview } from '@/features/collections/collection-overview-model';
+import {
+  buildCollectionOverview,
+  buildCollectionOverviewJson,
+  buildCollectionOverviewShareText,
+} from '@/features/collections/collection-overview-model';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
@@ -22,6 +28,7 @@ const COLLECTION_TYPES = [2, 1, 3, 4, 6] as const;
 export default function CollectionOverviewScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [isSharing, setIsSharing] = useState(false);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
   const animeQuery = usePublicUserCollections(username, 2);
@@ -53,6 +60,23 @@ export default function CollectionOverviewScreen() {
 
   function refresh() {
     void Promise.all(queries.map((query) => query.refetch()));
+  }
+
+  async function shareOverview(format: 'json' | 'text') {
+    setIsSharing(true);
+    try {
+      await Share.share({
+        message:
+          format === 'json'
+            ? buildCollectionOverviewJson(overview, username)
+            : buildCollectionOverviewShareText(overview, username),
+        title: format === 'json' ? 'Kaku 收藏概览 JSON' : 'Kaku 收藏概览',
+      });
+    } catch {
+      Alert.alert('暂时无法分享', '系统分享面板没有打开，请稍后重试。');
+    } finally {
+      setIsSharing(false);
+    }
   }
 
   if (isAuthLoading) {
@@ -197,6 +221,39 @@ export default function CollectionOverviewScreen() {
           ))}
         </View>
 
+        <View style={styles.exportCard}>
+          <Text style={styles.cardTitle}>导出与分享</Text>
+          <Text style={styles.exportDescription}>
+            只包含上方五类总数，不包含收藏条目、备注或私密数据。
+          </Text>
+          <View style={styles.exportActions}>
+            <Pressable
+              accessibilityLabel="分享收藏概览摘要"
+              accessibilityRole="button"
+              disabled={isSharing}
+              onPress={() => void shareOverview('text')}
+              style={({ pressed }) => [
+                styles.exportPrimary,
+                (pressed || isSharing) && styles.pressed,
+              ]}
+            >
+              <Text style={styles.exportPrimaryText}>分享摘要</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="导出收藏概览 JSON"
+              accessibilityRole="button"
+              disabled={isSharing}
+              onPress={() => void shareOverview('json')}
+              style={({ pressed }) => [
+                styles.exportSecondary,
+                (pressed || isSharing) && styles.pressed,
+              ]}
+            >
+              <Text style={styles.exportSecondaryText}>导出 JSON</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <Text style={styles.footnote}>
           收藏可见性由 Bangumi 决定。下拉可重新读取；点击任一类型可查看完整列表。
         </Text>
@@ -303,6 +360,47 @@ const createStyles = (colors: ThemeColors) =>
       height: '100%',
     },
     percentage: { color: colors.subtle, fontSize: 11, marginTop: 6 },
+    exportCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 24,
+      marginTop: 12,
+      padding: 20,
+    },
+    exportDescription: {
+      color: colors.subtle,
+      fontSize: 12,
+      lineHeight: 18,
+      marginTop: 4,
+    },
+    exportActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
+    exportPrimary: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: 15,
+      flex: 1,
+      justifyContent: 'center',
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    exportPrimaryText: {
+      color: colors.surface,
+      fontSize: 14,
+      fontWeight: '800',
+    },
+    exportSecondary: {
+      alignItems: 'center',
+      backgroundColor: colors.accentSoft,
+      borderRadius: 15,
+      flex: 1,
+      justifyContent: 'center',
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    exportSecondaryText: {
+      color: colors.accentRich,
+      fontSize: 14,
+      fontWeight: '800',
+    },
     footnote: {
       color: colors.muted,
       fontSize: 11,
