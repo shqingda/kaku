@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -20,6 +20,9 @@ import { useSearchHistory } from '@/features/search/search-history-provider';
 import type { ThemePreference } from '@/features/preferences/preferences-model';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
+
+const SYNC_HINT =
+  '最近搜索最多保留 8 条，最近浏览最多 10 条。可在对应页面或清理本地数据时清除。';
 
 const THEME_OPTIONS: {
   description: string;
@@ -58,6 +61,7 @@ export default function SettingsScreen() {
   } = usePreferences();
   const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
+  const [syncHintVisible, setSyncHintVisible] = useState(false);
   const syncError =
     cloudError || searchHistory.cloudError || recentSubjects.cloudError;
 
@@ -132,15 +136,49 @@ export default function SettingsScreen() {
           {session ? (
             <View style={styles.row}>
               <View style={styles.rowCopy}>
-                <Text style={styles.rowTitle}>云同步</Text>
-                <Text style={styles.rowDescription}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.rowTitle}>云同步</Text>
+                  <Pressable
+                    accessibilityHint={SYNC_HINT}
+                    accessibilityLabel="同步范围说明"
+                    accessibilityRole="button"
+                    hitSlop={HIT_SLOP}
+                    onHoverIn={() => setSyncHintVisible(true)}
+                    onHoverOut={() => setSyncHintVisible(false)}
+                    onPress={() => setSyncHintVisible((visible) => !visible)}
+                    style={({ pressed }) => [
+                      styles.hintAnchor,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <SymbolView
+                      name={{
+                        android: 'error_outline',
+                        ios: 'exclamationmark.circle',
+                        web: 'error_outline',
+                      }}
+                      size={15}
+                      tintColor={colors.subtle}
+                      weight="medium"
+                    />
+                    {syncHintVisible ? (
+                      <View
+                        accessibilityLiveRegion="polite"
+                        style={styles.hintBubble}
+                      >
+                        <Text style={styles.hintText}>{SYNC_HINT}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                </View>
+                <Text numberOfLines={1} style={styles.rowDescription}>
                   {!cloudSyncAvailable
-                    ? 'Kaku 云同步服务暂时关闭，本机设置不受影响。'
+                    ? '云服务暂时关闭，本机不受影响。'
                     : !preferences.syncEnabled
-                      ? '已关闭，外观、搜索和浏览只保存在本机。'
+                      ? '已关闭，只保存在本机。'
                       : syncing
-                        ? '正在同步到其他设备…'
-                        : '外观、最近搜索和浏览会同步到你的其他设备。'}
+                        ? '正在同步…'
+                        : '已开启，将同步到其他设备。'}
                 </Text>
               </View>
               <Switch
@@ -148,6 +186,7 @@ export default function SettingsScreen() {
                 disabled={!cloudSyncAvailable}
                 ios_backgroundColor={colors.track}
                 onValueChange={(enabled) => {
+                  setSyncHintVisible(false);
                   playSelectionHaptic();
                   setSyncEnabled(enabled);
                 }}
@@ -168,8 +207,8 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>设备间同步</Text>
-                <Text style={styles.rowDescription}>
-                  登录后即可在你的设备之间同步外观、搜索和浏览。
+                <Text numberOfLines={1} style={styles.rowDescription}>
+                  登录后即可在设备间同步。
                 </Text>
               </View>
               <Text style={styles.rowAction}>去登录</Text>
@@ -189,9 +228,6 @@ export default function SettingsScreen() {
             </Pressable>
           ) : null}
         </View>
-        <Text style={styles.groupFooter}>
-          最近搜索最多保留 8 条，最近浏览最多 10 条。可在对应页面或清理本地数据时清除。
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -215,7 +251,6 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 20,
-      overflow: 'hidden',
       paddingHorizontal: 16,
     },
     row: {
@@ -229,6 +264,25 @@ const createStyles = (colors: ThemeColors) =>
       borderTopWidth: StyleSheet.hairlineWidth,
     },
     rowCopy: { flex: 1, minWidth: 0, paddingRight: 4 },
+    titleRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+    hintAnchor: { position: 'relative' },
+    hintBubble: {
+      backgroundColor: colors.ink,
+      borderCurve: 'continuous',
+      borderRadius: 10,
+      left: -12,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      position: 'absolute',
+      top: 22,
+      width: 228,
+      zIndex: 4,
+    },
+    hintText: {
+      color: colors.surface,
+      fontSize: 12,
+      lineHeight: 17,
+    },
     rowTitle: {
       color: colors.ink,
       fontSize: TYPE.heading.fontSize,
@@ -259,14 +313,6 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: TYPE.caption.fontSize,
       fontWeight: '600',
       lineHeight: TYPE.caption.lineHeight,
-    },
-    groupFooter: {
-      color: colors.muted,
-      fontSize: TYPE.caption.fontSize,
-      letterSpacing: TYPE.caption.letterSpacing,
-      lineHeight: 20,
-      marginTop: 8,
-      paddingHorizontal: 16,
     },
     pressed: { opacity: 0.62 },
   });
