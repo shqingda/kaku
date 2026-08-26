@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from 'drizzle-orm';
+import { and, desc, eq, gt, ne } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
 import {
@@ -72,6 +72,10 @@ export type AuthStore = {
   }) => Promise<void>;
   deleteAllSessions: (userId: number) => Promise<void>;
   deleteBangumiCredential: (userId: number) => Promise<void>;
+  deleteOtherSessions: (
+    userId: number,
+    currentSessionId: string,
+  ) => Promise<number>;
   deleteSession: (tokenHash: string) => Promise<void>;
   deleteSessionById: (userId: number, sessionId: string) => Promise<boolean>;
   getBangumiCredential: (
@@ -194,6 +198,20 @@ export function createD1AuthStore(database: D1Database): AuthStore {
 
     async deleteAllSessions(userId) {
       await db.delete(sessions).where(eq(sessions.userId, userId));
+    },
+
+    async deleteOtherSessions(userId, currentSessionId) {
+      const deleted = await db
+        .delete(sessions)
+        .where(
+          and(
+            eq(sessions.userId, userId),
+            ne(sessions.sessionId, currentSessionId),
+          ),
+        )
+        .returning({ sessionId: sessions.sessionId });
+
+      return deleted.length;
     },
 
     async deleteBangumiCredential(userId) {

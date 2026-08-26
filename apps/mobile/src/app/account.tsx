@@ -20,6 +20,7 @@ import { takeReturnTo } from '@/lib/auth-redirect';
 import {
   useDeviceSessions,
   useRevokeDeviceSession,
+  useRevokeOtherDeviceSessions,
 } from '@/features/auth/use-device-sessions';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { useNotifications } from '@/features/notifications/use-notifications';
@@ -54,6 +55,10 @@ export default function AccountScreen() {
   } = useAuth();
   const sessionsQuery = useDeviceSessions();
   const revokeSession = useRevokeDeviceSession();
+  const revokeOtherSessions = useRevokeOtherDeviceSessions();
+  const otherSessionCount =
+    sessionsQuery.data?.filter((deviceSession) => !deviceSession.current)
+      .length ?? 0;
   const notificationsQuery = useNotifications();
   const { clearHistory: clearRecentSubjects } = useRecentSubjects();
   const { clearHistory: clearSearchHistory } = useSearchHistory();
@@ -109,6 +114,30 @@ export default function AccountScreen() {
     } finally {
       setIsClearingLocalData(false);
     }
+  }
+
+  function confirmRevokeOtherSessions() {
+    Alert.alert(
+      '退出其他登录？',
+      '其他设备需要重新用 Bangumi 登录。当前这台设备不受影响。',
+      [
+        { style: 'cancel', text: '取消' },
+        {
+          onPress: () => {
+            void revokeOtherSessions.mutateAsync().catch((caughtError: unknown) => {
+              Alert.alert(
+                '未能退出其他登录',
+                caughtError instanceof Error
+                  ? caughtError.message
+                  : '请稍后重试。',
+              );
+            });
+          },
+          style: 'destructive',
+          text: '退出其他登录',
+        },
+      ],
+    );
   }
 
   function confirmClearLocalData() {
@@ -253,9 +282,26 @@ export default function AccountScreen() {
             <View style={styles.sessionsCard}>
               <View style={styles.sessionsHeading}>
                 <Text style={styles.sessionsTitle}>登录设备</Text>
-                {sessionsQuery.isFetching ? (
-                  <ActivityIndicator color={colors.accent} size="small" />
-                ) : null}
+                <View style={styles.sessionsHeadingActions}>
+                  {sessionsQuery.isFetching || revokeOtherSessions.isPending ? (
+                    <ActivityIndicator color={colors.accent} size="small" />
+                  ) : null}
+                  {otherSessionCount > 0 ? (
+                    <Pressable
+                      accessibilityLabel="退出其他登录"
+                      accessibilityRole="button"
+                      disabled={revokeOtherSessions.isPending}
+                      hitSlop={8}
+                      onPress={confirmRevokeOtherSessions}
+                      style={({ pressed }) =>
+                        (pressed || revokeOtherSessions.isPending) &&
+                        styles.pressed
+                      }
+                    >
+                      <Text style={styles.revokeOtherText}>退出其他登录</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
               {sessionsQuery.isError ? (
                 <Pressable
@@ -668,6 +714,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   sessionsTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  sessionsHeadingActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  revokeOtherText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   sessionMessage: { paddingTop: 14 },
   sessionError: { color: colors.accent, fontSize: 13 },
   sessionRow: {

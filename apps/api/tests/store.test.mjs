@@ -153,6 +153,50 @@ test('listSessions only returns unexpired sessions ordered by recency', async ()
   assert.equal(sessions[0].sessionId, 'session-1');
 });
 
+test('deleteOtherSessions keeps the current device session', async () => {
+  const otherUser = {
+    avatarUrl: 'https://lain.bgm.tv/b.jpg',
+    id: 99,
+    nickname: 'Other Device Owner',
+    username: 'kaku-other-sessions',
+  };
+  await store.saveBangumiLogin({
+    accessToken: 'other-user-access',
+    accessTokenExpiresAt: FUTURE,
+    refreshToken: 'other-user-refresh',
+    updatedAt: NOW,
+    user: otherUser,
+  });
+  await store.createSession({
+    createdAt: NOW,
+    deviceName: '当前设备',
+    expiresAt: FUTURE,
+    refreshExpiresAt: FUTURE,
+    refreshTokenHash: 'other-current-refresh',
+    sessionId: 'other-current',
+    tokenHash: 'other-current-token',
+    userId: otherUser.id,
+  });
+  await store.createSession({
+    createdAt: NOW,
+    deviceName: '另一台设备',
+    expiresAt: FUTURE,
+    refreshExpiresAt: FUTURE,
+    refreshTokenHash: 'other-peer-refresh',
+    sessionId: 'other-peer',
+    tokenHash: 'other-peer-token',
+    userId: otherUser.id,
+  });
+
+  const deleted = await store.deleteOtherSessions(otherUser.id, 'other-current');
+  const remaining = await store.listSessions(otherUser.id, NOW);
+  assert.equal(deleted, 1);
+  assert.deepEqual(
+    remaining.map((session) => session.sessionId),
+    ['other-current'],
+  );
+});
+
 test('deleteSessionById and deleteAllSessions remove the right rows', async () => {
   assert.equal(await store.deleteSessionById(user.id, 'session-old'), true);
   assert.equal(await store.deleteSessionById(user.id, 'session-old'), false);

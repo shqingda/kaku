@@ -326,6 +326,21 @@ export function registerAuthRoutes(
     return context.body(null, 204);
   });
 
+  app.delete('/auth/sessions', async (context) => {
+    const store = getStore(context.env, dependencies);
+    const authentication = await authenticateRequest(context, store, now());
+
+    if (isAuthenticationResponse(authentication)) {
+      return authentication;
+    }
+
+    const revoked = await store.deleteOtherSessions(
+      authentication.userId,
+      authentication.sessionId,
+    );
+    return context.json({ revoked });
+  });
+
   app.get('/auth/sessions', async (context) => {
     const store = getStore(context.env, dependencies);
     const authentication = await authenticateRequest(context, store, now());

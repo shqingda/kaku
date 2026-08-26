@@ -18,6 +18,7 @@ function createFakeStore() {
   let oauthTransaction;
 
   const state = {
+    extraSessions: [],
     savedLogin: undefined,
     session: undefined,
   };
@@ -89,6 +90,15 @@ function createFakeStore() {
       },
       async deleteAllSessions() {
         state.session = undefined;
+      },
+      async deleteOtherSessions(_userId, currentSessionId) {
+        const extras = state.extraSessions.length;
+        state.extraSessions = [];
+        if (state.session && state.session.sessionId !== currentSessionId) {
+          state.session = undefined;
+          return extras + 1;
+        }
+        return extras;
       },
       async deleteBangumiCredential() {
         state.savedLogin = undefined;
@@ -309,6 +319,38 @@ test('refresh tokens rotate once and the new access token authenticates', async 
   assert.equal(sessionsResponse.status, 200);
   assert.equal(sessions.sessions[0].current, true);
   assert.equal(sessions.sessions[0].deviceName, 'Android 设备');
+});
+
+test('DELETE /auth/sessions revokes every session except the current one', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  const accessToken = 'access-token-abcdefghijklmnopqrstuvwxyz';
+  await fake.store.createSession({
+    createdAt: now,
+    deviceName: '当前设备',
+    expiresAt: now + 10_000,
+    refreshExpiresAt: now + 20_000,
+    refreshTokenHash: await hashToken('refresh-token-abcdefghijklmnopqrstuvwxyz'),
+    sessionId: 'session-current',
+    tokenHash: await hashToken(accessToken),
+    userId: 42,
+  });
+  fake.state.extraSessions = [
+    {
+      sessionId: 'session-peer',
+    },
+  ];
+
+  const response = await app.request(
+    '/auth/sessions',
+    { headers: { Authorization: `Bearer ${accessToken}` }, method: 'DELETE' },
+    env,
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { revoked: 1 });
+  assert.equal(fake.state.session?.sessionId, 'session-current');
+  assert.equal(fake.state.extraSessions.length, 0);
 });
 
 test('sign out revokes the current server session', async () => {

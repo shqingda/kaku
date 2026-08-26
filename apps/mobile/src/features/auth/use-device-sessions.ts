@@ -30,6 +30,27 @@ export function useDeviceSessions() {
   });
 }
 
+export function useRevokeOtherDeviceSessions() {
+  const { request, session } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await request('/auth/sessions', { method: 'DELETE' });
+
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+      }
+
+      return response.json() as Promise<{ revoked: number }>;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: deviceSessionsKey(session?.user.id),
+      }),
+  });
+}
+
 export function useRevokeDeviceSession() {
   const { request, session } = useAuth();
   const queryClient = useQueryClient();
