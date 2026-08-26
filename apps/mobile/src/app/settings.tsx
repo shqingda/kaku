@@ -130,7 +130,7 @@ export default function SettingsScreen() {
     },
     {
       key: 'search',
-      label: `搜索 ${searchHistory.items.length}`,
+      label: `最近搜索 ${searchHistory.items.length} 条`,
       onRetry: () => void searchHistory.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
@@ -142,7 +142,7 @@ export default function SettingsScreen() {
     },
     {
       key: 'browse',
-      label: `浏览 ${recentSubjects.items.length}`,
+      label: `最近浏览 ${recentSubjects.items.length} 条`,
       onRetry: () => void recentSubjects.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
@@ -427,17 +427,18 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'space-between',
     },
     statusList: {
+      alignItems: 'center',
       flexDirection: 'row',
-      gap: 8,
+      flexWrap: 'wrap',
+      gap: 12,
       marginTop: 12,
     },
     statusRow: {
       alignItems: 'center',
-      flex: 1,
       flexDirection: 'row',
+      flexShrink: 0,
       gap: 5,
       minHeight: 22,
-      minWidth: 0,
     },
     statusLabel: {
       color: colors.subtle,
