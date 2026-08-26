@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ComponentProps,
 } from 'react';
@@ -108,7 +107,6 @@ export default function ExploreScreen() {
     refreshFromCloud: refreshRecentSubjects,
     syncIfStale: syncRecentSubjectsIfStale,
   } = useRecentSubjects();
-  const clearSearchFrameRef = useRef<number | null>(null);
   const {
     handleScroll: handleOverviewScroll,
     ref: overviewScrollRef,
@@ -191,15 +189,6 @@ export default function ExploreScreen() {
     setKeyword(initialKeyword);
   }, [initialKeyword, setDraft]);
 
-  useEffect(
-    () => () => {
-      if (clearSearchFrameRef.current !== null) {
-        cancelAnimationFrame(clearSearchFrameRef.current);
-      }
-    },
-    [],
-  );
-
   useFocusEffect(
     useCallback(() => {
       void syncSearchHistoryIfStale();
@@ -234,17 +223,7 @@ export default function ExploreScreen() {
 
   function updateDraft(value: string) {
     setDraft(value);
-
-    if (!value) {
-      if (clearSearchFrameRef.current !== null) {
-        cancelAnimationFrame(clearSearchFrameRef.current);
-      }
-      // iOS 的 TextInput clearButton 需要先完成原生清除帧，再卸载搜索 FlatList。
-      clearSearchFrameRef.current = requestAnimationFrame(() => {
-        clearSearchFrameRef.current = null;
-        setKeyword('');
-      });
-    }
+    if (!value) setKeyword('');
   }
 
   function refreshOverview() {
@@ -270,51 +249,22 @@ export default function ExploreScreen() {
         }}
       />
       <View style={styles.body}>
-      {keyword ? (
-        <SearchResults
-          key="search-results"
-          draft={draft}
-          hasNextPage={activeSearchQuery.hasNextPage}
-          isError={activeSearchQuery.isError}
-          isFetchNextPageError={activeSearchQuery.isFetchNextPageError}
-          isFetchingNextPage={activeSearchQuery.isFetchingNextPage}
-          isPending={activeSearchQuery.isPending}
-          isRefetching={activeSearchQuery.isRefetching}
-          keyword={keyword}
-          onChangeDraft={updateDraft}
-          onChangeSearchType={(value) => {
-            if (value === 100) {
-              setSearchMode('character');
-            } else if (value === 101) {
-              setSearchMode('person');
-            } else {
-              setSearchMode('subject');
-              setSelectedSearchType(value);
-            }
-          }}
-          onLoadMore={() => void activeSearchQuery.fetchNextPage()}
-          onRetry={() => void activeSearchQuery.refetch()}
-          onRefresh={refreshSearchResults}
-          onSubmit={submitSearch}
-          people={searchPeople}
-          searchMode={searchMode}
-          subjects={searchSubjects}
-          selectedSearchType={
-            searchMode === 'character'
-              ? 100
-              : searchMode === 'person'
-                ? 101
-                : selectedSearchType
-          }
-          total={searchTotal}
-        />
-        ) : (
+        <View style={styles.searchSlot}>
+          <SearchField
+            draft={draft}
+            onChangeDraft={updateDraft}
+            onSubmit={submitSearch}
+          />
+        </View>
+        <View style={styles.pane}>
           <ScrollView
-            key="explore-overview"
+            accessibilityElementsHidden={Boolean(keyword)}
             contentContainerStyle={styles.content}
+            importantForAccessibility={keyword ? 'no-hide-descendants' : 'auto'}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
             onScroll={handleOverviewScroll}
+            pointerEvents={keyword ? 'none' : 'auto'}
             ref={overviewScrollRef}
             scrollEventThrottle={80}
             refreshControl={
@@ -330,11 +280,6 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             style={styles.overviewList}
           >
-          <SearchField
-            draft={draft}
-            onChangeDraft={updateDraft}
-            onSubmit={submitSearch}
-          />
           {!draft ? (
             <>
               <RecentSearches
@@ -490,11 +435,48 @@ export default function ExploreScreen() {
             />
           </View>
           </ScrollView>
-        )}
+          {keyword ? (
+            <View style={styles.searchOverlay}>
+              <SearchResults
+                hasNextPage={activeSearchQuery.hasNextPage}
+                isError={activeSearchQuery.isError}
+                isFetchNextPageError={activeSearchQuery.isFetchNextPageError}
+                isFetchingNextPage={activeSearchQuery.isFetchingNextPage}
+                isPending={activeSearchQuery.isPending}
+                isRefetching={activeSearchQuery.isRefetching}
+                keyword={keyword}
+                onChangeSearchType={(value) => {
+                  if (value === 100) {
+                    setSearchMode('character');
+                  } else if (value === 101) {
+                    setSearchMode('person');
+                  } else {
+                    setSearchMode('subject');
+                    setSelectedSearchType(value);
+                  }
+                }}
+                onLoadMore={() => void activeSearchQuery.fetchNextPage()}
+                onRetry={() => void activeSearchQuery.refetch()}
+                onRefresh={refreshSearchResults}
+                people={searchPeople}
+                searchMode={searchMode}
+                subjects={searchSubjects}
+                selectedSearchType={
+                  searchMode === 'character'
+                    ? 100
+                    : searchMode === 'person'
+                      ? 101
+                      : selectedSearchType
+                }
+                total={searchTotal}
+              />
+            </View>
+          ) : null}
+        </View>
       </View>
       <ScrollToTopButton
         onPress={scrollOverviewToTop}
-        visible={overviewScrollVisible}
+        visible={overviewScrollVisible && !keyword}
       />
     </SafeAreaView>
   );
@@ -726,7 +708,6 @@ function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
 }
 
 function SearchResults({
-  draft,
   hasNextPage,
   isError,
   isFetchNextPageError,
@@ -734,19 +715,16 @@ function SearchResults({
   isPending,
   isRefetching,
   keyword,
-  onChangeDraft,
   onChangeSearchType,
   onLoadMore,
   onRetry,
   onRefresh,
-  onSubmit,
   people,
   searchMode,
   subjects,
   selectedSearchType,
   total,
 }: {
-  draft: string;
   hasNextPage: boolean;
   isError: boolean;
   isFetchNextPageError: boolean;
@@ -754,12 +732,10 @@ function SearchResults({
   isPending: boolean;
   isRefetching: boolean;
   keyword: string;
-  onChangeDraft: (value: string) => void;
   onChangeSearchType: (subjectType: number) => void;
   onLoadMore: () => void;
   onRetry: () => void;
   onRefresh: () => void;
-  onSubmit: () => void;
   people: PublicPersonSummary[];
   searchMode: SearchMode;
   subjects: DiscoverSubject[];
@@ -802,11 +778,6 @@ function SearchResults({
       }
       ListHeaderComponent={
         <>
-          <SearchField
-            draft={draft}
-            onChangeDraft={onChangeDraft}
-            onSubmit={onSubmit}
-          />
           <SubjectTypeTabs
             contentContainerStyle={styles.subjectTypeTabs}
             onChange={onChangeSearchType}
@@ -913,6 +884,13 @@ function SearchResults({
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   body: { backgroundColor: colors.background, flex: 1 },
+  searchSlot: { paddingHorizontal: 20 },
+  pane: { flex: 1 },
+  searchOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.background,
+    zIndex: 1,
+  },
   overviewList: { flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
   searchList: { backgroundColor: colors.background, flex: 1 },
