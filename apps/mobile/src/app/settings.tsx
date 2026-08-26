@@ -1,9 +1,17 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
 
+import { HIT_SLOP, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
@@ -50,6 +58,14 @@ export default function SettingsScreen() {
   } = usePreferences();
   const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
+  const syncError =
+    cloudError || searchHistory.cloudError || recentSubjects.cloudError;
+
+  function retryFailedSync() {
+    if (cloudError) void retryCloudSync();
+    if (searchHistory.cloudError) void searchHistory.retryCloudSync();
+    if (recentSubjects.cloudError) void recentSubjects.retryCloudSync();
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -57,7 +73,9 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>外观</Text>
+        <Text style={[styles.sectionTitle, styles.firstSectionTitle]}>
+          外观
+        </Text>
         <View style={styles.group}>
           {THEME_OPTIONS.map((option, index) => {
             const isSelected = preferences.theme === option.value;
@@ -74,21 +92,21 @@ export default function SettingsScreen() {
                   setTheme(option.value);
                 }}
                 style={({ pressed }) => [
-                  styles.optionRow,
+                  styles.row,
                   index > 0 && styles.rowDivider,
                   pressed && styles.pressed,
                 ]}
               >
-                <View style={styles.optionCopy}>
+                <View style={styles.rowCopy}>
                   <Text
                     style={[
-                      styles.optionLabel,
-                      isSelected && styles.optionLabelSelected,
+                      styles.rowTitle,
+                      isSelected && styles.rowTitleSelected,
                     ]}
                   >
                     {option.label}
                   </Text>
-                  <Text style={styles.optionDescription}>
+                  <Text style={styles.rowDescription}>
                     {option.description}
                   </Text>
                 </View>
@@ -101,7 +119,7 @@ export default function SettingsScreen() {
                     }}
                     size={18}
                     tintColor={colors.accent}
-                    weight="bold"
+                    weight="semibold"
                   />
                 ) : null}
               </Pressable>
@@ -112,182 +130,143 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>同步</Text>
         <View style={styles.group}>
           {session ? (
-            <View style={styles.syncRow}>
-              <View style={styles.syncCopy}>
-                <Text style={styles.syncTitle}>云同步</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={
-                    !cloudSyncAvailable ||
-                    !preferences.syncEnabled ||
-                    syncing ||
-                    !cloudError
-                  }
-                  onPress={() => void retryCloudSync()}
-                  style={({ pressed }) => pressed && styles.pressed}
-                >
-                  <Text
-                    style={[
-                      styles.syncDescription,
-                      cloudError && !syncing && styles.syncDescriptionError,
-                    ]}
-                  >
-                    {!cloudSyncAvailable
-                      ? 'Kaku 云同步服务暂时关闭，本机设置不受影响。'
-                      : !preferences.syncEnabled
-                      ? '已关闭，外观偏好只保存在本机。'
+            <View style={styles.row}>
+              <View style={styles.rowCopy}>
+                <Text style={styles.rowTitle}>云同步</Text>
+                <Text style={styles.rowDescription}>
+                  {!cloudSyncAvailable
+                    ? 'Kaku 云同步服务暂时关闭，本机设置不受影响。'
+                    : !preferences.syncEnabled
+                      ? '已关闭，外观、搜索和浏览只保存在本机。'
                       : syncing
-                        ? '正在同步…'
-                        : cloudError
-                          ? '上次同步失败，点此重试。'
-                          : '已开启，自动同步到你的其他设备。'}
-                  </Text>
-                </Pressable>
+                        ? '正在同步到其他设备…'
+                        : '外观、最近搜索和浏览会同步到你的其他设备。'}
+                </Text>
               </View>
               <Switch
                 accessibilityLabel="云同步"
                 disabled={!cloudSyncAvailable}
                 ios_backgroundColor={colors.track}
-                onValueChange={setSyncEnabled}
-                style={styles.syncSwitch}
+                onValueChange={(enabled) => {
+                  playSelectionHaptic();
+                  setSyncEnabled(enabled);
+                }}
                 testID="preference-sync-switch"
-                thumbColor={colors.surface}
                 trackColor={{ false: colors.track, true: colors.accent }}
                 value={preferences.syncEnabled}
               />
             </View>
           ) : (
-            <View style={styles.syncRow}>
-              <View style={styles.syncCopy}>
-                <Text style={styles.syncTitle}>设备间同步</Text>
-                <Text style={styles.syncDescription}>
-                  登录后可在你的设备之间同步外观偏好。
+            <Pressable
+              accessibilityLabel="前往登录"
+              accessibilityRole="button"
+              onPress={() => router.push('/account')}
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.rowCopy}>
+                <Text style={styles.rowTitle}>设备间同步</Text>
+                <Text style={styles.rowDescription}>
+                  登录后即可在你的设备之间同步外观、搜索和浏览。
                 </Text>
               </View>
-              <Pressable
-                accessibilityLabel="前往登录"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => router.push('/account')}
-                style={({ pressed }) => pressed && styles.pressed}
-              >
-                <Text style={styles.syncRetry}>去登录</Text>
-              </Pressable>
-            </View>
+              <Text style={styles.rowAction}>去登录</Text>
+            </Pressable>
           )}
-          {session ? (
-            <View style={[styles.syncRow, styles.rowDivider]}>
-              <View style={styles.syncCopy}>
-                <Text style={styles.syncTitle}>最近搜索</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={!searchHistory.cloudError || searchHistory.syncing}
-                  onPress={() => void searchHistory.retryCloudSync()}
-                  style={({ pressed }) => pressed && styles.pressed}
-                >
-                  <Text
-                    style={[
-                      styles.syncDescription,
-                      searchHistory.cloudError && styles.syncDescriptionError,
-                    ]}
-                  >
-                    {searchHistory.syncing
-                      ? '正在同步…'
-                      : searchHistory.cloudError
-                        ? '上次同步失败，点此重试。'
-                        : !preferences.syncEnabled
-                          ? '云同步已关闭，只保存在本机。'
-                        : '最多 8 条，可在搜索页或清理本地数据时清除。'}
-                  </Text>
-                </Pressable>
-              </View>
-              <SymbolView
-                name={{ android: 'history', ios: 'clock', web: 'history' }}
-                size={18}
-                tintColor={colors.subtle}
-              />
-            </View>
-          ) : null}
-          {session ? (
-            <View style={[styles.syncRow, styles.rowDivider]}>
-              <View style={styles.syncCopy}>
-                <Text style={styles.syncTitle}>最近浏览</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={!recentSubjects.cloudError || recentSubjects.syncing}
-                  onPress={() => void recentSubjects.retryCloudSync()}
-                  style={({ pressed }) => pressed && styles.pressed}
-                >
-                  <Text
-                    style={[
-                      styles.syncDescription,
-                      recentSubjects.cloudError && styles.syncDescriptionError,
-                    ]}
-                  >
-                    {recentSubjects.syncing
-                      ? '正在同步…'
-                      : recentSubjects.cloudError
-                        ? '上次同步失败，点此重试。'
-                        : !preferences.syncEnabled
-                          ? '云同步已关闭，只保存在本机。'
-                          : '最多 10 条，可在发现页或清理本地数据时清除。'}
-                  </Text>
-                </Pressable>
-              </View>
-              <SymbolView
-                name={{ android: 'visibility', ios: 'eye', web: 'visibility' }}
-                size={18}
-                tintColor={colors.subtle}
-              />
-            </View>
+          {session && syncError ? (
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={HIT_SLOP}
+              onPress={retryFailedSync}
+              style={({ pressed }) => [
+                styles.retryRow,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.retryText}>上次同步失败，点此重试</Text>
+            </Pressable>
           ) : null}
         </View>
+        <Text style={styles.groupFooter}>
+          最近搜索最多保留 8 条，最近浏览最多 10 条。可在对应页面或清理本地数据时清除。
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  screen: { backgroundColor: colors.background, flex: 1 },
-  content: { padding: 24 },
-  sectionTitle: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 8,
-    marginTop: 22,
-    paddingHorizontal: 4,
-  },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    overflow: 'hidden',
-    paddingHorizontal: 18,
-  },
-  optionRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    minHeight: 68,
-  },
-  rowDivider: {
-    borderTopColor: colors.track,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  optionCopy: { flex: 1, paddingRight: 12 },
-  optionLabel: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-  optionLabelSelected: { color: colors.accent },
-  optionDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
-  syncRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 11,
-    minHeight: 68,
-  },
-  syncCopy: { flex: 1 },
-  syncTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-  syncDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
-  syncDescriptionError: { color: colors.accent },
-  syncRetry: { color: colors.accent, fontSize: 13, fontWeight: '800' },
-  syncSwitch: { transform: [{ scaleX: 0.82 }, { scaleY: 0.82 }] },
-  pressed: { opacity: 0.62 },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: { backgroundColor: colors.background, flex: 1 },
+    content: { paddingBottom: 40, paddingHorizontal: 20, paddingTop: 8 },
+    sectionTitle: {
+      color: colors.muted,
+      fontSize: TYPE.caption.fontSize,
+      fontWeight: '600',
+      letterSpacing: TYPE.caption.letterSpacing,
+      marginBottom: 8,
+      marginTop: 28,
+      paddingHorizontal: 16,
+    },
+    firstSectionTitle: { marginTop: 12 },
+    group: {
+      backgroundColor: colors.surface,
+      borderCurve: 'continuous',
+      borderRadius: 20,
+      overflow: 'hidden',
+      paddingHorizontal: 16,
+    },
+    row: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 16,
+      paddingVertical: 14,
+    },
+    rowDivider: {
+      borderTopColor: colors.track,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    rowCopy: { flex: 1, minWidth: 0, paddingRight: 4 },
+    rowTitle: {
+      color: colors.ink,
+      fontSize: TYPE.heading.fontSize,
+      fontWeight: '600',
+      letterSpacing: TYPE.heading.letterSpacing,
+      lineHeight: TYPE.heading.lineHeight,
+    },
+    rowTitleSelected: { color: colors.accent },
+    rowDescription: {
+      color: colors.subtle,
+      fontSize: TYPE.caption.fontSize,
+      letterSpacing: TYPE.caption.letterSpacing,
+      lineHeight: TYPE.caption.lineHeight,
+      marginTop: 3,
+    },
+    rowAction: {
+      color: colors.accent,
+      fontSize: TYPE.body.fontSize,
+      fontWeight: '600',
+    },
+    retryRow: {
+      borderTopColor: colors.track,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      paddingVertical: 14,
+    },
+    retryText: {
+      color: colors.accent,
+      fontSize: TYPE.caption.fontSize,
+      fontWeight: '600',
+      lineHeight: TYPE.caption.lineHeight,
+    },
+    groupFooter: {
+      color: colors.muted,
+      fontSize: TYPE.caption.fontSize,
+      letterSpacing: TYPE.caption.letterSpacing,
+      lineHeight: 20,
+      marginTop: 8,
+      paddingHorizontal: 16,
+    },
+    pressed: { opacity: 0.62 },
+  });
