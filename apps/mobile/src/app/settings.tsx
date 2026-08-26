@@ -1,4 +1,4 @@
-import { useMemo, type ComponentProps } from 'react';
+import { useEffect, useMemo, type ComponentProps } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -10,6 +10,14 @@ import {
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { HIT_SLOP, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
@@ -20,6 +28,7 @@ import { useSearchHistory } from '@/features/search/search-history-provider';
 import type { ThemePreference } from '@/features/preferences/preferences-model';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
+import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 const STATUS_GREEN = '#34C759';
 const STATUS_RED = '#FF3B30';
@@ -121,7 +130,7 @@ export default function SettingsScreen() {
     },
     {
       key: 'search',
-      label: '最近搜索',
+      label: `搜索 ${searchHistory.items.length}`,
       onRetry: () => void searchHistory.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
@@ -133,7 +142,7 @@ export default function SettingsScreen() {
     },
     {
       key: 'browse',
-      label: '最近浏览',
+      label: `浏览 ${recentSubjects.items.length}`,
       onRetry: () => void recentSubjects.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
@@ -259,6 +268,45 @@ export default function SettingsScreen() {
   );
 }
 
+function SyncingIcon({ color }: { color: string }) {
+  const reduceMotion = useReduceMotion();
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      cancelAnimation(rotation);
+      rotation.value = 0;
+      return;
+    }
+
+    rotation.value = 0;
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 900, easing: Easing.linear }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(rotation);
+    };
+  }, [reduceMotion, rotation]);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  return (
+    <Animated.View style={spinStyle}>
+      <SymbolView
+        name={STATUS_ICONS.syncing}
+        size={15}
+        tintColor={color}
+        weight="medium"
+      />
+    </Animated.View>
+  );
+}
+
 function SyncStatusRow({
   colors,
   label,
@@ -280,13 +328,19 @@ function SyncStatusRow({
         : colors.subtle;
   const content = (
     <>
-      <SymbolView
-        name={STATUS_ICONS[status]}
-        size={15}
-        tintColor={tint}
-        weight="medium"
-      />
-      <Text style={styles.statusLabel}>{label}</Text>
+      {status === 'syncing' ? (
+        <SyncingIcon color={tint} />
+      ) : (
+        <SymbolView
+          name={STATUS_ICONS[status]}
+          size={15}
+          tintColor={tint}
+          weight="medium"
+        />
+      )}
+      <Text numberOfLines={1} style={styles.statusLabel}>
+        {label}
+      </Text>
     </>
   );
 
@@ -372,12 +426,18 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
     },
-    statusList: { gap: 10, marginTop: 12 },
-    statusRow: {
-      alignItems: 'center',
+    statusList: {
       flexDirection: 'row',
       gap: 8,
+      marginTop: 12,
+    },
+    statusRow: {
+      alignItems: 'center',
+      flex: 1,
+      flexDirection: 'row',
+      gap: 5,
       minHeight: 22,
+      minWidth: 0,
     },
     statusLabel: {
       color: colors.subtle,
