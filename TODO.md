@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 最后更新：2026-08-24。
+> 最后更新：2026-08-26。
 
 ## 设计与体验
 
@@ -38,11 +38,11 @@
 - [x] API 用户偏好读写接口：`GET /me/preferences`、`PUT /me/preferences`，带鉴权与校验。
 - [x] D1 定时清理：`scheduled` 仅清理已过期的 OAuth transaction、handoff、refresh session，Cron 每天 03:00；不会删除仍有效的登录会话。
 - [x] 测试补充：preferences routes、maintenance cleanup。
-- [ ] API 鉴权/错误处理收拢：`authenticateContext` 统一返回当前 authentication 与同一 auth store，已迁移 preferences、搜索历史、最近浏览、举报、通知、好友与屏蔽；collections、timeline、discussions、indexes 仍需渐进迁移。
+- [x] API 鉴权/错误处理收拢：`authenticateContext` 统一返回当前 authentication 与同一 auth store；preferences、搜索历史、最近浏览、举报、通知、好友与屏蔽、collections、timeline、discussions、indexes 均已迁移。auth 自身路由仍直接使用 `authenticateRequest`，因为 store 来自同一模块的 `getStore`。
 - [x] HTML 抓取监控：blogs、indexes、people、tags、wiki 首页解析为空时写入统一 `bangumi_html_parse_failure` 结构化错误日志，仅含 parser、host、path、page，不记录 HTML、查询参数或用户数据。
 - [ ] 共享类型包：把 mobile/api/web 共用的基础类型/常量抽到 `packages/shared`。
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。
-- [ ] 服务端限流：先做轻量级限流，再评估 Durable Objects。
+- [x] 服务端限流：按客户端 IP 分读/写桶，计数写在 Cache API（公开读 180/分钟、写 40/分钟）；无 Cache 时放行。不够再评估 Durable Objects。
 - [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
 - [ ] CI 增加覆盖率门槛或专门的抓取回归 job。
 
