@@ -12,6 +12,7 @@
     "types:worker": "wrangler types src/worker-configuration.d.ts --env-interface CloudflareBindings --include-runtime false",
     "test": "node --test tests/*.test.mjs",
     "test:coverage": "node --experimental-test-coverage --test-coverage-lines=75 --test tests/*.test.mjs",
+    "test:html-parsers": "node --test tests/blogs.test.mjs tests/indexes.test.mjs tests/people-browser.test.mjs tests/tags.test.mjs tests/wiki.test.mjs tests/html-parser-monitor.test.mjs tests/html-parsers.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

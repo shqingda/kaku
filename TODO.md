@@ -45,7 +45,7 @@
 - [x] 服务端限流：按客户端 IP 分读/写桶，计数写在 Cache API（公开读 180/分钟、写 40/分钟）；无 Cache 时放行。不够再评估 Durable Objects。
 - [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
 - [x] CI 增加 API 覆盖率门槛：`pnpm --filter @kaku/api test:coverage` 要求行覆盖 ≥75%。
-- [ ] 专门的抓取回归 job。
+- [x] 专门的抓取回归 job：CI `scrape-regression` 跑 blogs/indexes/people/tags/wiki 解析器与空页/无关 markup 回归；不抓真实 HTML，避免把上游页面或用户数据写入产物。
 
 
 
