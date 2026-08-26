@@ -157,24 +157,6 @@ function RootNavigator() {
             }}
           />
           <Stack.Screen
-            name="collection-overview"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '我的数据',
-            }}
-          />
-          <Stack.Screen
-            name="footprint"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '浏览足迹',
-            }}
-          />
-          <Stack.Screen
             name="about"
             options={{
               headerBackButtonDisplayMode: 'minimal',

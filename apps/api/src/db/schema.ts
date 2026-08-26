@@ -73,15 +73,3 @@ export const userRecentSubjects = sqliteTable('user_recent_subjects', {
     .primaryKey()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
-
-export const userExports = sqliteTable('user_exports', {
-  byteSize: integer('byte_size').notNull(),
-  createdAt: integer('created_at').notNull(),
-  expiresAt: integer('expires_at').notNull(),
-  format: text('format').notNull(),
-  id: text('id').primaryKey(),
-  objectKey: text('object_key').notNull().unique(),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
-});

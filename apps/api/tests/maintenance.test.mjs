@@ -6,7 +6,6 @@ import { migrate } from 'drizzle-orm/d1/migrator';
 import { Miniflare } from 'miniflare';
 
 import { createD1AuthStore } from '../src/auth/store.ts';
-import { createExportStore, EXPORT_TTL_MS } from '../src/exports/store.ts';
 import { cleanupExpiredAuthData } from '../src/maintenance.ts';
 
 const NOW = 1_800_000_000_000;
@@ -93,7 +92,6 @@ test('cleanupExpiredAuthData removes only expired handoffs, transactions and ses
 
   assert.deepEqual(result, {
     deletedAuthHandoffs: 1,
-    deletedExpiredExports: 0,
     deletedOAuthTransactions: 1,
     deletedSessions: 1,
   });
@@ -105,43 +103,4 @@ test('cleanupExpiredAuthData removes only expired handoffs, transactions and ses
   );
 });
 
-test('cleanupExpiredAuthData deletes expired R2 export objects', async () => {
-  const objects = new Map();
-  const bucket = {
-    async delete(key) {
-      objects.delete(key);
-    },
-    async get(key) {
-      const body = objects.get(key);
-      return body === undefined ? null : { text: async () => body };
-    },
-    async put(key, value) {
-      objects.set(key, String(value));
-    },
-  };
-  const database = await miniflare.getD1Database('DB');
-  const exportStore = createExportStore(database, bucket);
 
-  await exportStore.create({
-    body: 'expired-backup',
-    format: 'json',
-    id: 'expired-export',
-    now: NOW - EXPORT_TTL_MS - 1_000,
-    userId: user.id,
-  });
-  await exportStore.create({
-    body: 'fresh-backup',
-    format: 'csv',
-    id: 'fresh-export',
-    now: NOW,
-    userId: user.id,
-  });
-
-  const result = await cleanupExpiredAuthData(database, NOW, bucket);
-  assert.equal(result.deletedExpiredExports, 1);
-  assert.equal(objects.has('exports/42/expired-export.json'), false);
-  assert.deepEqual(
-    (await exportStore.list(user.id)).map((record) => record.id),
-    ['fresh-export'],
-  );
-});

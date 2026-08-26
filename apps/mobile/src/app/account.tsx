@@ -240,20 +240,7 @@ export default function AccountScreen() {
               />
               <AccountMenuRow
                 colors={colors}
-                description="收藏结构与最近浏览"
-                hasDivider
-                icon={{
-                  android: 'donut_large',
-                  ios: 'chart.pie',
-                  web: 'donut_large',
-                }}
-                label="我的数据"
-                onPress={() => router.push('/collection-overview')}
-              />
-              <AccountMenuRow
-                colors={colors}
                 description="版本、帮助与隐私"
-                hasDivider
                 icon={{
                   android: 'info',
                   ios: 'info.circle',
