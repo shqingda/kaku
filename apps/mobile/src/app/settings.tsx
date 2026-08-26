@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Host, Switch } from '@expo/ui';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
@@ -145,14 +144,17 @@ export default function SettingsScreen() {
                   </Text>
                 </Pressable>
               </View>
-              <Host matchContents>
-                <Switch
-                  disabled={!cloudSyncAvailable}
-                  testID="preference-sync-switch"
-                  value={preferences.syncEnabled}
-                  onValueChange={setSyncEnabled}
-                />
-              </Host>
+              <Switch
+                accessibilityLabel="云同步"
+                disabled={!cloudSyncAvailable}
+                ios_backgroundColor={colors.track}
+                onValueChange={setSyncEnabled}
+                style={styles.syncSwitch}
+                testID="preference-sync-switch"
+                thumbColor={colors.surface}
+                trackColor={{ false: colors.track, true: colors.accent }}
+                value={preferences.syncEnabled}
+              />
             </View>
           ) : (
             <View style={styles.syncRow}>
@@ -286,5 +288,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   syncDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
   syncDescriptionError: { color: colors.accent },
   syncRetry: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  syncSwitch: { transform: [{ scaleX: 0.82 }, { scaleY: 0.82 }] },
   pressed: { opacity: 0.62 },
 });
