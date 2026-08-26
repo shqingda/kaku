@@ -8,12 +8,14 @@ import {
   type ReactNode,
 } from 'react';
 
+import type { ThemePreference } from '@kaku/shared';
+
 import { translations, type Language } from './translations';
 
 const LANGUAGE_STORAGE_KEY = 'kaku-lang';
 const THEME_STORAGE_KEY = 'kaku-theme';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = ThemePreference;
 
 function detectDefaultLanguage(): Language {
   const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);

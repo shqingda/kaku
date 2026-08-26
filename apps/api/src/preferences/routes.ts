@@ -1,6 +1,11 @@
 import type { Hono } from 'hono';
 import { z } from 'zod';
 
+import {
+  LOCALE_PREFERENCES,
+  THEME_PREFERENCES,
+} from '@kaku/shared';
+
 import type { AuthDependencies } from '../auth/routes.ts';
 import { authenticateContext } from '../auth/route-helpers.ts';
 import {
@@ -15,8 +20,8 @@ import {
 } from './store.ts';
 
 const preferencesUpdateSchema = z.object({
-  locale: z.enum(['system', 'zh', 'en']).optional(),
-  theme: z.enum(['system', 'light', 'dark']).optional(),
+  locale: z.enum(LOCALE_PREFERENCES).optional(),
+  theme: z.enum(THEME_PREFERENCES).optional(),
 });
 
 export type PreferencesDependencies = {

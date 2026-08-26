@@ -1,8 +1,15 @@
-export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
-export const LOCAL_PREFERENCES = ['system', 'zh', 'en'] as const;
+import {
+  isThemePreference,
+  type LocalePreference,
+  type ThemePreference,
+} from '@kaku/shared';
 
-export type ThemePreference = (typeof THEME_PREFERENCES)[number];
-export type LocalePreference = (typeof LOCAL_PREFERENCES)[number];
+export {
+  LOCALE_PREFERENCES,
+  THEME_PREFERENCES,
+  type LocalePreference,
+  type ThemePreference,
+} from '@kaku/shared';
 export type ResolvedTheme = 'light' | 'dark';
 
 export type AppPreferences = {
@@ -32,8 +39,8 @@ export function parseAppPreferences(value: unknown): AppPreferences {
   }
 
   const candidate = value as Partial<AppPreferences>;
-  const theme = THEME_PREFERENCES.includes(candidate.theme as ThemePreference)
-    ? (candidate.theme as ThemePreference)
+  const theme = isThemePreference(candidate.theme)
+    ? candidate.theme
     : DEFAULT_APP_PREFERENCES.theme;
   const updatedAt =
     typeof candidate.updatedAt === 'number' &&

@@ -1,9 +1,6 @@
-export type CollectionStatus =
-  | 'wish'
-  | 'completed'
-  | 'doing'
-  | 'onHold'
-  | 'dropped';
+import type { CollectionStatus } from '@kaku/shared';
+
+export type { CollectionStatus };
 
 export type WatchingItem = {
   collectionStatus?: CollectionStatus | null;

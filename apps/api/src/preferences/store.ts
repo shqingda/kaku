@@ -1,11 +1,17 @@
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
+import {
+  DEFAULT_PREFERENCE_VALUES,
+  type LocalePreference,
+  type ThemePreference,
+} from '@kaku/shared';
+
 import { userPreferences } from '../db/schema.ts';
 
 export type UserPreferences = {
-  locale: 'system' | 'zh' | 'en';
-  theme: 'system' | 'light' | 'dark';
+  locale: LocalePreference;
+  theme: ThemePreference;
   updatedAt: number;
   userId: number;
 };
@@ -15,10 +21,7 @@ export type PreferencesStore = {
   save: (input: UserPreferences) => Promise<void>;
 };
 
-export const DEFAULT_USER_PREFERENCES = {
-  locale: 'system',
-  theme: 'system',
-} as const;
+export const DEFAULT_USER_PREFERENCES = DEFAULT_PREFERENCE_VALUES;
 
 export function createD1PreferencesStore(
   database: D1Database,
@@ -38,8 +41,8 @@ export function createD1PreferencesStore(
       }
 
       return {
-        locale: row.locale as UserPreferences['locale'],
-        theme: row.theme as UserPreferences['theme'],
+        locale: row.locale as LocalePreference,
+        theme: row.theme as ThemePreference,
         updatedAt: row.updatedAt,
         userId: row.userId,
       };

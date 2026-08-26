@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
-import type {
-  CloudPreferences,
-  ThemePreference,
-} from '@/features/preferences/preferences-model';
+import {
+  LOCALE_PREFERENCES,
+  THEME_PREFERENCES,
+  type ThemePreference,
+} from '@kaku/shared';
+
+import type { CloudPreferences } from '@/features/preferences/preferences-model';
 
 import {
   KakuApiError,
@@ -12,8 +15,8 @@ import {
 
 const cloudPreferencesSchema = z.object({
   preferences: z.object({
-    locale: z.enum(['system', 'zh', 'en']),
-    theme: z.enum(['system', 'light', 'dark']),
+    locale: z.enum(LOCALE_PREFERENCES),
+    theme: z.enum(THEME_PREFERENCES),
     updatedAt: z.number().int().positive().nullable(),
   }),
 });
