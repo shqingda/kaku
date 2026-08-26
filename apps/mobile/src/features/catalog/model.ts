@@ -10,6 +10,9 @@ export type CatalogEpisode = {
 };
 
 export type CatalogSubject = {
+  // Present only when the live catalog request failed and a 30-day pack
+  // of this recently viewed subject is filling in.
+  offlineSource?: 'pack';
   collectionStats?: {
     completed: number;
     doing: number;

@@ -25,6 +25,7 @@ import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { useNotifications } from '@/features/notifications/use-notifications';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import { useTheme } from '@/features/theme/theme-provider';
+import { clearOfflineSubjectPack } from '@/features/catalog/offline-subject-pack';
 import { queryPersister } from '@/lib/query-persister';
 import { clearDiagnosticRecords } from '@/lib/diagnostic-log';
 
@@ -88,6 +89,7 @@ export default function AccountScreen() {
 
       const results = await Promise.allSettled([
         queryPersister.removeClient(),
+        clearOfflineSubjectPack(),
         clearSearchHistory(),
         clearRecentSubjects(),
         clearDiagnosticRecords(),
@@ -102,7 +104,7 @@ export default function AccountScreen() {
 
       Alert.alert(
         '已清理',
-        '公开缓存、图片、最近记录和诊断信息已清理；最近搜索和浏览也会同步清除。',
+        '公开缓存、离线包、图片、最近记录和诊断信息已清理；最近搜索和浏览也会同步清除。',
       );
     } finally {
       setIsClearingLocalData(false);

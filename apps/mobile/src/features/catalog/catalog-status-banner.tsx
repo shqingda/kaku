@@ -6,6 +6,7 @@ import { HIT_SLOP } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 
 type CatalogStatusBannerProps = {
+  fromOfflinePack?: boolean;
   isError: boolean;
   isPending: boolean;
   isRefreshing: boolean;
@@ -13,6 +14,7 @@ type CatalogStatusBannerProps = {
 };
 
 export function CatalogStatusBanner({
+  fromOfflinePack = false,
   isError,
   isPending,
   isRefreshing,
@@ -21,25 +23,31 @@ export function CatalogStatusBanner({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  if (!isError && !isPending && !isRefreshing) {
+  if (!isError && !isPending && !isRefreshing && !fromOfflinePack) {
     return null;
   }
 
+  const title = fromOfflinePack
+    ? '正在使用离线包中的条目和章节'
+    : isError
+      ? 'Bangumi 数据暂时加载失败'
+      : isPending
+        ? '正在读取 Bangumi 最新资料…'
+        : '正在更新 Bangumi 资料…';
+
   return (
-    <View style={[styles.banner, isError && styles.errorBanner]}>
+    <View style={[styles.banner, (isError || fromOfflinePack) && styles.errorBanner]}>
       <View style={styles.copy}>
-        <Text style={styles.title}>
-          {isError
-            ? 'Bangumi 数据暂时加载失败'
-            : isPending
-              ? '正在读取 Bangumi 最新资料…'
-              : '正在更新 Bangumi 资料…'}
-        </Text>
-        {isError ? (
-          <Text style={styles.detail}>当前继续显示本地缓存，不会白屏。</Text>
+        <Text style={styles.title}>{title}</Text>
+        {isError || fromOfflinePack ? (
+          <Text style={styles.detail}>
+            {fromOfflinePack
+              ? '离线包来自最近打开过的条目，最多保留 30 天。点此重试获取最新资料。'
+              : '当前继续显示本地缓存，不会白屏。'}
+          </Text>
         ) : null}
       </View>
-      {isError ? (
+      {isError || fromOfflinePack ? (
         <Pressable
           accessibilityRole="button"
           hitSlop={HIT_SLOP}

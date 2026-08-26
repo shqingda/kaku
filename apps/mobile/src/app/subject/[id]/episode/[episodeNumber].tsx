@@ -343,6 +343,7 @@ export default function EpisodeScreen() {
                 </Text>
               </View>
               <CatalogStatusBanner
+                fromOfflinePack={catalogQuery.data?.offlineSource === 'pack'}
                 isError={catalogQuery.isError}
                 isPending={catalogQuery.isPending}
                 isRefreshing={catalogQuery.isFetching && !catalogQuery.isPending}

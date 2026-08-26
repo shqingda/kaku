@@ -304,6 +304,7 @@ export default function SubjectScreen() {
         <View style={styles.heroSpacing} />
 
         <CatalogStatusBanner
+          fromOfflinePack={catalogSubject?.offlineSource === 'pack'}
           isError={catalogQuery.isError}
           isPending={catalogQuery.isPending}
           isRefreshing={catalogQuery.isFetching && !catalogQuery.isPending}
