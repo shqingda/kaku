@@ -109,6 +109,95 @@ test('health stays available after other routes are rate limited', async () => {
   assert.equal(health.status, 200);
 });
 
+test('CF-Connecting-IP wins over X-Forwarded-For and ignores surrounding spaces', () => {
+  assert.equal(
+    getClientIp(
+      new Headers({
+        'CF-Connecting-IP': ' 203.0.113.8 ',
+        'X-Forwarded-For': '198.51.100.2',
+      }),
+    ),
+    '203.0.113.8',
+  );
+});
+
+test('PUT PATCH and DELETE count as writes, OPTIONS does not', () => {
+  assert.equal(isWriteMethod('PUT'), true);
+  assert.equal(isWriteMethod('PATCH'), true);
+  assert.equal(isWriteMethod('DELETE'), true);
+  assert.equal(isWriteMethod('OPTIONS'), false);
+});
+
+test('corrupt or invalid cache records start a fresh window', async () => {
+  const now = 1_700_000_000_000;
+  const corrupt = {
+    async match() {
+      return new Response('not-json');
+    },
+    async put() {},
+  };
+  const invalid = {
+    async match() {
+      return Response.json({ count: -1, resetAt: now + 60_000 });
+    },
+    async put() {},
+  };
+
+  const fromCorrupt = await consumeRateLimit(corrupt, 'public:1', 2, now);
+  const fromInvalid = await consumeRateLimit(invalid, 'public:1', 2, now);
+
+  assert.equal(fromCorrupt.allowed, true);
+  assert.equal(fromCorrupt.remaining, 1);
+  assert.equal(fromInvalid.allowed, true);
+  assert.equal(fromInvalid.remaining, 1);
+});
+
+test('read and write buckets are independent per IP', async () => {
+  const cache = createMemoryCache();
+  const app = createApp({
+    cache,
+    createStore: () => ({}),
+    now: () => 1_700_000_000_000,
+  });
+  const writeHeaders = {
+    'CF-Connecting-IP': '203.0.113.11',
+    'Content-Type': 'application/json',
+  };
+
+  for (let index = 0; index < WRITE_REQUEST_LIMIT; index += 1) {
+    await app.request(
+      '/me/reports',
+      { headers: writeHeaders, method: 'POST', body: '{}' },
+      { DB: {} },
+    );
+  }
+
+  const writeLimited = await app.request(
+    '/me/reports',
+    { headers: writeHeaders, method: 'POST', body: '{}' },
+    { DB: {} },
+  );
+  const publicStillOpen = await app.request('/missing', {
+    headers: { 'CF-Connecting-IP': '203.0.113.11' },
+  });
+  const otherIpWrite = await app.request(
+    '/me/reports',
+    {
+      headers: {
+        'CF-Connecting-IP': '203.0.113.12',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: '{}',
+    },
+    { DB: {} },
+  );
+
+  assert.equal(writeLimited.status, 429);
+  assert.equal(publicStillOpen.status, 404);
+  assert.notEqual(otherIpWrite.status, 429);
+});
+
 test('write routes use a tighter limit than public reads', async () => {
   const cache = createMemoryCache();
   const app = createApp({

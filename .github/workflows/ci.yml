@@ -44,6 +44,9 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Check API test coverage
+        run: pnpm --filter @kaku/api test:coverage
+
       - name: Bundle iOS app
         run: pnpm --filter @kaku/mobile exec expo export --platform ios --output-dir /tmp/kaku-ios
 

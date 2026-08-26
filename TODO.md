@@ -44,7 +44,8 @@
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。
 - [x] 服务端限流：按客户端 IP 分读/写桶，计数写在 Cache API（公开读 180/分钟、写 40/分钟）；无 Cache 时放行。不够再评估 Durable Objects。
 - [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
-- [ ] CI 增加覆盖率门槛或专门的抓取回归 job。
+- [x] CI 增加 API 覆盖率门槛：`pnpm --filter @kaku/api test:coverage` 要求行覆盖 ≥75%。
+- [ ] 专门的抓取回归 job。
 
 
 
