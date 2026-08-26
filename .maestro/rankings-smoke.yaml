@@ -1,0 +1,12 @@
+appId: com.shqingda.kaku
+name: Open rankings from home
+tags:
+  - smoke
+---
+# 覆盖：首页发现入口 → 排行榜可见
+- launchApp
+- tapOn: "排行榜"
+- extendedWaitUntil:
+    visible: "动画排行榜"
+    timeout: 15000
+- assertVisible: "动画排行榜"

@@ -1,0 +1,16 @@
+appId: com.shqingda.kaku
+name: Open category browse from channel
+tags:
+  - smoke
+---
+# 覆盖：频道 → 分类浏览
+- launchApp
+- tapOn: "频道"
+- extendedWaitUntil:
+    visible: "分类浏览"
+    timeout: 15000
+- tapOn: "分类浏览"
+- extendedWaitUntil:
+    visible: "分类浏览"
+    timeout: 15000
+- assertVisible: "排名"

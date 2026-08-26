@@ -43,7 +43,7 @@
 - [x] 共享类型包：新增 `@kaku/shared`，抽出主题/语言偏好与收藏状态常量；Bangumi 数字映射仍留在各 adapter。
 - [x] KV 远程配置：新增公开 `/config`，Cache API 热缓存优先、KV 只承载低频配置；首个服务级开关可暂停偏好云同步，移动端明确降级且本机设置不受影响。KV 缺失、损坏或读取失败均返回带 `source/degraded` 的安全默认值并记录结构化告警。
 - [x] 服务端限流：按客户端 IP 分读/写桶，计数写在 Cache API（公开读 180/分钟、写 40/分钟）；无 Cache 时放行。不够再评估 Durable Objects。
-- [ ] 更多 Maestro 端到端：登录、条目详情、收藏、发布等关键路径。
+- [x] 更多 Maestro 端到端：未登录的账户/我的数据、排行榜、分类浏览、条目收藏盒登录提示；公开搜索与吐槽箱冒烟仍保留。真正登录、写收藏和发布仍需带会话的真机，不能在 CI 里伪造 OAuth。
 - [x] CI 增加 API 覆盖率门槛：`pnpm --filter @kaku/api test:coverage` 要求行覆盖 ≥75%。
 - [x] 专门的抓取回归 job：CI `scrape-regression` 跑 blogs/indexes/people/tags/wiki 解析器与空页/无关 markup 回归；不抓真实 HTML，避免把上游页面或用户数据写入产物。
 

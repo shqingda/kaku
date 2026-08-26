@@ -1,0 +1,25 @@
+appId: com.shqingda.kaku
+name: Collection box requires sign-in
+tags:
+  - smoke
+---
+# 覆盖：搜索 → 条目详情 → 打开收藏盒 → 未登录提示（不写远端）
+- launchApp
+- tapOn: "搜索条目"
+- setClipboard: 葬送的芙莉莲
+- pasteText
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "葬送的芙莉莲.*"
+    timeout: 15000
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- tapOn: "打开收藏盒"
+- extendedWaitUntil:
+    visible: "登录后使用收藏盒"
+    timeout: 8000
+- assertVisible: "取消"
