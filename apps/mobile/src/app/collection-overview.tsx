@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
 import {
   ActivityIndicator,
@@ -35,7 +35,16 @@ import {
   buildCollectionStatusAnalysis,
 } from "@/features/collections/collection-overview-model";
 import { bangumiUsersProvider } from "@/infrastructure/bangumi/users/provider";
+import {
+  createCloudExport,
+  deleteCloudExport,
+  downloadCloudExport,
+  listCloudExports,
+  type CloudExportRecord,
+} from "@/infrastructure/kaku/exports-client";
+import { KakuApiError } from "@/infrastructure/kaku/auth-client";
 import { buildBrowsingFootprint } from "@/features/history/browsing-footprint-model";
+import { usePreferences } from "@/features/preferences/preferences-provider";
 import { useRecentSubjects } from "@/features/history/recent-subjects-provider";
 import { HorizontalBarChart } from "@/features/insights/horizontal-bar-chart";
 import { useTheme } from "@/features/theme/theme-provider";
@@ -61,7 +70,13 @@ export default function PersonalDataScreen() {
     useState<CollectionArchiveProgress | null>(null);
   const exportAbortRef = useRef<AbortController | null>(null);
   const [selectedSubjectType, setSelectedSubjectType] = useState(2);
-  const { isLoading: isAuthLoading, session } = useAuth();
+  const { isLoading: isAuthLoading, request, session } = useAuth();
+  const { preferences } = usePreferences();
+  const [cloudExports, setCloudExports] = useState<CloudExportRecord[]>([]);
+  const [cloudExportsError, setCloudExportsError] = useState<string | null>(
+    null,
+  );
+  const cloudSyncEnabled = Boolean(session && preferences.syncEnabled);
   const recentSubjects = useRecentSubjects();
   const footprint = useMemo(
     () => buildBrowsingFootprint(recentSubjects.items),
@@ -165,15 +180,35 @@ export default function PersonalDataScreen() {
     exportAbortRef.current?.abort();
   }
 
-  async function exportArchive(format: "json" | "csv") {
-    if (!session || exportProgress) return;
+  async function refreshCloudExports() {
+    if (!session || !cloudSyncEnabled) {
+      setCloudExports([]);
+      setCloudExportsError(null);
+      return;
+    }
 
+    try {
+      setCloudExports(await listCloudExports(request));
+      setCloudExportsError(null);
+    } catch (error) {
+      setCloudExportsError(
+        error instanceof KakuApiError
+          ? error.message
+          : "云端备份列表暂时读不到。",
+      );
+    }
+  }
+
+  useEffect(() => {
+    void refreshCloudExports();
+  }, [cloudSyncEnabled, session?.sessionId]);
+
+  async function buildArchive() {
     const controller = new AbortController();
     exportAbortRef.current = controller;
     setExportProgress({ loaded: 0, total: overview.total });
-
     try {
-      const archive = await collectPublicCollectionArchive({
+      return await collectPublicCollectionArchive({
         fetchPage: (subjectType, offset, signal) =>
           bangumiUsersProvider.getPublicUserCollections(
             username,
@@ -186,6 +221,17 @@ export default function PersonalDataScreen() {
         signal: controller.signal,
         username,
       });
+    } finally {
+      exportAbortRef.current = null;
+      setExportProgress(null);
+    }
+  }
+
+  async function exportArchive(format: "json" | "csv") {
+    if (!session || exportProgress) return;
+
+    try {
+      const archive = await buildArchive();
       const message =
         format === "csv"
           ? buildCollectionArchiveCsv(archive)
@@ -211,10 +257,81 @@ export default function PersonalDataScreen() {
         "导出失败",
         error instanceof Error ? error.message : "读取公开收藏时出错，请稍后重试。",
       );
-    } finally {
-      exportAbortRef.current = null;
-      setExportProgress(null);
     }
+  }
+
+  async function saveArchiveToCloud() {
+    if (!session || exportProgress) return;
+    if (!cloudSyncEnabled) {
+      Alert.alert("云同步已关闭", "打开“外观与同步”中的云同步后再保存。");
+      return;
+    }
+
+    try {
+      const archive = await buildArchive();
+      const record = await createCloudExport(request, {
+        content: buildCollectionArchiveJson(archive),
+        format: "json",
+      });
+      await refreshCloudExports();
+      Alert.alert(
+        "已保存到云端",
+        `7 天内可在本页取回。到期时间 ${new Intl.DateTimeFormat("zh-CN", {
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(record.expiresAt))}${
+          archive.truncated ? "。这份备份已截断到 4000 条。" : ""
+        }`,
+      );
+    } catch (error) {
+      if (
+        error instanceof CollectionArchiveError &&
+        error.message === "已取消导出。"
+      ) {
+        return;
+      }
+      Alert.alert(
+        "云端保存失败",
+        error instanceof Error ? error.message : "备份没有写到云端，请稍后重试。",
+      );
+    }
+  }
+
+  async function shareCloudExport(id: string, format: "json" | "csv") {
+    try {
+      const content = await downloadCloudExport(request, id);
+      await Share.share({
+        message: content,
+        title: format === "csv" ? "Kaku 云端 CSV" : "Kaku 云端 JSON",
+      });
+    } catch (error) {
+      Alert.alert(
+        "无法取回备份",
+        error instanceof Error ? error.message : "云端备份暂时读不到。",
+      );
+    }
+  }
+
+  function confirmDeleteCloudExport(id: string) {
+    Alert.alert("删除云端备份？", "删除后不能恢复。", [
+      { style: "cancel", text: "取消" },
+      {
+        onPress: () => {
+          void deleteCloudExport(request, id)
+            .then(() => refreshCloudExports())
+            .catch((error: unknown) => {
+              Alert.alert(
+                "删除失败",
+                error instanceof Error ? error.message : "请稍后重试。",
+              );
+            });
+        },
+        style: "destructive",
+        text: "删除",
+      },
+    ]);
   }
 
   function inspectImportedArchive() {
@@ -491,7 +608,74 @@ export default function PersonalDataScreen() {
                     onPress={() => setIsImportOpen(true)}
                     styles={styles}
                   />
+                  {cloudSyncEnabled ? (
+                    <ArchiveAction
+                      disabled={isSharing}
+                      label="保存到云端"
+                      onPress={() => void saveArchiveToCloud()}
+                      styles={styles}
+                    />
+                  ) : null}
                 </View>
+              )}
+              {cloudSyncEnabled ? (
+                <>
+                  {cloudExportsError ? (
+                    <RetryNotice
+                      onPress={() => void refreshCloudExports()}
+                      styles={styles}
+                      text={`${cloudExportsError} · 点此重试`}
+                    />
+                  ) : null}
+                  {cloudExports.length ? (
+                    <View style={styles.cloudList}>
+                      {cloudExports.map((item) => (
+                        <View key={item.id} style={styles.cloudRow}>
+                          <View style={styles.cloudCopy}>
+                            <Text style={styles.cloudTitle}>
+                              {item.format.toUpperCase()} ·{" "}
+                              {Math.max(1, Math.round(item.byteSize / 1024))} KB
+                            </Text>
+                            <Text style={styles.cloudMeta}>
+                              {new Intl.DateTimeFormat("zh-CN", {
+                                month: "numeric",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }).format(new Date(item.createdAt))}{" "}
+                              ·{" "}
+                              {new Intl.DateTimeFormat("zh-CN", {
+                                month: "numeric",
+                                day: "numeric",
+                              }).format(new Date(item.expiresAt))}
+                              到期
+                            </Text>
+                          </View>
+                          <ArchiveAction
+                            label="取回"
+                            onPress={() =>
+                              void shareCloudExport(item.id, item.format)
+                            }
+                            styles={styles}
+                          />
+                          <ArchiveAction
+                            label="删除"
+                            onPress={() => confirmDeleteCloudExport(item.id)}
+                            styles={styles}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ) : cloudExportsError ? null : (
+                    <Text style={styles.subsectionDescription}>
+                      还没有云端副本。保存后保留 7 天，最多 5 份。
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <Text style={styles.subsectionDescription}>
+                  打开“外观与同步”中的云同步后，可以把备份保存 7 天。
+                </Text>
               )}
             </>
           )}
@@ -878,6 +1062,15 @@ const createStyles = (colors: ThemeColors) =>
       padding: 12,
       textAlignVertical: "top",
     },
+    cloudList: { gap: 10, marginTop: 12 },
+    cloudRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+    },
+    cloudCopy: { flex: 1, minWidth: 0 },
+    cloudTitle: { color: colors.ink, fontSize: 12, fontWeight: "700" },
+    cloudMeta: { color: colors.subtle, fontSize: 10, marginTop: 2 },
     inlineState: {
       alignItems: "center",
       gap: 9,

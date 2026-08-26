@@ -28,6 +28,12 @@
 			"migrations_dir": "drizzle"
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "EXPORTS",
+			"bucket_name": "kaku-exports"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}

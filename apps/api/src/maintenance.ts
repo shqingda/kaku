@@ -2,9 +2,11 @@ import { lt } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
 import { authHandoffs, oauthTransactions, sessions } from './db/schema.ts';
+import { createExportStore } from './exports/store.ts';
 
 export type CleanupResult = {
   deletedAuthHandoffs: number;
+  deletedExpiredExports: number;
   deletedOAuthTransactions: number;
   deletedSessions: number;
 };
@@ -14,6 +16,7 @@ export type CleanupResult = {
 export async function cleanupExpiredAuthData(
   database: D1Database,
   now: number,
+  bucket?: R2Bucket,
 ): Promise<CleanupResult> {
   const db = drizzle(database);
 
@@ -33,8 +36,13 @@ export async function cleanupExpiredAuthData(
         .returning({ sessionId: sessions.sessionId }),
     ]);
 
+  const deletedExpiredExports = bucket
+    ? await createExportStore(database, bucket).deleteExpired(now)
+    : 0;
+
   return {
     deletedAuthHandoffs: deletedAuthHandoffs.length,
+    deletedExpiredExports,
     deletedOAuthTransactions: deletedOAuthTransactions.length,
     deletedSessions: deletedSessions.length,
   };

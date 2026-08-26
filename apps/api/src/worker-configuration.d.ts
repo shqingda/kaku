@@ -3,6 +3,7 @@
 interface __BaseEnv_CloudflareBindings {
 	KAKU_CONFIG: KVNamespace;
 	DB: D1Database;
+	EXPORTS: R2Bucket;
 	BANGUMI_REDIRECT_URI: "https://kaku-api.shqingda.workers.dev/auth/bangumi/callback";
 }
 declare namespace Cloudflare {
