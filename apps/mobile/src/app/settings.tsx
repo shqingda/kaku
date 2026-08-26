@@ -1,5 +1,6 @@
 import { useEffect, useMemo, type ComponentProps } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -93,8 +94,8 @@ function getSyncStatus({
   signedIn: boolean;
   syncing: boolean;
 }): SyncStatus {
-  if (!signedIn || !enabled || !available) return 'idle';
   if (syncing) return 'syncing';
+  if (!signedIn || !enabled || !available) return 'idle';
   if (error) return 'failed';
   return 'success';
 }
@@ -229,6 +230,9 @@ export default function SettingsScreen() {
                     setSyncEnabled(enabled);
                   }}
                   testID="preference-sync-switch"
+                  thumbColor={
+                    Platform.OS === 'android' ? '#FFFFFF' : undefined
+                  }
                   trackColor={{ false: colors.track, true: colors.accent }}
                   value={preferences.syncEnabled}
                 />

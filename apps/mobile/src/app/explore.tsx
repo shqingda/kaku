@@ -47,6 +47,7 @@ import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { SectionAction } from '@/features/shared/section-action';
 import { RecentSearches } from '@/features/search/recent-searches';
+import { useSearchDraft } from '@/features/search/search-draft';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
@@ -89,7 +90,7 @@ export default function ExploreScreen() {
   const { styles } = useThemedStyles();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const initialKeyword = typeof q === 'string' ? q.trim() : '';
-  const [draft, setDraft] = useState(initialKeyword);
+  const [draft, setDraft] = useSearchDraft();
   const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
@@ -185,9 +186,10 @@ export default function ExploreScreen() {
   // query 参数；useState 的初始值不会重新计算，因此把新 q 同步回本地
   // state。搜索历史由首页提交时写入，这里不再重复记录。
   useEffect(() => {
+    if (!initialKeyword) return;
     setDraft(initialKeyword);
     setKeyword(initialKeyword);
-  }, [initialKeyword]);
+  }, [initialKeyword, setDraft]);
 
   useEffect(
     () => () => {

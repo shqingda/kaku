@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -11,6 +11,7 @@ import {
 
 import type { ThemeColors } from '@/constants/theme';
 import type { AuthSession } from '@/features/auth/model';
+import { useSearchDraft } from '@/features/search/search-draft';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -21,7 +22,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { addSearch } = useSearchHistory();
-  const [searchDraft, setSearchDraft] = useState('');
+  const [searchDraft, setSearchDraft] = useSearchDraft();
 
   function submitSearch() {
     const keyword = searchDraft.trim();
