@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, type ComponentProps } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -21,8 +21,11 @@ import type { ThemePreference } from '@/features/preferences/preferences-model';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
 
-const SYNC_HINT =
-  '最近搜索最多保留 8 条，最近浏览最多 10 条。可在对应页面或清理本地数据时清除。';
+const STATUS_GREEN = '#34C759';
+const STATUS_RED = '#FF3B30';
+
+type SyncStatus = 'failed' | 'idle' | 'success' | 'syncing';
+type SymbolName = ComponentProps<typeof SymbolView>['name'];
 
 const THEME_OPTIONS: {
   description: string;
@@ -46,6 +49,47 @@ const THEME_OPTIONS: {
   },
 ];
 
+const STATUS_ICONS: Record<SyncStatus, SymbolName> = {
+  failed: { android: 'cancel', ios: 'xmark.circle.fill', web: 'cancel' },
+  idle: { android: 'cloud_off', ios: 'icloud.slash', web: 'cloud_off' },
+  success: {
+    android: 'check_circle',
+    ios: 'checkmark.circle.fill',
+    web: 'check_circle',
+  },
+  syncing: {
+    android: 'sync',
+    ios: 'arrow.triangle.2.circlepath',
+    web: 'sync',
+  },
+};
+
+const STATUS_LABELS: Record<SyncStatus, string> = {
+  failed: '同步失败',
+  idle: '未同步',
+  success: '已同步',
+  syncing: '正在同步',
+};
+
+function getSyncStatus({
+  available,
+  enabled,
+  error,
+  signedIn,
+  syncing,
+}: {
+  available: boolean;
+  enabled: boolean;
+  error: string | null;
+  signedIn: boolean;
+  syncing: boolean;
+}): SyncStatus {
+  if (!signedIn || !enabled || !available) return 'idle';
+  if (syncing) return 'syncing';
+  if (error) return 'failed';
+  return 'success';
+}
+
 export default function SettingsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -61,15 +105,45 @@ export default function SettingsScreen() {
   } = usePreferences();
   const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
-  const [syncHintVisible, setSyncHintVisible] = useState(false);
-  const syncError =
-    cloudError || searchHistory.cloudError || recentSubjects.cloudError;
-
-  function retryFailedSync() {
-    if (cloudError) void retryCloudSync();
-    if (searchHistory.cloudError) void searchHistory.retryCloudSync();
-    if (recentSubjects.cloudError) void recentSubjects.retryCloudSync();
-  }
+  const signedIn = Boolean(session);
+  const channels = [
+    {
+      key: 'appearance',
+      label: '外观',
+      onRetry: () => void retryCloudSync(),
+      status: getSyncStatus({
+        available: cloudSyncAvailable,
+        enabled: preferences.syncEnabled,
+        error: cloudError,
+        signedIn,
+        syncing,
+      }),
+    },
+    {
+      key: 'search',
+      label: '最近搜索',
+      onRetry: () => void searchHistory.retryCloudSync(),
+      status: getSyncStatus({
+        available: cloudSyncAvailable,
+        enabled: preferences.syncEnabled,
+        error: searchHistory.cloudError,
+        signedIn,
+        syncing: searchHistory.syncing,
+      }),
+    },
+    {
+      key: 'browse',
+      label: '最近浏览',
+      onRetry: () => void recentSubjects.retryCloudSync(),
+      status: getSyncStatus({
+        available: cloudSyncAvailable,
+        enabled: preferences.syncEnabled,
+        error: recentSubjects.cloudError,
+        signedIn,
+        syncing: recentSubjects.syncing,
+      }),
+    },
+  ] as const;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -134,76 +208,41 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>同步</Text>
         <View style={styles.group}>
           {session ? (
-            <View style={styles.row}>
-              <View style={styles.rowCopy}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.rowTitle}>云同步</Text>
-                  <Pressable
-                    accessibilityHint={SYNC_HINT}
-                    accessibilityLabel="同步范围说明"
-                    accessibilityRole="button"
-                    hitSlop={HIT_SLOP}
-                    onHoverIn={() => setSyncHintVisible(true)}
-                    onHoverOut={() => setSyncHintVisible(false)}
-                    onPress={() => setSyncHintVisible((visible) => !visible)}
-                    style={({ pressed }) => [
-                      styles.hintAnchor,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <SymbolView
-                      name={{
-                        android: 'error_outline',
-                        ios: 'exclamationmark.circle',
-                        web: 'error_outline',
-                      }}
-                      size={15}
-                      tintColor={colors.subtle}
-                      weight="medium"
-                    />
-                    {syncHintVisible ? (
-                      <View
-                        accessibilityLiveRegion="polite"
-                        style={styles.hintBubble}
-                      >
-                        <Text style={styles.hintText}>{SYNC_HINT}</Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                </View>
-                <Text numberOfLines={1} style={styles.rowDescription}>
-                  {!cloudSyncAvailable
-                    ? '云服务暂时关闭，本机不受影响。'
-                    : !preferences.syncEnabled
-                      ? '已关闭，只保存在本机。'
-                      : syncing
-                        ? '正在同步…'
-                        : '已开启，将同步到其他设备。'}
-                </Text>
+            <View style={styles.syncBlock}>
+              <View style={styles.syncHeader}>
+                <Text style={styles.rowTitle}>云同步</Text>
+                <Switch
+                  accessibilityLabel="云同步"
+                  disabled={!cloudSyncAvailable}
+                  ios_backgroundColor={colors.track}
+                  onValueChange={(enabled) => {
+                    playSelectionHaptic();
+                    setSyncEnabled(enabled);
+                  }}
+                  testID="preference-sync-switch"
+                  trackColor={{ false: colors.track, true: colors.accent }}
+                  value={preferences.syncEnabled}
+                />
               </View>
-              <Switch
-                accessibilityLabel="云同步"
-                disabled={!cloudSyncAvailable}
-                ios_backgroundColor={colors.track}
-                onValueChange={(enabled) => {
-                  setSyncHintVisible(false);
-                  playSelectionHaptic();
-                  setSyncEnabled(enabled);
-                }}
-                testID="preference-sync-switch"
-                trackColor={{ false: colors.track, true: colors.accent }}
-                value={preferences.syncEnabled}
-              />
+              <View style={styles.statusList}>
+                {channels.map((channel) => (
+                  <SyncStatusRow
+                    colors={colors}
+                    key={channel.key}
+                    label={channel.label}
+                    onRetry={channel.onRetry}
+                    status={channel.status}
+                    styles={styles}
+                  />
+                ))}
+              </View>
             </View>
           ) : (
             <Pressable
               accessibilityLabel="前往登录"
               accessibilityRole="button"
               onPress={() => router.push('/account')}
-              style={({ pressed }) => [
-                styles.row,
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>设备间同步</Text>
@@ -214,22 +253,65 @@ export default function SettingsScreen() {
               <Text style={styles.rowAction}>去登录</Text>
             </Pressable>
           )}
-          {session && syncError ? (
-            <Pressable
-              accessibilityRole="button"
-              hitSlop={HIT_SLOP}
-              onPress={retryFailedSync}
-              style={({ pressed }) => [
-                styles.retryRow,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.retryText}>上次同步失败，点此重试</Text>
-            </Pressable>
-          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SyncStatusRow({
+  colors,
+  label,
+  onRetry,
+  status,
+  styles,
+}: {
+  colors: ThemeColors;
+  label: string;
+  onRetry: () => void;
+  status: SyncStatus;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const tint =
+    status === 'success'
+      ? STATUS_GREEN
+      : status === 'failed'
+        ? STATUS_RED
+        : colors.subtle;
+  const content = (
+    <>
+      <SymbolView
+        name={STATUS_ICONS[status]}
+        size={15}
+        tintColor={tint}
+        weight="medium"
+      />
+      <Text style={styles.statusLabel}>{label}</Text>
+    </>
+  );
+
+  if (status === 'failed') {
+    return (
+      <Pressable
+        accessibilityHint="点此重试"
+        accessibilityLabel={`${label}，${STATUS_LABELS[status]}`}
+        accessibilityRole="button"
+        hitSlop={HIT_SLOP}
+        onPress={onRetry}
+        style={({ pressed }) => [styles.statusRow, pressed && styles.pressed]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View
+      accessibilityLabel={`${label}，${STATUS_LABELS[status]}`}
+      style={styles.statusRow}
+    >
+      {content}
+    </View>
   );
 }
 
@@ -264,25 +346,6 @@ const createStyles = (colors: ThemeColors) =>
       borderTopWidth: StyleSheet.hairlineWidth,
     },
     rowCopy: { flex: 1, minWidth: 0, paddingRight: 4 },
-    titleRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-    hintAnchor: { position: 'relative' },
-    hintBubble: {
-      backgroundColor: colors.ink,
-      borderCurve: 'continuous',
-      borderRadius: 10,
-      left: -12,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      position: 'absolute',
-      top: 22,
-      width: 228,
-      zIndex: 4,
-    },
-    hintText: {
-      color: colors.surface,
-      fontSize: 12,
-      lineHeight: 17,
-    },
     rowTitle: {
       color: colors.ink,
       fontSize: TYPE.heading.fontSize,
@@ -303,15 +366,23 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: TYPE.body.fontSize,
       fontWeight: '600',
     },
-    retryRow: {
-      borderTopColor: colors.track,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      paddingVertical: 14,
+    syncBlock: { paddingBottom: 14, paddingTop: 14 },
+    syncHeader: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
     },
-    retryText: {
-      color: colors.accent,
+    statusList: { gap: 10, marginTop: 12 },
+    statusRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 8,
+      minHeight: 22,
+    },
+    statusLabel: {
+      color: colors.subtle,
       fontSize: TYPE.caption.fontSize,
-      fontWeight: '600',
+      letterSpacing: TYPE.caption.letterSpacing,
       lineHeight: TYPE.caption.lineHeight,
     },
     pressed: { opacity: 0.62 },
