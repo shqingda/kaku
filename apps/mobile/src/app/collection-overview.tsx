@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,11 +20,21 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { SubjectTypeTabs } from "@/features/catalog/subject-type-tabs";
 import { getSubjectTypeLabel } from "@/features/catalog/subject-types";
 import {
+  buildCollectionArchiveCsv,
+  buildCollectionArchiveJson,
+  collectPublicCollectionArchive,
+  CollectionArchiveError,
+  describeCollectionArchive,
+  parseCollectionArchive,
+  type CollectionArchiveProgress,
+} from "@/features/collections/collection-archive-model";
+import {
   buildCollectionOverview,
   buildCollectionOverviewJson,
   buildCollectionOverviewShareText,
   buildCollectionStatusAnalysis,
 } from "@/features/collections/collection-overview-model";
+import { bangumiUsersProvider } from "@/infrastructure/bangumi/users/provider";
 import { buildBrowsingFootprint } from "@/features/history/browsing-footprint-model";
 import { useRecentSubjects } from "@/features/history/recent-subjects-provider";
 import { HorizontalBarChart } from "@/features/insights/horizontal-bar-chart";
@@ -43,6 +55,11 @@ export default function PersonalDataScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isSharing, setIsSharing] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importDraft, setImportDraft] = useState("");
+  const [exportProgress, setExportProgress] =
+    useState<CollectionArchiveProgress | null>(null);
+  const exportAbortRef = useRef<AbortController | null>(null);
   const [selectedSubjectType, setSelectedSubjectType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const recentSubjects = useRecentSubjects();
@@ -144,6 +161,90 @@ export default function PersonalDataScreen() {
     }
   }
 
+  function cancelExport() {
+    exportAbortRef.current?.abort();
+  }
+
+  async function exportArchive(format: "json" | "csv") {
+    if (!session || exportProgress) return;
+
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
+    setExportProgress({ loaded: 0, total: overview.total });
+
+    try {
+      const archive = await collectPublicCollectionArchive({
+        fetchPage: (subjectType, offset, signal) =>
+          bangumiUsersProvider.getPublicUserCollections(
+            username,
+            subjectType,
+            offset,
+            undefined,
+            signal,
+          ),
+        onProgress: setExportProgress,
+        signal: controller.signal,
+        username,
+      });
+      const message =
+        format === "csv"
+          ? buildCollectionArchiveCsv(archive)
+          : buildCollectionArchiveJson(archive);
+      await Share.share({
+        message,
+        title: format === "csv" ? "Kaku 收藏 CSV" : "Kaku 收藏 JSON",
+      });
+      if (archive.truncated) {
+        Alert.alert(
+          "导出已截断",
+          "公开收藏超过 4000 条，这次只导出了前 4000 条。私密笔记不会包含在备份里。",
+        );
+      }
+    } catch (error) {
+      if (
+        error instanceof CollectionArchiveError &&
+        error.message === "已取消导出。"
+      ) {
+        return;
+      }
+      Alert.alert(
+        "导出失败",
+        error instanceof Error ? error.message : "读取公开收藏时出错，请稍后重试。",
+      );
+    } finally {
+      exportAbortRef.current = null;
+      setExportProgress(null);
+    }
+  }
+
+  function inspectImportedArchive() {
+    try {
+      const archive = parseCollectionArchive(importDraft);
+      const summary = describeCollectionArchive(archive);
+      const typeLine = summary.typeCounts
+        .map((item) => `${item.label} ${item.total} 部`)
+        .join("、");
+      Alert.alert(
+        "备份校验通过",
+        [
+          `@${summary.username} · ${summary.total} 部公开收藏`,
+          typeLine || "没有条目",
+          summary.truncated ? "这份备份曾被截断。" : "",
+          "Kaku 不会把备份写回 Bangumi。",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+      setIsImportOpen(false);
+      setImportDraft("");
+    } catch (error) {
+      Alert.alert(
+        "无法导入",
+        error instanceof Error ? error.message : "备份无法识别。",
+      );
+    }
+  }
+
   return (
     <SafeAreaView edges={["bottom"]} style={styles.screen}>
       <ScrollView
@@ -164,7 +265,7 @@ export default function PersonalDataScreen() {
           我的数据
         </Text>
         <Text style={styles.description}>
-          收藏结构与最近探索，只呈现当前公开数据和最近 10 条浏览。
+          收藏结构与最近探索，只呈现当前公开数据和最近 10 条浏览。完整备份可导出 JSON/CSV，不含私密笔记。
         </Text>
 
         <View style={styles.section}>
@@ -343,6 +444,55 @@ export default function PersonalDataScreen() {
                   })
                 }
               />
+              <View style={styles.divider} />
+              <Text style={styles.subsectionTitle}>完整备份</Text>
+              <Text style={styles.subsectionDescription}>
+                分页读取你的公开收藏条目。导入只校验内容，不会写回 Bangumi。
+              </Text>
+              {exportProgress ? (
+                <View style={styles.inlineState}>
+                  <ActivityIndicator />
+                  <Text style={styles.inlineStateText}>
+                    正在读取收藏 {exportProgress.loaded.toLocaleString("zh-CN")}/
+                    {Math.max(
+                      exportProgress.total,
+                      exportProgress.loaded,
+                    ).toLocaleString("zh-CN")}
+                    …
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={cancelExport}
+                    style={({ pressed }) => [
+                      styles.shareButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.shareButtonText}>取消</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={styles.exportActions}>
+                  <ArchiveAction
+                    disabled={isSharing}
+                    label="导出 JSON"
+                    onPress={() => void exportArchive("json")}
+                    styles={styles}
+                  />
+                  <ArchiveAction
+                    disabled={isSharing}
+                    label="导出 CSV"
+                    onPress={() => void exportArchive("csv")}
+                    styles={styles}
+                  />
+                  <ArchiveAction
+                    disabled={isSharing}
+                    label="导入"
+                    onPress={() => setIsImportOpen(true)}
+                    styles={styles}
+                  />
+                </View>
+              )}
             </>
           )}
         </View>
@@ -410,10 +560,81 @@ export default function PersonalDataScreen() {
           )}
         </View>
         <Text style={styles.footnote}>
-          收藏可见性由 Bangumi 决定；最近浏览可在“外观与同步”中管理。
+          收藏可见性由 Bangumi 决定；最近浏览可在“外观与同步”中管理。完整备份不含私密笔记。
         </Text>
       </ScrollView>
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setIsImportOpen(false)}
+        transparent
+        visible={isImportOpen}
+      >
+        <Pressable
+          onPress={() => setIsImportOpen(false)}
+          style={styles.importScrim}
+        >
+          <View style={styles.importSheet}>
+            <Text style={styles.sectionTitle}>导入备份</Text>
+            <Text style={styles.sectionDescription}>
+              粘贴 Kaku 导出的 JSON 或 CSV。只做校验，不会改 Bangumi 收藏。
+            </Text>
+            <TextInput
+              accessibilityLabel="收藏备份内容"
+              autoCapitalize="none"
+              autoCorrect={false}
+              multiline
+              onChangeText={setImportDraft}
+              placeholder='{"source":"bangumi-public-collections",...}'
+              placeholderTextColor={colors.muted}
+              style={styles.importInput}
+              value={importDraft}
+            />
+            <View style={styles.exportActions}>
+              <ArchiveAction
+                label="取消"
+                onPress={() => {
+                  setIsImportOpen(false);
+                  setImportDraft("");
+                }}
+                styles={styles}
+              />
+              <ArchiveAction
+                disabled={!importDraft.trim()}
+                label="校验"
+                onPress={inspectImportedArchive}
+                styles={styles}
+              />
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+function ArchiveAction({
+  disabled,
+  label,
+  onPress,
+  styles,
+}: {
+  disabled?: boolean;
+  label: string;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.shareButton,
+        (pressed || disabled) && styles.pressed,
+      ]}
+    >
+      <Text style={styles.shareButtonText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -626,6 +847,36 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.accentRich,
       fontSize: 12,
       fontWeight: "800",
+    },
+    exportActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginTop: 12,
+    },
+    importScrim: {
+      backgroundColor: "rgba(0,0,0,0.4)",
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    importSheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      padding: 20,
+      paddingBottom: 32,
+    },
+    importInput: {
+      backgroundColor: colors.surfaceSoft,
+      borderCurve: "continuous",
+      borderRadius: 14,
+      color: colors.ink,
+      fontSize: 12,
+      marginTop: 14,
+      maxHeight: 180,
+      minHeight: 120,
+      padding: 12,
+      textAlignVertical: "top",
     },
     inlineState: {
       alignItems: "center",
