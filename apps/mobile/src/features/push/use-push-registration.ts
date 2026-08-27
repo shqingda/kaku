@@ -10,7 +10,11 @@ import {
 } from '@/infrastructure/kaku/push-client';
 import { userErrorMessage } from '@/lib/user-error-message';
 
-import { isPhysicalDevice, loadNotifications } from './native-notifications';
+import {
+  hasNotificationsNativeModule,
+  isPhysicalDevice,
+  loadNotifications,
+} from './native-notifications';
 
 const ENABLED_KEY = 'kaku-push-enabled';
 
@@ -48,6 +52,11 @@ export function usePushRegistration() {
     async (shouldEnable: boolean) => {
       if (Platform.OS === 'web') {
         setStatus('unavailable');
+        return;
+      }
+      if (!hasNotificationsNativeModule()) {
+        setStatus('unavailable');
+        setError('当前安装还没有推送模块，需要重新编译后再打开。');
         return;
       }
       const Notifications = loadNotifications();

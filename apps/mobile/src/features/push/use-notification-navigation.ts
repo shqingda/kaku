@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { router, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 
-import { loadNotifications } from './native-notifications';
+import {
+  hasNotificationsNativeModule,
+  loadNotifications,
+} from './native-notifications';
 
 function hrefFromNotification(data: unknown): Href | null {
   if (!data || typeof data !== 'object' || !('href' in data)) {
@@ -15,6 +18,7 @@ function hrefFromNotification(data: unknown): Href | null {
 export function useNotificationNavigation() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
+    if (!hasNotificationsNativeModule()) return;
     const Notifications = loadNotifications();
     if (!Notifications) return;
 
