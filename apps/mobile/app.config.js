@@ -106,6 +106,17 @@ module.exports = {
           granularPermissions: ['photo'],
         },
       ],
+      [
+        'expo-quick-actions',
+        {
+          androidIcons: {
+            shortcut: {
+              backgroundColor: '#C96878',
+              foregroundImage: './assets/images/kaku-mark.png',
+            },
+          },
+        },
+      ],
       'expo-secure-store',
       'expo-sqlite',
       ...sentryPlugin,

@@ -10,6 +10,7 @@ import '@/lib/sentry';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';
+import { useHomeScreenShortcuts } from '@/features/quick-actions/use-home-screen-shortcuts';
 import { SearchHistoryProvider } from '@/features/search/search-history-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
 import { HeaderBackButton } from '@/features/shared/header-back-button';
@@ -92,6 +93,7 @@ export default function RootLayout() {
 function RootNavigator() {
   const colors = useTheme();
   const scheme = useThemeScheme();
+  useHomeScreenShortcuts();
 
   return (
     <>
