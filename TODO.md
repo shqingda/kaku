@@ -30,7 +30,7 @@
 - [ ] 小组件 / 快捷指令：
   - [x] 主屏幕快捷操作：长按图标直达每日放送、搜索、排行榜、分类浏览（iOS Quick Actions / Android App Shortcuts）。需重新打 native 包后生效。
   - [ ] iOS Widget、Android App Widget。Expo SDK 57 的 JS widget 在 iOS 26 上会空白渲染，等上游稳定后再做。
-- [x] 多数据源/跨站数据增强：共享包抽出 provider 与标题对齐；`GET /public/subjects/:id/enrichment` 用 AniList 精确标题匹配补评分/预告片/外链，条目页「其它来源」失败与未匹配均显式展示。音乐/游戏不强迫匹配。
+- [x] 多数据源/跨站数据增强：曾用 AniList 在条目页补评分/预告片。匹配失败或接口不可用时会在条目页正中露出「其它来源」错误卡，已整段移除，Bangumi 仍是唯一目录来源。
 
 
 

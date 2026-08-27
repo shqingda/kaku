@@ -22,7 +22,6 @@ import {
   supportsWatchProgress,
   usesEpisodeData,
 } from '@/features/catalog/subject-types';
-import { SubjectEnrichmentCard } from '@/features/catalog/subject-enrichment-card';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import {
   usePersonalCollection,
@@ -350,7 +349,6 @@ export default function SubjectScreen() {
           year={year}
           showsEpisodes={tracksWatchProgress && totalEpisodes > 0}
         />
-        <SubjectEnrichmentCard subjectId={subjectId} />
 
           <View style={styles.detailEntries}>
             {detailLabels.characters ? (

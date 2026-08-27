@@ -16,10 +16,6 @@ import {
   registerConfigRoutes,
 } from './config/routes.ts';
 import { registerDiscussionRoutes } from './discussions/routes.ts';
-import {
-  type EnrichmentDependencies,
-  registerEnrichmentRoutes,
-} from './enrichment/routes.ts';
 import { registerFriendRoutes } from './friends/routes.ts';
 import { registerIndexRoutes } from './indexes/routes.ts';
 import { registerNotificationRoutes } from './notifications/routes.ts';
@@ -51,7 +47,6 @@ import { registerWikiRoutes } from './wiki/routes.ts';
 
 type AppDependencies = AuthDependencies &
   ConfigDependencies &
-  EnrichmentDependencies &
   PreferencesDependencies &
   PushDeviceDependencies &
   RankingDependencies &
@@ -86,7 +81,6 @@ export function createApp(dependencies: AppDependencies = {}) {
   registerCollectionRoutes(app, dependencies);
   registerConfigRoutes(app, dependencies);
   registerDiscussionRoutes(app, dependencies);
-  registerEnrichmentRoutes(app, dependencies);
   registerFriendRoutes(app, dependencies);
   registerIndexRoutes(app, dependencies);
   registerNotificationRoutes(app, dependencies);

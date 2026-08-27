@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  anilistMediaTypeForSubject,
-  catalogTitlesMatch,
   COLLECTION_STATUSES,
   DEFAULT_PREFERENCE_VALUES,
   isCollectionStatus,
@@ -32,13 +30,4 @@ test('theme, locale, and collection status guards reject unknown values', () => 
     'onHold',
     'dropped',
   ]);
-});
-
-test('catalog title matching ignores space and case', () => {
-  assert.equal(catalogTitlesMatch('CLANNAD', 'clannad'), true);
-  assert.equal(catalogTitlesMatch('After Story', 'AfterStory'), true);
-  assert.equal(catalogTitlesMatch('CLANNAD', 'CLANNAD After Story'), false);
-  assert.equal(anilistMediaTypeForSubject(2), 'ANIME');
-  assert.equal(anilistMediaTypeForSubject(1), 'MANGA');
-  assert.equal(anilistMediaTypeForSubject(4), null);
 });

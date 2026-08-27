@@ -27,8 +27,6 @@ export const queryKeys = {
     ['notifications', 'kaku', userId ?? 'signed-out'] as const,
   catalogSubject: (subjectId: number, version: number) =>
     ['catalog-subject', 'bangumi', version, subjectId] as const,
-  subjectEnrichment: (subjectId: number) =>
-    ['subject-enrichment', 'anilist', subjectId] as const,
   calendar: () => ['calendar', 'bangumi'] as const,
   channel: (subjectType: number) =>
     ['channel', 'kaku', subjectType] as const,
