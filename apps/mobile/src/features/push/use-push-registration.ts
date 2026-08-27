@@ -18,6 +18,17 @@ import {
 
 const ENABLED_KEY = 'kaku-push-enabled';
 
+function describePushRegistrationError(error: unknown) {
+  const detail = error instanceof Error ? error.message : '';
+  if (/firebase|fcm|google[- ]services|default firebaseapp/i.test(detail)) {
+    return 'Android 推送需要 Firebase（FCM）。当前包没有 google-services.json，拿不到设备令牌。';
+  }
+  return userErrorMessage(
+    error,
+    detail.trim() || '推送登记失败，请稍后重试。',
+  );
+}
+
 export type PushStatus =
   | 'denied'
   | 'failed'
@@ -119,9 +130,7 @@ export function usePushRegistration() {
         setError(null);
       } catch (caughtError) {
         setStatus('failed');
-        setError(
-          userErrorMessage(caughtError, '推送登记失败，请稍后重试。'),
-        );
+        setError(describePushRegistrationError(caughtError));
       }
     },
     [request, session],
