@@ -45,7 +45,7 @@ module.exports = {
   expo: {
     name: 'Kaku',
     slug: 'kaku',
-    version: '1.0.7',
+    version: '1.0.8',
     orientation: 'portrait',
     icon: lightIcon,
     scheme: 'kaku',
