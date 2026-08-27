@@ -7,7 +7,6 @@ import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/lib/sentry';
-import '@/features/push/notification-handler';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';

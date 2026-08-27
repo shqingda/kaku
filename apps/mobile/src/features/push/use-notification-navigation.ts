@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { router, type Href } from 'expo-router';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+
+import { loadNotifications } from './native-notifications';
 
 function hrefFromNotification(data: unknown): Href | null {
   if (!data || typeof data !== 'object' || !('href' in data)) {
@@ -14,6 +15,21 @@ function hrefFromNotification(data: unknown): Href | null {
 export function useNotificationNavigation() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
+    const Notifications = loadNotifications();
+    if (!Notifications) return;
+
+    try {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+    } catch {
+      return;
+    }
 
     function open(data: unknown) {
       const href = hrefFromNotification(data);

@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Constants from 'expo-constants';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 
@@ -11,6 +9,8 @@ import {
   unregisterPushDevice,
 } from '@/infrastructure/kaku/push-client';
 import { userErrorMessage } from '@/lib/user-error-message';
+
+import { isPhysicalDevice, loadNotifications } from './native-notifications';
 
 const ENABLED_KEY = 'kaku-push-enabled';
 
@@ -50,7 +50,13 @@ export function usePushRegistration() {
         setStatus('unavailable');
         return;
       }
-      if (!Device.isDevice) {
+      const Notifications = loadNotifications();
+      if (!Notifications) {
+        setStatus('unavailable');
+        setError('当前安装还没有推送模块，需要重新编译后再打开。');
+        return;
+      }
+      if (isPhysicalDevice() === false) {
         setStatus('simulator');
         setError('模拟器收不到远程推送，请用真机打开。');
         return;
