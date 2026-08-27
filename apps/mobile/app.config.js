@@ -59,6 +59,7 @@ module.exports = {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription: '允许 Kaku 扫描二维码连接开发服务器。',
+        UIBackgroundModes: ['remote-notification'],
       },
       supportsTablet: false,
     },
@@ -104,6 +105,14 @@ module.exports = {
           photosPermission: '允许 Kaku 访问照片。',
           savePhotosPermission: '允许 Kaku 将封面保存到照片。',
           granularPermissions: ['photo'],
+        },
+      ],
+      [
+        'expo-notifications',
+        {
+          color: '#C96878',
+          defaultChannel: 'kaku-default',
+          icon: './assets/images/kaku-mark.png',
         },
       ],
       [

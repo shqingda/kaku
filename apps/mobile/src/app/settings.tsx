@@ -25,6 +25,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { usePreferences } from '@/features/preferences/preferences-provider';
+import { usePushRegistration } from '@/features/push/use-push-registration';
 import { useSearchHistory } from '@/features/search/search-history-provider';
 import type { ThemePreference } from '@/features/preferences/preferences-model';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -115,6 +116,7 @@ export default function SettingsScreen() {
   } = usePreferences();
   const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
+  const push = usePushRegistration();
   const signedIn = Boolean(session);
   const channels = [
     {
@@ -261,6 +263,74 @@ export default function SettingsScreen() {
                 <Text style={styles.rowTitle}>设备间同步</Text>
                 <Text numberOfLines={1} style={styles.rowDescription}>
                   登录后即可在设备间同步。
+                </Text>
+              </View>
+              <Text style={styles.rowAction}>去登录</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <Text style={styles.sectionTitle}>通知</Text>
+        <View style={styles.group}>
+          {session ? (
+            <View style={styles.syncBlock}>
+              <View style={styles.syncHeader}>
+                <Text style={styles.rowTitle}>推送通知</Text>
+                <Switch
+                  accessibilityLabel="推送通知"
+                  disabled={
+                    push.status === 'unavailable' || push.status === 'simulator'
+                  }
+                  ios_backgroundColor={colors.track}
+                  onValueChange={(next) => {
+                    playSelectionHaptic();
+                    push.setEnabled(next);
+                  }}
+                  thumbColor={
+                    Platform.OS === 'android' ? '#FFFFFF' : undefined
+                  }
+                  trackColor={{ false: colors.track, true: colors.accent }}
+                  value={push.enabled}
+                />
+              </View>
+              <Text style={styles.rowDescription}>
+                {push.status === 'on'
+                  ? '有新的 Bangumi 通知时，会发到这台设备。'
+                  : push.status === 'denied'
+                    ? '系统通知权限未打开，可在系统设置里允许后再开。'
+                    : push.status === 'simulator'
+                      ? '模拟器收不到远程推送，请用真机打开。'
+                      : push.status === 'failed'
+                        ? (push.error ?? '推送登记失败，请稍后重试。')
+                        : push.status === 'unavailable'
+                          ? '当前平台不支持远程推送。'
+                          : '打开后，未读回复会推送到这台设备。'}
+              </Text>
+              {push.status === 'failed' ? (
+                <Pressable
+                  accessibilityRole="button"
+                  hitSlop={HIT_SLOP}
+                  onPress={push.retry}
+                  style={({ pressed }) => [
+                    styles.row,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.rowAction}>重试</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : (
+            <Pressable
+              accessibilityLabel="前往登录"
+              accessibilityRole="button"
+              onPress={() => router.push('/account')}
+              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+            >
+              <View style={styles.rowCopy}>
+                <Text style={styles.rowTitle}>推送通知</Text>
+                <Text numberOfLines={1} style={styles.rowDescription}>
+                  登录后即可在这台设备接收未读通知。
                 </Text>
               </View>
               <Text style={styles.rowAction}>去登录</Text>

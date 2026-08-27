@@ -12,22 +12,25 @@
 
 - [ ] 恢复“角色与人物收藏”入口（含自己的主页与好友主页）。目前通过 `SHOW_ENTITY_ENTRY` 开关全部隐藏，相关页面、查询和接口均保留；待 Bangumi P1 的角色/人物取消收藏接口不再返回 500，并完成 iOS 与 Android 真机验证后恢复。
 
+
+
 ## 等待上游
 
 - [ ] 加入/退出小组：Bangumi P1 公开接口没有小组成员写操作（官网靠服务端表单），前端生成的 P1 客户端（bangumi/frontend `packages/client`）中亦无对应端点。待上游开放后实现，不要臆测端点。好友添加/移除（`PUT/DELETE /p1/friends/{username}`）已按官方端点实现。
 - [ ] 删除自己的动态：`DELETE /p1/timeline/{id}` 端点虽在 P1 spec 中，但官方 iOS 客户端（Bangumi-iOS）与官网均未实现删除 UI，实测返回 5xx。已移除 Kaku 的删除入口，API 路由与测试保留待上游恢复。
 
+
+
 ## Kaku 自有增值功能
 
 - [x] 用户偏好云同步（主题部分）：「外观与同步」页（头像菜单/账户入口：跟随系统/浅色/深色）接入 `GET/PUT /me/preferences`，本地立即生效、登录后自动同步/回拉、失败显式重试；内置设备级云同步开关（系统 Switch，只存本机、关闭即闸停所有云端读写）；本地偏好存 `expo-sqlite/kv-store`，重启保持。
-- [ ] 导入/导出收藏与笔记：搁置。原先挂在「我的数据」页的汇总/JSON/CSV 与 R2 副本已随该页删除。
-- [ ] 推送通知：需要 APNs / FCM、用户授权，以及 Queue + Cron 轮询。
+- [x] 推送通知：设置页开关申请系统权限后登记 Expo Push token（底层 APNs/FCM）；D1 `push_devices` 存设备；Cron 每 15 分钟轮询已登记用户的 Bangumi 未读通知并推送；首次登记只记游标不刷旧通知。需重新打 native 包、迁移 D1 并部署 worker。
 - [x] 离线增强：公开查询缓存之外，最近打开的 10 个条目（含章节列表）另存 30 天离线包；网络失败时明确展示离线包并提供重试，清理本机数据时一并删除。
 - [x] 多设备偏好/搜索历史/最近浏览同步：主题偏好、最近搜索与最近浏览均已接入；最近浏览本地即时更新，登录后合并各设备的 10 条轻量快照，并在前台恢复、进入发现页和下拉刷新时回拉；清空操作跨设备传播，失败在设置页显式重试。设备级云同步开关会同时闸停三类云端读写。
 - [ ] 小组件 / 快捷指令：
   - [x] 主屏幕快捷操作：长按图标直达每日放送、搜索、排行榜、分类浏览（iOS Quick Actions / Android App Shortcuts）。需重新打 native 包后生效。
   - [ ] iOS Widget、Android App Widget。Expo SDK 57 的 JS widget 在 iOS 26 上会空白渲染，等上游稳定后再做。
-- [ ] 多数据源/跨站数据增强：需要先完善领域模型抽象，暂缓。
+- [x] 多数据源/跨站数据增强：共享包抽出 provider 与标题对齐；`GET /public/subjects/:id/enrichment` 用 AniList 精确标题匹配补评分/预告片/外链，条目页「其它来源」失败与未匹配均显式展示。音乐/游戏不强迫匹配。
 
 
 
@@ -53,11 +56,8 @@
 - [x] D1：新增 `user_preferences` 表，免费版可用。
 - [x] Cron Triggers：每天清理已过期的认证数据，免费版可用。
 - [x] KV：用于低频公共远程配置，`/config` 先走 Cache API（5 分钟）再读 KV，避免每次请求消耗 KV 额度；namespace 绑定采用 Wrangler 自动配置，部署时创建，不进行高频写入。
-- [ ] R2：暂缓。收藏备份页已删除，不再占用免费容量。
-- [x] Queues：评估后暂缓。推送通知仍需要 Queue，等 APNs/FCM 一并做。
+- [x] Queues：评估后暂缓。当前用户量用 Cron 顺序投递即可，不必先上 Cloudflare Queue。
 - [x] Cache API 已用：公开 `/config` 先走 5 分钟边缘热缓存，再读低频 KV 配置，避免每次请求消耗 KV 读取额度。
-- [ ] Durable Objects：暂缓，免费版限制/复杂度较高，不是当前瓶颈。
-- [ ] Browser Rendering：暂缓，可能超出免费版合理用量且不一定必要。
 
 
 
@@ -91,3 +91,4 @@
 - 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
 - EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n>`，正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
+

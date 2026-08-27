@@ -7,9 +7,11 @@ import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/lib/sentry';
+import '@/features/push/notification-handler';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';
+import { useNotificationNavigation } from '@/features/push/use-notification-navigation';
 import { useHomeScreenShortcuts } from '@/features/quick-actions/use-home-screen-shortcuts';
 import { SearchHistoryProvider } from '@/features/search/search-history-provider';
 import { AppErrorBoundary } from '@/features/shared/app-error-boundary';
@@ -94,6 +96,7 @@ function RootNavigator() {
   const colors = useTheme();
   const scheme = useThemeScheme();
   useHomeScreenShortcuts();
+  useNotificationNavigation();
 
   return (
     <>

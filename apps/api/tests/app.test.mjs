@@ -155,6 +155,31 @@ test('entity collections are registered as authenticated routes', async () => {
   }
 });
 
+test('push device routes are registered as authenticated routes', async () => {
+  const app = createApp({ createStore: () => ({}) });
+
+  for (const method of ['PUT', 'DELETE']) {
+    const response = await app.request(
+      '/me/push-devices',
+      {
+        body:
+          method === 'PUT'
+            ? JSON.stringify({
+                platform: 'ios',
+                token: 'ExponentPushToken[abc]',
+              })
+            : undefined,
+        headers:
+          method === 'PUT' ? { 'Content-Type': 'application/json' } : undefined,
+        method,
+      },
+      { DB: {} },
+    );
+
+    assert.equal(response.status, 401);
+  }
+});
+
 test('friend actions are registered as authenticated routes', async () => {
   const app = createApp({ createStore: () => ({}) });
 

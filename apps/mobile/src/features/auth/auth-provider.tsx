@@ -20,6 +20,7 @@ import {
   KakuApiError,
   refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
+import { unregisterPushDevice } from '@/infrastructure/kaku/push-client';
 import { isPrivateQuery } from '@/lib/query-persistence';
 import { userErrorMessage } from '@/lib/user-error-message';
 
@@ -242,6 +243,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       if (sessionRef.current) {
+        try {
+          await unregisterPushDevice(request);
+        } catch {
+          // 退出仍继续；下次登录会重新登记。
+        }
         const response = await request('/auth/session', { method: 'DELETE' });
 
         if (!response.ok) {
@@ -256,6 +262,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession, request]);
 
   const disconnectBangumi = useCallback(async () => {
+    try {
+      await unregisterPushDevice(request);
+    } catch {
+      // 断开授权仍继续。
+    }
     const response = await request('/auth/connection', { method: 'DELETE' });
 
     if (!response.ok) {

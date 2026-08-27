@@ -73,3 +73,13 @@ export const userRecentSubjects = sqliteTable('user_recent_subjects', {
     .primaryKey()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
+
+export const pushDevices = sqliteTable('push_devices', {
+  lastNotificationId: integer('last_notification_id'),
+  platform: text('platform').notNull(),
+  token: text('token').primaryKey(),
+  updatedAt: integer('updated_at').notNull(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
+});
