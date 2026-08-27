@@ -21,17 +21,9 @@ import { playSuccessHaptic } from '@/lib/haptics';
 
 import type { DiscussionReply } from './model';
 import {
+  useDiscussionReply,
   type DiscussionReplyTarget,
-  useCreateDiscussionReply,
-} from './use-create-discussion-reply';
-import {
-  useEditCharacterReply,
-  useEditEpisodeReply,
-  useEditGroupReply,
-  useEditPersonReply,
-  useEditReviewReply,
-  useEditSubjectReply,
-} from './use-edit-reply';
+} from './use-discussion-reply';
 
 const MAX_CONTENT_LENGTH = 5000;
 
@@ -61,37 +53,7 @@ export function DiscussionReplyComposer({
     setContent,
     MAX_CONTENT_LENGTH,
   );
-  const createReply = useCreateDiscussionReply(target);
-  const editSubjectReply = useEditSubjectReply(
-    target.kind === 'subject-topic' ? target.id : 0,
-  );
-  const editGroupReply = useEditGroupReply(
-    target.kind === 'group-topic' ? target.id : 0,
-  );
-  const editEpisodeReply = useEditEpisodeReply(
-    target.kind === 'episode' ? target.id : 0,
-  );
-  const editReviewReply = useEditReviewReply(
-    target.kind === 'review' ? target.id : 0,
-  );
-  const editCharacterReply = useEditCharacterReply(
-    target.kind === 'character' ? target.id : 0,
-  );
-  const editPersonReply = useEditPersonReply(
-    target.kind === 'person' ? target.id : 0,
-  );
-  const editReply =
-    target.kind === 'subject-topic'
-      ? editSubjectReply
-      : target.kind === 'group-topic'
-        ? editGroupReply
-        : target.kind === 'episode'
-          ? editEpisodeReply
-          : target.kind === 'review'
-            ? editReviewReply
-            : target.kind === 'character'
-              ? editCharacterReply
-              : editPersonReply;
+  const { create: createReply, edit: editReply } = useDiscussionReply(target);
   const isEditing = editing != null;
   const pending = createReply.isPending || editReply.isPending;
   const hasUnsavedChanges = isEditing

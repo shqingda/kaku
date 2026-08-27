@@ -28,7 +28,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
-import { useDeleteEpisodeReply } from '@/features/discussions/use-delete-reply';
+import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
@@ -74,7 +74,10 @@ export default function EpisodeScreen() {
     (episode) => episode.number === episodeNumber,
   );
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id);
-  const deleteReply = useDeleteEpisodeReply(catalogEpisode?.id ?? 0);
+  const { remove: deleteReply } = useDiscussionReply({
+    id: catalogEpisode?.id ?? 0,
+    kind: 'episode',
+  });
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);

@@ -23,7 +23,7 @@ import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-bod
 import { DiscussionUnavailableState } from '@/features/discussions/discussion-unavailable-state';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
-import { useDeleteGroupReply } from '@/features/discussions/use-delete-reply';
+import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
@@ -46,7 +46,10 @@ export default function GroupTopicScreen() {
   const { isSigningIn, session, signIn } = useAuth();
   const composer = useReplyComposer();
   const topicQuery = usePublicGroupTopic(numericTopicId ?? 0);
-  const deleteReply = useDeleteGroupReply(numericTopicId ?? 0);
+  const { remove: deleteReply } = useDiscussionReply({
+    id: numericTopicId ?? 0,
+    kind: 'group-topic',
+  });
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);

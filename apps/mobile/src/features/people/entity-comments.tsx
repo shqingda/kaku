@@ -18,7 +18,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
-import { useDeleteEntityReply } from '@/features/discussions/use-delete-reply';
+import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { AppSheet } from '@/features/shared/app-sheet';
@@ -56,7 +56,10 @@ export function EntityComments({
   const composer = useReplyComposer();
   const [sheetVisible, setSheetVisible] = useState(false);
   const commentsQuery = useEntityComments(entityKind, entityId);
-  const deleteReply = useDeleteEntityReply(entityKind, entityId);
+  const { remove: deleteReply } = useDiscussionReply({
+    id: entityId,
+    kind: entityKind,
+  });
   const comments = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(comments);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);

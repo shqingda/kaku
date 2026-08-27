@@ -23,7 +23,7 @@ import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-bod
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
-import { useDeleteSubjectReply } from '@/features/discussions/use-delete-reply';
+import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
@@ -52,7 +52,10 @@ export default function TopicScreen() {
     label: string;
   } | null>(null);
   const topicQuery = useBangumiSubjectTopic(numericTopicId ?? 0);
-  const deleteReply = useDeleteSubjectReply(numericTopicId ?? 0);
+  const { remove: deleteReply } = useDiscussionReply({
+    id: numericTopicId ?? 0,
+    kind: 'subject-topic',
+  });
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);

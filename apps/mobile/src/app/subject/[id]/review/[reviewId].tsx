@@ -20,7 +20,7 @@ import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
-import { useDeleteReviewReply } from '@/features/discussions/use-delete-reply';
+import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
@@ -50,7 +50,10 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const { isSigningIn, session } = useAuth();
   const composer = useReplyComposer();
   const reviewQuery = useSubjectReview(numericReviewId ?? 0);
-  const deleteReply = useDeleteReviewReply(numericReviewId ?? 0);
+  const { remove: deleteReply } = useDiscussionReply({
+    id: numericReviewId ?? 0,
+    kind: 'review',
+  });
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
