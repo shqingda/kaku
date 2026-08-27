@@ -24,6 +24,7 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiSubjectTopic } from '@/features/discussions/use-bangumi-discussions';
 import { useDeleteSubjectReply } from '@/features/discussions/use-delete-reply';
+import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
 import { ReportSheet } from '@/features/reports/report-sheet';
@@ -45,9 +46,7 @@ export default function TopicScreen() {
   const numericTopicId = parsePositiveIntegerRouteParam(topicId);
   const numericReplyId = parsePositiveIntegerRouteParam(replyId);
   const { isSigningIn, session, signIn } = useAuth();
-  const [composerVisible, setComposerVisible] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const composer = useReplyComposer();
   const [reportTarget, setReportTarget] = useState<{
     id: number;
     label: string;
@@ -72,29 +71,6 @@ export default function TopicScreen() {
     appliedReplyRef.current = true;
     replyNavigation.openReply(String(numericReplyId));
   }, [numericReplyId, replies.length, replyNavigation]);
-
-  async function openComposer(reply?: DiscussionReply) {
-    if (!session) {
-      const signedIn = await signIn();
-      if (!signedIn) {
-        return;
-      }
-    }
-
-    setReplyingTo(reply);
-    setComposerVisible(true);
-  }
-
-  function openEditComposer(reply: DiscussionReply) {
-    setReplyingTo(undefined);
-    setEditingReply(reply);
-    setComposerVisible(true);
-  }
-
-  function closeComposer() {
-    setComposerVisible(false);
-    setEditingReply(null);
-  }
 
   function confirmDeleteReply(reply: DiscussionReply) {
     Alert.alert(
@@ -213,18 +189,11 @@ export default function TopicScreen() {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
-              onDelete={
-                item.authorUsername === session?.user.username
-                  ? confirmDeleteReply
-                  : undefined
-              }
-              onEdit={
-                item.authorUsername === session?.user.username
-                  ? openEditComposer
-                  : undefined
-              }
+              onDelete={confirmDeleteReply}
+              onEdit={composer.openEdit}
               onOpenReference={replyNavigation.openReply}
-              onReply={openComposer}
+              onReply={composer.open}
+              ownerUsername={session?.user.username}
               onReport={
                 session && item.authorUsername !== session.user.username
                   ? (reply) =>
@@ -247,7 +216,7 @@ export default function TopicScreen() {
               accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
               accessibilityRole="button"
               disabled={isSigningIn}
-              onPress={() => void openComposer()}
+              onPress={() => void composer.open()}
               style={({ pressed }) => [
                 styles.replyButton,
                 pressed && styles.pressed,
@@ -274,16 +243,8 @@ export default function TopicScreen() {
         ) : null}
       </View>
       <DiscussionReplyComposer
-        editing={
-          editingReply
-            ? { content: editingReply.body, postId: Number(editingReply.id) }
-            : null
-        }
-        onClose={closeComposer}
-        onEdited={() => setEditingReply(null)}
-        replyingTo={replyingTo}
+        {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'subject-topic' }}
-        visible={composerVisible}
       />
       <ReportSheet
         onClose={() => setReportTarget(null)}

@@ -67,30 +67,20 @@ export function useDeleteReviewReply(reviewId: number) {
   });
 }
 
-export function useDeleteCharacterReply(characterId: number) {
+export function useDeleteEntityReply(
+  kind: 'character' | 'person',
+  entityId: number,
+) {
   const { request } = useAuthActions();
   const queryClient = useQueryClient();
+  const deleteComment =
+    kind === 'character' ? deleteCharacterComment : deletePersonComment;
 
   return useMutation({
-    mutationFn: (commentId: number) =>
-      deleteCharacterComment(request, commentId),
+    mutationFn: (commentId: number) => deleteComment(request, commentId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.entityComments('character', characterId),
-      });
-    },
-  });
-}
-
-export function useDeletePersonReply(personId: number) {
-  const { request } = useAuthActions();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (commentId: number) => deletePersonComment(request, commentId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.entityComments('person', personId),
+        queryKey: queryKeys.entityComments(kind, entityId),
       });
     },
   });

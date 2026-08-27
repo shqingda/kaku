@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -29,6 +29,7 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useDeleteEpisodeReply } from '@/features/discussions/use-delete-reply';
+import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -50,10 +51,8 @@ export default function EpisodeScreen() {
     episodeNumber: string;
     id: string;
   }>();
-  const { isSigningIn, session, signIn } = useAuth();
-  const [composerVisible, setComposerVisible] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const { isSigningIn, session } = useAuth();
+  const composer = useReplyComposer();
   const parsedSubjectId = parsePositiveIntegerRouteParam(id);
   const parsedEpisodeNumber = parsePositiveIntegerRouteParam(episodeParam);
   const subjectId = parsedSubjectId ?? 0;
@@ -79,29 +78,6 @@ export default function EpisodeScreen() {
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
-
-  async function openComposer(reply?: DiscussionReply) {
-    if (!session) {
-      const signedIn = await signIn();
-      if (!signedIn) {
-        return;
-      }
-    }
-
-    setReplyingTo(reply);
-    setComposerVisible(true);
-  }
-
-  function openEditComposer(reply: DiscussionReply) {
-    setReplyingTo(undefined);
-    setEditingReply(reply);
-    setComposerVisible(true);
-  }
-
-  function closeComposer() {
-    setComposerVisible(false);
-    setEditingReply(null);
-  }
 
   function confirmDeleteReply(reply: DiscussionReply) {
     Alert.alert(
@@ -377,18 +353,11 @@ export default function EpisodeScreen() {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
-              onDelete={
-                item.authorUsername === session?.user.username
-                  ? confirmDeleteReply
-                  : undefined
-              }
-              onEdit={
-                item.authorUsername === session?.user.username
-                  ? openEditComposer
-                  : undefined
-              }
+              onDelete={confirmDeleteReply}
+              onEdit={composer.openEdit}
               onOpenReference={replyNavigation.openReply}
-              onReply={openComposer}
+              onReply={composer.open}
+              ownerUsername={session?.user.username}
               reply={item}
             />
           )}
@@ -402,7 +371,7 @@ export default function EpisodeScreen() {
               accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
               accessibilityRole="button"
               disabled={isSigningIn}
-              onPress={() => void openComposer()}
+              onPress={() => void composer.open()}
               style={({ pressed }) => [
                 styles.replyButton,
                 pressed && styles.pressed,
@@ -431,16 +400,8 @@ export default function EpisodeScreen() {
       {catalogEpisode ? (
         <>
           <DiscussionReplyComposer
-            editing={
-              editingReply
-                ? { content: editingReply.body, postId: Number(editingReply.id) }
-                : null
-            }
-            onClose={closeComposer}
-            onEdited={() => setEditingReply(null)}
-            replyingTo={replyingTo}
+            {...composer.sheetProps}
             target={{ id: catalogEpisode.id, kind: 'episode' }}
-            visible={composerVisible}
           />
         </>
       ) : null}

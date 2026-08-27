@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -21,6 +21,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useDeleteReviewReply } from '@/features/discussions/use-delete-reply';
+import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -46,10 +47,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   }>();
   const numericReviewId = parsePositiveIntegerRouteParam(reviewId ?? id);
   const numericReplyId = parsePositiveIntegerRouteParam(replyId);
-  const { isSigningIn, session, signIn } = useAuth();
-  const [composerVisible, setComposerVisible] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const { isSigningIn, session } = useAuth();
+  const composer = useReplyComposer();
   const reviewQuery = useSubjectReview(numericReviewId ?? 0);
   const deleteReply = useDeleteReviewReply(numericReviewId ?? 0);
   const review = reviewQuery.data;
@@ -71,29 +70,6 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
     appliedReplyRef.current = true;
     replyNavigation.openReply(String(numericReplyId));
   }, [numericReplyId, replies.length, replyNavigation]);
-
-  async function openComposer(reply?: DiscussionReply) {
-    if (!session) {
-      const signedIn = await signIn();
-      if (!signedIn) {
-        return;
-      }
-    }
-
-    setReplyingTo(reply);
-    setComposerVisible(true);
-  }
-
-  function openEditComposer(reply: DiscussionReply) {
-    setReplyingTo(undefined);
-    setEditingReply(reply);
-    setComposerVisible(true);
-  }
-
-  function closeComposer() {
-    setComposerVisible(false);
-    setEditingReply(null);
-  }
 
   function confirmDeleteReply(reply: DiscussionReply) {
     Alert.alert(
@@ -193,18 +169,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
-              onDelete={
-                item.authorUsername === session?.user.username
-                  ? confirmDeleteReply
-                  : undefined
-              }
-              onEdit={
-                item.authorUsername === session?.user.username
-                  ? openEditComposer
-                  : undefined
-              }
+              onDelete={confirmDeleteReply}
+              onEdit={composer.openEdit}
               onOpenReference={replyNavigation.openReply}
-              onReply={openComposer}
+              onReply={composer.open}
+              ownerUsername={session?.user.username}
               reply={item}
             />
           )}
@@ -218,7 +187,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
               accessibilityLabel={session ? `回复${contentLabel}` : `登录后回复${contentLabel}`}
               accessibilityRole="button"
               disabled={isSigningIn}
-              onPress={() => void openComposer()}
+              onPress={() => void composer.open()}
               style={({ pressed }) => [
                 styles.replyButton,
                 pressed && styles.pressed,
@@ -245,16 +214,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         ) : null}
       </View>
       <DiscussionReplyComposer
-        editing={
-          editingReply
-            ? { content: editingReply.body, postId: Number(editingReply.id) }
-            : null
-        }
-        onClose={closeComposer}
-        onEdited={() => setEditingReply(null)}
-        replyingTo={replyingTo}
+        {...composer.sheetProps}
         target={{ id: numericReviewId, kind: 'review' }}
-        visible={composerVisible}
       />
       <ScrollToTopButton
         bottom={104}

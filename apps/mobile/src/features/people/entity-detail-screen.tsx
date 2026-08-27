@@ -1,7 +1,7 @@
 import { userErrorMessage } from '@/lib/user-error-message';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -11,31 +11,18 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
-import { HIT_SLOP } from '@/constants/design';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
-import { AppSheet } from '@/features/shared/app-sheet';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
-import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
-import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
-import type { DiscussionReply } from '@/features/discussions/model';
-import { ReplyListItem } from '@/features/discussions/reply-list-item';
-import {
-  useDeleteCharacterReply,
-  useDeletePersonReply,
-} from '@/features/discussions/use-delete-reply';
-import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 
+import { EntityComments } from './entity-comments';
 import {
   buildEntityListItems,
   EntityRelationRow,
@@ -45,7 +32,6 @@ import {
   useEntityCollection,
   useSaveEntityCollection,
 } from './use-entity-collection';
-import { useEntityComments } from './use-public-entity';
 
 export function EntityDetailScreen({
   data,
@@ -66,73 +52,16 @@ export function EntityDetailScreen({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  // FlatList 在 Android 上必须用确定高度 + flex:1 才能滚动（maxHeight 不被
-  // VirtualizedList 可靠尊重）。92% 为 AppSheet 上限，24 为拖拽把手与内边距。
-  const commentsBodyHeight = Math.max(320, windowHeight * 0.92 - 24);
   const { isSigningIn, session, signIn } = useAuth();
-  const [commentsVisible, setCommentsVisible] = useState(false);
-  const [composerVisible, setComposerVisible] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
   const [portraitVisible, setPortraitVisible] = useState(false);
-  // 与排行榜一致：往下滚动一段距离后显示"回到顶部"。
-  const [showsScrollToTop, setShowsScrollToTop] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
   const collectionQuery = useEntityCollection(entityKind, entityId);
-  const commentsQuery = useEntityComments(entityKind, entityId);
   const saveCollection = useSaveEntityCollection(entityKind, entityId);
-  const deleteCharacterReply = useDeleteCharacterReply(entityId);
-  const deletePersonReply = useDeletePersonReply(entityId);
-  const deleteReply =
-    entityKind === 'character' ? deleteCharacterReply : deletePersonReply;
-  const comments = commentsQuery.data ?? [];
-  const {
-    handleScrollToIndexFailed,
-    highlightedReplyId,
-    listRef: commentsListRef,
-    openReply,
-  } = useReplyNavigation(comments);
-  // 打开评论弹层后要定位到的回复：等弹层入场动画结束再滚动，避免硬编码等待时间。
-  const pendingReplyIdRef = useRef<string | undefined>(undefined);
-  // 通知深链：等实体数据就绪（entityId 有效）再打开评论弹层。
-  useEffect(() => {
-    if (!initialReplyId || !data) {
-      return;
-    }
-    pendingReplyIdRef.current = initialReplyId;
-    setCommentsVisible(true);
-  }, [data, initialReplyId]);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
-
-  function openReplyInSheet(replyId: string) {
-    pendingReplyIdRef.current = replyId;
-    setCommentsVisible(true);
-  }
-
-  function handleCommentsEntered() {
-    const replyId = pendingReplyIdRef.current;
-    pendingReplyIdRef.current = undefined;
-    if (replyId) {
-      openReply(replyId);
-    }
-  }
-
-  function handleCommentsScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const nextVisible = event.nativeEvent.contentOffset.y > 720;
-    setShowsScrollToTop((current) =>
-      current === nextVisible ? current : nextVisible,
-    );
-  }
-
-  function scrollCommentsToTop() {
-    commentsListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-  }
 
   async function toggleCollection() {
     if (!session) {
@@ -174,48 +103,6 @@ export function EntityDetailScreen({
     }
   }
 
-  async function openComposer(reply?: DiscussionReply) {
-    if (!session) {
-      const signedIn = await signIn();
-      if (!signedIn) {
-        return;
-      }
-    }
-
-    setReplyingTo(reply);
-    setComposerVisible(true);
-  }
-
-  function openEditComposer(reply: DiscussionReply) {
-    setReplyingTo(undefined);
-    setEditingReply(reply);
-    setComposerVisible(true);
-  }
-
-  function closeComposer() {
-    setComposerVisible(false);
-    setEditingReply(null);
-  }
-
-  function confirmDeleteReply(reply: DiscussionReply) {
-    Alert.alert('删除这条评论？', '删除后无法恢复。', [
-      { style: 'cancel', text: '取消' },
-      {
-        onPress: () => {
-          const commentId = Number(reply.id);
-          if (Number.isInteger(commentId)) {
-            deleteReply.mutate(commentId, {
-              onError: (error) =>
-                Alert.alert('评论没有删除', userErrorMessage(error)),
-            });
-          }
-        },
-        style: 'destructive',
-        text: '删除',
-      },
-    ]);
-  }
-
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: data?.name ?? `${kind}详情` }} />
@@ -228,345 +115,173 @@ export function EntityDetailScreen({
           title={`${kind}资料读取失败`}
         />
       ) : (
-        <FlatList
-          contentContainerStyle={styles.content}
-          data={items}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={
-            <>
-              <View style={styles.hero}>
-                <Pressable
-                  accessibilityLabel={`全屏查看${data.name}图片`}
-                  accessibilityRole="button"
-                  disabled={!data.imageUrl}
-                  onPress={() => setPortraitVisible(true)}
-                  style={({ pressed }) => [
-                    styles.portrait,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.fallback}>{data.name.slice(0, 1)}</Text>
-                  {data.imageUrl ? (
-                    <Image
-                      contentFit="cover"
-                      contentPosition="top"
-                      source={data.imageUrl}
-                      style={StyleSheet.absoluteFill}
-                      transition={140}
-                    />
-                  ) : null}
-                </Pressable>
-                <View style={styles.heroMain}>
-                  <Text selectable style={styles.name}>
-                    {data.name}
-                  </Text>
-                  <Text numberOfLines={2} style={styles.kind}>
-                    {(data.categoryLabels ?? [kind]).join(' · ')}
-                  </Text>
-                  <Text style={styles.stats}>
-                    {(data.collectionCount ?? 0).toLocaleString('zh-CN')} 人收藏
-                    {' · '}
-                    {(data.commentCount ?? 0).toLocaleString('zh-CN')} 条评论
-                  </Text>
-                  <Pressable
-                    accessibilityLabel={
-                      session
-                        ? collectionQuery.data
-                          ? `取消收藏${kind}`
-                          : `收藏${kind}`
-                        : `登录后收藏${kind}`
-                    }
-                    accessibilityRole="button"
-                    disabled={
-                      isSigningIn ||
-                      (Boolean(session) && collectionQuery.isPending) ||
-                      saveCollection.isPending
-                    }
-                    onPress={() => void toggleCollection()}
-                    style={({ pressed }) => [
-                      styles.collectionButton,
-                      collectionQuery.data && styles.collectedButton,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    {(session && collectionQuery.isPending) ||
-                    saveCollection.isPending ? (
-                      <ActivityIndicator color={colors.accent} size="small" />
-                    ) : (
-                      <SymbolView
-                        name={{
-                          android: collectionQuery.data
-                            ? 'favorite'
-                            : 'favorite_border',
-                          ios: collectionQuery.data ? 'heart.fill' : 'heart',
-                          web: collectionQuery.data
-                            ? 'favorite'
-                            : 'favorite_border',
-                        }}
-                        size={15}
-                        tintColor={
-                          collectionQuery.data ? colors.accent : colors.muted
-                        }
-                        weight="semibold"
-                      />
-                    )}
-                    <Text
-                      style={[
-                        styles.collectionButtonText,
-                        collectionQuery.data && styles.collectedButtonText,
-                      ]}
-                    >
-                      {isSigningIn
-                        ? '正在登录'
-                        : !session
-                          ? '登录后收藏'
-                          : collectionQuery.isError
-                            ? '重试'
-                            : collectionQuery.data
-                              ? '取消收藏'
-                              : '收藏'}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              {data.summary ? (
-                <View style={styles.panel}>
-                  <Text style={styles.panelTitle}>简介</Text>
-                  <Text selectable style={styles.summary}>
-                    {data.summary}
-                  </Text>
-                </View>
-              ) : null}
-
-              {data.metadata.length > 0 ? (
-                <View style={styles.panel}>
-                  <Text style={styles.panelTitle}>资料</Text>
-                  {data.metadata.map((item, index) => (
-                    <View
-                      key={`${item.label}-${index}`}
-                      style={[
-                        styles.metadataRow,
-                        index > 0 && styles.rowBorder,
-                      ]}
-                    >
-                      <Text style={styles.metadataLabel}>{item.label}</Text>
-                      <Text selectable style={styles.metadataValue}>
-                        {item.value}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-
-              <View style={styles.commentsSection}>
-                <View style={styles.commentsHeader}>
-                  <View>
-                    <Text accessibilityRole="header" style={styles.commentsHeaderTitle}>
-                      评论
-                    </Text>
-                    <Text style={styles.commentsHeaderMeta}>
-                      {data.commentCount.toLocaleString('zh-CN')} 条公开评论
-                    </Text>
-                  </View>
-                  <Pressable
-                    accessibilityLabel={session ? `评论这个${kind}` : '登录后评论'}
-                    accessibilityRole="button"
-                    disabled={isSigningIn}
-                    hitSlop={HIT_SLOP}
-                    onPress={() => void openComposer()}
-                    style={({ pressed }) => [
-                      styles.publishButton,
-                      pressed && styles.publishButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.publishIcon}>
-                      <SymbolView
-                        name={{
-                          android: 'edit',
-                          ios: 'square.and.pencil',
-                          web: 'edit',
-                        }}
-                        size={16}
-                        tintColor={colors.ink}
-                        weight="semibold"
-                      />
-                    </View>
-                    <Text style={styles.publishText}>发布</Text>
-                  </Pressable>
-                </View>
-                {commentsQuery.isPending ? (
-                  <Text style={styles.commentsState}>正在读取评论…</Text>
-                ) : commentsQuery.isError ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => void commentsQuery.refetch()}
-                    style={({ pressed }) => pressed && styles.pressed}
-                  >
-                    <Text style={styles.commentsState}>评论读取失败，点此重试</Text>
-                  </Pressable>
-                ) : comments.length === 0 ? (
-                  <Text style={styles.commentsState}>还没有公开评论。</Text>
-                ) : (
-                  <View style={styles.commentsCard}>
-                    {comments.slice(0, 3).map((reply, index) => (
-                      <ReplyListItem
-                        embedded
-                        floor={index + 1}
-                        hasDivider={index > 0}
-                        key={reply.id}
-                        onDelete={
-                          reply.authorUsername === session?.user.username
-                            ? confirmDeleteReply
-                            : undefined
-                        }
-                        onEdit={
-                          reply.authorUsername === session?.user.username
-                            ? openEditComposer
-                            : undefined
-                        }
-                        onOpenReference={openReplyInSheet}
-                        onReply={openComposer}
-                        reply={reply}
-                      />
-                    ))}
+        <EntityComments
+          commentCount={data.commentCount}
+          entityId={data.id}
+          entityKind={entityKind}
+          initialReplyId={initialReplyId}
+          kind={kind}
+          name={data.name}
+        >
+          {(preview) => (
+            <FlatList
+              contentContainerStyle={styles.content}
+              data={items}
+              keyExtractor={(item) => item.id}
+              ListHeaderComponent={
+                <>
+                  <View style={styles.hero}>
                     <Pressable
-                      accessibilityLabel="查看全部评论"
+                      accessibilityLabel={`全屏查看${data.name}图片`}
                       accessibilityRole="button"
-                      onPress={() => setCommentsVisible(true)}
+                      disabled={!data.imageUrl}
+                      onPress={() => setPortraitVisible(true)}
                       style={({ pressed }) => [
-                        styles.commentsAllButton,
+                        styles.portrait,
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text style={styles.commentsAllText}>查看全部</Text>
-                      <SymbolView
-                        name={{
-                          android: 'chevron_right',
-                          ios: 'chevron.right',
-                          web: 'chevron_right',
-                        }}
-                        size={12}
-                        tintColor={colors.accent}
-                        weight="semibold"
-                      />
+                      <Text style={styles.fallback}>
+                        {data.name.slice(0, 1)}
+                      </Text>
+                      {data.imageUrl ? (
+                        <Image
+                          contentFit="cover"
+                          contentPosition="top"
+                          source={data.imageUrl}
+                          style={StyleSheet.absoluteFill}
+                          transition={140}
+                        />
+                      ) : null}
                     </Pressable>
+                    <View style={styles.heroMain}>
+                      <Text selectable style={styles.name}>
+                        {data.name}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.kind}>
+                        {(data.categoryLabels ?? [kind]).join(' · ')}
+                      </Text>
+                      <Text style={styles.stats}>
+                        {(data.collectionCount ?? 0).toLocaleString('zh-CN')}{' '}
+                        人收藏
+                        {' · '}
+                        {(data.commentCount ?? 0).toLocaleString('zh-CN')} 条评论
+                      </Text>
+                      <Pressable
+                        accessibilityLabel={
+                          session
+                            ? collectionQuery.data
+                              ? `取消收藏${kind}`
+                              : `收藏${kind}`
+                            : `登录后收藏${kind}`
+                        }
+                        accessibilityRole="button"
+                        disabled={
+                          isSigningIn ||
+                          (Boolean(session) && collectionQuery.isPending) ||
+                          saveCollection.isPending
+                        }
+                        onPress={() => void toggleCollection()}
+                        style={({ pressed }) => [
+                          styles.collectionButton,
+                          collectionQuery.data && styles.collectedButton,
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        {(session && collectionQuery.isPending) ||
+                        saveCollection.isPending ? (
+                          <ActivityIndicator
+                            color={colors.accent}
+                            size="small"
+                          />
+                        ) : (
+                          <SymbolView
+                            name={{
+                              android: collectionQuery.data
+                                ? 'favorite'
+                                : 'favorite_border',
+                              ios: collectionQuery.data
+                                ? 'heart.fill'
+                                : 'heart',
+                              web: collectionQuery.data
+                                ? 'favorite'
+                                : 'favorite_border',
+                            }}
+                            size={15}
+                            tintColor={
+                              collectionQuery.data
+                                ? colors.accent
+                                : colors.muted
+                            }
+                            weight="semibold"
+                          />
+                        )}
+                        <Text
+                          style={[
+                            styles.collectionButtonText,
+                            collectionQuery.data && styles.collectedButtonText,
+                          ]}
+                        >
+                          {isSigningIn
+                            ? '正在登录'
+                            : !session
+                              ? '登录后收藏'
+                              : collectionQuery.isError
+                                ? '重试'
+                                : collectionQuery.data
+                                  ? '取消收藏'
+                                  : '收藏'}
+                        </Text>
+                      </Pressable>
+                    </View>
                   </View>
-                )}
-              </View>
-            </>
-          }
-          refreshControl={
-            <AppRefreshControl
-              onRefresh={onRetry}
-              refreshing={isRefreshing}
+
+                  {data.summary ? (
+                    <View style={styles.panel}>
+                      <Text style={styles.panelTitle}>简介</Text>
+                      <Text selectable style={styles.summary}>
+                        {data.summary}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {data.metadata.length > 0 ? (
+                    <View style={styles.panel}>
+                      <Text style={styles.panelTitle}>资料</Text>
+                      {data.metadata.map((item, index) => (
+                        <View
+                          key={`${item.label}-${index}`}
+                          style={[
+                            styles.metadataRow,
+                            index > 0 && styles.rowBorder,
+                          ]}
+                        >
+                          <Text style={styles.metadataLabel}>{item.label}</Text>
+                          <Text selectable style={styles.metadataValue}>
+                            {item.value}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
+
+                  {preview}
+                </>
+              }
+              refreshControl={
+                <AppRefreshControl
+                  onRefresh={onRetry}
+                  refreshing={isRefreshing}
+                />
+              }
+              renderItem={({ item }) => (
+                <EntityRelationRow item={item} kind={kind} />
+              )}
+              showsVerticalScrollIndicator={false}
             />
-          }
-          renderItem={({ item }) => (
-            <EntityRelationRow item={item} kind={kind} />
           )}
-          showsVerticalScrollIndicator={false}
-        />
+        </EntityComments>
       )}
-      <AppSheet
-        onClose={() => setCommentsVisible(false)}
-        onEntered={handleCommentsEntered}
-        visible={commentsVisible}
-      >
-        <View
-          style={[
-            styles.commentsSheetBody,
-            { height: commentsBodyHeight },
-          ]}
-        >
-          <View style={styles.commentsModalHeader}>
-            <Pressable
-              accessibilityLabel="回到评论顶部"
-              accessibilityRole="button"
-              onPress={scrollCommentsToTop}
-              style={({ pressed }) => [
-                styles.commentsHeaderTapTarget,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.commentsModalTitle}>{kind}评论</Text>
-              <Text style={styles.commentsModalMeta}>{data?.name}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="关闭评论"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => setCommentsVisible(false)}
-              style={({ pressed }) => [
-                styles.commentsClose,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{ android: 'close', ios: 'xmark', web: 'close' }}
-                size={17}
-                tintColor={colors.ink}
-                weight="semibold"
-              />
-            </Pressable>
-          </View>
-          <FlatList
-            ref={commentsListRef}
-            contentContainerStyle={[
-              styles.commentsContent,
-              { paddingBottom: Math.max(insets.bottom, 16) },
-            ]}
-            data={comments}
-            initialNumToRender={10}
-            keyExtractor={(reply) => reply.id}
-            maxToRenderPerBatch={10}
-            onRefresh={() => void commentsQuery.refetch()}
-            onScroll={handleCommentsScroll}
-            onScrollToIndexFailed={handleScrollToIndexFailed}
-            refreshing={commentsQuery.isRefetching}
-            renderItem={({ index, item }) => (
-              <ReplyListItem
-                floor={index + 1}
-                isHighlighted={highlightedReplyId === item.id}
-                onDelete={
-                  item.authorUsername === session?.user.username
-                    ? confirmDeleteReply
-                    : undefined
-                }
-                onEdit={
-                  item.authorUsername === session?.user.username
-                    ? openEditComposer
-                    : undefined
-                }
-                onOpenReference={openReply}
-                onReply={openComposer}
-                reply={item}
-              />
-            )}
-            scrollEventThrottle={80}
-            showsVerticalScrollIndicator={false}
-            style={styles.commentsList}
-            updateCellsBatchingPeriod={40}
-            windowSize={9}
-          />
-          <ScrollNavButton
-            onPress={scrollCommentsToTop}
-            visible={showsScrollToTop}
-          />
-        </View>
-      </AppSheet>
-      <DiscussionReplyComposer
-        editing={
-          editingReply
-            ? { content: editingReply.body, postId: Number(editingReply.id) }
-            : null
-        }
-        onClose={closeComposer}
-        onEdited={() => setEditingReply(null)}
-        replyingTo={replyingTo}
-        target={{ id: entityId, kind: entityKind }}
-        visible={composerVisible}
-      />
       <FullscreenImageViewer
         onClose={() => setPortraitVisible(false)}
         title={data?.name ?? kind}
@@ -577,178 +292,86 @@ export function EntityDetailScreen({
   );
 }
 
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  screen: { backgroundColor: colors.background, flex: 1 },
-  content: {
-    alignItems: 'stretch',
-    gap: 10,
-    padding: 20,
-    paddingBottom: 44,
-  },
-  hero: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingBottom: 12,
-    paddingTop: 2,
-  },
-  portrait: {
-    alignItems: 'center',
-    backgroundColor: colors.track,
-    borderRadius: 22,
-    height: 154,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 112,
-  },
-  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
-  heroMain: { flex: 1, marginLeft: 20 },
-  name: {
-    color: colors.ink,
-    fontSize: 27,
-    fontWeight: '800',
-    letterSpacing: -0.6,
-    lineHeight: 34,
-  },
-  kind: { color: colors.muted, fontSize: 13, marginTop: 8 },
-  stats: { color: colors.subtle, fontSize: 11, marginTop: 6 },
-  collectionButton: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: colors.track,
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 7,
-    marginTop: 14,
-    minHeight: 44,
-    paddingHorizontal: 13,
-  },
-  collectedButton: { backgroundColor: colors.accentSoft },
-  collectionButtonText: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  collectedButtonText: { color: colors.accent },
-  panel: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    marginTop: 4,
-    padding: 18,
-  },
-  commentsSection: { marginTop: 10 },
-  commentsHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 10,
-    paddingHorizontal: 4,
-    paddingTop: 12,
-  },
-  commentsHeaderTitle: {
-    color: colors.ink,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.35,
-  },
-  commentsHeaderMeta: { color: colors.muted, fontSize: 12, marginTop: 3 },
-  publishButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderCurve: 'continuous',
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 5,
-    height: 34,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-  },
-  publishButtonPressed: { backgroundColor: colors.track },
-  publishIcon: {
-    alignItems: 'center',
-    height: 18,
-    justifyContent: 'center',
-    width: 18,
-  },
-  publishText: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: '700',
-    includeFontPadding: false,
-    lineHeight: 18,
-    textAlignVertical: 'center',
-  },
-  commentsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    marginTop: 4,
-    overflow: 'hidden',
-    paddingHorizontal: 18,
-  },
-  commentsAllButton: {
-    alignItems: 'center',
-    borderTopColor: colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 50,
-    paddingHorizontal: 2,
-  },
-  commentsAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
-  commentsState: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    color: colors.muted,
-    fontSize: 13,
-    padding: 18,
-  },
-  commentsSheetBody: { flexShrink: 1 },
-  commentsModalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 14,
-    paddingTop: 12,
-  },
-  commentsHeaderTapTarget: {
-    flex: 1,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingRight: 12,
-  },
-  commentsModalTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' },
-  commentsModalMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
-  commentsClose: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: 18,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  commentsList: { flex: 1 },
-  commentsContent: { paddingBottom: 12 },
-  panelTitle: {
-    color: colors.ink,
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 12,
-  },
-  summary: { color: colors.muted, fontSize: 14, lineHeight: 23 },
-  metadataRow: {
-    flexDirection: 'row',
-    paddingVertical: 10,
-  },
-  rowBorder: {
-    borderTopColor: colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  metadataLabel: { color: colors.subtle, fontSize: 13, width: 78 },
-  metadataValue: {
-    color: colors.ink,
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  pressed: { opacity: 0.62 },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: { backgroundColor: colors.background, flex: 1 },
+    content: {
+      alignItems: 'stretch',
+      gap: 10,
+      padding: 20,
+      paddingBottom: 44,
+    },
+    hero: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      paddingBottom: 12,
+      paddingTop: 2,
+    },
+    portrait: {
+      alignItems: 'center',
+      backgroundColor: colors.track,
+      borderRadius: 22,
+      height: 154,
+      justifyContent: 'center',
+      overflow: 'hidden',
+      width: 112,
+    },
+    fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
+    heroMain: { flex: 1, marginLeft: 20 },
+    name: {
+      color: colors.ink,
+      fontSize: 27,
+      fontWeight: '800',
+      letterSpacing: -0.6,
+      lineHeight: 34,
+    },
+    kind: { color: colors.muted, fontSize: 13, marginTop: 8 },
+    stats: { color: colors.subtle, fontSize: 11, marginTop: 6 },
+    collectionButton: {
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      backgroundColor: colors.track,
+      borderRadius: 14,
+      flexDirection: 'row',
+      gap: 7,
+      marginTop: 14,
+      minHeight: 44,
+      paddingHorizontal: 13,
+    },
+    collectedButton: { backgroundColor: colors.accentSoft },
+    collectionButtonText: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    collectedButtonText: { color: colors.accent },
+    panel: {
+      backgroundColor: colors.surface,
+      borderRadius: 22,
+      marginTop: 4,
+      padding: 18,
+    },
+    panelTitle: {
+      color: colors.ink,
+      fontSize: 17,
+      fontWeight: '800',
+      marginBottom: 12,
+    },
+    summary: { color: colors.muted, fontSize: 14, lineHeight: 23 },
+    metadataRow: {
+      flexDirection: 'row',
+      paddingVertical: 10,
+    },
+    rowBorder: {
+      borderTopColor: colors.divider,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    metadataLabel: { color: colors.subtle, fontSize: 13, width: 78 },
+    metadataValue: {
+      color: colors.ink,
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 20,
+    },
+    pressed: { opacity: 0.62 },
+  });

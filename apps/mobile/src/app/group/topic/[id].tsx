@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -24,6 +24,7 @@ import { DiscussionUnavailableState } from '@/features/discussions/discussion-un
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useDeleteGroupReply } from '@/features/discussions/use-delete-reply';
+import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
 import { REPORT_TYPES } from '@/features/reports/types';
@@ -43,9 +44,7 @@ export default function GroupTopicScreen() {
   const numericTopicId = parsePositiveIntegerRouteParam(id);
   const numericReplyId = parsePositiveIntegerRouteParam(replyId);
   const { isSigningIn, session, signIn } = useAuth();
-  const [composerVisible, setComposerVisible] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<DiscussionReply>();
-  const [editingReply, setEditingReply] = useState<DiscussionReply | null>(null);
+  const composer = useReplyComposer();
   const topicQuery = usePublicGroupTopic(numericTopicId ?? 0);
   const deleteReply = useDeleteGroupReply(numericTopicId ?? 0);
   const topic = topicQuery.data;
@@ -66,27 +65,6 @@ export default function GroupTopicScreen() {
     appliedReplyRef.current = true;
     replyNavigation.openReply(String(numericReplyId));
   }, [numericReplyId, replies.length, replyNavigation]);
-
-  async function openComposer(reply?: DiscussionReply) {
-    if (!session) {
-      const signedIn = await signIn();
-      if (!signedIn) return;
-    }
-
-    setReplyingTo(reply);
-    setComposerVisible(true);
-  }
-
-  function openEditComposer(reply: DiscussionReply) {
-    setReplyingTo(undefined);
-    setEditingReply(reply);
-    setComposerVisible(true);
-  }
-
-  function closeComposer() {
-    setComposerVisible(false);
-    setEditingReply(null);
-  }
 
   function confirmDeleteReply(reply: DiscussionReply) {
     Alert.alert(
@@ -209,18 +187,11 @@ export default function GroupTopicScreen() {
             <ReplyListItem
               floor={index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
-              onDelete={
-                item.authorUsername === session?.user.username
-                  ? confirmDeleteReply
-                  : undefined
-              }
-              onEdit={
-                item.authorUsername === session?.user.username
-                  ? openEditComposer
-                  : undefined
-              }
+              onDelete={confirmDeleteReply}
+              onEdit={composer.openEdit}
               onOpenReference={replyNavigation.openReply}
-              onReply={openComposer}
+              onReply={composer.open}
+              ownerUsername={session?.user.username}
               reply={item}
             />
           )}
@@ -234,7 +205,7 @@ export default function GroupTopicScreen() {
               accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
               accessibilityRole="button"
               disabled={isSigningIn}
-              onPress={() => void openComposer()}
+              onPress={() => void composer.open()}
               style={({ pressed }) => [
                 styles.replyButton,
                 pressed && styles.pressed,
@@ -261,16 +232,8 @@ export default function GroupTopicScreen() {
         ) : null}
       </View>
       <DiscussionReplyComposer
-        editing={
-          editingReply
-            ? { content: editingReply.body, postId: Number(editingReply.id) }
-            : null
-        }
-        onClose={closeComposer}
-        onEdited={() => setEditingReply(null)}
-        replyingTo={replyingTo}
+        {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'group-topic' }}
-        visible={composerVisible}
       />
       <ScrollToTopButton
         bottom={104}

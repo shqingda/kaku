@@ -20,6 +20,7 @@ type ReplyListItemProps = {
   onOpenReference: (replyId: string) => void;
   onReply?: (reply: DiscussionReply) => void;
   onReport?: (reply: DiscussionReply) => void;
+  ownerUsername?: string;
   reply: DiscussionReply;
 };
 
@@ -33,10 +34,15 @@ export const ReplyListItem = memo(function ReplyListItem({
   onOpenReference,
   onReply,
   onReport,
+  ownerUsername,
   reply,
 }: ReplyListItemProps) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const isOwner =
+    !ownerUsername || reply.authorUsername === ownerUsername;
+  const editReply = isOwner ? onEdit : undefined;
+  const deleteReply = isOwner ? onDelete : undefined;
 
   return (
     <View
@@ -154,14 +160,14 @@ export const ReplyListItem = memo(function ReplyListItem({
         }
         style={styles.body}
       />
-      {onEdit || onDelete || onReport ? (
+      {editReply || deleteReply || onReport ? (
         <View style={styles.actions}>
-          {onEdit ? (
+          {editReply ? (
             <Pressable
               accessibilityLabel="编辑自己的回复"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={() => onEdit(reply)}
+              onPress={() => editReply(reply)}
               style={({ pressed }) => [
                 styles.actionButton,
                 pressed && styles.pressed,
@@ -170,12 +176,12 @@ export const ReplyListItem = memo(function ReplyListItem({
               <Text style={styles.editAction}>编辑</Text>
             </Pressable>
           ) : null}
-          {onDelete ? (
+          {deleteReply ? (
             <Pressable
               accessibilityLabel={`删除自己的回复`}
               accessibilityRole="button"
               hitSlop={8}
-              onPress={() => onDelete(reply)}
+              onPress={() => deleteReply(reply)}
               style={({ pressed }) => [
                 styles.actionButton,
                 pressed && styles.pressed,
