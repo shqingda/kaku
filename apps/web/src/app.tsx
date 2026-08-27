@@ -12,6 +12,17 @@ const legalPages = {
   '/privacy': 'privacy',
   '/terms': 'terms',
 } as const;
+const retiredPaths: Record<string, { hash?: string; path: '/' }> = {
+  '/pricing': { path: '/' },
+  '/support': { hash: 'faq', path: '/' },
+};
+
+function getRetiredPath(path: string) {
+  if (path === '/pricing' || path === '/support') {
+    return retiredPaths[path];
+  }
+  return undefined;
+}
 
 function setMetaContent(selector: string, content: string) {
   document.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', content);
@@ -44,11 +55,24 @@ function PageMetadata({ path }: { path: string }) {
 
 function Site() {
   const { t } = useI18n();
-  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const rawPath = window.location.pathname.replace(/\/$/, '') || '/';
+  const retired = getRetiredPath(rawPath);
+  const path = retired?.path ?? rawPath;
 
   useEffect(() => {
+    if (!retired) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    const nextUrl = retired.hash ? `${retired.path}#${retired.hash}` : retired.path;
+    window.history.replaceState(null, '', nextUrl);
+    if (retired.hash) {
+      document.getElementById(retired.hash)?.scrollIntoView();
+      return;
+    }
     window.scrollTo(0, 0);
-  }, [path]);
+  }, [rawPath, retired]);
 
   let page = path === '/' ? <HomePage /> : <NotFoundPage />;
 

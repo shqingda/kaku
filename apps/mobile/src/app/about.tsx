@@ -36,7 +36,7 @@ const productLinks: AboutLink[] = [
   {
     icon: { android: 'help_outline', ios: 'questionmark.circle', web: 'help_outline' },
     label: '使用帮助',
-    url: `${WEBSITE_URL}/support`,
+    url: `${WEBSITE_URL}/#faq`,
   },
   {
     icon: { android: 'feedback', ios: 'bubble.left.and.text.bubble.right', web: 'feedback' },

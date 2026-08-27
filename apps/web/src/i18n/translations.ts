@@ -186,7 +186,7 @@ const zh: Translation = {
         },
         {
           title: '九、联系我们',
-          body: '关于本政策或数据处理的任何问题，可通过 GitHub Issues 或官网支持入口联系开发者，我们会在合理时间内回复。',
+          body: '关于本政策或数据处理的任何问题，可通过 GitHub Issues 联系开发者，我们会在合理时间内回复。',
         },
       ],
     },
@@ -230,7 +230,7 @@ const zh: Translation = {
         },
         {
           title: '九、联系',
-          body: '关于本条款的任何问题，可通过 GitHub Issues 或官网支持入口联系开发者。',
+          body: '关于本条款的任何问题，可通过 GitHub Issues 联系开发者。',
         },
       ],
     },
@@ -372,7 +372,7 @@ const en: Translation = {
         },
         {
           title: '9. Contact',
-          body: 'For any question about this policy or data processing, contact the developer via GitHub Issues or the support link on this website; we will respond within a reasonable time.',
+          body: 'For any question about this policy or data processing, contact the developer via GitHub Issues; we will respond within a reasonable time.',
         },
       ],
     },
@@ -416,7 +416,7 @@ const en: Translation = {
         },
         {
           title: '9. Contact',
-          body: 'For any question about these Terms, contact the developer via GitHub Issues or the support link on this website.',
+          body: 'For any question about these Terms, contact the developer via GitHub Issues.',
         },
       ],
     },
