@@ -106,6 +106,8 @@ module.exports = {
           granularPermissions: ['photo'],
         },
       ],
+      'expo-secure-store',
+      'expo-sqlite',
       ...sentryPlugin,
     ],
     experiments: {

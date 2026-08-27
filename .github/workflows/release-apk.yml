@@ -51,7 +51,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          pnpm exec eas build \
+          pnpm dlx eas-cli@22.2.0 build \
             --profile "${{ github.event.inputs.channel }}" \
             --platform android \
             --non-interactive \
@@ -66,7 +66,7 @@ jobs:
         run: |
           BUILD_ID=$(node -e "const b=require('/tmp/eas-build.json');process.stdout.write(b[0].id)")
           for i in $(seq 1 60); do
-            STATUS=$(pnpm exec eas build:view "$BUILD_ID" --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const b=JSON.parse(d);process.stdout.write((b.status||'')+'|'+(b.artifacts?.buildUrl||''))})")
+            STATUS=$(pnpm dlx eas-cli@22.2.0 build:view "$BUILD_ID" --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const b=JSON.parse(d);process.stdout.write((b.status||'')+'|'+(b.artifacts?.buildUrl||''))})")
             STATE=$(echo "$STATUS" | cut -d'|' -f1)
             URL=$(echo "$STATUS" | cut -d'|' -f2)
             LOWERCASE_STATE=$(echo "$STATE" | tr '[:upper:]' '[:lower:]')
