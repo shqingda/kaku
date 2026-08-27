@@ -78,6 +78,10 @@ export function getSubjectTypeLabel(subjectType?: number) {
   );
 }
 
+export function getSubjectChannelLabel(subjectType: number) {
+  return subjectType === 1 ? '阅读' : getSubjectTypeLabel(subjectType);
+}
+
 const COMMON_INFO_KEYS = ['中文名', '别名', '官方网站', '链接'] as const;
 
 const SUBJECT_INFO_KEYS: Record<number, readonly string[]> = {

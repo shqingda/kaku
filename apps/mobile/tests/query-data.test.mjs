@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  readInfiniteItems,
   readInfinitePages,
   readQueryArray,
   readQueryItems,
@@ -23,4 +24,14 @@ test('query data readers reject malformed persisted values', () => {
 test('query data readers preserve valid list data', () => {
   assert.deepEqual(readQueryItems({ items: [1, 2] }), [1, 2]);
   assert.deepEqual(readQueryArray(['monday']), ['monday']);
+});
+
+test('readInfiniteItems flattens page items and skips malformed pages', () => {
+  assert.deepEqual(
+    readInfiniteItems({
+      pages: [{ items: [{ id: 1 }] }, { items: 'nope' }, { items: [{ id: 2 }] }],
+    }),
+    [{ id: 1 }, { id: 2 }],
+  );
+  assert.deepEqual(readInfiniteItems({ pages: null }), []);
 });

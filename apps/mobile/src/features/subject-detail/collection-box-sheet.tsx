@@ -24,16 +24,16 @@ import type {
 } from '@/features/watching/model';
 import { canRateCollectionStatus } from '@/features/watching/progress';
 
-export type CollectionBoxDraft = {
-  collectionStatus?: CollectionStatus;
-  comment?: string;
-  isPrivate?: boolean;
-  readChapterCount?: number;
-  readVolumeCount?: number;
-  rating?: number;
-  tags?: string[];
-  watchedCount: number;
-};
+import {
+  collectionBoxBaselineFromItem,
+  collectionBoxDraftFromForm,
+  collectionBoxFormFromItem,
+  isCollectionBoxFormDirty,
+  type CollectionBoxDraft,
+  type CollectionBoxForm,
+} from './collection-box-draft';
+
+export type { CollectionBoxDraft };
 
 const STATUS_OPTIONS: CollectionStatus[] = [
   'wish',
@@ -66,23 +66,20 @@ export function CollectionBoxSheet({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const contentScrollRef = useRef<ScrollView>(null);
-  const [status, setStatus] = useState<CollectionStatus | undefined>(
-    item.collectionStatus ?? undefined,
+  const [form, setForm] = useState<CollectionBoxForm>(() =>
+    collectionBoxFormFromItem(item),
   );
-  const [watchedCount, setWatchedCount] = useState(
-    String(item.watchedEpisodeNumbers.length),
-  );
-  const [rating, setRating] = useState(item.rating);
-  const [comment, setComment] = useState(item.comment ?? '');
-  const [isPrivate, setIsPrivate] = useState(item.isPrivate ?? false);
-  const [readChapterCount, setReadChapterCount] = useState(
-    String(item.readChapterCount ?? 0),
-  );
-  const [readVolumeCount, setReadVolumeCount] = useState(
-    String(item.readVolumeCount ?? 0),
-  );
-  const [tags, setTags] = useState(item.tags ?? []);
-  const [tagDraft, setTagDraft] = useState('');
+  const {
+    comment,
+    isPrivate,
+    rating,
+    readChapterCount,
+    readVolumeCount,
+    status,
+    tagDraft,
+    tags,
+    watchedCount,
+  } = form;
   const canEditPersonalData = canRateCollectionStatus(status);
   const showsProgress =
     canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
@@ -94,34 +91,14 @@ export function CollectionBoxSheet({
   const progressTotalWidth = 22 + progressDigits * 10;
 
   const baselineRef = useRef<CollectionBoxDraft | null>(null);
+  const isDirty = useMemo(
+    () => isCollectionBoxFormDirty(form, baselineRef.current),
+    [form],
+  );
 
-  const isDirty = useMemo(() => {
-    const baseline = baselineRef.current;
-    if (!baseline) {
-      return false;
-    }
-    return (
-      (status ?? undefined) !== (baseline.collectionStatus ?? undefined) ||
-      Number(watchedCount) !== baseline.watchedCount ||
-      rating !== baseline.rating ||
-      comment !== baseline.comment ||
-      isPrivate !== baseline.isPrivate ||
-      Number(readChapterCount) !== baseline.readChapterCount ||
-      Number(readVolumeCount) !== baseline.readVolumeCount ||
-      tagDraft.trim().length > 0 ||
-      JSON.stringify(tags) !== JSON.stringify(baseline.tags)
-    );
-  }, [
-    status,
-    watchedCount,
-    rating,
-    comment,
-    isPrivate,
-    readChapterCount,
-    readVolumeCount,
-    tags,
-    tagDraft,
-  ]);
+  function patchForm(patch: Partial<CollectionBoxForm>) {
+    setForm((current) => ({ ...current, ...patch }));
+  }
 
   function requestClose() {
     if (isDirty) {
@@ -143,25 +120,8 @@ export function CollectionBoxSheet({
       return;
     }
 
-    setStatus(item.collectionStatus ?? undefined);
-    setWatchedCount(String(item.watchedEpisodeNumbers.length));
-    setRating(item.rating);
-    setComment(item.comment ?? '');
-    setIsPrivate(item.isPrivate ?? false);
-    setReadChapterCount(String(item.readChapterCount ?? 0));
-    setReadVolumeCount(String(item.readVolumeCount ?? 0));
-    setTags(item.tags ?? []);
-    setTagDraft('');
-    baselineRef.current = {
-      collectionStatus: item.collectionStatus ?? undefined,
-      comment: item.comment ?? '',
-      isPrivate: item.isPrivate ?? false,
-      rating: item.rating,
-      readChapterCount: item.readChapterCount ?? 0,
-      readVolumeCount: item.readVolumeCount ?? 0,
-      tags: item.tags ?? [],
-      watchedCount: item.watchedEpisodeNumbers.length,
-    };
+    setForm(collectionBoxFormFromItem(item));
+    baselineRef.current = collectionBoxBaselineFromItem(item);
   }, [
     item.collectionStatus,
     item.rating,
@@ -175,52 +135,22 @@ export function CollectionBoxSheet({
   ]);
 
   function save() {
-    const parsedCount = Number(watchedCount);
-    const nextCount =
-      showsProgress && Number.isInteger(parsedCount)
-        ? Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
-        : 0;
-    const parsedChapterCount = Number(readChapterCount);
-    const parsedVolumeCount = Number(readVolumeCount);
-
-    const pendingTag = tagDraft.trim();
-    const nextTags =
-      item.tags !== undefined &&
-      pendingTag &&
-      !tags.includes(pendingTag)
-        ? [...tags, pendingTag]
-        : tags;
-
-    onSave({
-      collectionStatus: status,
-      comment: item.comment !== undefined ? comment.trim() : undefined,
-      isPrivate: item.isPrivate !== undefined ? isPrivate : undefined,
-      readChapterCount:
-        item.readChapterCount !== undefined &&
-        Number.isInteger(parsedChapterCount)
-          ? Math.max(parsedChapterCount, 0)
-          : undefined,
-      readVolumeCount:
-        item.readVolumeCount !== undefined &&
-        Number.isInteger(parsedVolumeCount)
-          ? Math.max(parsedVolumeCount, 0)
-          : undefined,
-      rating: canEditPersonalData ? rating : undefined,
-      tags: item.tags !== undefined ? nextTags : undefined,
-      watchedCount: nextCount,
-    });
+    onSave(collectionBoxDraftFromForm(form, item, showsProgress));
   }
 
   function addTag() {
     const nextTag = tagDraft.trim();
 
     if (!nextTag || tags.includes(nextTag)) {
-      setTagDraft('');
+      patchForm({ tagDraft: '' });
       return;
     }
 
-    setTags((current) => [...current, nextTag]);
-    setTagDraft('');
+    setForm((current) => ({
+      ...current,
+      tagDraft: '',
+      tags: [...current.tags, nextTag],
+    }));
   }
 
   return (
@@ -283,7 +213,7 @@ export function CollectionBoxSheet({
                       accessibilityRole="radio"
                       accessibilityState={{ selected: isSelected }}
                       key={option}
-                      onPress={() => setStatus(option)}
+                      onPress={() => patchForm({ status: option })}
                       style={({ pressed }) => [
                         styles.statusOption,
                         isSelected && styles.selectedStatusOption,
@@ -336,7 +266,9 @@ export function CollectionBoxSheet({
                             accessibilityLabel="已看集数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
-                              setWatchedCount(value.replace(/\D/g, ''))
+                              patchForm({
+                                watchedCount: value.replace(/\D/g, ''),
+                              })
                             }
                             selectTextOnFocus
                             style={styles.progressInput}
@@ -369,7 +301,9 @@ export function CollectionBoxSheet({
                             accessibilityLabel="已读章节"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
-                              setReadChapterCount(value.replace(/\D/g, ''))
+                              patchForm({
+                                readChapterCount: value.replace(/\D/g, ''),
+                              })
                             }
                             selectTextOnFocus
                             style={styles.readingInput}
@@ -382,7 +316,9 @@ export function CollectionBoxSheet({
                             accessibilityLabel="已读卷数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
-                              setReadVolumeCount(value.replace(/\D/g, ''))
+                              patchForm({
+                                readVolumeCount: value.replace(/\D/g, ''),
+                              })
                             }
                             selectTextOnFocus
                             style={styles.readingInput}
@@ -422,7 +358,9 @@ export function CollectionBoxSheet({
                             accessibilityState={{ selected: isSelected }}
                             key={option}
                             onPress={() =>
-                              setRating(isSelected ? undefined : option)
+                              patchForm({
+                                rating: isSelected ? undefined : option,
+                              })
                             }
                             style={({ pressed }) => [
                               styles.ratingOption,
@@ -486,7 +424,7 @@ export function CollectionBoxSheet({
                    accessibilityLabel="吐槽"
                    maxLength={1000}
                    multiline
-                   onChangeText={setComment}
+                   onChangeText={(value) => patchForm({ comment: value })}
                    onFocus={() => {
                      setTimeout(() => {
                        contentScrollRef.current?.scrollToEnd({ animated: true });
@@ -515,9 +453,12 @@ export function CollectionBoxSheet({
                         accessibilityRole="button"
                         hitSlop={6}
                         onPress={() =>
-                          setTags((current) =>
-                            current.filter((item) => item !== tag),
-                          )
+                          setForm((current) => ({
+                            ...current,
+                            tags: current.tags.filter(
+                              (currentTag) => currentTag !== tag,
+                            ),
+                          }))
                         }
                       >
                         <SymbolView
@@ -537,7 +478,7 @@ export function CollectionBoxSheet({
                     accessibilityLabel="添加收藏标签"
                     autoCapitalize="none"
                     onChangeText={(value) =>
-                      setTagDraft(value.replace(/\s/g, ''))
+                      patchForm({ tagDraft: value.replace(/\s/g, '') })
                     }
                     onSubmitEditing={addTag}
                     placeholder={
@@ -565,7 +506,7 @@ export function CollectionBoxSheet({
                   <Switch
                     accessibilityLabel="仅自己可见"
                     ios_backgroundColor={colors.track}
-                    onValueChange={setIsPrivate}
+                    onValueChange={(value) => patchForm({ isPrivate: value })}
                     trackColor={{
                       false: colors.track,
                       true: colors.accentSoft,

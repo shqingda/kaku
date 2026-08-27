@@ -14,6 +14,12 @@ export function readInfinitePages<T>(data: unknown): T[] {
   return (data as { pages: T[] }).pages;
 }
 
+export function readInfiniteItems<T>(data: unknown): T[] {
+  return readInfinitePages<{ items?: T[] }>(data).flatMap((page) =>
+    Array.isArray(page.items) ? page.items : [],
+  );
+}
+
 export function readQueryItems<T>(data: unknown): T[] {
   if (!isRecord(data) || !Array.isArray((data as ItemListData).items)) {
     return [];

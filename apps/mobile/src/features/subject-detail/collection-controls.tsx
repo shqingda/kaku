@@ -22,10 +22,8 @@ import {
 } from '@/features/watching/progress';
 import { playSuccessHaptic } from '@/lib/haptics';
 
-import {
-  CollectionBoxSheet,
-  type CollectionBoxDraft,
-} from './collection-box-sheet';
+import type { CollectionBoxDraft } from './collection-box-draft';
+import { CollectionBoxSheet } from './collection-box-sheet';
 
 export function CollectionControls({
   item,

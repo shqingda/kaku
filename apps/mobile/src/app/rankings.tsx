@@ -24,7 +24,7 @@ import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import type { DiscoverSubject, DiscoverSubjectPage } from '@/features/discover/model';
-import { readInfinitePages } from '@/lib/query-data';
+import { readInfiniteItems, readInfinitePages } from '@/lib/query-data';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function RankingsScreen() {
@@ -50,11 +50,8 @@ export default function RankingsScreen() {
     [rankingQuery.data],
   );
   const subjects = useMemo(
-    () =>
-      pages.flatMap((page) =>
-        Array.isArray(page.items) ? page.items : [],
-      ),
-    [pages],
+    () => readInfiniteItems<DiscoverSubject>(rankingQuery.data),
+    [rankingQuery.data],
   );
   const total = pages[0]?.total;
   const openSubject = useCallback((id: number) => {

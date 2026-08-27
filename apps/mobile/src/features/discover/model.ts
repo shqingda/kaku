@@ -1,3 +1,8 @@
+export function currentCalendarWeekdayId() {
+  const day = new Date().getDay();
+  return day === 0 ? 7 : day;
+}
+
 export type DiscoverSubject = {
   coverUrl?: string;
   date?: string;

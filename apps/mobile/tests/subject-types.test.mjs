@@ -3,12 +3,19 @@ import test from 'node:test';
 
 import {
   getCollectionStatusLabel,
+  getSubjectChannelLabel,
   getSubjectDetailLabels,
   getSubjectInfoKeys,
   supportsReadingProgress,
   supportsWatchProgress,
   usesEpisodeData,
 } from '../src/features/catalog/subject-types.ts';
+
+test('channel copy calls books 阅读 instead of 书籍', () => {
+  assert.equal(getSubjectChannelLabel(1), '阅读');
+  assert.equal(getSubjectChannelLabel(2), '动画');
+  assert.equal(getSubjectChannelLabel(6), '三次元');
+});
 
 test('collection labels follow each Bangumi subject type', () => {
   assert.equal(getCollectionStatusLabel(1, 'doing'), '在读');

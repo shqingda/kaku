@@ -14,21 +14,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import type { DiscoverSubject } from '@/features/discover/model';
+import {
+  currentCalendarWeekdayId,
+  type DiscoverSubject,
+} from '@/features/discover/model';
 import { useBangumiCalendar } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
 
-function currentWeekdayId() {
-  const day = new Date().getDay();
-  return day === 0 ? 7 : day;
-}
-
 export default function CalendarScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [selectedDay, setSelectedDay] = useState(currentWeekdayId);
+  const [selectedDay, setSelectedDay] = useState(currentCalendarWeekdayId);
   const calendarQuery = useBangumiCalendar();
   const selectedCalendarDay = useMemo(
     () =>

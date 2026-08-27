@@ -8,28 +8,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import {
+  getSubjectChannelLabel,
   getSubjectTypeFromSlug,
-  getSubjectTypeLabel,
   getSubjectTypeSlug,
+  SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import type { ChannelSubject } from '@/features/channels/model';
-import type { DiscoverSubjectPage } from '@/features/discover/model';
+import type { DiscoverSubject } from '@/features/discover/model';
 import { useChannel } from '@/features/channels/use-channel';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
-import { readInfinitePages, readQueryItems } from '@/lib/query-data';
-
-const CHANNEL_TYPES = [
-  { id: 2, label: '动画' },
-  { id: 1, label: '书籍' },
-  { id: 3, label: '音乐' },
-  { id: 4, label: '游戏' },
-  { id: 6, label: '三次元' },
-] as const;
+import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
 
 function useThemedStyles() {
   const colors = useTheme();
@@ -42,14 +35,14 @@ export default function ChannelScreen() {
   const { styles } = useThemedStyles();
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
-  const label = subjectType === 1 ? '阅读' : getSubjectTypeLabel(subjectType);
+  const label = getSubjectChannelLabel(subjectType);
   const channelQuery = useChannel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
   const channelItems = readQueryItems<ChannelSubject>(channelQuery.data);
-  const rankingPages = readInfinitePages<DiscoverSubjectPage>(rankingQuery.data);
-  const ranked = Array.isArray(rankingPages[0]?.items)
-    ? rankingPages[0].items.slice(0, 6)
-    : [];
+  const ranked = readInfiniteItems<DiscoverSubject>(rankingQuery.data).slice(
+    0,
+    6,
+  );
 
   function refreshChannel() {
     void Promise.all([channelQuery.refetch(), rankingQuery.refetch()]);
@@ -81,7 +74,7 @@ export default function ChannelScreen() {
           contentContainerStyle={styles.typeTabs}
           onChange={setSubjectType}
           selectedType={subjectType}
-          types={CHANNEL_TYPES}
+          types={SUBJECT_TYPES}
         />
 
         <SectionHeading
