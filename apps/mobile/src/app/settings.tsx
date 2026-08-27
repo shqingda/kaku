@@ -303,7 +303,7 @@ export default function SettingsScreen() {
                       : push.status === 'failed'
                         ? (push.error ?? '推送登记失败，请稍后重试。')
                         : push.status === 'unavailable'
-                          ? '当前平台不支持远程推送。'
+                          ? (push.error ?? '当前安装还没有推送模块，需要重新编译后再打开。')
                           : '打开后，未读回复会推送到这台设备。'}
               </Text>
               {push.status === 'failed' ? (
