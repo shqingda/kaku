@@ -70,6 +70,7 @@ module.exports = {
         monochromeImage: monochromeIcon,
       },
       icon: lightIcon,
+      googleServicesFile: './google-services.json',
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
       permissions: [
