@@ -179,6 +179,33 @@ function RootNavigator() {
             }}
           />
           <Stack.Screen
+            name="changelog"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '更新日志',
+            }}
+          />
+          <Stack.Screen
+            name="network-status"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '网络诊断',
+            }}
+          />
+          <Stack.Screen
+            name="privacy"
+            options={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerShown: true,
+              headerShadowVisible: false,
+              title: '隐私政策',
+            }}
+          />
+          <Stack.Screen
             name="notifications"
             options={{
               headerBackButtonDisplayMode: 'minimal',
