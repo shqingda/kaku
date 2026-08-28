@@ -34,6 +34,15 @@ const productLinks: AboutLink[] = [
     url: WEBSITE_URL,
   },
   {
+    icon: {
+      android: 'receipt_long',
+      ios: 'list.bullet.rectangle',
+      web: 'receipt_long',
+    },
+    label: '更新日志',
+    route: '/changelog',
+  },
+  {
     icon: { android: 'help_outline', ios: 'questionmark.circle', web: 'help_outline' },
     label: '使用帮助',
     url: `${WEBSITE_URL}/#faq`,

@@ -270,6 +270,7 @@ export default function AccountScreen() {
               <AccountMenuRow
                 colors={colors}
                 description="版本、帮助与隐私"
+                hasDivider
                 icon={{
                   android: 'info',
                   ios: 'info.circle',
@@ -277,6 +278,18 @@ export default function AccountScreen() {
                 }}
                 label="关于 Kaku"
                 onPress={() => router.push('/about')}
+              />
+              <AccountMenuRow
+                colors={colors}
+                description="每个版本的新变化"
+                hasDivider
+                icon={{
+                  android: 'receipt_long',
+                  ios: 'list.bullet.rectangle',
+                  web: 'receipt_long',
+                }}
+                label="更新日志"
+                onPress={() => router.push('/changelog')}
               />
             </View>
             <View style={styles.sessionsCard}>
@@ -461,6 +474,18 @@ export default function AccountScreen() {
                 }}
                 label="诊断信息"
                 onPress={() => router.push('/diagnostics')}
+              />
+              <AccountMenuRow
+                colors={colors}
+                description="Bangumi 服务状态与本机连通性"
+                hasDivider
+                icon={{
+                  android: 'network_check',
+                  ios: 'antenna.radiowaves.left.and.right',
+                  web: 'network_check',
+                }}
+                label="网络诊断"
+                onPress={() => router.push('/network-status')}
               />
             </View>
           </>

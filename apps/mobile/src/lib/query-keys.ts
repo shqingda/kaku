@@ -126,4 +126,5 @@ export const queryKeys = {
     ['community', 'bangumi', 'group', groupName, 'topics'] as const,
   groupTopic: (topicId: number) =>
     ['community', 'bangumi', 'topic', topicId] as const,
+  bangumiStatus: () => ['network-status', 'bangumi-status'] as const,
 };
