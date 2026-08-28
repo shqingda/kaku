@@ -1,0 +1,4 @@
+- 接入 Firebase Cloud Messaging：带 Google Play 服务的 Android 可在设置中打开 Bangumi 推送
+- 安装包改为单一 64 位构建 `kaku-release.apk`（arm64-v8a），不再提供 32 位与模拟器包
+- 没有 Play 服务的设备仍无法收到推送，打开 App 后可在通知页拉取未读
+- 安装前请先卸载旧版（签名与旧包不同）

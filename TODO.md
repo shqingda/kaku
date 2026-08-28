@@ -68,7 +68,7 @@
 - [x] 官网重设计：zh/en 双语切换、日/夜/跟随系统主题（无闪白）、正式九节隐私政策与服务条款（双语）、Header 精简（GitHub/语言/主题按钮）、FAQ 移入首页、废弃 pricing/support 页。
 - [x] 隐私政策：web `/privacy` + App 内 `privacy.tsx`（关于页入口，离线可读）。
 - [x] Release 自动化：
-  - 本地发版脚本 `scripts/build-split-apks.sh`（不耗 EAS 额度，产出 4 个 per-ABI APK 50-62MB，debug 签名）；
+  - 本地发版脚本 `scripts/build-split-apks.sh`（不耗 EAS 额度，只打 arm64-v8a，按渠道命名 `kaku-release.apk` / `kaku-preview.apk` / `kaku-debug.apk`，debug 签名）；
   - EAS 云端 workflow `.github/workflows/release-apk.yml`（正式上架用，AAB + EAS 签名 + source map）。
 - [x] UX 打磨批次：按压反馈（重试按钮/列表行/日期 tab/筛选 chip）、触控目标 hitSlop、登录后回来源页（`lib/auth-redirect.ts`）、错误文案中文化（`lib/user-error-message.ts` 替换 17 处）、私有查询重试（`shouldRetryBangumiQuery`）、收藏盒草稿丢弃确认、`/tags` `/wiki` 入口、条目标签可点、时间线发布按钮（底部居中胶囊）、回到顶部按钮（6 个长列表页）。
 - [x] 分类浏览 tab 弹回 bug 修复（`browse.tsx` useEffect 依赖误含 `subjectType`）。
@@ -89,6 +89,6 @@
 ## 其它说明
 
 - 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
-- EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n>`，正式上架等额度恢复后走 EAS。
+- EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n> [debug|preview|release]`，正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
 

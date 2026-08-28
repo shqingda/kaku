@@ -6,7 +6,7 @@ Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS �
 
 | 场景 | 方式 |
 |---|---|
-| 日常迭代发 preview（当前 EAS 额度受限期间） | 本地构建 |
+| 日常迭代发 GitHub 安装包（当前 EAS 额度受限期间） | 本地构建 |
 | 正式上架 Play（AAB，Google 自动按架构分发） | EAS 云端 `production` |
 | 想在 GitHub Actions 里自动构建 + 发布 | EAS 云端 workflow |
 
@@ -14,40 +14,54 @@ Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS �
 
 ## 方式一：本地构建（推荐日常使用）
 
-**特点**：不消耗 EAS 免费额度（每月有限，9/1 重置）、完全控制 ABI、产出 4 个按 CPU 架构拆分的 APK（50–62MB 每个）。
+**特点**：不消耗 EAS 免费额度（每月有限，约 9/1 重置）。只打 **arm64-v8a**（2021 年后绝大多数手机），debug 签名。产物按渠道命名：
+
+| 渠道 | 命令参数 | 包名 | 安装包 |
+|---|---|---|---|
+| release（默认） | `release` | `com.shqingda.kaku` | `kaku-release.apk` |
+| preview | `preview` | `com.shqingda.kaku.preview` | `kaku-preview.apk` |
+| debug | `debug` | `com.shqingda.kaku.debug` | `kaku-debug.apk` |
 
 ### 前置
 
 - 本机已配置 Android 开发环境（`ANDROID_HOME`、JDK 17），之前成功跑过 `expo run:android`
 - `gh` 已登录（`gh auth status`）
 - `apps/mobile/.env` 里有 `EXPO_PUBLIC_SENTRY_DSN`（本地包才能上报崩溃）
+- 先改 `apps/mobile/app.config.js` 的 `version`，再按 [ReSource](https://github.com/kenischu/ReSource/releases) 的条目格式写好 `scripts/release-notes.md`（中文短句、一条一行、写清新增和修复）
 
 ### 命令
 
 ```bash
-bash scripts/build-split-apks.sh android-1.0.0-6
+# 先改脚本和说明，再构建。默认打 release 包：
+bash scripts/build-split-apks.sh android-1.0.0-9
+# 等价于
+bash scripts/build-split-apks.sh android-1.0.0-9 release
+
+# 其他渠道
+bash scripts/build-split-apks.sh android-1.0.0-9-preview preview
+bash scripts/build-split-apks.sh android-1.0.0-9-debug debug
 ```
 
-`android-1.0.0-6` 是 release tag，留空会自动生成。
+第一个参数是 GitHub Release tag，留空则用 `v<app 版本>`。
 
 ### 做了什么
 
-1. 从 `.env` 注入 `EXPO_PUBLIC_*`（DSN 内联进 JS bundle，Sentry 本地包可用）
-2. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
-3. 禁用本地 Sentry source map 上传（保留给 EAS 云端构建）
-4. 本地 `gradlew assembleRelease` 构建 4 个架构：
-   - `kaku-arm64-v8a.apk`（60MB）——2021 年后绝大多数手机
-   - `kaku-armeabi-v7a.apk`（50MB）——旧 32 位设备
-   - `kaku-x86_64.apk` / `kaku-x86.apk`（62MB）——模拟器
-5. `gh release create` 自动发布到 GitHub Releases（英文说明）
+1. 按渠道设置 `EAS_BUILD_PROFILE`（决定 Android 包名和渠道图标）
+2. 从 `.env` 注入 `EXPO_PUBLIC_*`（DSN 内联进 JS bundle，Sentry 本地包可用）
+3. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
+4. 禁用本地 Sentry source map 上传（保留给 EAS 云端构建）
+5. 本地 `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`，复制为 `kaku-<channel>.apk`
+6. `gh release create` 上传该 APK，说明来自 `scripts/release-notes.md`
 
 产物在 `apps/mobile/dist-split/`（已 gitignore）。
 
 ### 注意事项
 
 - **签名**：本地产物用 debug 签名，与 EAS 签名的旧包不同——**安装前必须先卸载旧版**（Release 说明已注明）
+- **架构**：只发 arm64-v8a。32 位机和 x86 模拟器不再提供安装包
 - ABI 控制用的是 RN 的 `-PreactNativeArchitectures=<abi>` 参数（Expo SDK 57 已移除 `android.abiFilters` / `expo-build-properties` 的 ABI 支持，不要再用那些配置）
 - 本地产物不上传 Sentry source map（堆栈是混淆/压缩的），崩溃会上报但定位不如 EAS 包精确
+- Clash 代理会卡死 `git push` / `gh release`：执行前 `unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
 
 ---
 
@@ -64,14 +78,14 @@ bash scripts/build-split-apks.sh android-1.0.0-6
 
 1. 打开 https://github.com/shqingda/kaku/actions → **Release Android APK**
 2. **Run workflow**：
-   - `channel`：`preview`（独立安装包）或 `production`（正式包，签名用于上架）
-   - `tag`：可自定义，如 `android-1.0.0-6`（留空自动生成 `android-<channel>-<run_number>`）
+   - `channel`：`preview`（`kaku-preview.apk`）或 `production`（`kaku-release.apk`，签名用于上架）
+   - `tag`：可自定义，如 `android-1.0.0-9`（留空自动生成 `android-<channel>-<run_number>`）
 3. 等待 10–20 分钟（有缓存更快），完成后 GitHub Releases 出现 APK
 
 ### 流程
 
-1. `eas build --profile <channel> --platform android`（EAS 云端构建 universal APK）
-2. 轮询构建状态 → 下载 APK
+1. `eas build --profile <channel> --platform android`（EAS 云端构建）
+2. 轮询构建状态 → 下载 APK 并按渠道重命名
 3. 创建 GitHub Release
 
 ### 注意事项
@@ -84,12 +98,12 @@ bash scripts/build-split-apks.sh android-1.0.0-6
 
 ## 版本号
 
-- 当前 app 版本 `1.0.8`（`apps/mobile/app.config.js`，发版时先改这里）
+- 当前 app 版本 `1.0.9`（`apps/mobile/app.config.js`，发版时先改这里）
 - EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
-- 本地脚本默认用版本号作为 tag/标题：`v<app 版本>`（如 `v1.0.7`，第一个参数可覆盖；标题不再写死，参考 waku 的 releases）
+- 本地脚本默认 tag/标题：`v<app 版本>`；日常迭代用 `android-1.0.0-<n>` 作为第一个参数覆盖
 
 ## 上架（Play）
 
-- Play 上架必须用 **EAS 云端 `production` 构建 AAB**（`eas build -p android --profile production`），Google 会按设备架构自动分发，用户实际下载约 50MB
-- 不要用本地拆分 APK 上架（debug 签名 + 手动分发不符合要求）
+- Play 上架必须用 **EAS 云端 `production` 构建 AAB**（`eas build -p android --profile production`），Google 会按设备架构自动分发
+- 不要用本地 APK 上架（debug 签名 + 手动分发不符合要求）
 - 商店素材、隐私政策、数据安全表单见对话记录

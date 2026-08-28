@@ -89,14 +89,23 @@ jobs:
           exit 1
 
       - name: Download APK
+        id: artifact
         run: |
-          curl -sL -o kaku.apk "${{ steps.build.outputs.apk-url }}"
-          ls -la kaku.apk
+          CHANNEL="${{ github.event.inputs.channel }}"
+          if [ "$CHANNEL" = "production" ]; then
+            NAME=kaku-release.apk
+          else
+            NAME=kaku-preview.apk
+          fi
+          curl -sL -o "$NAME" "${{ steps.build.outputs.apk-url }}"
+          ls -la "$NAME"
+          echo "apk=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}-{1}', github.event.inputs.channel, github.run_number) }}
           name: Kaku Android ${{ github.event.inputs.channel }} (1.0.0+${{ github.run_number }})
-          files: kaku.apk
+          body_path: scripts/release-notes.md
+          files: ${{ steps.artifact.outputs.apk }}
           draft: false

@@ -27,10 +27,12 @@ This repository is both a product and a learning project.
 
 Before any deployment, read `RELEASE.md` — it documents both release paths.
 
-- **日常迭代发 preview**：use the local split-ABI build script
-  `bash scripts/build-split-apks.sh android-1.0.0-<n>` — it does NOT consume the
-  monthly EAS free-build quota. Produces 4 per-ABI APKs (50–62MB) with debug signing
-  (users must uninstall the previous build first). ~10–15 min on the local machine.
+- **日常迭代发 GitHub 包**：use the local build script
+  `bash scripts/build-split-apks.sh android-1.0.0-<n> [debug|preview|release]` —
+  it does NOT consume the monthly EAS free-build quota. Builds **arm64-v8a only**,
+  names the APK `kaku-<channel>.apk` (default `kaku-release.apk`), debug signing
+  (users must uninstall the previous build first). Write `scripts/release-notes.md`
+  first (Chinese bullets, ReSource style). ~10–15 min on the local machine.
 - **正式上架 Play**：use EAS cloud `production` profile (AAB, EAS signing, Sentry
   source maps). Via GitHub Actions workflow `Release Android APK` (needs repo secret
   `EXPO_TOKEN`).
