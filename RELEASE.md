@@ -32,17 +32,17 @@ Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS �
 ### 命令
 
 ```bash
-# 先改脚本和说明，再构建。默认打 release 包：
-bash scripts/build-split-apks.sh android-1.0.0-9
+# 先改版本和说明并 push。默认 tag 是 v<app 版本>（例如 v1.0.9），打 release 包：
+bash scripts/build-split-apks.sh
 # 等价于
-bash scripts/build-split-apks.sh android-1.0.0-9 release
+bash scripts/build-split-apks.sh v1.0.9 release
 
-# 其他渠道
-bash scripts/build-split-apks.sh android-1.0.0-9-preview preview
-bash scripts/build-split-apks.sh android-1.0.0-9-debug debug
+# 其他渠道（tag 仍用 v 版本号，用第二参数区分渠道）
+bash scripts/build-split-apks.sh v1.0.9 preview
+bash scripts/build-split-apks.sh v1.0.9 debug
 ```
 
-第一个参数是 GitHub Release tag，留空则用 `v<app 版本>`。
+第一个参数是 GitHub Release **tag，必须是 `v<app 版本>`**，不要用 `android-1.0.0-n`。留空则用 `v<app.config.js 的 version>`。脚本在上传 APK 前会 `git push origin HEAD:main`。
 
 ### 做了什么
 
@@ -79,7 +79,7 @@ bash scripts/build-split-apks.sh android-1.0.0-9-debug debug
 1. 打开 https://github.com/shqingda/kaku/actions → **Release Android APK**
 2. **Run workflow**：
    - `channel`：`preview`（`kaku-preview.apk`）或 `production`（`kaku-release.apk`，签名用于上架）
-   - `tag`：可自定义，如 `android-1.0.0-9`（留空自动生成 `android-<channel>-<run_number>`）
+   - `tag`：必须是 `v<app 版本>`，如 `v1.0.9`（留空自动生成 `android-<channel>-<run_number>`，日常本地发版不要用这种）
 3. 等待 10–20 分钟（有缓存更快），完成后 GitHub Releases 出现 APK
 
 ### 流程
@@ -100,7 +100,7 @@ bash scripts/build-split-apks.sh android-1.0.0-9-debug debug
 
 - 当前 app 版本 `1.0.9`（`apps/mobile/app.config.js`，发版时先改这里）
 - EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
-- 本地脚本默认 tag/标题：`v<app 版本>`；日常迭代用 `android-1.0.0-<n>` 作为第一个参数覆盖
+- 本地脚本默认 tag/标题：`v<app 版本>`（与 `app.config.js` 一致，例如 `v1.0.9`）。不要用 `android-1.0.0-<n>`
 
 ## 上架（Play）
 

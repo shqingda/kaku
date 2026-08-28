@@ -89,6 +89,6 @@
 ## 其它说明
 
 - 定时清理只删除“已经过期”的 OAuth state、一次性 handoff 和 refresh token 已过期的 session；不会删除仍在有效期内的 Kaku 登录会话，用户不会因此每天重新登录。
-- EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh android-1.0.0-<n> [debug|preview|release]`，正式上架等额度恢复后走 EAS。
+- EAS 免费额度每月有限（2026-08 已用尽，9/1 重置）：期间发版走本地脚本 `bash scripts/build-split-apks.sh v1.0.9 [debug|preview|release]`（tag 用 `v<app 版本>`），正式上架等额度恢复后走 EAS。
 - 可选项（决定不做）：design token 全站推广。
 

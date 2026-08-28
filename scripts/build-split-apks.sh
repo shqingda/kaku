@@ -4,7 +4,7 @@
 #
 # 用法：
 #   bash scripts/build-split-apks.sh [tag] [channel]
-#   tag     例如 android-1.0.0-9（默认 v<app.config.js 版本>）
+#   tag     例如 v1.0.9（默认 v<app.config.js 版本>，不要用 android-1.0.0-n）
 #   channel debug | preview | release（默认 release）
 #           产物名为 kaku-<channel>.apk
 set -euo pipefail
@@ -64,9 +64,13 @@ echo "==> 构建 ${ABI} -> ${APK_NAME}"
 cp android/app/build/outputs/apk/release/app-release.apk "${OUT_DIR}/${APK_NAME}"
 du -h "${OUT_DIR}/${APK_NAME}" | sed 's/^/    /'
 
+echo "==> 推送 origin/main（Release tag 必须落在已上传的提交上）"
+git -C "${REPO_DIR}" push origin HEAD:main
+
 echo "==> 发布 tag=${TAG} asset=${APK_NAME}"
 gh release create "${TAG}" "${OUT_DIR}/${APK_NAME}" --repo shqingda/kaku \
   --title "${TAG}" \
-  --notes-file "${NOTES_FILE}"
+  --notes-file "${NOTES_FILE}" \
+  --target "$(git -C "${REPO_DIR}" rev-parse HEAD)"
 
 echo "==> 完成: https://github.com/shqingda/kaku/releases/tag/${TAG}"
