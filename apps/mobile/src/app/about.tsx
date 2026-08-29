@@ -5,8 +5,6 @@ import { Stack } from 'expo-router';
 import { useRouter, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
+import { openExternalUrl } from '@/lib/open-url';
 
 const WEBSITE_URL = 'https://kaku-web.shqingda.workers.dev';
 
@@ -71,14 +70,6 @@ const legalLinks: AboutLink[] = [
     url: 'https://github.com/shqingda/kaku',
   },
 ];
-
-async function openExternalUrl(url: string) {
-  try {
-    await Linking.openURL(url);
-  } catch {
-    Alert.alert('暂时无法打开', '请检查网络后重试。');
-  }
-}
 
 export default function AboutScreen() {
   const colors = useTheme();

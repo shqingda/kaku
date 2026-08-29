@@ -3,8 +3,6 @@ import { Stack } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import {
   ActivityIndicator,
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +25,7 @@ import {
 import { useBangumiStatus } from '@/features/network-status/use-bangumi-status';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
+import { openExternalUrl } from '@/lib/open-url';
 
 // 与系统状态色一致的语义色（settings 页沿用同一套硬编码）。
 const LEVEL_GREEN = '#34C759';
@@ -35,63 +34,54 @@ const LEVEL_RED = '#FF3B30';
 
 const STATUS_SITE_URL = 'https://status.bgm.tv';
 
-type ProbeEntry = ProbeResult | 'pending';
-
-function levelTint(level: ServiceLevel, colors: ThemeColors) {
-  switch (level) {
-    case 'ok':
-      return LEVEL_GREEN;
-    case 'degraded':
-      return LEVEL_AMBER;
-    case 'down':
-      return LEVEL_RED;
-    default:
-      return colors.subtle;
+// 服务状态展示元数据查表：颜色、文案、图标、总览标题随级别一次取齐。
+// unknown 的颜色随主题，所以 tint 统一收颜色参数。
+const LEVEL_META: Record<
+  ServiceLevel,
+  {
+    label: string;
+    symbol: SymbolViewProps['name'];
+    title: string;
+    tint: (colors: ThemeColors) => string;
   }
-}
-
-function levelLabel(level: ServiceLevel) {
-  switch (level) {
-    case 'ok':
-      return '正常';
-    case 'degraded':
-      return '降级';
-    case 'down':
-      return '中断';
-    default:
-      return '未知';
-  }
-}
-
-function overallTitle(level: ServiceLevel) {
-  switch (level) {
-    case 'ok':
-      return 'Bangumi 服务正常';
-    case 'degraded':
-      return 'Bangumi 部分服务降级';
-    case 'down':
-      return 'Bangumi 服务中断';
-    default:
-      return '服务状态未知';
-  }
-}
-
-function overallSymbol(level: ServiceLevel): SymbolViewProps['name'] {
-  switch (level) {
-    case 'ok':
-      return { android: 'check_circle', ios: 'checkmark.circle.fill', web: 'check_circle' };
-    case 'degraded':
-      return {
-        android: 'error_outline',
-        ios: 'exclamationmark.triangle.fill',
-        web: 'error_outline',
-      };
-    case 'down':
-      return { android: 'cancel', ios: 'xmark.circle.fill', web: 'cancel' };
-    default:
-      return { android: 'help_outline', ios: 'questionmark.circle', web: 'help_outline' };
-  }
-}
+> = {
+  ok: {
+    label: '正常',
+    symbol: {
+      android: 'check_circle',
+      ios: 'checkmark.circle.fill',
+      web: 'check_circle',
+    },
+    title: 'Bangumi 服务正常',
+    tint: () => LEVEL_GREEN,
+  },
+  degraded: {
+    label: '降级',
+    symbol: {
+      android: 'error_outline',
+      ios: 'exclamationmark.triangle.fill',
+      web: 'error_outline',
+    },
+    title: 'Bangumi 部分服务降级',
+    tint: () => LEVEL_AMBER,
+  },
+  down: {
+    label: '中断',
+    symbol: { android: 'cancel', ios: 'xmark.circle.fill', web: 'cancel' },
+    title: 'Bangumi 服务中断',
+    tint: () => LEVEL_RED,
+  },
+  unknown: {
+    label: '未知',
+    symbol: {
+      android: 'help_outline',
+      ios: 'questionmark.circle',
+      web: 'help_outline',
+    },
+    title: '服务状态未知',
+    tint: (colors) => colors.subtle,
+  },
+};
 
 function formatUpdatedTime(timestampMs: number) {
   const date = new Date(timestampMs);
@@ -136,16 +126,13 @@ export default function NetworkStatusScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const statusQuery = useBangumiStatus();
-  const [probeResults, setProbeResults] = useState<Record<string, ProbeEntry>>({});
+  const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>({});
   const probeRunRef = useRef(0);
 
   const runProbes = useCallback(() => {
     const runId = ++probeRunRef.current;
-    setProbeResults(
-      Object.fromEntries(
-        CONNECTIVITY_TARGETS.map((target) => [target.id, 'pending']),
-      ),
-    );
+    // 只保留已完成的结果：缺失的键即「检测中」。
+    setProbeResults({});
     for (const target of CONNECTIVITY_TARGETS) {
       void probeConnectivity(target.url).then((result) => {
         if (probeRunRef.current !== runId) return;
@@ -158,8 +145,10 @@ export default function NetworkStatusScreen() {
     runProbes();
   }, [runProbes]);
 
-  const isProbing = Object.values(probeResults).some((entry) => entry === 'pending');
-  const report = statusQuery.data as StatusReport | undefined;
+  const isProbing = CONNECTIVITY_TARGETS.some(
+    (target) => !(target.id in probeResults),
+  );
+  const report = statusQuery.data;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -257,9 +246,7 @@ export default function NetworkStatusScreen() {
           accessibilityRole="link"
           hitSlop={HIT_SLOP}
           onPress={() => {
-            void Linking.openURL(STATUS_SITE_URL).catch(() =>
-              Alert.alert('暂时无法打开', '请检查网络后重试。'),
-            );
+            void openExternalUrl(STATUS_SITE_URL);
           }}
           style={({ pressed }) => [styles.footerLink, pressed && styles.pressed]}
         >
@@ -279,26 +266,27 @@ function OverallCard({
   report: StatusReport;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const tint = levelTint(report.level, colors);
+  const meta = LEVEL_META[report.level];
+  const tint = meta.tint(colors);
   const showDetail = report.level !== 'ok' && report.message;
 
   return (
     <View style={styles.overallCard}>
       <View
-        accessibilityLabel={`${overallTitle(report.level)}，${formatUpdatedTime(
+        accessibilityLabel={`${meta.title}，${formatUpdatedTime(
           report.updatedAt === null ? Date.now() : report.updatedAt * 1000,
         )}更新`}
         style={styles.overallHeader}
       >
         <View style={styles.overallIcon}>
           <SymbolView
-            name={overallSymbol(report.level)}
+            name={meta.symbol}
             size={24}
             tintColor={tint}
           />
         </View>
         <View style={styles.overallCopy}>
-          <Text style={styles.overallTitle}>{overallTitle(report.level)}</Text>
+          <Text style={styles.overallTitle}>{meta.title}</Text>
           {showDetail ? (
             <Text style={styles.overallMessage}>{report.message}</Text>
           ) : null}
@@ -324,19 +312,18 @@ function ProbeRow({
   styles,
 }: {
   colors: ThemeColors;
-  entry: ProbeEntry | undefined;
+  entry: ProbeResult | undefined;
   hasDivider: boolean;
   host: string;
   name: string;
   styles: ReturnType<typeof createStyles>;
 }) {
+  // entry 为 undefined 表示该探测尚未完成。
   let tint = colors.subtle;
-  let stateText = '等待检测';
+  let stateText = '检测中';
   let dotColor = colors.track;
 
-  if (entry === 'pending') {
-    stateText = '检测中';
-  } else if (entry) {
+  if (entry) {
     if (entry.state === 'failed') {
       tint = LEVEL_RED;
       stateText = entry.detail ?? '连接失败';
@@ -349,9 +336,7 @@ function ProbeRow({
 
   return (
     <View
-      accessibilityLabel={`${name} ${host}，${
-        entry === 'pending' ? '检测中' : stateText
-      }`}
+      accessibilityLabel={`${name} ${host}，${stateText}`}
       style={[styles.probeRow, hasDivider && styles.rowDivider]}
     >
       <View style={[styles.probeDot, { backgroundColor: dotColor }]} />
@@ -377,7 +362,8 @@ function ComponentCard({
   hasDivider: boolean;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const tint = levelTint(component.level, colors);
+  const meta = LEVEL_META[component.level];
+  const tint = meta.tint(colors);
   const incident = component.latestIncident;
 
   return (
@@ -389,7 +375,7 @@ function ComponentCard({
         <View style={[styles.levelPill, { backgroundColor: `${tint}1F` }]}>
           <View style={[styles.levelPillDot, { backgroundColor: tint }]} />
           <Text style={[styles.levelPillText, { color: tint }]}>
-            {levelLabel(component.level)}
+            {meta.label}
           </Text>
         </View>
       </View>
@@ -407,7 +393,9 @@ function ComponentCard({
                 styles.dayBar,
                 {
                   backgroundColor:
-                    day.level === 'unknown' ? colors.track : levelTint(day.level, colors),
+                    day.level === 'unknown'
+                      ? colors.track
+                      : LEVEL_META[day.level].tint(colors),
                 },
               ]}
             />

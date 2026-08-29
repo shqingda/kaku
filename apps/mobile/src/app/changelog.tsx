@@ -3,8 +3,6 @@ import Constants from 'expo-constants';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +24,7 @@ import {
 } from '@/features/changelog/changelog-data';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
+import { openExternalUrl } from '@/lib/open-url';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 const RELEASES_URL = 'https://github.com/shqingda/kaku/releases';
@@ -61,9 +60,7 @@ export default function ChangelogScreen() {
           accessibilityRole="link"
           hitSlop={HIT_SLOP}
           onPress={() => {
-            void Linking.openURL(RELEASES_URL).catch(() =>
-              Alert.alert('暂时无法打开', '请检查网络后重试。'),
-            );
+            void openExternalUrl(RELEASES_URL);
           }}
           style={({ pressed }) => [styles.releasesLink, pressed && styles.pressed]}
         >
