@@ -1,0 +1,11 @@
+# 前置：已位于更新日志页。检查手风琴展开，结束后返回上一页。
+# maestro 在 iOS 上按无障碍 label 精确匹配（子串会匹配失败），所以这里全部
+# 使用完整 label：卡片「版本 x.y.z，展开/收起更新内容」，说明为完整句子。
+appId: placeholder
+---
+- assertVisible: "更新日志"
+- takeScreenshot: changelog
+- tapOn: "版本 1.0.9，展开更新内容"
+- assertVisible: "完成 Firebase 推送接入：带 Google Play 服务的 Android 可以稳定收到 Bangumi 通知"
+- takeScreenshot: changelog-expanded
+- tapOn: "返回"

@@ -1,0 +1,9 @@
+# iOS 入口：dev client bundle id 带 .debug 后缀
+appId: com.shqingda.kaku.debug
+name: kaku-smoke-ios
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+- runFlow:
+    file: kaku-smoke-steps.yaml

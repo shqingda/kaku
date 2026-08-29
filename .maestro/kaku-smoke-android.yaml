@@ -1,0 +1,9 @@
+# Android 入口：debug 渠道的 applicationId 没有 .debug 后缀
+appId: com.shqingda.kaku
+name: kaku-smoke-android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+- runFlow:
+    file: kaku-smoke-steps.yaml

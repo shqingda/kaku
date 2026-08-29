@@ -1,0 +1,59 @@
+# 共用冒烟步骤（仅被 kaku-smoke-ios / kaku-smoke-android 以 runFlow file 引入；
+# launchApp 由入口 flow 负责，子 flow 只做界面操作）。
+# 复位策略：openLink 触发 dev client 重载 bundle，路由必然回到首页顶部，
+# 无论上次运行停在哪个页面（含滚动过的首页）都能恢复。
+appId: placeholder
+---
+- openLink: "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+# 热重载一般 5–15 秒；冷启动 bundle 编译最长给 3 分钟
+- extendedWaitUntil:
+    visible: "打开账户菜单"
+    timeout: 180000
+- takeScreenshot: home
+# reload 后布局分阶段挂载，等稳定再点，避免用过期坐标点到搜索框
+- waitForAnimationToEnd
+- tapOn: "打开账户菜单"
+- runFlow:
+    when:
+      notVisible: "账户与设备"
+    commands:
+      # 首次 tap 可能落在尚未稳定的布局上，复核失败再点一次
+      - tapOn: "打开账户菜单"
+- assertVisible: "账户与设备"
+- tapOn: "账户与设备"
+# ---- 更新日志页（gate 在账户页刚落地时求值，恰好区分登录态）----
+# 已登录：账户页直连入口。changelog-checks 的「返回」落回账户页。
+- runFlow:
+    when:
+      visible: "更新日志"
+    commands:
+      - tapOn: "更新日志"
+      - runFlow:
+          file: changelog-checks.yaml
+# 未登录：经「关于、帮助与隐私」绕行，多一层返回落回账户页。
+# 双重 gate：限定仍停留在账户页，避免在首页被误触发。
+- runFlow:
+    when:
+      visible: "账户"
+      notVisible: "更新日志"
+    commands:
+      - tapOn: "关于、帮助与隐私"
+      - assertVisible: "更新日志"
+      - tapOn: "更新日志"
+      - runFlow:
+          file: changelog-checks.yaml
+      - tapOn: "返回"
+# ---- 网络诊断页（两种登录态此时都在账户页；行在页面底部）----
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      text: "网络诊断"
+- tapOn: "网络诊断"
+- assertVisible: "本机连通性"
+# 按钮容器 label 是完整短语「重新检测本机连通性」，探测行 label 含动态延迟，
+# 所以这里断言容器 label，探测结果用截图作视觉证据
+- assertVisible: "重新检测本机连通性"
+- waitForAnimationToEnd
+- takeScreenshot: network-status
+# ---- 收尾：回到首页并停在顶部，保证下次运行从干净状态开始 ----
+- tapOn: "返回"
