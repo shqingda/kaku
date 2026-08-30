@@ -81,6 +81,34 @@ export default function EpisodeScreen() {
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+  const episodeUnit = isTrack ? '曲' : '集';
+  const episodeList = useMemo(
+    () =>
+      [...(catalogSubject?.episodes ?? [])].sort(
+        (left, right) => left.number - right.number,
+      ),
+    [catalogSubject?.episodes],
+  );
+  const currentEpisodeIndex = episodeList.findIndex(
+    (episode) => episode.number === episodeNumber,
+  );
+  const previousEpisode =
+    currentEpisodeIndex > 0 ? episodeList[currentEpisodeIndex - 1] : undefined;
+  const nextEpisode =
+    currentEpisodeIndex >= 0 && currentEpisodeIndex < episodeList.length - 1
+      ? episodeList[currentEpisodeIndex + 1]
+      : undefined;
+
+  function openEpisode(nextNumber: number) {
+    router.replace({
+      pathname: '/subject/[id]/episode/[episodeNumber]',
+      params: { id: String(subjectId), episodeNumber: String(nextNumber) },
+    });
+    replyNavigation.listRef.current?.scrollToOffset({
+      animated: false,
+      offset: 0,
+    });
+  }
 
   function confirmDeleteReply(reply: DiscussionReply) {
     Alert.alert(
@@ -320,6 +348,68 @@ export default function EpisodeScreen() {
                   {catalogEpisode?.description ||
                     `本${isTrack ? '曲' : '集'}简介暂时缺失，稍后可以重试 Bangumi 数据。`}
                 </Text>
+                {previousEpisode || nextEpisode ? (
+                  <View style={styles.episodeNavRow}>
+                    {previousEpisode ? (
+                      <Pressable
+                        accessibilityLabel={`跳转到上一${episodeUnit}：第 ${previousEpisode.number} ${episodeUnit}`}
+                        accessibilityRole="button"
+                        hitSlop={4}
+                        onPress={() => openEpisode(previousEpisode.number)}
+                        style={({ pressed }) => [
+                          styles.episodeNavButton,
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        <SymbolView
+                          name={{
+                            android: 'chevron_left',
+                            ios: 'chevron.left',
+                            web: 'chevron_left',
+                          }}
+                          size={15}
+                          tintColor={colors.accent}
+                          weight="semibold"
+                        />
+                        <Text
+                          numberOfLines={1}
+                          style={styles.episodeNavText}
+                        >{`上一${episodeUnit}`}</Text>
+                      </Pressable>
+                    ) : (
+                      <View style={styles.episodeNavSpacer} />
+                    )}
+                    {nextEpisode ? (
+                      <Pressable
+                        accessibilityLabel={`跳转到下一${episodeUnit}：第 ${nextEpisode.number} ${episodeUnit}`}
+                        accessibilityRole="button"
+                        hitSlop={4}
+                        onPress={() => openEpisode(nextEpisode.number)}
+                        style={({ pressed }) => [
+                          styles.episodeNavButton,
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          style={styles.episodeNavText}
+                        >{`下一${episodeUnit}`}</Text>
+                        <SymbolView
+                          name={{
+                            android: 'chevron_right',
+                            ios: 'chevron.right',
+                            web: 'chevron_right',
+                          }}
+                          size={15}
+                          tintColor={colors.accent}
+                          weight="semibold"
+                        />
+                      </Pressable>
+                    ) : (
+                      <View style={styles.episodeNavSpacer} />
+                    )}
+                  </View>
+                ) : null}
               </View>
               <CatalogStatusBanner
                 fromOfflinePack={catalogQuery.data?.offlineSource === 'pack'}
@@ -456,6 +546,30 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   watchedStatusText: { color: colors.surface },
   airDate: { color: colors.subtle, fontSize: 12 },
   description: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 18 },
+  episodeNavRow: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  episodeNavButton: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 14,
+    flexDirection: 'row',
+    flex: 1,
+    gap: 3,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  episodeNavText: {
+    color: colors.accent,
+    flexShrink: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  episodeNavSpacer: { flex: 1 },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
