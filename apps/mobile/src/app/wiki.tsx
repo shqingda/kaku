@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicWikiRevision } from '@/features/wiki/model';
@@ -56,6 +57,12 @@ export default function WikiScreen() {
           </View>
         }
         maxToRenderPerBatch={12}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void revisionsQuery.refetch()}
+            refreshing={revisionsQuery.isRefetching && !revisionsQuery.isPending}
+          />
+        }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
           <RevisionRow

@@ -10,6 +10,7 @@ import {
   getSubjectTypeSlug,
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -113,6 +114,12 @@ export default function TagsScreen() {
           }
         }}
         onEndReachedThreshold={0.45}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={() => void tagsQuery.refetch()}
+            refreshing={tagsQuery.isRefetching && !tagsQuery.isPending}
+          />
+        }
         renderItem={({ item }) => (
           <TagCard item={item} onPress={() => browseTag(item.name)} styles={styles} />
         )}
