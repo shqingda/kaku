@@ -26,7 +26,9 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
+import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
@@ -59,6 +61,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
   const contentLabel = kind === 'blog' ? '日志' : '评论';
 
@@ -178,7 +181,12 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           ref={replyNavigation.listRef}
           refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
-          onScroll={scrollToTop.handleScroll}
+          onContentSizeChange={scrollToBottom.handleContentSizeChange}
+          onLayout={scrollToBottom.handleLayout}
+          onScroll={(event) => {
+            scrollToTop.handleScroll(event);
+            scrollToBottom.handleScroll(event);
+          }}
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -236,6 +244,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
+      />
+      <ScrollToBottomButton
+        bottom={156}
+        onPress={scrollToBottom.scrollToBottom}
+        visible={scrollToBottom.visible}
       />
     </SafeAreaView>
   );

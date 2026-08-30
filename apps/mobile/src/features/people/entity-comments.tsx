@@ -23,6 +23,7 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
+import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -63,6 +64,7 @@ export function EntityComments({
   const comments = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(comments);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
   const pendingReplyIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -247,7 +249,12 @@ export function EntityComments({
             keyExtractor={(reply) => reply.id}
             maxToRenderPerBatch={10}
             onRefresh={() => void commentsQuery.refetch()}
-            onScroll={scrollToTop.handleScroll}
+            onContentSizeChange={scrollToBottom.handleContentSizeChange}
+            onLayout={scrollToBottom.handleLayout}
+            onScroll={(event) => {
+              scrollToTop.handleScroll(event);
+              scrollToBottom.handleScroll(event);
+            }}
             onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
@@ -271,6 +278,12 @@ export function EntityComments({
           <ScrollNavButton
             onPress={scrollToTop.scrollToTop}
             visible={scrollToTop.visible}
+          />
+          <ScrollNavButton
+            bottom={80}
+            direction="bottom"
+            onPress={scrollToBottom.scrollToBottom}
+            visible={scrollToBottom.visible}
           />
         </View>
       </AppSheet>

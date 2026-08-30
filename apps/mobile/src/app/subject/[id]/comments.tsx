@@ -9,7 +9,9 @@ import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
@@ -27,6 +29,7 @@ export default function SubjectCommentsScreen() {
   );
   const total = commentsQuery.data?.pages[0]?.total ?? 0;
   const scrollToTop = useScrollToTopButton();
+  const scrollToBottom = useScrollToBottomButton(scrollToTop.ref);
 
   if (!subjectId) {
     return <InvalidRouteState message="这个吐槽箱链接缺少有效条目编号。" />;
@@ -92,7 +95,12 @@ export default function SubjectCommentsScreen() {
         }}
         onEndReachedThreshold={0.45}
         onRefresh={() => void commentsQuery.refetch()}
-        onScroll={scrollToTop.handleScroll}
+        onContentSizeChange={scrollToBottom.handleContentSizeChange}
+        onLayout={scrollToBottom.handleLayout}
+        onScroll={(event) => {
+          scrollToTop.handleScroll(event);
+          scrollToBottom.handleScroll(event);
+        }}
         refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
         renderItem={({ index, item }) => (
           <View style={[styles.card, index === 0 && styles.firstCard]}>
@@ -128,6 +136,11 @@ export default function SubjectCommentsScreen() {
       <ScrollToTopButton
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
+      />
+      <ScrollToBottomButton
+        bottom={76}
+        onPress={scrollToBottom.scrollToBottom}
+        visible={scrollToBottom.visible}
       />
     </SafeAreaView>
   );

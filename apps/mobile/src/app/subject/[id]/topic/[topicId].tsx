@@ -30,7 +30,9 @@ import { ReportButton } from '@/features/reports/report-button';
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -60,6 +62,7 @@ export default function TopicScreen() {
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
   useEffect(() => {
@@ -186,7 +189,12 @@ export default function TopicScreen() {
           ref={replyNavigation.listRef}
           refreshing={topicQuery.isRefetching && !topicQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
-          onScroll={scrollToTop.handleScroll}
+          onContentSizeChange={scrollToBottom.handleContentSizeChange}
+          onLayout={scrollToBottom.handleLayout}
+          onScroll={(event) => {
+            scrollToTop.handleScroll(event);
+            scrollToBottom.handleScroll(event);
+          }}
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -265,6 +273,11 @@ export default function TopicScreen() {
         bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
+      />
+      <ScrollToBottomButton
+        bottom={156}
+        onPress={scrollToBottom.scrollToBottom}
+        visible={scrollToBottom.visible}
       />
     </SafeAreaView>
   );
