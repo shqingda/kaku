@@ -123,7 +123,7 @@ function StaffRow({ item }: { item: StaffCredit }) {
   const { colors, styles } = useThemedStyles();
   const content = (
     <>
-      <StaffAvatar item={item} withZoom={!item.isOrganization} />
+      <StaffAvatar item={item} withZoom />
       <View style={styles.staffMain}>
         <Text numberOfLines={1} style={styles.staffName}>
           {item.name}
@@ -137,25 +137,20 @@ function StaffRow({ item }: { item: StaffCredit }) {
           <Text style={styles.episodeBadgeText}>EP.{item.episodeInfo}</Text>
         </View>
       ) : null}
-      {!item.isOrganization ? (
-        <SymbolView
-          name={{
-            android: 'chevron_right',
-            ios: 'chevron.right',
-            web: 'chevron_right',
-          }}
-          size={13}
-          tintColor={colors.subtle}
-          weight="semibold"
-        />
-      ) : null}
+      <SymbolView
+        name={{
+          android: 'chevron_right',
+          ios: 'chevron.right',
+          web: 'chevron_right',
+        }}
+        size={13}
+        tintColor={colors.subtle}
+        weight="semibold"
+      />
     </>
   );
 
-  if (item.isOrganization) {
-    return <View style={styles.staffRow}>{content}</View>;
-  }
-
+  // 机构在 Bangumi 与人物共用同一编号空间，直接复用人物详情页。
   return (
     <Link
       asChild
@@ -165,7 +160,7 @@ function StaffRow({ item }: { item: StaffCredit }) {
       }}
     >
       <Pressable
-        accessibilityLabel={`查看人物 ${item.name}`}
+        accessibilityLabel={`查看${item.isOrganization ? '机构' : '人物'} ${item.name}`}
         accessibilityRole="button"
         style={styles.staffRow}
       >
