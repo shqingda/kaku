@@ -19,6 +19,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
+import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -105,7 +106,18 @@ export function EntityDetailScreen({
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: data?.name ?? `${kind}详情` }} />
+      <Stack.Screen
+        options={{
+          title: data?.name ?? `${kind}详情`,
+          headerRight: () =>
+            data ? (
+              <HeaderShareButton
+                path={`/${entityKind}/${entityId}`}
+                title={data.name}
+              />
+            ) : null,
+        }}
+      />
       {isPending ? (
         <AppState text={`正在读取${kind}资料。`} title="加载中" />
       ) : isError || !data ? (

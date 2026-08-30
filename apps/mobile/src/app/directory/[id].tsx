@@ -40,6 +40,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
+import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -143,7 +144,18 @@ export default function PublicIndexScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: index?.title ?? '目录' }} />
+      <Stack.Screen
+        options={{
+          title: index?.title ?? '目录',
+          headerRight: () =>
+            index ? (
+              <HeaderShareButton
+                path={`/index/${indexId}`}
+                title={index.title}
+              />
+            ) : null,
+        }}
+      />
       <FlatList
         contentContainerStyle={styles.content}
         data={items}

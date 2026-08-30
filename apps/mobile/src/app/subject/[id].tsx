@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { useIsOffline } from '@/lib/use-connectivity';
 import { userErrorMessage } from '@/lib/user-error-message';
+import { shareBangumiEntity } from '@/lib/share';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
@@ -129,6 +130,29 @@ function FloatingHomeButton({
         // Same iOS-only optical nudge as HeaderHomeButton.
         iconOffset={Platform.OS === 'ios' ? { y: 0.5 } : undefined}
         onPress={onPress}
+        variant="floating"
+      />
+    </View>
+  );
+}
+
+function FloatingShareButton({
+  path,
+  title,
+  top,
+}: {
+  path: string;
+  title: string;
+  top: number;
+}) {
+  const { styles } = useThemedStyles();
+  return (
+    <View style={[styles.shareButton, { top }]}>
+      <HeaderIconButton
+        accessibilityHint="通过系统分享面板分享这个条目"
+        accessibilityLabel="分享条目"
+        icon={{ android: 'share', ios: 'square.and.arrow.up', web: 'share' }}
+        onPress={() => void shareBangumiEntity({ path, title })}
         variant="floating"
       />
     </View>
@@ -274,6 +298,11 @@ export default function SubjectScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
+      <FloatingShareButton
+        path={`/subject/${subjectId}`}
+        title={title}
+        top={insets.top + bannerOffset}
+      />
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -513,6 +542,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   homeButton: {
     position: 'absolute',
     right: 16,
+    zIndex: 10,
+  },
+  shareButton: {
+    position: 'absolute',
+    right: 68,
     zIndex: 10,
   },
   heroSpacing: { height: 20 },

@@ -25,6 +25,7 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { BangumiText } from '@/features/shared/bangumi-text';
@@ -102,7 +103,18 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: contentLabel }} />
+      <Stack.Screen
+        options={{
+          title: contentLabel,
+          headerRight: () =>
+            review ? (
+              <HeaderShareButton
+                path={`/blog/${numericReviewId}`}
+                title={review.title}
+              />
+            ) : null,
+        }}
+      />
       <View style={styles.contentView}>
         <FlatList
           style={styles.list}

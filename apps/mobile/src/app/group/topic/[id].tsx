@@ -32,6 +32,7 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -112,7 +113,18 @@ export default function GroupTopicScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: '小组话题' }} />
+      <Stack.Screen
+        options={{
+          title: '小组话题',
+          headerRight: () =>
+            topic ? (
+              <HeaderShareButton
+                path={`/group/topic/${numericTopicId}`}
+                title={topic.title}
+              />
+            ) : null,
+        }}
+      />
       <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.listContent}

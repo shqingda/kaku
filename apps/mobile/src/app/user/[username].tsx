@@ -27,6 +27,7 @@ import { FriendAction } from '@/features/users/friend-action';
 import { ProfileOverflow } from '@/features/users/profile-overflow';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
+import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import {
   usePublicUser,
@@ -90,6 +91,12 @@ export default function PublicUserScreen() {
       <Stack.Screen
         options={{
           title: user?.nickname ?? '用户主页',
+          headerRight: () => (
+            <HeaderShareButton
+              path={`/user/${username}`}
+              title={user?.nickname ?? ''}
+            />
+          ),
         }}
       />
       {userQuery.isPending ? (
