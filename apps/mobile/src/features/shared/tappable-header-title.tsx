@@ -3,9 +3,8 @@ import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { HIT_SLOP } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 
-// 可点击的导航栏标题：点击导航栏任意位置（左右按钮除外）回到当前列表
-// 顶部。组件撑满标题容器，并用水平 hitSlop 把按钮两侧的空白也纳入
-// 触达范围；按钮自身的响应优先级更高，不受影响。
+// 可点击的导航栏标题：点击回到当前列表顶部（iOS 惯例的列表快捷导航）。
+// 字号字重对齐原生栈导航栏默认样式。
 export function TappableHeaderTitle({
   onPress,
   title,
@@ -20,7 +19,7 @@ export function TappableHeaderTitle({
       accessibilityHint="回到当前列表顶部"
       accessibilityLabel={`回到${title}顶部`}
       accessibilityRole="button"
-      hitSlop={{ bottom: 8, left: 140, right: 140, top: 8 }}
+      hitSlop={HIT_SLOP}
       onPress={onPress}
       style={({ pressed }) => [styles.title, pressed && styles.pressed]}
     >
@@ -37,9 +36,7 @@ export function TappableHeaderTitle({
 const styles = StyleSheet.create({
   pressed: { opacity: 0.55 },
   title: {
-    alignItems: Platform.OS === 'android' ? 'flex-start' : 'center',
     alignSelf: 'stretch',
-    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 8,
   },

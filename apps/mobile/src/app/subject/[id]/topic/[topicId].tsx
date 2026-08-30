@@ -55,9 +55,7 @@ export default function TopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef, {
-    getLastIndex: () => replies.length - 1,
-  });
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
 
   function scrollToTop() {
     replyNavigation.listRef.current?.scrollToOffset({

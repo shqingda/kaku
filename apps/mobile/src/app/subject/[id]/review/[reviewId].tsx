@@ -59,9 +59,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef, {
-    getLastIndex: () => replies.length - 1,
-  });
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
 
   function scrollToTop() {
     replyNavigation.listRef.current?.scrollToOffset({

@@ -28,7 +28,6 @@ export default function SubjectCommentsScreen() {
   );
   const total = commentsQuery.data?.pages[0]?.total ?? 0;
   const scrollToBottom = useScrollToBottomButton(undefined, {
-    getLastIndex: () => comments.length - 1,
     // 跳到底部时若还有未加载的吐槽，顺势触发下一页；页脚会显示加载
     // 状态，加载完成后不自动滚动，由用户继续上滑或再次点按。
     onLoadMore:
@@ -119,7 +118,6 @@ export default function SubjectCommentsScreen() {
         onContentSizeChange={scrollToBottom.handleContentSizeChange}
         onLayout={scrollToBottom.handleLayout}
         onScroll={scrollToBottom.handleScroll}
-        onScrollToIndexFailed={scrollToBottom.handleScrollToIndexFailed}
         refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
         renderItem={({ index, item }) => (
           <View style={[styles.card, index === 0 && styles.firstCard]}>
