@@ -12,23 +12,19 @@ import { SymbolView } from 'expo-symbols';
 import { useTheme } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
-// 底部居中的滚动导航胶囊按钮：图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
-// direction 为 top 时回到列表顶部，bottom 时跳到最新回复。
+// 底部居中的「跳到底部」胶囊按钮：图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
 export function ScrollNavButton({
   bottom = 28,
-  direction = 'top',
   onPress,
   visible,
 }: {
   bottom?: number;
-  direction?: 'top' | 'bottom';
   onPress: () => void;
   visible: boolean;
 }) {
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
   const colors = useTheme();
   const reduceMotion = useReduceMotion();
-  const isDown = direction === 'bottom';
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -59,7 +55,7 @@ export function ScrollNavButton({
       ]}
     >
       <Pressable
-        accessibilityLabel={isDown ? '跳到底部' : '回到顶部'}
+        accessibilityLabel="跳到底部"
         accessibilityRole="button"
         hitSlop={8}
         onPress={onPress}
@@ -70,26 +66,16 @@ export function ScrollNavButton({
         ]}
       >
         <SymbolView
-          name={
-            isDown
-              ? {
-                  android: 'arrow_downward',
-                  ios: 'arrow.down',
-                  web: 'arrow_downward',
-                }
-              : {
-                  android: 'arrow_upward',
-                  ios: 'arrow.up',
-                  web: 'arrow_upward',
-                }
-          }
+          name={{
+            android: 'arrow_downward',
+            ios: 'arrow.down',
+            web: 'arrow_downward',
+          }}
           size={15}
           tintColor={colors.ink}
           weight="semibold"
         />
-        <Text style={[styles.label, { color: colors.ink }]}>
-          {isDown ? '跳到底部' : '回到顶部'}
-        </Text>
+        <Text style={[styles.label, { color: colors.ink }]}>跳到底部</Text>
       </Pressable>
     </Animated.View>
   );

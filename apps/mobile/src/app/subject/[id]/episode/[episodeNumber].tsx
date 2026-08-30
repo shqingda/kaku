@@ -34,9 +34,8 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { TappableHeaderTitle } from '@/features/shared/tappable-header-title';
 import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -82,8 +81,14 @@ export default function EpisodeScreen() {
   });
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
+
+  function scrollToTop() {
+    replyNavigation.listRef.current?.scrollToOffset({
+      animated: true,
+      offset: 0,
+    });
+  }
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -261,7 +266,14 @@ export default function EpisodeScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
-        options={{ title: `第 ${episodeNumber} ${isTrack ? '曲' : '集'}` }}
+        options={{
+          headerTitle: () => (
+            <TappableHeaderTitle
+              onPress={scrollToTop}
+              title={`第 ${episodeNumber} ${episodeUnit}`}
+            />
+          ),
+        }}
       />
       <View style={styles.contentView}>
         <FlatList
@@ -290,10 +302,7 @@ export default function EpisodeScreen() {
           removeClippedSubviews={Platform.OS === 'android'}
           onContentSizeChange={scrollToBottom.handleContentSizeChange}
           onLayout={scrollToBottom.handleLayout}
-          onScroll={(event) => {
-            scrollToTop.handleScroll(event);
-            scrollToBottom.handleScroll(event);
-          }}
+          onScroll={scrollToBottom.handleScroll}
           scrollEventThrottle={80}
           ListEmptyComponent={
             commentsQuery.isPending ||
@@ -506,13 +515,8 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
-      <ScrollToTopButton
-        bottom={104}
-        onPress={scrollToTop.scrollToTop}
-        visible={scrollToTop.visible}
-      />
       <ScrollToBottomButton
-        bottom={156}
+        bottom={104}
         onPress={scrollToBottom.scrollToBottom}
         visible={scrollToBottom.visible}
       />
