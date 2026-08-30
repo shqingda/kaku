@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -27,7 +27,6 @@ import { useDiscussionReply } from '@/features/discussions/use-discussion-reply'
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
-import { ReportSheet } from '@/features/reports/report-sheet';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
@@ -48,10 +47,6 @@ export default function TopicScreen() {
   const numericReplyId = parsePositiveIntegerRouteParam(replyId);
   const { isSigningIn, session, signIn } = useAuth();
   const composer = useReplyComposer();
-  const [reportTarget, setReportTarget] = useState<{
-    id: number;
-    label: string;
-  } | null>(null);
   const topicQuery = useBangumiSubjectTopic(numericTopicId ?? 0);
   const { remove: deleteReply } = useDiscussionReply({
     id: numericTopicId ?? 0,
@@ -60,7 +55,9 @@ export default function TopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef, {
+    getLastIndex: () => replies.length - 1,
+  });
 
   function scrollToTop() {
     replyNavigation.listRef.current?.scrollToOffset({
@@ -213,15 +210,6 @@ export default function TopicScreen() {
               onOpenReference={replyNavigation.openReply}
               onReply={composer.open}
               ownerUsername={session?.user.username}
-              onReport={
-                session && item.authorUsername !== session.user.username
-                  ? (reply) =>
-                      setReportTarget({
-                        id: Number(reply.id),
-                        label: reply.author,
-                      })
-                  : undefined
-              }
               reply={item}
             />
           )}
@@ -264,18 +252,6 @@ export default function TopicScreen() {
       <DiscussionReplyComposer
         {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'subject-topic' }}
-      />
-      <ReportSheet
-        onClose={() => setReportTarget(null)}
-        onSubmitted={() =>
-          Alert.alert('举报已提交', '感谢你的反馈，Bangumi 会进行审核。')
-        }
-        target={
-          reportTarget
-            ? { ...reportTarget, type: REPORT_TYPES.subjectReply }
-            : { id: 0, label: '', type: REPORT_TYPES.subjectReply }
-        }
-        visible={reportTarget !== null}
       />
       <ScrollToBottomButton
         bottom={104}

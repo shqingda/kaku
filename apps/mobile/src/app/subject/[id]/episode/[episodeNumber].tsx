@@ -81,7 +81,9 @@ export default function EpisodeScreen() {
   });
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef, {
+    getLastIndex: () => replies.length - 1,
+  });
 
   function scrollToTop() {
     replyNavigation.listRef.current?.scrollToOffset({

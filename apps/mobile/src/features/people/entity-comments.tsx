@@ -62,7 +62,9 @@ export function EntityComments({
   });
   const comments = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(comments);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
+  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef, {
+    getLastIndex: () => comments.length - 1,
+  });
 
   function scrollToTop() {
     replyNavigation.listRef.current?.scrollToOffset({
