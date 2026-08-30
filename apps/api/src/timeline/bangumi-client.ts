@@ -31,7 +31,7 @@ const timelineSchema = z.object({
   createdAt: z.number().int(),
   id: z.number().int().positive(),
   memo: z.object({
-    blog: z.object({ title: z.string() }).optional(),
+    blog: z.object({ id: z.number().int().positive(), title: z.string() }).optional(),
     daily: z
       .object({ users: z.array(timelineUserSchema).optional() })
       .optional(),
@@ -123,6 +123,8 @@ const collectionVerbs: Record<number, string> = {
 };
 
 type TimelineDescription = {
+  blogId?: number;
+  blogTitle?: string;
   entityId?: number;
   entityKind?: 'character' | 'person';
   entityTitle?: string;
@@ -233,8 +235,20 @@ function describeTimeline(item: z.infer<typeof timelineSchema>) {
             ? `将昵称改为 ${item.memo.status.nickname.after}`
             : '更新了状态'),
       };
-    case 6:
-      return { text: item.memo.blog ? `发表了日志《${item.memo.blog.title}》` : '发表了日志' };
+    case 6: {
+      const blog = item.memo.blog;
+      if (!blog) {
+        return { text: '发表了日志' };
+      }
+      const leading = '发表了日志 ';
+      return {
+        blogId: blog.id,
+        blogTitle: blog.title,
+        leadingText: leading,
+        text: `${leading}《${blog.title}》`,
+        trailingText: '',
+      };
+    }
     case 7:
       return { text: item.memo.index ? `更新了目录《${item.memo.index.title}》` : '更新了目录' };
     case 8: {

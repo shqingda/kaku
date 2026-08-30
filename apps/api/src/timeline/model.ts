@@ -1,4 +1,6 @@
 export type FriendTimelineItem = {
+  blogId?: number;
+  blogTitle?: string;
   createdAt: number;
   entityId?: number;
   entityKind?: 'character' | 'person';

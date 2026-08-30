@@ -5,6 +5,8 @@ import { KakuApiError, readErrorMessage } from './auth-client.ts';
 import { getFriendTimelinePath } from './timeline-pagination.ts';
 
 const timelineItemSchema = z.object({
+  blogId: z.number().int().positive().optional(),
+  blogTitle: z.string().optional(),
   createdAt: z.number().int(),
   entityId: z.number().int().positive().optional(),
   entityKind: z.enum(['character', 'person']).optional(),

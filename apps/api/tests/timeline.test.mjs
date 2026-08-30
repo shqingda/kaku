@@ -107,6 +107,66 @@ test('Bangumi collection timeline keeps its exact action and subject title', asy
   });
 });
 
+test('Bangumi blog timeline keeps the entry id so clients can deep link', async () => {
+  const fetcher = async () =>
+    Response.json([
+      {
+        batch: false,
+        cat: 6,
+        createdAt: 1_785_940_000,
+        id: 47,
+        memo: {
+          blog: { id: 13683, title: '2026 年夏番观后感' },
+        },
+        replies: 3,
+        type: 1,
+        user: {
+          avatar: {},
+          nickname: '好友 B',
+          username: 'friend-b',
+        },
+      },
+      {
+        batch: false,
+        cat: 6,
+        createdAt: 1_785_940_000,
+        id: 48,
+        memo: {},
+        replies: 0,
+        type: 1,
+        user: {
+          avatar: {},
+          nickname: '好友 B',
+          username: 'friend-b',
+        },
+      },
+    ]);
+
+  const page = await getBangumiFriendTimeline({
+    accessToken: 'access-token',
+    fetcher,
+  });
+
+  assert.deepEqual(page.items[0], {
+    blogId: 13683,
+    blogTitle: '2026 年夏番观后感',
+    createdAt: 1_785_940_000,
+    id: 47,
+    leadingText: '发表了日志 ',
+    replies: 3,
+    subjectId: undefined,
+    text: '发表了日志 《2026 年夏番观后感》',
+    trailingText: '',
+    user: {
+      avatarUrl: undefined,
+      nickname: '好友 B',
+      username: 'friend-b',
+    },
+  });
+  assert.equal(page.items[1].blogId, undefined);
+  assert.equal(page.items[1].text, '发表了日志');
+});
+
 test('Bangumi batch progress timeline exposes completed episode counts', async () => {
   const fetcher = async () =>
     Response.json([

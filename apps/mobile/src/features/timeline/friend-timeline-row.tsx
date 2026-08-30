@@ -18,19 +18,32 @@ export function FriendTimelineRow({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // 条目动态进条目页；日志动态与日志标题一样，直接进日志详情页。
+  const destination = item.subjectId
+    ? {
+        pathname: '/subject/[id]' as const,
+        params: { id: String(item.subjectId) },
+      }
+    : item.blogId
+      ? {
+          pathname: '/blog/[id]' as const,
+          params: { id: String(item.blogId) },
+        }
+      : undefined;
 
   return (
     <Pressable
       accessibilityLabel={`${item.user.nickname}：${item.text}`}
-      accessibilityRole={item.subjectId ? 'button' : undefined}
-      accessibilityHint={item.subjectId ? '进入相关条目详情' : undefined}
-      onPress={() =>
-        item.subjectId
-          ? router.push({
-              pathname: '/subject/[id]',
-              params: { id: String(item.subjectId) },
-            })
+      accessibilityRole={destination ? 'button' : undefined}
+      accessibilityHint={
+        destination
+          ? item.subjectId
+            ? '进入相关条目详情'
+            : '进入日志详情'
           : undefined
+      }
+      onPress={() =>
+        destination ? router.push(destination) : undefined
       }
       style={({ pressed }) => [
         styles.row,
@@ -95,6 +108,22 @@ export function FriendTimelineRow({
             ))}
             {item.trailingText}
           </Text>
+        ) : item.blogId && item.blogTitle ? (
+          <Text style={styles.text}>
+            {item.leadingText}
+            <Text
+              onPress={() =>
+                router.push({
+                  pathname: '/blog/[id]',
+                  params: { id: String(item.blogId) },
+                })
+              }
+              style={styles.blogTitle}
+            >
+              《{item.blogTitle}》
+            </Text>
+            {item.trailingText}
+          </Text>
         ) : item.subjectTitle || item.entityTitle ? (
           <Text style={styles.text}>
             {item.leadingText}
@@ -155,6 +184,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   nickname: { color: colors.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
   time: { color: colors.subtle, fontSize: 11 },
   text: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
+  blogTitle: { color: colors.accentRich, fontWeight: '700' },
   subjectTitle: { color: colors.accentRich, fontWeight: '700' },
   entityTitle: { color: colors.accentRich, fontWeight: '700' },
   userMention: { color: colors.accentRich, fontWeight: '700' },
