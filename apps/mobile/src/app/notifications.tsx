@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -18,7 +18,16 @@ export default function NotificationsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const notificationsQuery = useNotifications();
   const markRead = useMarkNotificationsRead();
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const notifications = notificationsQuery.data?.items ?? [];
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
+  const visibleNotifications = useMemo(
+    () =>
+      showUnreadOnly
+        ? notifications.filter((item) => item.unread)
+        : notifications,
+    [notifications, showUnreadOnly],
+  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -50,15 +59,54 @@ export default function NotificationsScreen() {
       />
       <FlatList
         contentContainerStyle={styles.content}
-        data={notifications}
+        data={visibleNotifications}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          <NotificationState
-            colors={colors}
-            error={notificationsQuery.isError}
-            loading={notificationsQuery.isPending}
-            onRetry={() => void notificationsQuery.refetch()}
-          />
+          notificationsQuery.isPending ? (
+            <NotificationState
+              colors={colors}
+              error={false}
+              loading
+              onRetry={() => void notificationsQuery.refetch()}
+            />
+          ) : notificationsQuery.isError ? (
+            <NotificationState
+              colors={colors}
+              error
+              loading={false}
+              onRetry={() => void notificationsQuery.refetch()}
+            />
+          ) : showUnreadOnly ? (
+            <View style={styles.state}>
+              <Text style={styles.stateTitle}>没有未读通知</Text>
+              <Text style={styles.stateText}>
+                新消息到达后会在这里显示，下拉可以手动刷新。
+              </Text>
+            </View>
+          ) : (
+            <NotificationState
+              colors={colors}
+              error={false}
+              loading={false}
+              onRetry={() => void notificationsQuery.refetch()}
+            />
+          )
+        }
+        ListHeaderComponent={
+          <View style={styles.filterRow}>
+            <NotificationFilterChip
+              label="全部"
+              onPress={() => setShowUnreadOnly(false)}
+              selected={!showUnreadOnly}
+              styles={styles}
+            />
+            <NotificationFilterChip
+              label={unreadCount > 0 ? `未读 ${unreadCount}` : '未读'}
+              onPress={() => setShowUnreadOnly(true)}
+              selected={showUnreadOnly}
+              styles={styles}
+            />
+          </View>
         }
         refreshControl={
           <AppRefreshControl
@@ -78,6 +126,40 @@ export default function NotificationsScreen() {
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
+  );
+}
+
+function NotificationFilterChip({
+  label,
+  onPress,
+  selected,
+  styles,
+}: {
+  label: string;
+  onPress: () => void;
+  selected: boolean;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.filterChip,
+        selected && styles.filterChipSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text
+        style={[
+          styles.filterChipText,
+          selected && styles.filterChipTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -124,8 +206,26 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 22,
     margin: 20,
     overflow: 'hidden',
+    paddingBottom: 8,
     paddingHorizontal: 18,
   },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 12,
+    paddingTop: 14,
+  },
+  filterChip: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 14,
+    justifyContent: 'center',
+    minHeight: 36,
+    paddingHorizontal: 14,
+  },
+  filterChipSelected: { backgroundColor: colors.ink },
+  filterChipText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterChipTextSelected: { color: colors.surface },
   state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 48 },
   stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
   stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
