@@ -33,9 +33,7 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -83,7 +81,6 @@ export default function EpisodeScreen() {
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -288,9 +285,7 @@ export default function EpisodeScreen() {
             !commentsQuery.isPending
           }
           removeClippedSubviews={Platform.OS === 'android'}
-          onContentSizeChange={scrollToBottom.handleContentSizeChange}
-          onLayout={scrollToBottom.handleLayout}
-          onScroll={scrollToBottom.handleScroll}
+          onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}
           ListEmptyComponent={
             commentsQuery.isPending ||
@@ -507,11 +502,6 @@ export default function EpisodeScreen() {
         bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
-      />
-      <ScrollToBottomButton
-        bottom={156}
-        onPress={scrollToBottom.scrollToBottom}
-        visible={scrollToBottom.visible}
       />
     </SafeAreaView>
   );

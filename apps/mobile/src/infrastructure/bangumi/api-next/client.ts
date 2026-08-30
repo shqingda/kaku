@@ -122,7 +122,7 @@ export async function getBangumiSubjectComments(
   signal?: AbortSignal,
 ) {
   const json = await requestJson(
-    `/p1/subjects/${subjectId}/comments?limit=100&offset=${offset}`,
+    `/p1/subjects/${subjectId}/comments?limit=30&offset=${offset}`,
     { signal },
   );
   return bangumiSubjectCommentsSchema.parse(json);
