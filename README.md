@@ -74,6 +74,7 @@ Kaku 目前包含移动端、服务端 API 与产品官网三个应用：
 - Bangumi OAuth 2.0
 - AES-GCM 加密保存 Bangumi 授权凭据
 - 短期 access session 与轮换 refresh session
+- 部署与回滚流程见 `docs/deploy-api.md`
 
 
 
