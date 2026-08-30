@@ -41,6 +41,8 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -54,6 +56,7 @@ export default function PublicIndexScreen() {
   const indexId = parsePositiveIntegerRouteParam(id);
   const indexQuery = usePublicIndex(indexId ?? 0);
   const itemsQuery = usePublicIndexItems(indexId ?? 0);
+  const listRef = useScrollToTopButton();
   const deleteIndex = useDeleteIndex();
   const collectionQuery = useIndexCollection(indexId ?? 0);
   const setCollection = useSetIndexCollection(indexId ?? 0);
@@ -290,6 +293,9 @@ export default function PublicIndexScreen() {
             ) : null}
           </>
         }
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             itemsQuery.hasNextPage &&
@@ -380,6 +386,10 @@ export default function PublicIndexScreen() {
           return href ? <Link asChild href={href}>{row}</Link> : row;
         }}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
       <IndexComposer
         editing={

@@ -13,6 +13,8 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { usePublicUserTimeline } from '@/features/users/use-public-user';
@@ -22,6 +24,7 @@ export default function PublicUserTimelineScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const timelineQuery = usePublicUserTimeline(username);
+  const listRef = useScrollToTopButton();
   const timeline = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [timelineQuery.data],
@@ -78,6 +81,9 @@ export default function PublicUserTimelineScreen() {
           </View>
         }
         maxToRenderPerBatch={12}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             timelineQuery.hasNextPage &&
@@ -117,6 +123,10 @@ export default function PublicUserTimelineScreen() {
         showsVerticalScrollIndicator={false}
         updateCellsBatchingPeriod={40}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

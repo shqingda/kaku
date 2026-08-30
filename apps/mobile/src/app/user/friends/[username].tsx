@@ -12,6 +12,8 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { usePublicUserFriends } from '@/features/users/use-public-user';
@@ -21,6 +23,7 @@ export default function PublicUserFriendsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const friendsQuery = usePublicUserFriends(username);
+  const listRef = useScrollToTopButton();
   const friends = useMemo(
     () => friendsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [friendsQuery.data],
@@ -73,6 +76,9 @@ export default function PublicUserFriendsScreen() {
           </View>
         }
         numColumns={3}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             friendsQuery.hasNextPage &&
@@ -98,6 +104,10 @@ export default function PublicUserFriendsScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

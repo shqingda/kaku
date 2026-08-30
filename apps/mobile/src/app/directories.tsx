@@ -27,6 +27,8 @@ import {
 } from '@/features/indexes/model';
 import { useGlobalIndexes } from '@/features/indexes/use-global-indexes';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -38,6 +40,7 @@ export default function DirectoriesScreen() {
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const indexesQuery = useGlobalIndexes(sort);
+  const listRef = useScrollToTopButton();
   const indexes = useMemo(
     () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [indexesQuery.data],
@@ -154,6 +157,9 @@ export default function DirectoriesScreen() {
           </View>
         }
         maxToRenderPerBatch={10}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             indexesQuery.hasNextPage &&
@@ -181,6 +187,10 @@ export default function DirectoriesScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
       <IndexComposer
         onClose={() => setComposerVisible(false)}

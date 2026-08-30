@@ -13,6 +13,8 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { usePublicUserBlogs } from '@/features/users/use-public-user';
@@ -22,6 +24,7 @@ export default function PublicUserBlogsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const blogsQuery = usePublicUserBlogs(username);
+  const listRef = useScrollToTopButton();
   const blogs = useMemo(
     () => blogsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [blogsQuery.data],
@@ -73,6 +76,9 @@ export default function PublicUserBlogsScreen() {
           </View>
         }
         maxToRenderPerBatch={12}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             blogsQuery.hasNextPage &&
@@ -108,6 +114,10 @@ export default function PublicUserBlogsScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

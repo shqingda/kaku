@@ -19,6 +19,8 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -27,6 +29,7 @@ export default function GlobalBlogsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<BlogFilter>('all');
   const blogsQuery = useGlobalBlogs(filter);
+  const listRef = useScrollToTopButton();
   const blogs = useMemo(
     () => blogsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [blogsQuery.data],
@@ -104,6 +107,9 @@ export default function GlobalBlogsScreen() {
           </View>
         }
         maxToRenderPerBatch={10}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             blogsQuery.hasNextPage &&
@@ -137,6 +143,10 @@ export default function GlobalBlogsScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

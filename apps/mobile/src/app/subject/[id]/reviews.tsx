@@ -8,6 +8,8 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectReviews } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -18,6 +20,7 @@ export default function SubjectReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const reviewsQuery = useSubjectReviews(subjectId ?? 0);
+  const listRef = useScrollToTopButton();
   const reviews = useMemo(
     () => reviewsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [reviewsQuery.data],
@@ -73,6 +76,9 @@ export default function SubjectReviewsScreen() {
             />
           ) : null
         }
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             reviewsQuery.hasNextPage &&
@@ -114,6 +120,10 @@ export default function SubjectReviewsScreen() {
           </Pressable>
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

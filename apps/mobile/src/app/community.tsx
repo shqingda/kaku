@@ -21,6 +21,8 @@ import {
 } from '@/features/community/use-community';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 
 const compactNumber = new Intl.NumberFormat('zh-CN', {
@@ -33,6 +35,7 @@ export default function CommunityScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
+  const listRef = useScrollToTopButton();
   const community = communityQuery.data;
   const topics = useMemo(
     () => topicsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -156,6 +159,9 @@ export default function CommunityScreen() {
             )}
           </>
         }
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             topicsQuery.hasNextPage &&
@@ -195,6 +201,10 @@ export default function CommunityScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

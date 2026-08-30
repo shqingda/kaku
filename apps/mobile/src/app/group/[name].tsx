@@ -19,6 +19,8 @@ import { TopicComposer } from '@/features/discussions/topic-composer';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function GroupScreen() {
@@ -30,6 +32,7 @@ export default function GroupScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const groupQuery = usePublicGroup(name);
   const topicsQuery = usePublicGroupTopics(name);
+  const listRef = useScrollToTopButton();
   const group = groupQuery.data;
   const topics = useMemo(
     () => topicsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -197,6 +200,9 @@ export default function GroupScreen() {
             />
           ) : null
         }
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             topicsQuery.hasNextPage &&
@@ -241,6 +247,10 @@ export default function GroupScreen() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
       <TopicComposer
         onClose={() => setComposerVisible(false)}

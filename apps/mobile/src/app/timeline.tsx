@@ -14,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -23,6 +25,7 @@ export default function FriendTimelineScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
+  const listRef = useScrollToTopButton();
   const [composerVisible, setComposerVisible] = useState(false);
   const items = useMemo(
     () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -55,6 +58,9 @@ export default function FriendTimelineScreen() {
             />
           ) : null
         }
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             timelineQuery.hasNextPage &&
@@ -78,6 +84,10 @@ export default function FriendTimelineScreen() {
           <FriendTimelineRow hasDivider={index > 0} item={item} />
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
       <TimelineComposer
         onClose={() => setComposerVisible(false)}

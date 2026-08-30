@@ -12,6 +12,8 @@ import {
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicTag } from '@/features/tags/model';
@@ -37,6 +39,7 @@ export default function TagsScreen() {
   }, [subjectType, type]);
   const [draft, setDraft] = useState('');
   const tagsQuery = useGlobalTags(subjectType);
+  const listRef = useScrollToTopButton();
   const items = useMemo(
     () => tagsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [tagsQuery.data],
@@ -104,6 +107,9 @@ export default function TagsScreen() {
           </View>
         }
         numColumns={2}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             tagsQuery.hasNextPage &&
@@ -124,6 +130,10 @@ export default function TagsScreen() {
           <TagCard item={item} onPress={() => browseTag(item.name)} styles={styles} />
         )}
         showsVerticalScrollIndicator={false}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );

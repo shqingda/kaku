@@ -30,6 +30,8 @@ import {
 } from '@/features/people-browser/model';
 import { useGlobalPeople } from '@/features/people-browser/use-global-people';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { usePeopleSearch } from '@/features/people-browser/use-people-search';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -52,6 +54,7 @@ export default function PeopleScreen() {
   );
   const searchQuery = usePeopleSearch(kind, keyword);
   const activeQuery = keyword ? searchQuery : peopleQuery;
+  const listRef = useScrollToTopButton();
   const people = useMemo(
     () => activeQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [activeQuery.data],
@@ -201,6 +204,9 @@ export default function PeopleScreen() {
           </View>
         }
         maxToRenderPerBatch={10}
+        onScroll={listRef.handleScroll}
+        ref={listRef.ref}
+        scrollEventThrottle={80}
         onEndReached={() => {
           if (
             activeQuery.hasNextPage &&
@@ -230,6 +236,10 @@ export default function PeopleScreen() {
         )}
         showsVerticalScrollIndicator={false}
         windowSize={7}
+      />
+      <ScrollToTopButton
+        onPress={listRef.scrollToTop}
+        visible={listRef.visible}
       />
     </SafeAreaView>
   );
