@@ -237,13 +237,13 @@ export default function EpisodeScreen() {
     const currentStatus = personalCollection?.collectionStatus;
 
     try {
+      // 只在状态真正变化时携带 collectionStatus：Bangumi v0 API 对
+      // 携带 type 的每次 PUT 都会生成一条时间线事件，无变化的保存应当
+      // 保持安静（与官网行为一致）。
+      const nextStatus =
+        !currentStatus || currentStatus === 'wish' ? 'doing' : currentStatus;
       await saveCollection.mutateAsync({
-        collectionStatus:
-          !currentStatus || currentStatus === 'wish' ? 'doing' : currentStatus,
-        rating:
-          currentStatus && currentStatus !== 'wish'
-            ? personalCollection?.rating
-            : undefined,
+        ...(nextStatus !== currentStatus ? { collectionStatus: nextStatus } : {}),
         watchedEpisodeNumbers,
       });
       playEpisodeToggleHaptic(isWatched);

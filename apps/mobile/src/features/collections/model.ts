@@ -13,7 +13,7 @@ export type PersonalCollection = {
 };
 
 export type PersonalCollectionUpdate = {
-  collectionStatus: CollectionStatus | null;
+  collectionStatus?: CollectionStatus | null;
   comment?: string;
   isPrivate?: boolean;
   readChapterCount?: number;

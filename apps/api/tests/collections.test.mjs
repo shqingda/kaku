@@ -141,6 +141,29 @@ test('saving progress updates only changed Bangumi episode states', async () => 
   ]);
 });
 
+test('collection save without status or rating omits type and rate', async () => {
+  const requests = [];
+  const fetcher = async (_input, init) => {
+    requests.push({ body: init.body, method: init.method });
+    return Response.json({ id: 42, type: 2, private: true });
+  };
+
+  await saveBangumiPersonalCollection({
+    accessToken,
+    comment: '换个说法',
+    fetcher,
+    isPrivate: true,
+    subjectId: 42,
+    tags: ['重温'],
+  });
+
+  assert.deepEqual(JSON.parse(requests[0].body), {
+    comment: '换个说法',
+    private: true,
+    tags: ['重温'],
+  });
+});
+
 test('saving book progress maps chapters and volumes', async () => {
   let body;
 
@@ -156,9 +179,10 @@ test('saving book progress maps chapters and volumes', async () => {
     subjectId: 44,
   });
 
+  // No rating passed: `rate` must be omitted entirely so the update
+  // cannot clear an existing Bangumi rating as a side effect.
   assert.deepEqual(body, {
     ep_status: 126,
-    rate: 0,
     type: 3,
     vol_status: 14,
   });

@@ -52,18 +52,20 @@ export function useSavePersonalCollection(subjectId: number) {
       const previous = queryClient.getQueryData<PersonalCollection | null>(
         queryKey,
       );
+      const nextStatus =
+        update.collectionStatus ?? previous?.collectionStatus ?? null;
       queryClient.setQueryData<PersonalCollection | null>(
         queryKey,
-        update.collectionStatus
+        nextStatus
           ? {
-              collectionStatus: update.collectionStatus,
+              collectionStatus: nextStatus,
               comment: update.comment ?? previous?.comment ?? '',
               isPrivate: update.isPrivate ?? previous?.isPrivate ?? false,
               readChapterCount:
                 update.readChapterCount ?? previous?.readChapterCount,
               readVolumeCount:
                 update.readVolumeCount ?? previous?.readVolumeCount,
-              rating: update.rating,
+              rating: update.rating ?? previous?.rating,
               subjectId,
               tags: update.tags ?? previous?.tags ?? [],
               watchedEpisodeNumbers: update.watchedEpisodeNumbers ?? [],

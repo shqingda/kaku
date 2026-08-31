@@ -25,6 +25,15 @@ import { playSuccessHaptic } from '@/lib/haptics';
 import type { CollectionBoxDraft } from './collection-box-draft';
 import { CollectionBoxSheet } from './collection-box-sheet';
 
+function sameWatchedEpisodes(left: number[], right: number[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const sortedLeft = [...left].sort((a, b) => a - b);
+  const sortedRight = [...right].sort((a, b) => a - b);
+  return sortedLeft.every((value, index) => value === sortedRight[index]);
+}
+
 export function CollectionControls({
   item,
   onSave,
@@ -61,7 +70,7 @@ export function CollectionControls({
       const canSavePersonalData = canRateCollectionStatus(
         draft.collectionStatus,
       );
-      await onSave({
+      const update: PersonalCollectionUpdate = {
         collectionStatus: draft.collectionStatus ?? null,
         comment: draft.comment,
         isPrivate: draft.isPrivate,
@@ -89,7 +98,40 @@ export function CollectionControls({
             : supportsProgress
               ? []
               : undefined,
-      });
+      };
+      // Bangumi v0 API 对携带 type 或进度字段的每次 PUT 都会生成时间线
+      // 事件，而官网只在真正变化时才发。剔除与当前收藏相同的字段，让
+      // 纯吐槽/标签/可见范围编辑和私有公开切换保持安静。
+      if (
+        (update.collectionStatus ?? null) === (item.collectionStatus ?? null)
+      ) {
+        delete update.collectionStatus;
+      }
+      if (update.rating !== undefined && update.rating === item.rating) {
+        delete update.rating;
+      }
+      if (
+        update.readChapterCount !== undefined &&
+        update.readChapterCount === (item.readChapterCount ?? 0)
+      ) {
+        delete update.readChapterCount;
+      }
+      if (
+        update.readVolumeCount !== undefined &&
+        update.readVolumeCount === (item.readVolumeCount ?? 0)
+      ) {
+        delete update.readVolumeCount;
+      }
+      if (
+        update.watchedEpisodeNumbers &&
+        sameWatchedEpisodes(
+          update.watchedEpisodeNumbers,
+          item.watchedEpisodeNumbers,
+        )
+      ) {
+        delete update.watchedEpisodeNumbers;
+      }
+      await onSave(update);
       setIsOpen(false);
       playSuccessHaptic();
     } catch (error) {

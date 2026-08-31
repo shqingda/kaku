@@ -20,7 +20,8 @@ import {
 const collectionUpdateSchema = z.object({
   collectionStatus: z
     .enum(['wish', 'completed', 'doing', 'onHold', 'dropped'])
-    .nullable(),
+    .nullable()
+    .optional(),
   comment: z.string().max(1000).optional(),
   isPrivate: z.boolean().optional(),
   readChapterCount: z.number().int().nonnegative().optional(),

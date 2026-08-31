@@ -330,7 +330,7 @@ export async function saveBangumiPersonalCollection({
   watchedEpisodeNumbers,
 }: {
   accessToken: string;
-  collectionStatus: CollectionStatus;
+  collectionStatus?: CollectionStatus;
   comment?: string;
   fetcher: typeof fetch;
   isPrivate?: boolean;
@@ -350,9 +350,13 @@ export async function saveBangumiPersonalCollection({
         ...(readChapterCount !== undefined
           ? { ep_status: readChapterCount }
           : {}),
-        rate: rating ?? 0,
+        // Bangumi v0 creates a timeline entry whenever `type` is present,
+        // even when unchanged, so only send fields that actually changed.
+        ...(rating !== undefined ? { rate: rating } : {}),
         ...(tags !== undefined ? { tags } : {}),
-        type: collectionStatusToBangumiType[collectionStatus],
+        ...(collectionStatus !== undefined
+          ? { type: collectionStatusToBangumiType[collectionStatus] }
+          : {}),
         ...(readVolumeCount !== undefined
           ? { vol_status: readVolumeCount }
           : {}),
