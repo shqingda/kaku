@@ -23,6 +23,9 @@ CI/CD 自动化当前不存在，所有部署都是本机执行 `wrangler deploy
 
 在仓库根目录执行：
 
+以下命令都在仓库根目录执行（`pnpm --filter` 会在 `apps/api` 下运行，
+wrangler 能正确读取该目录的 `wrangler.jsonc`）：
+
 ```sh
 # 1. 测试与类型检查必须全绿
 pnpm --filter @kaku/api typecheck
@@ -35,6 +38,9 @@ pnpm --filter @kaku/api exec wrangler d1 migrations apply kaku-production --remo
 # 3. 部署（构建 + 上传 + 更新 Cron 触发器；不改动 secrets）
 pnpm --filter @kaku/api deploy:worker
 ```
+
+注意：第 0 步的 `unset` 代理必须与后面的部署命令在**同一个终端会话**
+里执行，新开终端要重新 unset。
 
 `wrangler deploy` 读取 `apps/api/wrangler.jsonc`；KV/D1 绑定、Cron、
 `vars` 随配置更新，Secrets（`wrangler secret put` 设置的项）不受影响。
