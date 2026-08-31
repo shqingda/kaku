@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -119,7 +119,7 @@ function StaffAvatar({
   return withZoom ? <Link.AppleZoom>{avatar}</Link.AppleZoom> : avatar;
 }
 
-function StaffRow({ item }: { item: StaffCredit }) {
+const StaffRow = memo(function StaffRow({ item }: { item: StaffCredit }) {
   const { colors, styles } = useThemedStyles();
   const content = (
     <>
@@ -168,6 +168,10 @@ function StaffRow({ item }: { item: StaffCredit }) {
       </Pressable>
     </Link>
   );
+});
+
+function renderStaffRow({ item }: { item: StaffCredit }) {
+  return <StaffRow item={item} />;
 }
 
 export default function StaffScreen() {
@@ -258,7 +262,8 @@ export default function StaffScreen() {
               </View>
             </>
           }
-          maxToRenderPerBatch={16}
+          maxToRenderPerBatch={24}
+          removeClippedSubviews={false}
           onRefresh={() =>
             void Promise.all([staffQuery.refetch(), subjectQuery.refetch()])
           }
@@ -266,7 +271,7 @@ export default function StaffScreen() {
             (staffQuery.isRefetching || subjectQuery.isRefetching) &&
             !staffQuery.isPending
           }
-          renderItem={({ item }) => <StaffRow item={item} />}
+          renderItem={renderStaffRow}
           renderSectionFooter={({ section }) =>
             section.totalCount > COLLAPSED_COUNT ? (
               <Pressable
@@ -294,7 +299,7 @@ export default function StaffScreen() {
           sections={sections}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled
-          windowSize={7}
+          windowSize={21}
         />
       )}
     </SafeAreaView>
