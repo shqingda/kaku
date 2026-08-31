@@ -9,9 +9,8 @@ import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { TappableHeaderTitle } from '@/features/shared/tappable-header-title';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -27,23 +26,7 @@ export default function SubjectCommentsScreen() {
     [commentsQuery.data],
   );
   const total = commentsQuery.data?.pages[0]?.total ?? 0;
-  const scrollToBottom = useScrollToBottomButton(undefined, {
-    // 跳到底部时若还有未加载的吐槽，顺势触发下一页；页脚会显示加载
-    // 状态，加载完成后不自动滚动，由用户继续上滑或再次点按。
-    onLoadMore:
-      commentsQuery.hasNextPage &&
-      !commentsQuery.isFetchingNextPage &&
-      !commentsQuery.isFetchNextPageError
-        ? () => void commentsQuery.fetchNextPage()
-        : undefined,
-  });
-
-  function scrollToTop() {
-    scrollToBottom.ref.current?.scrollToOffset({
-      animated: true,
-      offset: 0,
-    });
-  }
+  const scrollToTop = useScrollToTopButton();
 
   if (!subjectId) {
     return <InvalidRouteState message="这个吐槽箱链接缺少有效条目编号。" />;
@@ -51,15 +34,9 @@ export default function SubjectCommentsScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <TappableHeaderTitle onPress={scrollToTop} title="吐槽箱" />
-          ),
-        }}
-      />
+      <Stack.Screen options={{ title: '吐槽箱' }} />
       <FlatList
-        ref={scrollToBottom.ref}
+        ref={scrollToTop.ref}
         contentContainerStyle={styles.content}
         data={comments}
         keyExtractor={(comment) => comment.id}
@@ -115,9 +92,7 @@ export default function SubjectCommentsScreen() {
         }}
         onEndReachedThreshold={0.45}
         onRefresh={() => void commentsQuery.refetch()}
-        onContentSizeChange={scrollToBottom.handleContentSizeChange}
-        onLayout={scrollToBottom.handleLayout}
-        onScroll={scrollToBottom.handleScroll}
+        onScroll={scrollToTop.handleScroll}
         refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
         renderItem={({ index, item }) => (
           <View style={[styles.card, index === 0 && styles.firstCard]}>
@@ -150,9 +125,9 @@ export default function SubjectCommentsScreen() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={80}
       />
-      <ScrollToBottomButton
-        onPress={scrollToBottom.scrollToBottom}
-        visible={scrollToBottom.visible}
+      <ScrollToTopButton
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

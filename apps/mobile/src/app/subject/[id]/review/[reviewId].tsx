@@ -26,9 +26,8 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { TappableHeaderTitle } from '@/features/shared/tappable-header-title';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -59,14 +58,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const review = reviewQuery.data;
   const replies = review?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
-
-  function scrollToTop() {
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: 0,
-    });
-  }
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
   const contentLabel = kind === 'blog' ? '日志' : '评论';
 
@@ -113,6 +105,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
         options={{
+          title: contentLabel,
           headerRight: () =>
             review ? (
               <HeaderShareButton
@@ -120,9 +113,6 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
                 title={review.title}
               />
             ) : null,
-          headerTitle: () => (
-            <TappableHeaderTitle onPress={scrollToTop} title={contentLabel} />
-          ),
         }}
       />
       <View style={styles.contentView}>
@@ -188,9 +178,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           ref={replyNavigation.listRef}
           refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
-          onContentSizeChange={scrollToBottom.handleContentSizeChange}
-          onLayout={scrollToBottom.handleLayout}
-          onScroll={scrollToBottom.handleScroll}
+          onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -244,10 +232,10 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         {...composer.sheetProps}
         target={{ id: numericReviewId, kind: 'review' }}
       />
-      <ScrollToBottomButton
+      <ScrollToTopButton
         bottom={104}
-        onPress={scrollToBottom.scrollToBottom}
-        visible={scrollToBottom.visible}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

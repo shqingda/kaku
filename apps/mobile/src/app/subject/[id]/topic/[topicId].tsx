@@ -29,9 +29,8 @@ import { useReplyNavigation } from '@/features/discussions/use-reply-navigation'
 import { ReportButton } from '@/features/reports/report-button';
 import { REPORT_TYPES } from '@/features/reports/types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { TappableHeaderTitle } from '@/features/shared/tappable-header-title';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -55,14 +54,7 @@ export default function TopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
-
-  function scrollToTop() {
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: 0,
-    });
-  }
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
   useEffect(() => {
@@ -121,13 +113,7 @@ export default function TopicScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <TappableHeaderTitle onPress={scrollToTop} title="讨论" />
-          ),
-        }}
-      />
+      <Stack.Screen options={{ title: '讨论' }} />
       <View style={styles.contentView}>
         <FlatList
           contentContainerStyle={styles.listContent}
@@ -195,9 +181,7 @@ export default function TopicScreen() {
           ref={replyNavigation.listRef}
           refreshing={topicQuery.isRefetching && !topicQuery.isPending}
           removeClippedSubviews={Platform.OS === 'android'}
-          onContentSizeChange={scrollToBottom.handleContentSizeChange}
-          onLayout={scrollToBottom.handleLayout}
-          onScroll={scrollToBottom.handleScroll}
+          onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -251,10 +235,10 @@ export default function TopicScreen() {
         {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'subject-topic' }}
       />
-      <ScrollToBottomButton
+      <ScrollToTopButton
         bottom={104}
-        onPress={scrollToBottom.scrollToBottom}
-        visible={scrollToBottom.visible}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

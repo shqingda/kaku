@@ -33,9 +33,8 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
-import { ScrollToBottomButton } from '@/features/shared/scroll-to-bottom-button';
-import { TappableHeaderTitle } from '@/features/shared/tappable-header-title';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
@@ -55,14 +54,7 @@ export default function GroupTopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
-
-  function scrollToTop() {
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: 0,
-    });
-  }
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
   useEffect(() => {
@@ -123,6 +115,7 @@ export default function GroupTopicScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
         options={{
+          title: '小组话题',
           headerRight: () =>
             topic ? (
               <HeaderShareButton
@@ -130,9 +123,6 @@ export default function GroupTopicScreen() {
                 title={topic.title}
               />
             ) : null,
-          headerTitle: () => (
-            <TappableHeaderTitle onPress={scrollToTop} title="小组话题" />
-          ),
         }}
       />
       <View style={styles.contentView}>
@@ -206,9 +196,7 @@ export default function GroupTopicScreen() {
           }
           ref={replyNavigation.listRef}
           removeClippedSubviews={Platform.OS === 'android'}
-          onContentSizeChange={scrollToBottom.handleContentSizeChange}
-          onLayout={scrollToBottom.handleLayout}
-          onScroll={scrollToBottom.handleScroll}
+          onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -262,10 +250,10 @@ export default function GroupTopicScreen() {
         {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'group-topic' }}
       />
-      <ScrollToBottomButton
+      <ScrollToTopButton
         bottom={104}
-        onPress={scrollToBottom.scrollToBottom}
-        visible={scrollToBottom.visible}
+        onPress={scrollToTop.scrollToTop}
+        visible={scrollToTop.visible}
       />
     </SafeAreaView>
   );

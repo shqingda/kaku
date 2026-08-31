@@ -23,7 +23,7 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
-import { useScrollToBottomButton } from '@/features/shared/use-scroll-to-bottom-button';
+import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import { useEntityComments } from './use-public-entity';
@@ -62,14 +62,7 @@ export function EntityComments({
   });
   const comments = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(comments);
-  const scrollToBottom = useScrollToBottomButton(replyNavigation.listRef);
-
-  function scrollToTop() {
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: 0,
-    });
-  }
+  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const pendingReplyIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -216,7 +209,7 @@ export function EntityComments({
             <Pressable
               accessibilityLabel="回到评论顶部"
               accessibilityRole="button"
-              onPress={scrollToTop}
+              onPress={scrollToTop.scrollToTop}
               style={({ pressed }) => [
                 styles.commentsHeaderTapTarget,
                 pressed && styles.pressed,
@@ -254,9 +247,7 @@ export function EntityComments({
             keyExtractor={(reply) => reply.id}
             maxToRenderPerBatch={10}
             onRefresh={() => void commentsQuery.refetch()}
-            onContentSizeChange={scrollToBottom.handleContentSizeChange}
-            onLayout={scrollToBottom.handleLayout}
-            onScroll={scrollToBottom.handleScroll}
+            onScroll={scrollToTop.handleScroll}
             onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
@@ -278,8 +269,8 @@ export function EntityComments({
             windowSize={9}
           />
           <ScrollNavButton
-            onPress={scrollToBottom.scrollToBottom}
-            visible={scrollToBottom.visible}
+            onPress={scrollToTop.scrollToTop}
+            visible={scrollToTop.visible}
           />
         </View>
       </AppSheet>
