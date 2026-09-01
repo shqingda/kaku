@@ -146,30 +146,32 @@ export default function DiagnosticsScreen() {
             </Text>
           </View>
 
-          <View style={styles.sentryCard}>
-            <Text style={styles.timingLabel}>线上崩溃监控（Sentry）</Text>
-            <Text style={styles.sentryState}>
-              {isSentryEnabled
-                ? '已启用（配置了 DSN）'
-                : '未启用（未配置 DSN，只会在本机记录错误）'}
-            </Text>
-            {isSentryEnabled ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  Sentry.captureMessage('Kaku 诊断测试上报', {
-                    tags: { source: 'diagnostics' },
-                  })
-                }
-                style={({ pressed }) => [
-                  styles.sentryButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.sentryButtonText}>发送测试上报</Text>
-              </Pressable>
-            ) : null}
-          </View>
+          {__DEV__ ? (
+            <View style={styles.sentryCard}>
+              <Text style={styles.timingLabel}>线上崩溃监控（Sentry）</Text>
+              <Text style={styles.sentryState}>
+                {isSentryEnabled
+                  ? '已启用（配置了 DSN）'
+                  : '未启用（未配置 DSN，只会在本机记录错误）'}
+              </Text>
+              {isSentryEnabled ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    Sentry.captureMessage('Kaku 诊断测试上报', {
+                      tags: { source: 'diagnostics' },
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.sentryButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.sentryButtonText}>发送测试上报</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
 
           {records.length === 0 ? (
             <View style={styles.emptyCard}>
