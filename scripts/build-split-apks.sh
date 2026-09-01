@@ -5,7 +5,7 @@
 # 用法：
 #   bash scripts/build-split-apks.sh [tag] [channel]
 #   tag     例如 v1.0.9（默认 v<app.config.js 版本>，不要用 android-1.0.0-n）
-#   channel debug | preview | release（默认 release）
+#   channel debug | release（默认 release）
 #           产物名为 kaku-<channel>.apk
 set -euo pipefail
 
@@ -31,14 +31,11 @@ case "${CHANNEL}" in
   debug)
     export EAS_BUILD_PROFILE=
     ;;
-  preview)
-    export EAS_BUILD_PROFILE=preview
-    ;;
   release)
     export EAS_BUILD_PROFILE=production
     ;;
   *)
-    echo "channel 只能是 debug、preview 或 release，收到: ${CHANNEL}" >&2
+    echo "channel 只能是 debug 或 release，收到: ${CHANNEL}" >&2
     exit 1
     ;;
 esac

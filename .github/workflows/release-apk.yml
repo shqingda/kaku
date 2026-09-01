@@ -4,12 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       channel:
-        description: 'EAS build profile (preview = 独立安装包)'
+        description: 'EAS build profile (production = 正式上架)'
         required: true
-        default: 'preview'
+        default: 'production'
         type: choice
         options:
-          - preview
           - production
       tag:
         description: 'Release tag（留空自动生成 android-<run_number>）'
@@ -91,12 +90,7 @@ jobs:
       - name: Download APK
         id: artifact
         run: |
-          CHANNEL="${{ github.event.inputs.channel }}"
-          if [ "$CHANNEL" = "production" ]; then
-            NAME=kaku-release.apk
-          else
-            NAME=kaku-preview.apk
-          fi
+          NAME=kaku-release.apk
           curl -sL -o "$NAME" "${{ steps.build.outputs.apk-url }}"
           ls -la "$NAME"
           echo "apk=$NAME" >> "$GITHUB_OUTPUT"

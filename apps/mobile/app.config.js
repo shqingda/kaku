@@ -1,26 +1,11 @@
 // 按 EAS 构建环境动态设置包名：
 // - production：正式包名 com.shqingda.kaku（Play 上架用）
-// - development：com.shqingda.kaku.dev（EAS dev client，可与正式版共存）
-// - preview：com.shqingda.kaku.preview（独立内测包，可与正式版共存）
-// - 本地（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
+// - 本地与 debug 构建（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
-function buildSuffix(profile) {
-  if (!profile) return '.debug';
-  if (profile === 'development') return '.dev';
-  if (profile === 'preview') return '.preview';
-  return '';
-}
-
-function buildChannel(profile) {
-  if (!profile) return 'debug';
-  if (profile === 'development') return 'dev';
-  if (profile === 'preview') return 'preview';
-  return 'production';
-}
-
-const suffix = buildSuffix(EAS_BUILD_PROFILE);
-const channel = buildChannel(EAS_BUILD_PROFILE);
+const isProduction = EAS_BUILD_PROFILE === 'production';
+const suffix = isProduction ? '' : '.debug';
+const channel = isProduction ? 'production' : 'debug';
 const iconDirectory = './assets/images/app-icons';
 const lightIcon = `${iconDirectory}/kaku-${channel}-light.png`;
 const darkIcon = `${iconDirectory}/kaku-${channel}-dark.png`;

@@ -77,7 +77,7 @@
 - [x] 官网重设计：zh/en 双语切换、日/夜/跟随系统主题（无闪白）、正式九节隐私政策与服务条款（双语）、Header 精简（GitHub/语言/主题按钮）、FAQ 移入首页、废弃 pricing/support 页。
 - [x] 隐私政策：web `/privacy` + App 内 `privacy.tsx`（关于页入口，离线可读）。
 - [x] Release 自动化：
-  - 本地发版脚本 `scripts/build-split-apks.sh`（不耗 EAS 额度，只打 arm64-v8a，按渠道命名 `kaku-release.apk` / `kaku-preview.apk` / `kaku-debug.apk`，debug 签名）；
+  - 本地发版脚本 `scripts/build-split-apks.sh`（不耗 EAS 额度，只打 arm64-v8a，按渠道命名 `kaku-release.apk` / `kaku-debug.apk`，debug 签名）；2026-09-01 起 dev/preview 包已整体移除（app.config、google-services.json、eas.json、图标、workflow），远程的 Firebase 应用与 Expo 凭据需在控制台手动删
   - EAS 云端 workflow `.github/workflows/release-apk.yml`（正式上架用，AAB + EAS 签名 + source map）。
 - [x] UX 打磨批次：按压反馈（重试按钮/列表行/日期 tab/筛选 chip）、触控目标 hitSlop、登录后回来源页（`lib/auth-redirect.ts`）、错误文案中文化（`lib/user-error-message.ts` 替换 17 处）、私有查询重试（`shouldRetryBangumiQuery`）、收藏盒草稿丢弃确认、`/tags` `/wiki` 入口、条目标签可点、时间线发布按钮（底部居中胶囊）、回到顶部按钮（6 个长列表页）。
 - [x] 分类浏览 tab 弹回 bug 修复（`browse.tsx` useEffect 依赖误含 `subjectType`）。

@@ -19,7 +19,6 @@ Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS �
 | 渠道 | 命令参数 | 包名 | 安装包 |
 |---|---|---|---|
 | release（默认） | `release` | `com.shqingda.kaku` | `kaku-release.apk` |
-| preview | `preview` | `com.shqingda.kaku.preview` | `kaku-preview.apk` |
 | debug | `debug` | `com.shqingda.kaku.debug` | `kaku-debug.apk` |
 
 ### 前置
@@ -38,7 +37,6 @@ bash scripts/build-split-apks.sh
 bash scripts/build-split-apks.sh v1.0.9 release
 
 # 其他渠道（tag 仍用 v 版本号，用第二参数区分渠道）
-bash scripts/build-split-apks.sh v1.0.9 preview
 bash scripts/build-split-apks.sh v1.0.9 debug
 ```
 
@@ -78,7 +76,7 @@ bash scripts/build-split-apks.sh v1.0.9 debug
 
 1. 打开 https://github.com/shqingda/kaku/actions → **Release Android APK**
 2. **Run workflow**：
-   - `channel`：`preview`（`kaku-preview.apk`）或 `production`（`kaku-release.apk`，签名用于上架）
+   - `channel`：固定 `production`（`kaku-release.apk`，签名用于上架）
    - `tag`：必须是 `v<app 版本>`，如 `v1.0.9`（留空自动生成 `android-<channel>-<run_number>`，日常本地发版不要用这种）
 3. 等待 10–20 分钟（有缓存更快），完成后 GitHub Releases 出现 APK
 
