@@ -33,7 +33,7 @@
 ## Kaku 自有增值功能
 
 - [x] 用户偏好云同步（主题部分）：「外观与同步」页（头像菜单/账户入口：跟随系统/浅色/深色）接入 `GET/PUT /me/preferences`，本地立即生效、登录后自动同步/回拉、失败显式重试；内置设备级云同步开关（系统 Switch，只存本机、关闭即闸停所有云端读写）；本地偏好存 `expo-sqlite/kv-store`，重启保持。
-- [x] 推送通知：设置页开关申请系统权限后登记 Expo Push token（底层 APNs/FCM）；D1 `push_devices` 存设备；Cron 每 15 分钟轮询已登记用户的 Bangumi 未读通知并推送；首次登记只记游标不刷旧通知。需重新打 native 包、迁移 D1 并部署 worker。
+- [ ] 推送通知（配置未完成）：App 端与 worker 代码已就绪；2026-09-01 排查确认两处缺口——worker 发送端此前未带 `Authorization: Bearer EXPO_ACCESS_TOKEN`（FCM v1 后 Android 必需，代码已修复），且 `push_devices` 表为空（App 从未成功拿到 token）。剩余步骤：① expo.dev Account Settings → Access Tokens 创建 token 并 `wrangler secret put EXPO_ACCESS_TOKEN`；② expo.dev 项目 Credentials → Android 上传 FCM v1 服务账号 JSON（Firebase 控制台 Project settings → Service accounts → Generate new private key）；③ 重新部署 worker；④ App 里重开推送开关，确认 `push_devices` 有记录并真机收到通知。
 - [x] 离线增强：公开查询缓存之外，最近打开的 10 个条目（含章节列表）另存 30 天离线包；网络失败时明确展示离线包并提供重试，清理本机数据时一并删除。
 - [x] 多设备偏好/搜索历史/最近浏览同步：主题偏好、最近搜索与最近浏览均已接入；最近浏览本地即时更新，登录后合并各设备的 10 条轻量快照，并在前台恢复、进入发现页和下拉刷新时回拉；清空操作跨设备传播，失败在设置页显式重试。设备级云同步开关会同时闸停三类云端读写。
 - [ ] 小组件 / 快捷指令：

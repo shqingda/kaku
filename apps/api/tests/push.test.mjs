@@ -4,6 +4,7 @@ import test from 'node:test';
 import { createApp } from '../src/app.ts';
 import { deliverPushForUser } from '../src/push/deliver.ts';
 import { composePushMessage } from '../src/push/message.ts';
+import { sendExpoPush } from '../src/push/expo-client.ts';
 
 const now = 1_800_000_000_000;
 const env = { DB: null };
@@ -195,4 +196,66 @@ test('later polls send only unread items newer than the cursor', async () => {
   assert.equal(result.sent, 1);
   assert.equal(sent[0].payload.body, '杏回复了你的条目讨论：第一章');
   assert.equal(cursor, 12);
+});
+
+test('sendExpoPush authenticates with the Expo access token', async () => {
+  const calls = [];
+  const fetcher = async (url, init) => {
+    calls.push({ url: String(url), init });
+    return Response.json({
+      data: [{ status: 'ok' }],
+    });
+  };
+
+  const invalid = await sendExpoPush(
+    fetcher,
+    ['ExponentPushToken[abc]'],
+    { body: '有新通知', title: 'Kaku', unreadCount: 1 },
+    { accessToken: 'expo-token' },
+  );
+
+  assert.equal(invalid.length, 0);
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer expo-token');
+  assert.deepEqual(JSON.parse(calls[0].init.body)[0].to, 'ExponentPushToken[abc]');
+});
+
+test('sendExpoPush reports misconfiguration instead of failing silently', async () => {
+  const fetcher = async () =>
+    Response.json({
+      data: [
+        {
+          status: 'error',
+          details: { error: 'InvalidCredentials' },
+          message: 'Credentials are misconfigured',
+        },
+      ],
+    });
+
+  await assert.rejects(
+    sendExpoPush(
+      fetcher,
+      ['ExponentPushToken[abc]'],
+      { body: '有新通知', title: 'Kaku', unreadCount: 1 },
+      { accessToken: 'expo-token' },
+    ),
+    /InvalidCredentials/,
+  );
+});
+
+test('sendExpoPush still cleans up unregistered devices', async () => {
+  const fetcher = async () =>
+    Response.json({
+      data: [
+        { status: 'error', details: { error: 'DeviceNotRegistered' } },
+      ],
+    });
+
+  const invalid = await sendExpoPush(
+    fetcher,
+    ['ExponentPushToken[stale]'],
+    { body: '有新通知', title: 'Kaku', unreadCount: 1 },
+    { accessToken: 'expo-token' },
+  );
+
+  assert.deepEqual(invalid, ['ExponentPushToken[stale]']);
 });

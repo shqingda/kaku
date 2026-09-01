@@ -15,6 +15,7 @@ export async function sendExpoPush(
   fetcher: typeof fetch,
   tokens: string[],
   payload: ExpoPushPayload,
+  options: { accessToken?: string } = {},
 ): Promise<string[]> {
   if (tokens.length === 0) {
     return [];
@@ -34,6 +35,9 @@ export async function sendExpoPush(
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...(options.accessToken
+        ? { Authorization: `Bearer ${options.accessToken}` }
+        : {}),
     },
     method: 'POST',
   });
@@ -48,12 +52,24 @@ export async function sendExpoPush(
     : [];
 
   const invalidTokens: string[] = [];
+  let misconfigured: string | null = null;
   tickets.forEach((ticket, index) => {
-    if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
+    if (ticket.status !== 'error') {
+      return;
+    }
+    const reason = ticket.details?.error ?? 'UnknownError';
+    if (reason === 'DeviceNotRegistered') {
       const token = tokens[index];
       if (token) invalidTokens.push(token);
+    } else {
+      // 401 Unauthorized（缺 access token）/ InvalidCredentials（未配 FCM v1）等整批发送失败。
+      misconfigured = reason;
     }
   });
+
+  if (misconfigured) {
+    throw new Error(`Expo 推送被拒（${misconfigured}），请检查 EXPO_ACCESS_TOKEN 与 FCM v1 凭据。`);
+  }
 
   return invalidTokens;
 }

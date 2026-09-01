@@ -39,6 +39,15 @@ export async function pollRegisteredPushUsers({
     users: userIds.length,
   };
 
+  if (!env.EXPO_ACCESS_TOKEN) {
+    // FCM v1 之后 Android 发送必须带 access token；缺配置时不发也不推游标，修好后不丢通知。
+    console.error('push_expo_access_token_missing', {
+      users: userIds.length,
+    });
+    result.failedUsers = userIds.length;
+    return result;
+  }
+
   for (const userId of userIds) {
     try {
       const userDevices = await devices.listByUser(userId);
@@ -55,7 +64,10 @@ export async function pollRegisteredPushUsers({
           getBangumiNotifications({ accessToken, fetcher }),
         saveCursor: (lastNotificationId) =>
           devices.setLastNotificationId(userId, lastNotificationId),
-        sendPush: (tokens, payload) => sendExpoPush(fetcher, tokens, payload),
+        sendPush: (tokens, payload) =>
+          sendExpoPush(fetcher, tokens, payload, {
+            accessToken: env.EXPO_ACCESS_TOKEN,
+          }),
       });
 
       await Promise.all(
