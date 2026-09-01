@@ -105,9 +105,21 @@ module.exports = {
         'expo-quick-actions',
         {
           androidIcons: {
-            shortcut: {
+            calendar_month: {
               backgroundColor: '#C96878',
-              foregroundImage: './assets/images/kaku-mark.png',
+              foregroundImage: './assets/images/app-icons/shortcuts/calendar_month.png',
+            },
+            search: {
+              backgroundColor: '#C96878',
+              foregroundImage: './assets/images/app-icons/shortcuts/search.png',
+            },
+            leaderboard: {
+              backgroundColor: '#C96878',
+              foregroundImage: './assets/images/app-icons/shortcuts/leaderboard.png',
+            },
+            filter_alt: {
+              backgroundColor: '#C96878',
+              foregroundImage: './assets/images/app-icons/shortcuts/filter_alt.png',
             },
           },
         },
