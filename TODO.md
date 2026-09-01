@@ -33,7 +33,7 @@
 ## Kaku 自有增值功能
 
 - [x] 用户偏好云同步（主题部分）：「外观与同步」页（头像菜单/账户入口：跟随系统/浅色/深色）接入 `GET/PUT /me/preferences`，本地立即生效、登录后自动同步/回拉、失败显式重试；内置设备级云同步开关（系统 Switch，只存本机、关闭即闸停所有云端读写）；本地偏好存 `expo-sqlite/kv-store`，重启保持。
-- [ ] 推送通知（待真机收到首条推送）：2026-09-01 完成全部配置并逐环节验证——`EXPO_ACCESS_TOKEN` 已配入 worker secret，FCM v1 服务账号 key 已上传 Expo 并挂到 `.debug`/`com.shqingda.kaku`/`.preview` 三个包名（注意：本地跑 `eas credentials` 需带 `EAS_BUILD_PROFILE` 才能解析到对应包名，否则默认 `.debug`）；worker 已重新部署（`5d3c76c6`）。真机实测：设置页开关登记成功（`push_devices` 出现记录），21:15 Cron 已把游标置为最新通知 id。剩最后一步：等下一条真实未读通知触发推送，确认设备端能收到。遗留：旧 debug 安装包构建于 google-services.json 入库（08-28）之前，报「没有 google-services.json」属预期，重打 debug 包即消。
+- [x] 推送通知：2026-09-01 全链路打通并真机双包验证收到。修复与配置：① worker 发送端补上 `Authorization: Bearer EXPO_ACCESS_TOKEN`（FCM v1 必需），缺配置时跳过发送且不推游标；② FCM v1 服务账号 key 上传 Expo 并挂到 `.debug`/`com.shqingda.kaku`/`.preview`（注意：本地跑 `eas credentials` 需带 `EAS_BUILD_PROFILE` 才能解析到对应包名，否则默认 `.debug`）；③ 真机根因是 FCM 的 MCS 长连接（`mtalk.google.com:5228`）被代理工具（FlClash TUN）弄断——服务器侧一直受理成功但设备不可达。**使用前提**：代理工具需让 GMS 的 MCS 直连（FlClash 访问控制排除「Google Play 服务」，或覆写规则 `DOMAIN-SUFFIX,mtalk.google.com,DIRECT`——后者可保住 Play 商店/结算/Gmail 等其它谷歌服务走代理）。遗留：旧 debug 安装包（08-28 前构建）无 google-services.json 报错属预期，重打即消；通知最多延迟 Cron 15 分钟轮询周期。
 - [x] 离线增强：公开查询缓存之外，最近打开的 10 个条目（含章节列表）另存 30 天离线包；网络失败时明确展示离线包并提供重试，清理本机数据时一并删除。
 - [x] 多设备偏好/搜索历史/最近浏览同步：主题偏好、最近搜索与最近浏览均已接入；最近浏览本地即时更新，登录后合并各设备的 10 条轻量快照，并在前台恢复、进入发现页和下拉刷新时回拉；清空操作跨设备传播，失败在设置页显式重试。设备级云同步开关会同时闸停三类云端读写。
 - [ ] 小组件 / 快捷指令：
