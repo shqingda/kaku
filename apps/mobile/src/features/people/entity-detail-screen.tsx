@@ -1,11 +1,7 @@
-import { userErrorMessage } from '@/lib/user-error-message';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { SymbolView } from 'expo-symbols';
 import {
-  ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -17,11 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
-import { useAuth } from '@/features/auth/auth-provider';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { useTheme } from '@/features/theme/theme-provider';
-import { playSuccessHaptic } from '@/lib/haptics';
 
 import { EntityComments } from './entity-comments';
 import {
@@ -29,10 +23,6 @@ import {
   EntityRelationRow,
 } from './entity-relation-list';
 import type { PublicEntityDetail } from './model';
-import {
-  useEntityCollection,
-  useSaveEntityCollection,
-} from './use-entity-collection';
 
 export function EntityDetailScreen({
   data,
@@ -53,56 +43,13 @@ export function EntityDetailScreen({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { isSigningIn, session, signIn } = useAuth();
   const [portraitVisible, setPortraitVisible] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
-  const collectionQuery = useEntityCollection(entityKind, entityId);
-  const saveCollection = useSaveEntityCollection(entityKind, entityId);
   const items = useMemo(() => {
     if (!data) return [];
     return buildEntityListItems(data, kind);
   }, [data, kind]);
-
-  async function toggleCollection() {
-    if (!session) {
-      await signIn();
-      return;
-    }
-
-    if (collectionQuery.isError) {
-      await collectionQuery.refetch();
-      return;
-    }
-
-    const nextCollected = !collectionQuery.data;
-
-    if (!nextCollected) {
-      Alert.alert(`取消收藏${kind}？`, `确认将“${data?.name ?? kind}”移出收藏？`, [
-        { style: 'cancel', text: '保留' },
-        {
-          onPress: () => void saveCollectionState(false),
-          style: 'destructive',
-          text: '取消收藏',
-        },
-      ]);
-      return;
-    }
-
-    await saveCollectionState(true);
-  }
-
-  async function saveCollectionState(collected: boolean) {
-    try {
-      await saveCollection.mutateAsync(collected);
-      playSuccessHaptic();
-    } catch (error) {
-      Alert.alert(
-        '收藏没有保存',
-        error instanceof Error ? userErrorMessage(error) : '请稍后重试。',
-      );
-    }
-  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -179,72 +126,6 @@ export function EntityDetailScreen({
                         {' · '}
                         {(data.commentCount ?? 0).toLocaleString('zh-CN')} 条评论
                       </Text>
-                      <Pressable
-                        accessibilityLabel={
-                          session
-                            ? collectionQuery.data
-                              ? `取消收藏${kind}`
-                              : `收藏${kind}`
-                            : `登录后收藏${kind}`
-                        }
-                        accessibilityRole="button"
-                        disabled={
-                          isSigningIn ||
-                          (Boolean(session) && collectionQuery.isPending) ||
-                          saveCollection.isPending
-                        }
-                        onPress={() => void toggleCollection()}
-                        style={({ pressed }) => [
-                          styles.collectionButton,
-                          collectionQuery.data && styles.collectedButton,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        {(session && collectionQuery.isPending) ||
-                        saveCollection.isPending ? (
-                          <ActivityIndicator
-                            color={colors.accent}
-                            size="small"
-                          />
-                        ) : (
-                          <SymbolView
-                            name={{
-                              android: collectionQuery.data
-                                ? 'favorite'
-                                : 'favorite_border',
-                              ios: collectionQuery.data
-                                ? 'heart.fill'
-                                : 'heart',
-                              web: collectionQuery.data
-                                ? 'favorite'
-                                : 'favorite_border',
-                            }}
-                            size={15}
-                            tintColor={
-                              collectionQuery.data
-                                ? colors.accent
-                                : colors.muted
-                            }
-                            weight="semibold"
-                          />
-                        )}
-                        <Text
-                          style={[
-                            styles.collectionButtonText,
-                            collectionQuery.data && styles.collectedButtonText,
-                          ]}
-                        >
-                          {isSigningIn
-                            ? '正在登录'
-                            : !session
-                              ? '登录后收藏'
-                              : collectionQuery.isError
-                                ? '重试'
-                                : collectionQuery.data
-                                  ? '取消收藏'
-                                  : '收藏'}
-                        </Text>
-                      </Pressable>
                     </View>
                   </View>
 
@@ -339,24 +220,6 @@ const createStyles = (colors: ThemeColors) =>
     },
     kind: { color: colors.muted, fontSize: 13, marginTop: 8 },
     stats: { color: colors.subtle, fontSize: 11, marginTop: 6 },
-    collectionButton: {
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      backgroundColor: colors.track,
-      borderRadius: 14,
-      flexDirection: 'row',
-      gap: 7,
-      marginTop: 14,
-      minHeight: 44,
-      paddingHorizontal: 13,
-    },
-    collectedButton: { backgroundColor: colors.accentSoft },
-    collectionButtonText: {
-      color: colors.muted,
-      fontSize: 12,
-      fontWeight: '700',
-    },
-    collectedButtonText: { color: colors.accent },
     panel: {
       backgroundColor: colors.surface,
       borderRadius: 22,
