@@ -102,10 +102,10 @@ test('inactive notice explains what the wish status skips recording', () => {
 test('inactive notice prompts status selection before rating', () => {
   assert.equal(
     collectionInactiveNotice(undefined, 2, true, false),
-    '选择收藏状态后可观看进度和评分',
+    '选择收藏状态后可记录观看进度和评分',
   );
   assert.equal(
     collectionInactiveNotice(undefined, 4, false, false),
-    '选择收藏状态后可评分',
+    '选择收藏状态后可记录评分',
   );
 });

@@ -133,7 +133,7 @@ export function collectionInactiveNotice(
     return `${getCollectionStatusLabel(subjectType, status)}状态不记录${joinChinese(recordables)}`;
   }
 
-  return `选择收藏状态后可${joinChinese(recordables)}`;
+  return `选择收藏状态后可记录${joinChinese(recordables)}`;
 }
 
 function joinChinese(items: string[]) {

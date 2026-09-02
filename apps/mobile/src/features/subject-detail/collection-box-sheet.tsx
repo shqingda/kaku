@@ -249,9 +249,9 @@ export function CollectionBoxSheet({
                             size={12}
                             tintColor={colors.surface}
                             weight="bold"
-                         />
+                          />
                         ) : null}
-                     </View>
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -267,7 +267,7 @@ export function CollectionBoxSheet({
                       <Text style={styles.recordTitle}>观看进度</Text>
                       <View style={styles.progressField}>
                         <View style={styles.progressControl}>
-                         <TextInput
+                          <TextInput
                             accessibilityLabel="已看集数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -280,7 +280,7 @@ export function CollectionBoxSheet({
                             value={watchedCount}
                           />
                         </View>
-                       <TextInput
+                        <TextInput
                           accessibilityElementsHidden
                           editable={false}
                           importantForAccessibility="no"
@@ -302,7 +302,7 @@ export function CollectionBoxSheet({
                       <Text style={styles.recordTitle}>阅读进度</Text>
                       <View style={styles.readingFields}>
                         <View style={styles.readingField}>
-                         <TextInput
+                          <TextInput
                             accessibilityLabel="已读章节"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -317,7 +317,7 @@ export function CollectionBoxSheet({
                           <Text style={styles.readingUnit}>章</Text>
                         </View>
                         <View style={styles.readingField}>
-                         <TextInput
+                          <TextInput
                             accessibilityLabel="已读卷数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -416,23 +416,23 @@ export function CollectionBoxSheet({
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>吐槽</Text>
                 <TextInput
-                   accessibilityLabel="吐槽"
-                   maxLength={1000}
-                   multiline
-                   onChangeText={(value) => patchForm({ comment: value })}
-                   onFocus={() => {
-                     setTimeout(() => {
-                       contentScrollRef.current?.scrollToEnd({ animated: true });
-                     }, 250);
-                   }}
-                   placeholder="写下你对这个条目的简短记录"
-                   placeholderTextColor={colors.subtle}
-                   style={styles.commentInput}
-                   textAlignVertical="top"
-                   value={comment}
-                 />
-               </View>
-             ) : null}
+                  accessibilityLabel="吐槽"
+                  maxLength={1000}
+                  multiline
+                  onChangeText={(value) => patchForm({ comment: value })}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      contentScrollRef.current?.scrollToEnd({ animated: true });
+                    }, 250);
+                  }}
+                  placeholder="写下你对这个条目的简短记录"
+                  placeholderTextColor={colors.subtle}
+                  style={styles.commentInput}
+                  textAlignVertical="top"
+                  value={comment}
+                />
+              </View>
+            ) : null}
 
             {item.tags !== undefined ? (
               <View style={styles.section}>
@@ -469,7 +469,7 @@ export function CollectionBoxSheet({
                       </Pressable>
                     </View>
                   ))}
-                 <TextInput
+                  <TextInput
                     accessibilityLabel="添加收藏标签"
                     autoCapitalize="none"
                     onChangeText={(value) =>
