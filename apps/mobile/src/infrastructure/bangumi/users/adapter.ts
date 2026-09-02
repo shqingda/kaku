@@ -258,9 +258,9 @@ export function toPublicTimelineItem(
       if (progressBatch) {
         const progress =
           progressBatch.epsUpdate !== undefined
-            ? `${progressBatch.epsUpdate} of ${progressBatch.epsTotal} 话`
+            ? `进度 ${progressBatch.epsUpdate}/${progressBatch.epsTotal} 话`
             : progressBatch.volsUpdate !== undefined
-              ? `${progressBatch.volsUpdate} of ${progressBatch.volsTotal} 卷`
+              ? `进度 ${progressBatch.volsUpdate}/${progressBatch.volsTotal} 卷`
               : '';
         text = withSubject('完成了 ', progress ? ` ${progress}` : '');
       } else if (progressSingle) {

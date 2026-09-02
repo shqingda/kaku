@@ -5,6 +5,7 @@ import {
   collectionBoxBaselineFromItem,
   collectionBoxDraftFromForm,
   collectionBoxFormFromItem,
+  collectionInactiveNotice,
   isCollectionBoxFormDirty,
 } from '../src/features/subject-detail/collection-box-draft.ts';
 
@@ -77,4 +78,34 @@ test('wish status does not keep a rating, and missing fields stay omitted', () =
   assert.equal(draft.tags, undefined);
   assert.equal(draft.isPrivate, undefined);
   assert.equal(draft.watchedCount, 0);
+});
+
+test('inactive notice explains what the wish status skips recording', () => {
+  assert.equal(
+    collectionInactiveNotice('wish', 2, true, false),
+    '想看状态不记录观看进度和评分',
+  );
+  assert.equal(
+    collectionInactiveNotice('wish', 1, false, true),
+    '想读状态不记录阅读进度和评分',
+  );
+  assert.equal(
+    collectionInactiveNotice('wish', 2, false, false),
+    '想看状态不记录评分',
+  );
+  assert.equal(
+    collectionInactiveNotice('wish', 2, true, true),
+    '想看状态不记录观看进度、阅读进度和评分',
+  );
+});
+
+test('inactive notice prompts status selection before rating', () => {
+  assert.equal(
+    collectionInactiveNotice(undefined, 2, true, false),
+    '选择收藏状态后可观看进度和评分',
+  );
+  assert.equal(
+    collectionInactiveNotice(undefined, 4, false, false),
+    '选择收藏状态后可评分',
+  );
 });

@@ -25,12 +25,12 @@ export function formatActivityTime(
     const minutes = totalMinutes % 60;
 
     if (hours === 0) {
-      return `${minutes}m ago`;
+      return `${minutes} 分钟前`;
     }
 
     return minutes > 0
-      ? `${hours}h ${minutes}m ago`
-      : `${hours}h ago`;
+      ? `${hours} 小时 ${minutes} 分钟前`
+      : `${hours} 小时前`;
   }
 
   if (elapsedMilliseconds < 3 * DAY_MS) {
@@ -38,7 +38,7 @@ export function formatActivityTime(
     const days = Math.floor(totalHours / 24);
     const hours = totalHours % 24;
 
-    return hours > 0 ? `${days}d ${hours}h ago` : `${days}d ago`;
+    return hours > 0 ? `${days} 天 ${hours} 小时前` : `${days} 天前`;
   }
 
   return [

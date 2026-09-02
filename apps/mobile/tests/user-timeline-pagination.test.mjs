@@ -78,10 +78,10 @@ test('public timeline keeps episode progress semantics', () => {
   const page = toPublicTimelinePage(timeline, 10);
 
   assert.equal(page.items[0].subjectId, 300);
-  assert.equal(page.items[0].text, '完成了 《示例动画》 5 of 12 话');
+  assert.equal(page.items[0].text, '完成了 《示例动画》 进度 5/12 话');
   assert.equal(page.items[0].leadingText, '完成了 ');
   assert.equal(page.items[0].subjectTitle, '示例动画');
-  assert.equal(page.items[0].trailingText, ' 5 of 12 话');
+  assert.equal(page.items[0].trailingText, ' 进度 5/12 话');
 });
 
 test('public timeline explains a registration event', () => {

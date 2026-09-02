@@ -28,10 +28,12 @@ import {
   collectionBoxBaselineFromItem,
   collectionBoxDraftFromForm,
   collectionBoxFormFromItem,
+  collectionInactiveNotice,
   isCollectionBoxFormDirty,
   type CollectionBoxDraft,
   type CollectionBoxForm,
 } from './collection-box-draft';
+import { playSelectionHaptic } from '@/lib/haptics';
 
 export type { CollectionBoxDraft };
 
@@ -213,7 +215,10 @@ export function CollectionBoxSheet({
                       accessibilityRole="radio"
                       accessibilityState={{ selected: isSelected }}
                       key={option}
-                      onPress={() => patchForm({ status: option })}
+                      onPress={() => {
+                        playSelectionHaptic();
+                        patchForm({ status: option });
+                      }}
                       style={({ pressed }) => [
                         styles.statusOption,
                         isSelected && styles.selectedStatusOption,
@@ -244,9 +249,9 @@ export function CollectionBoxSheet({
                             size={12}
                             tintColor={colors.surface}
                             weight="bold"
-                          />
+                         />
                         ) : null}
-                      </View>
+                     </View>
                     </Pressable>
                   );
                 })}
@@ -262,7 +267,7 @@ export function CollectionBoxSheet({
                       <Text style={styles.recordTitle}>观看进度</Text>
                       <View style={styles.progressField}>
                         <View style={styles.progressControl}>
-                          <TextInput
+                         <TextInput
                             accessibilityLabel="已看集数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -275,7 +280,7 @@ export function CollectionBoxSheet({
                             value={watchedCount}
                           />
                         </View>
-                        <TextInput
+                       <TextInput
                           accessibilityElementsHidden
                           editable={false}
                           importantForAccessibility="no"
@@ -297,7 +302,7 @@ export function CollectionBoxSheet({
                       <Text style={styles.recordTitle}>阅读进度</Text>
                       <View style={styles.readingFields}>
                         <View style={styles.readingField}>
-                          <TextInput
+                         <TextInput
                             accessibilityLabel="已读章节"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -312,7 +317,7 @@ export function CollectionBoxSheet({
                           <Text style={styles.readingUnit}>章</Text>
                         </View>
                         <View style={styles.readingField}>
-                          <TextInput
+                         <TextInput
                             accessibilityLabel="已读卷数"
                             keyboardType="number-pad"
                             onChangeText={(value) =>
@@ -357,11 +362,12 @@ export function CollectionBoxSheet({
                             accessibilityRole="button"
                             accessibilityState={{ selected: isSelected }}
                             key={option}
-                            onPress={() =>
+                            onPress={() => {
+                              playSelectionHaptic();
                               patchForm({
                                 rating: isSelected ? undefined : option,
-                              })
-                            }
+                              });
+                            }}
                             style={({ pressed }) => [
                               styles.ratingOption,
                               isSelected && styles.selectedRatingOption,
@@ -394,33 +400,22 @@ export function CollectionBoxSheet({
                       tintColor={colors.subtle}
                     />
                     <Text style={styles.inactiveNoticeText}>
-                      {status === 'wish'
-                        ? `${getCollectionStatusLabel(
-                            item.type ?? 2,
-                            'wish',
-                          )}状态不记录${
-                            supportsProgress
-                              ? '观看进度和'
-                              : item.readChapterCount !== undefined
-                                ? '阅读进度和'
-                                : ''
-                          }评分`
-                        : `选择收藏状态后可${
-                            supportsProgress ||
-                            item.readChapterCount !== undefined
-                              ? '记录进度和'
-                              : ''
-                          }评分`}
+                      {collectionInactiveNotice(
+                        status,
+                        item.type ?? 2,
+                        supportsProgress,
+                        item.readChapterCount !== undefined,
+                      )}
                     </Text>
                   </View>
                 )}
               </View>
             </View>
 
-             {item.comment !== undefined ? (
-               <View style={styles.section}>
-                 <Text style={styles.sectionLabel}>吐槽</Text>
-                 <TextInput
+            {item.comment !== undefined ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>吐槽</Text>
+                <TextInput
                    accessibilityLabel="吐槽"
                    maxLength={1000}
                    multiline
@@ -474,7 +469,7 @@ export function CollectionBoxSheet({
                       </Pressable>
                     </View>
                   ))}
-                  <TextInput
+                 <TextInput
                     accessibilityLabel="添加收藏标签"
                     autoCapitalize="none"
                     onChangeText={(value) =>

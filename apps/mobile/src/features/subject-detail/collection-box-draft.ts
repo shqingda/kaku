@@ -3,6 +3,7 @@ import type {
   WatchingItem,
 } from '../watching/model.ts';
 import { canRateCollectionStatus } from '../watching/progress.ts';
+import { getCollectionStatusLabel } from '../catalog/subject-types.ts';
 
 export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
@@ -114,6 +115,33 @@ export function collectionBoxDraftFromForm(
         ? Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
         : 0,
   };
+}
+
+export function collectionInactiveNotice(
+  status: CollectionStatus | undefined,
+  subjectType: number,
+  supportsWatchProgress: boolean,
+  supportsReadingProgress: boolean,
+): string {
+  const recordables = [
+    ...(supportsWatchProgress ? ['观看进度'] : []),
+    ...(supportsReadingProgress ? ['阅读进度'] : []),
+    '评分',
+  ];
+
+  if (status) {
+    return `${getCollectionStatusLabel(subjectType, status)}状态不记录${joinChinese(recordables)}`;
+  }
+
+  return `选择收藏状态后可${joinChinese(recordables)}`;
+}
+
+function joinChinese(items: string[]) {
+  if (items.length <= 1) {
+    return items.join('');
+  }
+
+  return `${items.slice(0, -1).join('、')}和${items[items.length - 1]}`;
 }
 
 function tagsDiffer(current: string[], expected: string[]) {

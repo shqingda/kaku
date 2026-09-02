@@ -26,8 +26,8 @@ import { formatActivityTime } from '../src/lib/format-activity-time.ts';
 test('formatActivityTime keeps the original three display ranges', () => {
   const now = new Date(2026, 6, 24, 12, 0).getTime();
 
-  assert.equal(formatActivityTime(now / 1000 - 3 * 3600 - 40 * 60, now), '3h 40m ago');
-  assert.equal(formatActivityTime(now / 1000 - 2 * 86400 - 23 * 3600, now), '2d 23h ago');
+  assert.equal(formatActivityTime(now / 1000 - 3 * 3600 - 40 * 60, now), '3 小时 40 分钟前');
+  assert.equal(formatActivityTime(now / 1000 - 2 * 86400 - 23 * 3600, now), '2 天 23 小时前');
   assert.match(formatActivityTime(now / 1000 - 3 * 86400, now), /^2026-7-21 12:00$/);
 });
 
