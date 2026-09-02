@@ -1,30 +1,64 @@
-import { useQuery } from '@tanstack/react-query';
+import {
+  type QueryClient,
+  queryOptions,
+  useQuery,
+} from '@tanstack/react-query';
+import { router } from 'expo-router';
 
-import { bangumiPeopleProvider } from '@/infrastructure/bangumi/people/provider';
+import {
+  getCharacter,
+  getEntityComments,
+  getPerson,
+} from '@/infrastructure/bangumi/people/provider';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function useCharacter(characterId: number) {
-  return useQuery({
+export function characterQueryOptions(characterId: number) {
+  return queryOptions({
     enabled: Number.isInteger(characterId) && characterId > 0,
     meta: PUBLIC_QUERY_META,
-    queryFn: ({ signal }) =>
-      bangumiPeopleProvider.getCharacter(characterId, signal),
+    queryFn: ({ signal }) => getCharacter(characterId, signal),
     queryKey: queryKeys.character(characterId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
   });
 }
 
-export function usePerson(personId: number) {
-  return useQuery({
+export function personQueryOptions(personId: number) {
+  return queryOptions({
     enabled: Number.isInteger(personId) && personId > 0,
     meta: PUBLIC_QUERY_META,
-    queryFn: ({ signal }) => bangumiPeopleProvider.getPerson(personId, signal),
+    queryFn: ({ signal }) => getPerson(personId, signal),
     queryKey: queryKeys.person(personId),
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useCharacter(characterId: number) {
+  return useQuery(characterQueryOptions(characterId));
+}
+
+export function usePerson(personId: number) {
+  return useQuery(personQueryOptions(personId));
+}
+
+export function prefetchCharacter(queryClient: QueryClient, characterId: number) {
+  if (!Number.isInteger(characterId) || characterId <= 0) return;
+  void queryClient.prefetchQuery(characterQueryOptions(characterId));
+  void router.prefetch({
+    pathname: '/character/[id]',
+    params: { id: String(characterId) },
+  });
+}
+
+export function prefetchPerson(queryClient: QueryClient, personId: number) {
+  if (!Number.isInteger(personId) || personId <= 0) return;
+  void queryClient.prefetchQuery(personQueryOptions(personId));
+  void router.prefetch({
+    pathname: '/person/[id]',
+    params: { id: String(personId) },
   });
 }
 
@@ -36,7 +70,7 @@ export function useEntityComments(
     enabled: Number.isInteger(entityId) && entityId > 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
-      bangumiPeopleProvider.getComments(kind, entityId, signal),
+      getEntityComments(kind, entityId, signal),
     queryKey: queryKeys.entityComments(kind, entityId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,

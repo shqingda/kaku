@@ -1,4 +1,5 @@
 import { useMemo, useState, type ComponentProps } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -16,7 +17,12 @@ import {
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import type { ChannelSubject } from '@/features/channels/model';
 import type { DiscoverSubject } from '@/features/discover/model';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useChannel } from '@/features/channels/use-channel';
+import {
+  prefetchCalendar,
+  prefetchRankings,
+} from '@/features/discover/use-discover';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
@@ -33,6 +39,7 @@ function useThemedStyles() {
 
 export default function ChannelScreen() {
   const { styles } = useThemedStyles();
+  const queryClient = useQueryClient();
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
   const label = getSubjectChannelLabel(subjectType);
@@ -118,6 +125,7 @@ export default function ChannelScreen() {
                 params: { type: String(subjectType) },
               })
             }
+            onPressIn={() => prefetchRankings(queryClient, subjectType)}
           />
           <ChannelAction
             compact={subjectType === 2}
@@ -136,6 +144,7 @@ export default function ChannelScreen() {
               icon={{ android: 'calendar_month', ios: 'calendar', web: 'calendar_month' }}
               label="每日放送"
               onPress={() => router.push('/calendar')}
+              onPressIn={() => prefetchCalendar(queryClient)}
             />
           ) : null}
         </View>
@@ -151,6 +160,7 @@ export default function ChannelScreen() {
                 params: { type: String(subjectType) },
               })
             }
+            onPressIn={() => prefetchRankings(queryClient, subjectType)}
             style={styles.allAction}
           />
         </View>
@@ -192,6 +202,7 @@ export default function ChannelScreen() {
 
 function ChannelCard({ item }: { item: ChannelSubject }) {
   const { styles } = useThemedStyles();
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <View style={styles.hotCard}>
@@ -203,6 +214,8 @@ function ChannelCard({ item }: { item: ChannelSubject }) {
           accessibilityHint="进入条目详情"
           accessibilityLabel={`打开${item.title}`}
           accessibilityRole="button"
+          onPressIn={() => prefetchSubject.prefetch(item.id)}
+          onPressOut={prefetchSubject.cancel}
           style={({ pressed }) => pressed && styles.pressed}
         >
           <Link.AppleZoom>
@@ -233,11 +246,12 @@ function ChannelCard({ item }: { item: ChannelSubject }) {
   );
 }
 
-function ChannelAction({ compact = false, icon, label, onPress }: {
+function ChannelAction({ compact = false, icon, label, onPress, onPressIn }: {
   compact?: boolean;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   onPress: () => void;
+  onPressIn?: () => void;
 }) {
   const { colors, styles } = useThemedStyles();
 
@@ -246,6 +260,7 @@ function ChannelAction({ compact = false, icon, label, onPress }: {
       accessibilityLabel={label}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.action,
         compact && styles.actionCompact,

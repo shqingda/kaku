@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -131,6 +132,7 @@ export function HomeMediaSection({
 function MediaCard({ item }: { item: PublicUserCollection }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const prefetchSubject = usePrefetchSubject();
   const progress =
     supportsWatchProgress(item.subjectType) && item.totalEpisodes > 0
       ? `${item.progress}/${item.totalEpisodes} 集`
@@ -149,6 +151,8 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           accessibilityLabel={`打开${item.title}`}
           accessibilityRole="button"
           accessibilityHint="进入条目详情"
+          onPressIn={() => prefetchSubject.prefetch(item.id)}
+          onPressOut={prefetchSubject.cancel}
           style={({ pressed }) => [
             styles.cardButton,
             pressed && styles.pressed,

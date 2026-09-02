@@ -1,4 +1,12 @@
-import type { UsersProvider } from '@/features/users/model';
+import type {
+  PublicTimelinePage,
+  PublicUserBlogPage,
+  PublicUserCollectionPage,
+  PublicUserEntityCollectionPage,
+  PublicUserEntityKind,
+  PublicUserFriendPage,
+  PublicUserProfile,
+} from '@/features/users/model';
 import type { CollectionStatus } from '@/features/watching/model';
 
 import {
@@ -27,61 +35,83 @@ const COLLECTION_TYPE: Record<CollectionStatus, number> = {
   wish: 1,
 };
 
-export const bangumiUsersProvider: UsersProvider = {
-  async getPublicUser(username, signal) {
-    const profile = await getBangumiPublicUser(username, signal);
+export async function getPublicUser(
+  username: string,
+  signal?: AbortSignal,
+): Promise<PublicUserProfile> {
+  const profile = await getBangumiPublicUser(username, signal);
 
-    return {
-      avatarUrl:
-        profile.avatar?.large ??
-        profile.avatar?.medium ??
-        profile.avatar?.small,
-      id: profile.id,
-      nickname: profile.nickname || profile.username,
-      sign: profile.sign,
-      username: profile.username,
-    };
-  },
-  async getPublicUserCollections(
+  return {
+    avatarUrl:
+      profile.avatar?.large ??
+      profile.avatar?.medium ??
+      profile.avatar?.small,
+    id: profile.id,
+    nickname: profile.nickname || profile.username,
+    sign: profile.sign,
+    username: profile.username,
+  };
+}
+
+export async function getPublicUserCollections(
+  username: string,
+  subjectType: number,
+  offset: number,
+  collectionStatus?: CollectionStatus,
+  signal?: AbortSignal,
+): Promise<PublicUserCollectionPage> {
+  const collections = await getBangumiUserCollections(
     username,
     subjectType,
     offset,
-    collectionStatus,
+    collectionStatus ? COLLECTION_TYPE[collectionStatus] : undefined,
     signal,
-  ) {
-    const collections = await getBangumiUserCollections(
-      username,
-      subjectType,
-      offset,
-      collectionStatus ? COLLECTION_TYPE[collectionStatus] : undefined,
-      signal,
-    );
-    return toPublicUserCollectionPage(collections, subjectType);
-  },
-  async getPublicUserBlogs(username, offset, signal) {
-    const blogs = await getBangumiUserBlogs(username, offset, signal);
-    return toPublicUserBlogPage(blogs, offset);
-  },
-  async getPublicUserFriends(username, offset, signal) {
-    const friends = await getBangumiUserFriends(username, offset, signal);
-    return toPublicUserFriendPage(friends, offset);
-  },
-  async getPublicUserEntities(username, kind, signal) {
-    const entities = await getBangumiUserEntityCollections(
-      username,
-      kind,
-      signal,
-    );
-    return toPublicUserEntityCollectionPage(entities, kind);
-  },
-  async getPublicUserTimeline(username, cursor, signal) {
-    const limit = 10;
-    const timeline = await getBangumiUserTimeline(
-      username,
-      cursor === undefined ? undefined : Number(cursor),
-      limit,
-      signal,
-    );
-    return toPublicTimelinePage(timeline, limit);
-  },
-};
+  );
+  return toPublicUserCollectionPage(collections, subjectType);
+}
+
+export async function getPublicUserBlogs(
+  username: string,
+  offset: number,
+  signal?: AbortSignal,
+): Promise<PublicUserBlogPage> {
+  const blogs = await getBangumiUserBlogs(username, offset, signal);
+  return toPublicUserBlogPage(blogs, offset);
+}
+
+export async function getPublicUserFriends(
+  username: string,
+  offset: number,
+  signal?: AbortSignal,
+): Promise<PublicUserFriendPage> {
+  const friends = await getBangumiUserFriends(username, offset, signal);
+  return toPublicUserFriendPage(friends, offset);
+}
+
+export async function getPublicUserEntities(
+  username: string,
+  kind: PublicUserEntityKind,
+  signal?: AbortSignal,
+): Promise<PublicUserEntityCollectionPage> {
+  const entities = await getBangumiUserEntityCollections(
+    username,
+    kind,
+    signal,
+  );
+  return toPublicUserEntityCollectionPage(entities, kind);
+}
+
+export async function getPublicUserTimeline(
+  username: string,
+  cursor?: string,
+  signal?: AbortSignal,
+): Promise<PublicTimelinePage> {
+  const limit = 10;
+  const timeline = await getBangumiUserTimeline(
+    username,
+    cursor === undefined ? undefined : Number(cursor),
+    limit,
+    signal,
+  );
+  return toPublicTimelinePage(timeline, limit);
+}

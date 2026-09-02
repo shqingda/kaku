@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -42,6 +43,13 @@ import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-s
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
 import { useTheme } from '@/features/theme/theme-provider';
+import { prefetchSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
+import { prefetchSubjectIndexes } from '@/features/indexes/use-indexes';
+import { prefetchSubjectStaff } from '@/features/staff/use-subject-staff';
+import {
+  prefetchSubjectCharacters,
+  prefetchSubjectRelations,
+} from '@/features/subject-extras/use-subject-extras';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function useThemedStyles() {
@@ -55,11 +63,13 @@ function DetailEntry({
   hint,
   label,
   onPress,
+  onPressIn,
   withBorder = false,
 }: {
   hint: string;
   label: string;
   onPress: () => void;
+  onPressIn?: () => void;
   withBorder?: boolean;
 }) {
   const { colors, styles } = useThemedStyles();
@@ -68,6 +78,7 @@ function DetailEntry({
       accessibilityLabel={`查看${label}`}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.detailEntry,
         withBorder && styles.detailEntryBorder,
@@ -170,6 +181,7 @@ export default function SubjectScreen() {
   const { rememberSubject: rememberRecentSubject } = useRecentSubjects();
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const subjectId = parsePositiveIntegerRouteParam(id);
+  const queryClient = useQueryClient();
   const catalogQuery = useCatalogSubject(subjectId ?? 0);
   const collectionQuery = usePersonalCollection(subjectId ?? 0);
   const saveCollection = useSavePersonalCollection(subjectId ?? 0);
@@ -390,6 +402,9 @@ export default function SubjectScreen() {
                     params: { id: String(subjectId) },
                   })
                 }
+                onPressIn={() =>
+                  prefetchSubjectCharacters(queryClient, subjectId)
+                }
               />
             ) : null}
             <DetailEntry
@@ -401,6 +416,7 @@ export default function SubjectScreen() {
                   params: { id: String(subjectId) },
                 })
               }
+              onPressIn={() => prefetchSubjectStaff(queryClient, subjectId)}
               withBorder={Boolean(detailLabels.characters)}
             />
             <DetailEntry
@@ -411,6 +427,9 @@ export default function SubjectScreen() {
                   pathname: '/subject/[id]/relations',
                   params: { id: String(subjectId) },
                 })
+              }
+              onPressIn={() =>
+                prefetchSubjectRelations(queryClient, subjectId)
               }
               withBorder
             />
@@ -423,6 +442,7 @@ export default function SubjectScreen() {
                   params: { id: String(subjectId) },
                 })
               }
+              onPressIn={() => prefetchSubjectTopics(queryClient, subjectId)}
               withBorder
             />
             <DetailEntry
@@ -434,6 +454,7 @@ export default function SubjectScreen() {
                   params: { id: String(subjectId) },
                 })
               }
+              onPressIn={() => prefetchSubjectIndexes(queryClient, subjectId)}
               withBorder
             />
             <DetailEntry

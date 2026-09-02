@@ -18,6 +18,7 @@ import {
   currentCalendarWeekdayId,
   type DiscoverSubject,
 } from '@/features/discover/model';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useBangumiCalendar } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -139,6 +140,7 @@ function CalendarRow({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <Pressable
@@ -149,6 +151,8 @@ function CalendarRow({
           params: { id: String(item.id) },
         })
       }
+      onPressIn={() => prefetchSubject.prefetch(item.id)}
+      onPressOut={prefetchSubject.cancel}
       style={({ pressed }) => [
         styles.row,
         isFirst && styles.firstRow,

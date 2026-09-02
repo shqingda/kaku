@@ -61,20 +61,3 @@ export type PublicIndexPage = {
   nextOffset?: number;
   total: number;
 };
-
-export type IndexesProvider = {
-  getIndex: (
-    indexId: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicIndexDetail>;
-  getIndexItems: (
-    indexId: number,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicIndexItemPage>;
-  getSubjectIndexes: (
-    subjectId: number,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicIndexPage>;
-};

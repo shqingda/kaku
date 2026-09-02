@@ -83,37 +83,3 @@ export type PublicUserProfile = {
   sign: string;
   username: string;
 };
-
-export type UsersProvider = {
-  getPublicUser: (
-    username: string,
-    signal?: AbortSignal,
-  ) => Promise<PublicUserProfile>;
-  getPublicUserCollections: (
-    username: string,
-    subjectType: number,
-    offset: number,
-    collectionStatus?: CollectionStatus,
-    signal?: AbortSignal,
-  ) => Promise<PublicUserCollectionPage>;
-  getPublicUserBlogs: (
-    username: string,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicUserBlogPage>;
-  getPublicUserFriends: (
-    username: string,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicUserFriendPage>;
-  getPublicUserEntities: (
-    username: string,
-    kind: PublicUserEntityKind,
-    signal?: AbortSignal,
-  ) => Promise<PublicUserEntityCollectionPage>;
-  getPublicUserTimeline: (
-    username: string,
-    cursor?: string,
-    signal?: AbortSignal,
-  ) => Promise<PublicTimelinePage>;
-};

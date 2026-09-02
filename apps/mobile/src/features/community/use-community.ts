@@ -1,8 +1,12 @@
 import {
   type InfiniteData,
+  infiniteQueryOptions,
+  type QueryClient,
+  queryOptions,
   useInfiniteQuery,
   useQuery,
 } from '@tanstack/react-query';
+import { router } from 'expo-router';
 
 import type { PublicGroupTopicPage } from './model';
 import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
@@ -20,8 +24,8 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function usePublicCommunity() {
-  return useQuery({
+export function communityQueryOptions() {
+  return queryOptions({
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => getPublicCommunity(signal),
     queryKey: queryKeys.community(),
@@ -30,15 +34,9 @@ export function usePublicCommunity() {
   });
 }
 
-export function usePublicCommunityTopics() {
-  return useInfiniteQuery<
-    PublicGroupTopicPage,
-    Error,
-    InfiniteData<PublicGroupTopicPage>,
-    ReturnType<typeof queryKeys.communityTopics>,
-    number
-  >({
-    getNextPageParam: (lastPage) => lastPage.nextOffset,
+export function communityTopicsQueryOptions() {
+  return infiniteQueryOptions({
+    getNextPageParam: (lastPage: PublicGroupTopicPage) => lastPage.nextOffset,
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
@@ -47,6 +45,20 @@ export function usePublicCommunityTopics() {
     retry: shouldRetryBangumiQuery,
     staleTime: 2 * 60 * 1000,
   });
+}
+
+export function usePublicCommunity() {
+  return useQuery(communityQueryOptions());
+}
+
+export function usePublicCommunityTopics() {
+  return useInfiniteQuery(communityTopicsQueryOptions());
+}
+
+export function prefetchCommunity(queryClient: QueryClient) {
+  void queryClient.prefetchQuery(communityQueryOptions());
+  void queryClient.prefetchInfiniteQuery(communityTopicsQueryOptions());
+  void router.prefetch('/community');
 }
 
 export function usePublicGroup(groupName: string) {

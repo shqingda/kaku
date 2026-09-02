@@ -36,20 +36,3 @@ export type DiscussionTopicPage = {
   topics: DiscussionTopic[];
   total: number;
 };
-
-export type DiscussionsProvider = {
-  getEpisodeComments: (
-    episodeId: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscussionReply[]>;
-  getSubjectTopic: (
-    topicId: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscussionTopic | null>;
-  getSubjectTopics: (
-    subjectId: number,
-    limit: number,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscussionTopicPage>;
-};

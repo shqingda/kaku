@@ -22,6 +22,7 @@ import {
   getSubjectTypeLabel,
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -222,6 +223,7 @@ export default function BrowseScreen() {
 
 const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject }) {
   const { styles } = useThemedStyles();
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <Pressable
@@ -229,6 +231,8 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
       accessibilityRole="button"
       accessibilityHint="进入条目详情"
       onPress={() => router.push({ pathname: '/subject/[id]', params: { id: String(item.id) } })}
+      onPressIn={() => prefetchSubject.prefetch(item.id)}
+      onPressOut={prefetchSubject.cancel}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.cover}>

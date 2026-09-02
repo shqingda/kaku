@@ -12,7 +12,14 @@ import type {
   PublicTimelinePage,
 } from './model';
 import type { CollectionStatus } from '@/features/watching/model';
-import { bangumiUsersProvider } from '@/infrastructure/bangumi/users/provider';
+import {
+  getPublicUser,
+  getPublicUserBlogs,
+  getPublicUserCollections,
+  getPublicUserEntities,
+  getPublicUserFriends,
+  getPublicUserTimeline,
+} from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
@@ -22,7 +29,7 @@ export function usePublicUser(username: string) {
     enabled: username.trim().length > 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
-      bangumiUsersProvider.getPublicUser(username, signal),
+      getPublicUser(username, signal),
     queryKey: queryKeys.publicUser(username),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -46,7 +53,7 @@ export function usePublicUserCollections(
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiUsersProvider.getPublicUserCollections(
+      getPublicUserCollections(
         username.trim(),
         subjectType,
         pageParam,
@@ -76,11 +83,7 @@ export function usePublicUserBlogs(username: string) {
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiUsersProvider.getPublicUserBlogs(
-        username.trim(),
-        pageParam,
-        signal,
-      ),
+      getPublicUserBlogs(username.trim(), pageParam, signal),
     queryKey: queryKeys.publicUserBlogs(username),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -100,11 +103,7 @@ export function usePublicUserFriends(username: string) {
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiUsersProvider.getPublicUserFriends(
-        username.trim(),
-        pageParam,
-        signal,
-      ),
+      getPublicUserFriends(username.trim(), pageParam, signal),
     queryKey: queryKeys.publicUserFriends(username),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -119,11 +118,7 @@ export function usePublicUserEntities(
     enabled: username.trim().length > 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) =>
-      bangumiUsersProvider.getPublicUserEntities(
-        username.trim(),
-        kind,
-        signal,
-      ),
+      getPublicUserEntities(username.trim(), kind, signal),
     queryKey: queryKeys.publicUserEntities(username, kind),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -143,11 +138,7 @@ export function usePublicUserTimeline(username: string) {
     initialPageParam: undefined,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiUsersProvider.getPublicUserTimeline(
-        username.trim(),
-        pageParam,
-        signal,
-      ),
+      getPublicUserTimeline(username.trim(), pageParam, signal),
     queryKey: queryKeys.publicUserTimeline(username),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,

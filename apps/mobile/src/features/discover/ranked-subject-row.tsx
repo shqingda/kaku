@@ -10,6 +10,8 @@ import {
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
+
 import type { DiscoverSubject } from './model';
 
 export function RankedSubjectRow({
@@ -25,6 +27,7 @@ export function RankedSubjectRow({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <Pressable
@@ -32,6 +35,8 @@ export function RankedSubjectRow({
       accessibilityRole="button"
       accessibilityHint="进入条目详情"
       onPress={onPress}
+      onPressIn={() => prefetchSubject.prefetch(item.id)}
+      onPressOut={prefetchSubject.cancel}
       style={({ pressed }) => [
         styles.row,
         hasDivider && styles.divider,

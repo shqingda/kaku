@@ -24,15 +24,6 @@ export type PeopleSearchPage = {
   total: number;
 };
 
-export type PeopleSearchProvider = {
-  search: (
-    kind: PeopleKind,
-    keyword: string,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<PeopleSearchPage>;
-};
-
 export const PEOPLE_KINDS: { id: PeopleKind; label: string }[] = [
   { id: 'character', label: '虚构角色' },
   { id: 'person', label: '现实人物' },

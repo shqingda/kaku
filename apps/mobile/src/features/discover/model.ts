@@ -23,18 +23,3 @@ export type DiscoverSubjectPage = {
   nextOffset?: number;
   total?: number;
 };
-
-export type DiscoverProvider = {
-  getCalendar: (signal?: AbortSignal) => Promise<CalendarDay[]>;
-  getRankedSubjects: (
-    subjectType: number,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscoverSubjectPage>;
-  searchSubjects: (
-    keyword: string,
-    subjectType: number,
-    offset: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscoverSubjectPage>;
-};

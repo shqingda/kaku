@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -34,6 +35,10 @@ import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { usePeopleSearch } from '@/features/people-browser/use-people-search';
+import {
+  prefetchCharacter,
+  prefetchPerson,
+} from '@/features/people/use-public-entity';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function PeopleScreen() {
@@ -306,6 +311,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
     hasDivider && styles.rowDivider,
   ]);
   const pathname = item.kind === 'character' ? '/character/[id]' : '/person/[id]';
+  const queryClient = useQueryClient();
   return (
     <View style={[
       styles.rowCard,
@@ -315,6 +321,13 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
       <Link asChild href={{ pathname, params: { id: String(item.id) } }}>
         <Pressable
           accessibilityRole="button"
+          onPressIn={() => {
+            if (item.kind === 'character') {
+              prefetchCharacter(queryClient, item.id);
+            } else {
+              prefetchPerson(queryClient, item.id);
+            }
+          }}
           style={rowStyle}
         >
           <View style={styles.avatar}>

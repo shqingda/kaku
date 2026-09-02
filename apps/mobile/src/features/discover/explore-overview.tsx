@@ -1,4 +1,5 @@
 import { type ComponentProps } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -11,6 +12,9 @@ import {
   View,
 } from 'react-native';
 
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
+import { prefetchChannel } from '@/features/channels/use-channel';
+import { prefetchCommunity } from '@/features/community/use-community';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import {
   getSubjectTypeLabel,
@@ -24,6 +28,7 @@ import { exploreChannelMeta } from './explore-search';
 import { useExploreStyles } from './explore-styles';
 import type { CalendarDay, DiscoverSubject } from './model';
 import { RankedSubjectRow } from './ranked-subject-row';
+import { prefetchRankings } from './use-discover';
 
 const STATIC_EXPLORE_ENTRIES = [
   {
@@ -133,6 +138,7 @@ export function ExploreOverviewBody({
 
 function ExploreEntries({ subjectType }: { subjectType: number }) {
   const { styles } = useExploreStyles();
+  const queryClient = useQueryClient();
 
   return (
     <View style={styles.exploreEntries}>
@@ -150,6 +156,7 @@ function ExploreEntries({ subjectType }: { subjectType: number }) {
             params: { type: getSubjectTypeSlug(subjectType) },
           })
         }
+        onPressIn={() => prefetchChannel(queryClient, subjectType)}
         title="频道"
       />
       {STATIC_EXPLORE_ENTRIES.map((entry) => (
@@ -158,6 +165,11 @@ function ExploreEntries({ subjectType }: { subjectType: number }) {
           key={entry.title}
           meta={entry.meta}
           onPress={() => router.push(entry.path as Href)}
+          onPressIn={
+            entry.path === '/community'
+              ? () => prefetchCommunity(queryClient)
+              : undefined
+          }
           title={entry.title}
         />
       ))}
@@ -170,12 +182,14 @@ function ExploreEntry({
   icon,
   meta,
   onPress,
+  onPressIn,
   title,
 }: {
   featured?: boolean;
   icon: ComponentProps<typeof SymbolView>['name'];
   meta: string;
   onPress: () => void;
+  onPressIn?: () => void;
   title: string;
 }) {
   const { colors, styles } = useExploreStyles();
@@ -186,6 +200,7 @@ function ExploreEntry({
       accessibilityLabel={title}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.exploreEntry,
         featured && styles.exploreEntryFeatured,
@@ -323,6 +338,7 @@ function RankingSection({
   subjectType: number;
 }) {
   const { styles } = useExploreStyles();
+  const queryClient = useQueryClient();
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
 
   return (
@@ -341,6 +357,7 @@ function RankingSection({
               params: { type: String(subjectType) },
             })
           }
+          onPressIn={() => prefetchRankings(queryClient, subjectType)}
         />
       </View>
       {subjects.length > 0 && isError ? (
@@ -377,6 +394,7 @@ function RankingSection({
 
 function CalendarCard({ item }: { item: DiscoverSubject }) {
   const { styles } = useExploreStyles();
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <Pressable
@@ -389,6 +407,8 @@ function CalendarCard({ item }: { item: DiscoverSubject }) {
           params: { id: String(item.id) },
         })
       }
+      onPressIn={() => prefetchSubject.prefetch(item.id)}
+      onPressOut={prefetchSubject.cancel}
       style={({ pressed }) => [styles.calendarCard, pressed && styles.pressed]}
     >
       <View style={styles.calendarCover}>

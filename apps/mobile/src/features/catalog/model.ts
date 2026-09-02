@@ -49,10 +49,3 @@ export type CatalogSubject = {
   type: number;
   year?: number;
 };
-
-export type CatalogProvider = {
-  getSubject: (
-    subjectId: number,
-    signal?: AbortSignal,
-  ) => Promise<CatalogSubject>;
-};

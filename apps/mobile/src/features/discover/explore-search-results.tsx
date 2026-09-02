@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import {
@@ -9,6 +10,11 @@ import {
 } from 'react-native';
 
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
+import {
+  prefetchCharacter,
+  prefetchPerson,
+} from '@/features/people/use-public-entity';
 import type { PublicPersonSummary } from '@/features/people-browser/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -144,6 +150,7 @@ export function ExploreSearchResults({
 
 function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
   const { styles } = useExploreStyles();
+  const queryClient = useQueryClient();
   const pathname =
     item.kind === 'character' ? '/character/[id]' : '/person/[id]';
 
@@ -162,6 +169,13 @@ function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
         onPress={() =>
           router.push({ pathname, params: { id: String(item.id) } })
         }
+        onPressIn={() => {
+          if (item.kind === 'character') {
+            prefetchCharacter(queryClient, item.id);
+          } else {
+            prefetchPerson(queryClient, item.id);
+          }
+        }}
         style={({ pressed }) => [styles.resultRow, pressed && styles.pressed]}
       >
         <View style={styles.resultCover}>
@@ -206,6 +220,7 @@ function SubjectSearchResultRow({
   item: DiscoverSubject;
 }) {
   const { styles } = useExploreStyles();
+  const prefetchSubject = usePrefetchSubject();
 
   return (
     <View
@@ -225,6 +240,8 @@ function SubjectSearchResultRow({
             params: { id: String(item.id) },
           })
         }
+        onPressIn={() => prefetchSubject.prefetch(item.id)}
+        onPressOut={prefetchSubject.cancel}
         style={({ pressed }) => [
           styles.resultRow,
           index > 0 && styles.resultBorder,

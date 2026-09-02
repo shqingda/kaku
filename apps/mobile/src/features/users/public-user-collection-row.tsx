@@ -7,6 +7,7 @@ import {
   getCollectionStatusLabel,
   supportsWatchProgress,
 } from '@/features/catalog/subject-types';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import type { PublicUserCollection } from './model';
@@ -24,6 +25,7 @@ export function PublicUserCollectionRow({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const prefetchSubject = usePrefetchSubject();
 
   const progress =
     supportsWatchProgress(item.subjectType) && item.progress > 0
@@ -44,6 +46,8 @@ export function PublicUserCollectionRow({
       accessibilityLabel={`打开收藏条目：${item.title}`}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={() => prefetchSubject.prefetch(item.id)}
+      onPressOut={prefetchSubject.cancel}
       style={({ pressed }) => [
         styles.row,
         hasDivider && styles.divider,

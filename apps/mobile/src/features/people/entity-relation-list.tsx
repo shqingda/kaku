@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -5,7 +6,13 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useTheme } from '@/features/theme/theme-provider';
+
+import {
+  prefetchCharacter,
+  prefetchPerson,
+} from './use-public-entity';
 
 import type {
   EntityRelatedPeer,
@@ -85,6 +92,8 @@ export function EntityRelationRow({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const queryClient = useQueryClient();
+  const prefetchSubject = usePrefetchSubject();
 
   if (item.kind === 'section') {
     return (
@@ -116,6 +125,13 @@ export function EntityRelationRow({
           accessibilityLabel={`打开${item.peer.name}`}
           accessibilityRole="button"
           hitSlop={4}
+          onPressIn={() => {
+            if (kind === '角色') {
+              prefetchPerson(queryClient, item.peer.id);
+            } else {
+              prefetchCharacter(queryClient, item.peer.id);
+            }
+          }}
           style={styles.peerRow}
         >
           <View style={styles.peerPortrait}>
@@ -170,6 +186,8 @@ export function EntityRelationRow({
         accessibilityLabel={`打开${item.subject.title}`}
         accessibilityRole="button"
         hitSlop={4}
+        onPressIn={() => prefetchSubject.prefetch(item.subject.id)}
+        onPressOut={prefetchSubject.cancel}
         style={styles.subjectRow}
       >
         <Link.AppleZoom>

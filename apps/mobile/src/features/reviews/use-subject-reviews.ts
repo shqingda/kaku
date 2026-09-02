@@ -4,7 +4,11 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-import { bangumiReviewsProvider } from '@/infrastructure/bangumi/reviews/provider';
+import {
+  getSubjectComments,
+  getSubjectReview,
+  getSubjectReviews,
+} from '@/infrastructure/bangumi/reviews/provider';
 import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
 import {
   cleanBangumiContent,
@@ -35,7 +39,7 @@ export function useSubjectComments(subjectId: number) {
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiReviewsProvider.getComments(subjectId, pageParam, signal),
+      getSubjectComments(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectComments(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -55,7 +59,7 @@ export function useSubjectReviews(subjectId: number) {
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
-      bangumiReviewsProvider.getReviews(subjectId, pageParam, signal),
+      getSubjectReviews(subjectId, pageParam, signal),
     queryKey: queryKeys.subjectReviews(subjectId),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,
@@ -64,7 +68,7 @@ export function useSubjectReviews(subjectId: number) {
 
 export function useSubjectReview(reviewId: number) {
   const { queryFn, meta, suffix } = useSessionAwareQuery({
-    public: (signal) => bangumiReviewsProvider.getReview(reviewId, signal),
+    public: (signal) => getSubjectReview(reviewId, signal),
     authenticated: async (request, signal) => {
       const { blog, comments } = await getAuthenticatedReview(
         request,

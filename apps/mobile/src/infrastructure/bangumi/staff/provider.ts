@@ -1,7 +1,4 @@
-import type {
-  StaffCredit,
-  StaffProvider,
-} from '@/features/staff/model';
+import type { StaffCredit } from '@/features/staff/model';
 
 import { getBangumiSubjectStaff } from '../api-v0/client';
 import type { BangumiSubjectStaffResponse } from '../api-v0/schemas';
@@ -20,9 +17,10 @@ function toStaffCredit(
   };
 }
 
-export const bangumiStaffProvider: StaffProvider = {
-  async getSubjectStaff(subjectId, signal) {
-    const credits = await getBangumiSubjectStaff(subjectId, signal);
-    return credits.map(toStaffCredit);
-  },
-};
+export async function getSubjectStaff(
+  subjectId: number,
+  signal?: AbortSignal,
+): Promise<StaffCredit[]> {
+  const credits = await getBangumiSubjectStaff(subjectId, signal);
+  return credits.map(toStaffCredit);
+}

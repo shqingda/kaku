@@ -1,6 +1,6 @@
 import type {
   RelatedSubject,
-  SubjectExtrasProvider,
+  SubjectCharacter,
 } from '@/features/subject-extras/model';
 
 import {
@@ -28,16 +28,21 @@ function toRelatedSubject(
   };
 }
 
-export const bangumiSubjectExtrasProvider: SubjectExtrasProvider = {
-  async getCharacters(subjectId, signal) {
-    const [characters, localizedCharacters] = await Promise.all([
-      getBangumiSubjectCharacters(subjectId, signal),
-      getBangumiSubjectCharacterNames(subjectId, signal),
-    ]);
-    return mapBangumiSubjectCharacters(characters, localizedCharacters);
-  },
-  async getRelations(subjectId, signal) {
-    const relations = await getBangumiSubjectRelations(subjectId, signal);
-    return relations.map(toRelatedSubject);
-  },
-};
+export async function getSubjectCharacters(
+  subjectId: number,
+  signal?: AbortSignal,
+): Promise<SubjectCharacter[]> {
+  const [characters, localizedCharacters] = await Promise.all([
+    getBangumiSubjectCharacters(subjectId, signal),
+    getBangumiSubjectCharacterNames(subjectId, signal),
+  ]);
+  return mapBangumiSubjectCharacters(characters, localizedCharacters);
+}
+
+export async function getSubjectRelations(
+  subjectId: number,
+  signal?: AbortSignal,
+): Promise<RelatedSubject[]> {
+  const relations = await getBangumiSubjectRelations(subjectId, signal);
+  return relations.map(toRelatedSubject);
+}

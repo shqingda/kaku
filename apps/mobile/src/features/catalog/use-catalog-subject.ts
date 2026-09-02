@@ -1,6 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef } from 'react';
+import {
+  type QueryClient,
+  queryOptions,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { router } from 'expo-router';
 
-import { bangumiCatalogProvider } from '@/infrastructure/bangumi/catalog/provider';
+import { getCatalogSubject } from '@/infrastructure/bangumi/catalog/provider';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
@@ -12,16 +19,13 @@ import {
 
 const CATALOG_QUERY_VERSION = 4;
 
-export function useCatalogSubject(subjectId: number) {
-  return useQuery({
+export function catalogSubjectQueryOptions(subjectId: number) {
+  return queryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     meta: PUBLIC_QUERY_META,
     queryFn: async ({ signal }) => {
       try {
-        const subject = await bangumiCatalogProvider.getSubject(
-          subjectId,
-          signal,
-        );
+        const subject = await getCatalogSubject(subjectId, signal);
         await saveOfflineSubject(subject);
         return subject;
       } catch (error) {
@@ -35,4 +39,47 @@ export function useCatalogSubject(subjectId: number) {
     retry: shouldRetryBangumiQuery,
     staleTime: 5 * 60 * 1000,
   });
+}
+
+export function useCatalogSubject(subjectId: number) {
+  return useQuery(catalogSubjectQueryOptions(subjectId));
+}
+
+export function prefetchCatalogSubject(
+  queryClient: QueryClient,
+  subjectId: number,
+) {
+  if (!Number.isInteger(subjectId) || subjectId <= 0) return;
+  void queryClient.prefetchQuery(catalogSubjectQueryOptions(subjectId));
+  void router.prefetch({
+    pathname: '/subject/[id]',
+    params: { id: String(subjectId) },
+  });
+}
+
+export function usePrefetchSubject() {
+  const queryClient = useQueryClient();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancel = useCallback(() => {
+    if (timerRef.current == null) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, []);
+
+  useEffect(() => cancel, [cancel]);
+
+  const prefetch = useCallback(
+    (subjectId: number) => {
+      cancel();
+      // 等一小段再发请求：列表滑动时 pressIn 会误触发，pressOut 会取消。
+      timerRef.current = setTimeout(() => {
+        prefetchCatalogSubject(queryClient, subjectId);
+        timerRef.current = null;
+      }, 50);
+    },
+    [cancel, queryClient],
+  );
+
+  return { cancel, prefetch };
 }

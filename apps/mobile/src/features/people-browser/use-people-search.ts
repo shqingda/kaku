@@ -3,7 +3,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 
-import { bangumiPeopleSearchProvider } from '@/infrastructure/bangumi/people-browser/search-provider';
+import { searchPeople } from '@/infrastructure/bangumi/people-browser/search-provider';
 import { queryKeys } from '@/lib/query-keys';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
@@ -27,12 +27,7 @@ export function usePeopleSearch(
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
-      bangumiPeopleSearchProvider.search(
-        kind,
-        normalizedKeyword,
-        pageParam,
-        signal,
-      ),
+      searchPeople(kind, normalizedKeyword, pageParam, signal),
     queryKey: queryKeys.peopleSearch(kind, normalizedKeyword),
     retry: shouldRetryBangumiQuery,
     staleTime: 10 * 60 * 1000,

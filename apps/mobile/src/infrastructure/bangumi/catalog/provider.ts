@@ -1,6 +1,5 @@
 import type {
   CatalogEpisode,
-  CatalogProvider,
   CatalogSubject,
 } from '@/features/catalog/model';
 import { usesEpisodeData } from '@/features/catalog/subject-types';
@@ -106,13 +105,14 @@ function toCatalogSubject(
   };
 }
 
-export const bangumiCatalogProvider: CatalogProvider = {
-  async getSubject(subjectId, signal) {
-    const subject = await getBangumiSubject(subjectId, signal);
-    const episodes = usesEpisodeData(subject.type)
-      ? await getBangumiEpisodes(subjectId, signal)
-      : [];
+export async function getCatalogSubject(
+  subjectId: number,
+  signal?: AbortSignal,
+): Promise<CatalogSubject> {
+  const subject = await getBangumiSubject(subjectId, signal);
+  const episodes = usesEpisodeData(subject.type)
+    ? await getBangumiEpisodes(subjectId, signal)
+    : [];
 
-    return toCatalogSubject(subject, episodes);
-  },
-};
+  return toCatalogSubject(subject, episodes);
+}

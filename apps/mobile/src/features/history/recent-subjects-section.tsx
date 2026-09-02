@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
+import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import type { RecentSubject } from './recent-subjects-model';
@@ -41,50 +42,66 @@ export function RecentSubjectsSection({
         showsHorizontalScrollIndicator={false}
       >
         {items.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <Link
-              asChild
-              href={{
-                pathname: '/subject/[id]',
-                params: { id: String(item.id) },
-              }}
-            >
-              <Pressable
-                accessibilityLabel={`再次打开${item.title}`}
-                accessibilityRole="button"
-                style={({ pressed }) => pressed && styles.pressed}
-              >
-                <Link.AppleZoom>
-                  <View style={styles.cover}>
-                    <Text style={styles.coverFallback}>
-                      {item.title.slice(0, 1)}
-                    </Text>
-                    {item.coverUrl ? (
-                      <Image
-                        contentFit="cover"
-                        recyclingKey={item.coverUrl}
-                        source={item.coverUrl}
-                        style={StyleSheet.absoluteFill}
-                        transition={120}
-                      />
-                    ) : null}
-                  </View>
-                </Link.AppleZoom>
-                <Text
-                  ellipsizeMode="tail"
-                  numberOfLines={2}
-                  style={styles.cardTitle}
-                >
-                  {item.title}
-                </Text>
-                <Text style={styles.cardMeta}>
-                  {getSubjectTypeLabel(item.type)}
-                </Text>
-              </Pressable>
-            </Link>
-          </View>
+          <RecentSubjectCard item={item} key={item.id} styles={styles} />
         ))}
       </ScrollView>
+    </View>
+  );
+}
+
+function RecentSubjectCard({
+  item,
+  styles,
+}: {
+  item: RecentSubject;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const prefetchSubject = usePrefetchSubject();
+
+  return (
+    <View style={styles.card}>
+      <Link
+        asChild
+        href={{
+          pathname: '/subject/[id]',
+          params: { id: String(item.id) },
+        }}
+      >
+        <Pressable
+          accessibilityLabel={`再次打开${item.title}`}
+          accessibilityRole="button"
+          onPressIn={() => prefetchSubject.prefetch(item.id)}
+          onPressOut={prefetchSubject.cancel}
+          style={({ pressed }) => pressed && styles.pressed}
+        >
+          <Link.AppleZoom>
+            <View style={styles.cover}>
+              <Text style={styles.coverFallback}>
+                {item.title.slice(0, 1)}
+              </Text>
+              {item.coverUrl ? (
+                <Image
+                  contentFit="cover"
+                  recyclingKey={item.coverUrl}
+                  source={item.coverUrl}
+                  style={StyleSheet.absoluteFill}
+                  transition={120}
+                />
+              ) : null}
+            </View>
+          </Link.AppleZoom>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={2}
+            style={styles.cardTitle}
+          >
+            {item.title}
+          </Text>
+          <Text style={styles.cardMeta}>
+            {getSubjectTypeLabel(item.type)}
+          </Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }

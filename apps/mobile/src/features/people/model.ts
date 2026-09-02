@@ -38,19 +38,3 @@ export type PublicEntityDetail = {
   relatedSubjects: EntityRelatedSubject[];
   summary: string;
 };
-
-export type PeopleProvider = {
-  getComments: (
-    kind: 'character' | 'person',
-    entityId: number,
-    signal?: AbortSignal,
-  ) => Promise<DiscussionReply[]>;
-  getCharacter: (
-    characterId: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicEntityDetail>;
-  getPerson: (
-    personId: number,
-    signal?: AbortSignal,
-  ) => Promise<PublicEntityDetail>;
-};

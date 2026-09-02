@@ -6,10 +6,3 @@ export type StaffCredit = {
   name: string;
   role: string;
 };
-
-export type StaffProvider = {
-  getSubjectStaff: (
-    subjectId: number,
-    signal?: AbortSignal,
-  ) => Promise<StaffCredit[]>;
-};

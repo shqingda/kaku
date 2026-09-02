@@ -1,4 +1,5 @@
-import type { PeopleProvider } from '@/features/people/model';
+import type { PublicEntityDetail } from '@/features/people/model';
+import type { DiscussionReply } from '@/features/discussions/model';
 
 import {
   getBangumiCharacter,
@@ -8,21 +9,31 @@ import { getBangumiEntityComments } from '../api-next/client';
 import { mapBangumiReplies } from '../discussions/adapter';
 import { mapBangumiEntityDetail } from './adapter';
 
-export const bangumiPeopleProvider: PeopleProvider = {
-  async getComments(kind, entityId, signal) {
-    return mapBangumiReplies(
-      await getBangumiEntityComments(kind, entityId, signal),
-    );
-  },
-  async getCharacter(characterId, signal) {
-    const { detail, peers, subjects } = await getBangumiCharacter(
-      characterId,
-      signal,
-    );
-    return mapBangumiEntityDetail(detail, subjects, peers, 'character');
-  },
-  async getPerson(personId, signal) {
-    const { detail, peers, subjects } = await getBangumiPerson(personId, signal);
-    return mapBangumiEntityDetail(detail, subjects, peers, 'person');
-  },
-};
+export async function getEntityComments(
+  kind: 'character' | 'person',
+  entityId: number,
+  signal?: AbortSignal,
+): Promise<DiscussionReply[]> {
+  return mapBangumiReplies(
+    await getBangumiEntityComments(kind, entityId, signal),
+  );
+}
+
+export async function getCharacter(
+  characterId: number,
+  signal?: AbortSignal,
+): Promise<PublicEntityDetail> {
+  const { detail, peers, subjects } = await getBangumiCharacter(
+    characterId,
+    signal,
+  );
+  return mapBangumiEntityDetail(detail, subjects, peers, 'character');
+}
+
+export async function getPerson(
+  personId: number,
+  signal?: AbortSignal,
+): Promise<PublicEntityDetail> {
+  const { detail, peers, subjects } = await getBangumiPerson(personId, signal);
+  return mapBangumiEntityDetail(detail, subjects, peers, 'person');
+}

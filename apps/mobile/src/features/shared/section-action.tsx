@@ -11,6 +11,7 @@ export function SectionAction({
   color,
   label,
   onPress,
+  onPressIn,
   style,
 }: {
   accessibilityHint?: string;
@@ -18,6 +19,7 @@ export function SectionAction({
   color?: string;
   label: string;
   onPress: () => void;
+  onPressIn?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
   const colors = useTheme();
@@ -30,6 +32,7 @@ export function SectionAction({
       accessibilityRole="button"
       hitSlop={HIT_SLOP}
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.button,
         style,

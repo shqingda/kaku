@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type ComponentProps } from 'react';
-import { useIsRestoring } from '@tanstack/react-query';
+import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -20,13 +20,19 @@ import {
   getCollectionStatusLabel,
   getSubjectTypeLabel,
 } from '@/features/catalog/subject-types';
+import { prefetchChannel } from '@/features/channels/use-channel';
+import { prefetchCommunity } from '@/features/community/use-community';
+import {
+  prefetchExplore,
+  prefetchRankings,
+} from '@/features/discover/use-discover';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
+import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import { usePublicUserCollections } from '@/features/users/use-public-user';
-import { useTheme } from '@/features/theme/theme-provider';
 import { markFirstContent } from '@/lib/startup-timing';
 
 export default function HomeScreen() {
@@ -93,6 +99,7 @@ function HomeContent() {
     router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
     router.prefetch('/rankings');
     router.prefetch('/community');
+    router.prefetch('/explore');
   }, []);
 
   function refreshHome() {
@@ -291,6 +298,7 @@ function SignedOutHome() {
 function QuickActions() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const queryClient = useQueryClient();
 
   return (
     <View style={styles.quickSection}>
@@ -305,6 +313,7 @@ function QuickActions() {
           }}
           label="综合"
           meta="频道、放送、排行榜与社区入口"
+          onPressIn={() => prefetchExplore(queryClient)}
         />
         <QuickActionRow
           hasDivider
@@ -312,6 +321,7 @@ function QuickActions() {
           icon={{ android: 'grid_view', ios: 'square.grid.2x2', web: 'grid_view' }}
           label="频道"
           meta="浏览动画、阅读、音乐、游戏与三次元"
+          onPressIn={() => prefetchChannel(queryClient, 2)}
         />
         <QuickActionRow
           hasDivider
@@ -319,6 +329,7 @@ function QuickActions() {
           icon={{ android: 'leaderboard', ios: 'chart.bar', web: 'leaderboard' }}
           label="排行榜"
           meta="浏览动画、书籍、音乐、游戏与三次元"
+          onPressIn={() => prefetchRankings(queryClient)}
         />
         <QuickActionRow
           hasDivider
@@ -330,6 +341,7 @@ function QuickActions() {
           }}
           label="社区"
           meta="看看公开小组和最新话题"
+          onPressIn={() => prefetchCommunity(queryClient)}
         />
       </View>
     </View>
@@ -342,12 +354,14 @@ function QuickActionRow({
   icon,
   label,
   meta,
+  onPressIn,
 }: {
   hasDivider?: boolean;
   href: Href;
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   meta: string;
+  onPressIn?: () => void;
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -358,6 +372,7 @@ function QuickActionRow({
       accessibilityRole="button"
       accessibilityHint={meta}
       onPress={() => router.push(href)}
+      onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.quickActionRow,
         hasDivider && styles.quickDivider,
