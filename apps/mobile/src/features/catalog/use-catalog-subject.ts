@@ -5,8 +5,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { router } from 'expo-router';
-
 import { getCatalogSubject } from '@/infrastructure/bangumi/catalog/provider';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
@@ -50,11 +48,9 @@ export function prefetchCatalogSubject(
   subjectId: number,
 ) {
   if (!Number.isInteger(subjectId) || subjectId <= 0) return;
+  // 只预取 Query 数据。router.prefetch 会把条目页预挂进原生栈，
+  // ZoomTransitionEnabler 还没带上 source id，Link.AppleZoom 就会退化成普通 push。
   void queryClient.prefetchQuery(catalogSubjectQueryOptions(subjectId));
-  void router.prefetch({
-    pathname: '/subject/[id]',
-    params: { id: String(subjectId) },
-  });
 }
 
 export function usePrefetchSubject() {

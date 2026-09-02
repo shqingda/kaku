@@ -3,7 +3,6 @@ import {
   queryOptions,
   useQuery,
 } from '@tanstack/react-query';
-import { router } from 'expo-router';
 
 import {
   getCharacter,
@@ -47,19 +46,11 @@ export function usePerson(personId: number) {
 export function prefetchCharacter(queryClient: QueryClient, characterId: number) {
   if (!Number.isInteger(characterId) || characterId <= 0) return;
   void queryClient.prefetchQuery(characterQueryOptions(characterId));
-  void router.prefetch({
-    pathname: '/character/[id]',
-    params: { id: String(characterId) },
-  });
 }
 
 export function prefetchPerson(queryClient: QueryClient, personId: number) {
   if (!Number.isInteger(personId) || personId <= 0) return;
   void queryClient.prefetchQuery(personQueryOptions(personId));
-  void router.prefetch({
-    pathname: '/person/[id]',
-    params: { id: String(personId) },
-  });
 }
 
 export function useEntityComments(

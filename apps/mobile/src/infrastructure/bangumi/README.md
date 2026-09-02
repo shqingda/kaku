@@ -26,10 +26,13 @@ Bangumi JSON
   -> app route
 ```
 
-Prefetch uses the same `queryOptions` as the screen hook. Expo Router
-`router.prefetch` warms the route JS; TanStack Query `prefetchQuery` /
-`prefetchInfiniteQuery` warms Bangumi data. Both start on pointer-down
-(`onPressIn`) of the control that navigates there.
+Prefetch uses the same `queryOptions` as the screen hook. TanStack Query
+`prefetchQuery` / `prefetchInfiniteQuery` warms Bangumi data on pointer-down
+(`onPressIn`). Do not call `router.prefetch` for screens that use
+`Link.AppleZoom`: Expo Router preloads the native screen before
+`ZoomTransitionEnabler` has the source id, so the zoom transition falls
+back to a plain push. `router.prefetch` is only for destinations that do
+not zoom (explore, channel, rankings, community).
 
 ## Directory roles
 
