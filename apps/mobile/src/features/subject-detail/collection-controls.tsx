@@ -16,23 +16,12 @@ import { getRatingLabel } from '@/features/reviews/rating-label';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { WatchingItem } from '@/features/watching/model';
-import {
-  canRateCollectionStatus,
-  resizeWatchedEpisodes,
-} from '@/features/watching/progress';
+import { canRateCollectionStatus } from '@/features/watching/progress';
 import { playSuccessHaptic } from '@/lib/haptics';
 
 import type { CollectionBoxDraft } from './collection-box-draft';
+import { collectionBoxUpdateFromDraft } from './collection-box-draft';
 import { CollectionBoxSheet } from './collection-box-sheet';
-
-function sameWatchedEpisodes(left: number[], right: number[]) {
-  if (left.length !== right.length) {
-    return false;
-  }
-  const sortedLeft = [...left].sort((a, b) => a - b);
-  const sortedRight = [...right].sort((a, b) => a - b);
-  return sortedLeft.every((value, index) => value === sortedRight[index]);
-}
 
 export function CollectionControls({
   item,
@@ -67,71 +56,12 @@ export function CollectionControls({
     setIsSaving(true);
 
     try {
-      const canSavePersonalData = canRateCollectionStatus(
-        draft.collectionStatus,
+      await onSave(
+        collectionBoxUpdateFromDraft(draft, item, {
+          supportsWatchProgress: supportsProgress,
+          supportsReadingProgress: supportsBookProgress,
+        }),
       );
-      const update: PersonalCollectionUpdate = {
-        collectionStatus: draft.collectionStatus ?? null,
-        comment: draft.comment,
-        isPrivate: draft.isPrivate,
-        readChapterCount:
-          supportsBookProgress && canSavePersonalData
-            ? draft.readChapterCount
-            : supportsBookProgress
-              ? 0
-              : undefined,
-        readVolumeCount:
-          supportsBookProgress && canSavePersonalData
-            ? draft.readVolumeCount
-            : supportsBookProgress
-              ? 0
-              : undefined,
-        rating: canSavePersonalData ? draft.rating : undefined,
-        tags: draft.tags,
-        watchedEpisodeNumbers:
-          canSavePersonalData && supportsProgress
-            ? resizeWatchedEpisodes(
-                item.watchedEpisodeNumbers,
-                draft.watchedCount,
-                item.totalEpisodes,
-              )
-            : supportsProgress
-              ? []
-              : undefined,
-      };
-      // Bangumi v0 API 对携带 type 或进度字段的每次 PUT 都会生成时间线
-      // 事件，而官网只在真正变化时才发。剔除与当前收藏相同的字段，让
-      // 纯吐槽/标签/可见范围编辑和私有公开切换保持安静。
-      if (
-        (update.collectionStatus ?? null) === (item.collectionStatus ?? null)
-      ) {
-        delete update.collectionStatus;
-      }
-      if (update.rating !== undefined && update.rating === item.rating) {
-        delete update.rating;
-      }
-      if (
-        update.readChapterCount !== undefined &&
-        update.readChapterCount === (item.readChapterCount ?? 0)
-      ) {
-        delete update.readChapterCount;
-      }
-      if (
-        update.readVolumeCount !== undefined &&
-        update.readVolumeCount === (item.readVolumeCount ?? 0)
-      ) {
-        delete update.readVolumeCount;
-      }
-      if (
-        update.watchedEpisodeNumbers &&
-        sameWatchedEpisodes(
-          update.watchedEpisodeNumbers,
-          item.watchedEpisodeNumbers,
-        )
-      ) {
-        delete update.watchedEpisodeNumbers;
-      }
-      await onSave(update);
       setIsOpen(false);
       playSuccessHaptic();
     } catch (error) {
@@ -264,107 +194,107 @@ export function CollectionControls({
         </Pressable>
       ) : (
         <Pressable
-        accessibilityLabel="打开收藏盒"
-        accessibilityRole="button"
-        onPress={openCollectionBox}
-        style={({ pressed }) => [
-          styles.panel,
-          pressed && styles.pressed,
-        ]}
+          accessibilityLabel="打开收藏盒"
+          accessibilityRole="button"
+          onPress={openCollectionBox}
+          style={({ pressed }) => [
+            styles.panel,
+            pressed && styles.pressed,
+          ]}
         >
-        <View style={styles.heading}>
-          <View style={styles.headingCopy}>
-            <Text style={styles.title}>收藏盒</Text>
-            <Text style={[styles.statusValue, !status && styles.emptyStatus]}>
-              {status
-                ? getCollectionStatusLabel(subjectType, status)
-                : '加入收藏'}
-            </Text>
+          <View style={styles.heading}>
+            <View style={styles.headingCopy}>
+              <Text style={styles.title}>收藏盒</Text>
+              <Text style={[styles.statusValue, !status && styles.emptyStatus]}>
+                {status
+                  ? getCollectionStatusLabel(subjectType, status)
+                  : '加入收藏'}
+              </Text>
+            </View>
+            <View style={styles.editButton}>
+              <SymbolView
+                name={{
+                  android: 'edit',
+                  ios: 'square.and.pencil',
+                  web: 'edit',
+                }}
+                size={16}
+                tintColor={colors.ink}
+                weight="semibold"
+              />
+            </View>
           </View>
-          <View style={styles.editButton}>
-            <SymbolView
-              name={{
-                android: 'edit',
-                ios: 'square.and.pencil',
-                web: 'edit',
-              }}
-              size={16}
-              tintColor={colors.ink}
-              weight="semibold"
-            />
-          </View>
-        </View>
-
-        {canShowPersonalData ? (
-          <View style={styles.details}>
-            <View style={styles.progressDetail}>
-              <View style={styles.progressHeading}>
-                <View style={styles.progressValue}>
-                  <Text
-                    style={[
-                      styles.watchedValue,
-                      hasLongProgress && styles.compactWatchedValue,
-                    ]}
-                  >
-                    {displayedProgress}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.totalValue,
-                      hasLongProgress && styles.compactTotalValue,
-                    ]}
-                  >
-                    /{displayedTotal}
-                  </Text>
-                  {supportsProgress ? (
+  
+          {canShowPersonalData ? (
+            <View style={styles.details}>
+              <View style={styles.progressDetail}>
+                <View style={styles.progressHeading}>
+                  <View style={styles.progressValue}>
                     <Text
                       style={[
-                        styles.unitValue,
-                        hasLongProgress && styles.compactUnitValue,
+                        styles.watchedValue,
+                        hasLongProgress && styles.compactWatchedValue,
                       ]}
                     >
-                      集
+                      {displayedProgress}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.totalValue,
+                        hasLongProgress && styles.compactTotalValue,
+                      ]}
+                    >
+                      /{displayedTotal}
+                    </Text>
+                    {supportsProgress ? (
+                      <Text
+                        style={[
+                          styles.unitValue,
+                          hasLongProgress && styles.compactUnitValue,
+                        ]}
+                      >
+                        集
+                      </Text>
+                    ) : null}
+                  </View>
+                  {!hasLongProgress ? (
+                    <Text style={styles.detailHint}>
+                      {supportsProgress ? '观看进度' : '条目进度'}
                     </Text>
                   ) : null}
                 </View>
-                {!hasLongProgress ? (
-                  <Text style={styles.detailHint}>
-                    {supportsProgress ? '观看进度' : '条目进度'}
-                  </Text>
-                ) : null}
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min(
+                          (displayedProgress / displayedTotal) * 100,
+                          100,
+                        )}%`,
+                      },
+                    ]}
+                  />
+                </View>
               </View>
-              <View style={styles.progressTrack}>
-                <View
+              <View style={styles.divider} />
+              <View style={styles.ratingDetail}>
+                <Text
                   style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(
-                        (displayedProgress / displayedTotal) * 100,
-                        100,
-                      )}%`,
-                    },
+                    styles.ratingLabel,
+                    !item.rating && styles.unsetText,
                   ]}
-                />
+                >
+                  {item.rating ? getRatingLabel(item.rating) : '未评分'}
+                </Text>
+                {item.rating ? (
+                  <RatingStars rating={item.rating} size={10} />
+                ) : (
+                  <Text style={styles.detailHint}>我的评分</Text>
+                )}
               </View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.ratingDetail}>
-              <Text
-                style={[
-                  styles.ratingLabel,
-                  !item.rating && styles.unsetText,
-                ]}
-              >
-                {item.rating ? getRatingLabel(item.rating) : '未评分'}
-              </Text>
-              {item.rating ? (
-                <RatingStars rating={item.rating} size={10} />
-              ) : (
-                <Text style={styles.detailHint}>我的评分</Text>
-              )}
-            </View>
-          </View>
-        ) : null}
+          ) : null}
         </Pressable>
       )}
 

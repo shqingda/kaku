@@ -7,9 +7,10 @@ import {
 } from '@/infrastructure/kaku/collections-client';
 import { queryKeys } from '@/lib/query-keys';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
-import type {
-  PersonalCollection,
-  PersonalCollectionUpdate,
+import {
+  mergePersonalCollection,
+  type PersonalCollection,
+  type PersonalCollectionUpdate,
 } from './model';
 
 export function usePersonalCollection(subjectId: number) {
@@ -52,25 +53,9 @@ export function useSavePersonalCollection(subjectId: number) {
       const previous = queryClient.getQueryData<PersonalCollection | null>(
         queryKey,
       );
-      const nextStatus =
-        update.collectionStatus ?? previous?.collectionStatus ?? null;
       queryClient.setQueryData<PersonalCollection | null>(
         queryKey,
-        nextStatus
-          ? {
-              collectionStatus: nextStatus,
-              comment: update.comment ?? previous?.comment ?? '',
-              isPrivate: update.isPrivate ?? previous?.isPrivate ?? false,
-              readChapterCount:
-                update.readChapterCount ?? previous?.readChapterCount,
-              readVolumeCount:
-                update.readVolumeCount ?? previous?.readVolumeCount,
-              rating: update.rating ?? previous?.rating,
-              subjectId,
-              tags: update.tags ?? previous?.tags ?? [],
-              watchedEpisodeNumbers: update.watchedEpisodeNumbers ?? [],
-            }
-          : null,
+        mergePersonalCollection(previous, update, subjectId),
       );
       return { previous };
     },

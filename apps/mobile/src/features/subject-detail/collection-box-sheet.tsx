@@ -25,17 +25,14 @@ import type {
 import { canRateCollectionStatus } from '@/features/watching/progress';
 
 import {
-  collectionBoxBaselineFromItem,
   collectionBoxDraftFromForm,
-  collectionBoxFormFromItem,
+  collectionBoxSessionFromItem,
   collectionInactiveNotice,
   isCollectionBoxFormDirty,
   type CollectionBoxDraft,
   type CollectionBoxForm,
 } from './collection-box-draft';
 import { playSelectionHaptic } from '@/lib/haptics';
-
-export type { CollectionBoxDraft };
 
 const STATUS_OPTIONS: CollectionStatus[] = [
   'wish',
@@ -68,9 +65,10 @@ export function CollectionBoxSheet({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const contentScrollRef = useRef<ScrollView>(null);
-  const [form, setForm] = useState<CollectionBoxForm>(() =>
-    collectionBoxFormFromItem(item),
+  const [session, setSession] = useState(() =>
+    collectionBoxSessionFromItem(item),
   );
+  const { baseline, form } = session;
   const {
     comment,
     isPrivate,
@@ -82,24 +80,23 @@ export function CollectionBoxSheet({
     tags,
     watchedCount,
   } = form;
+  const subjectType = item.type ?? 2;
   const canEditPersonalData = canRateCollectionStatus(status);
-  const showsProgress =
-    canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
-  const showsReadingProgress =
-    canEditPersonalData &&
+  const supportsReadingProgress =
     item.readChapterCount !== undefined &&
     item.readVolumeCount !== undefined;
+  const showsProgress =
+    canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
+  const showsReadingProgress = canEditPersonalData && supportsReadingProgress;
   const progressDigits = String(item.totalEpisodes).length;
   const progressTotalWidth = 22 + progressDigits * 10;
-
-  const baselineRef = useRef<CollectionBoxDraft | null>(null);
-  const isDirty = useMemo(
-    () => isCollectionBoxFormDirty(form, baselineRef.current),
-    [form],
-  );
+  const isDirty = isCollectionBoxFormDirty(form, baseline);
 
   function patchForm(patch: Partial<CollectionBoxForm>) {
-    setForm((current) => ({ ...current, ...patch }));
+    setSession((current) => ({
+      ...current,
+      form: { ...current.form, ...patch },
+    }));
   }
 
   function requestClose() {
@@ -122,9 +119,9 @@ export function CollectionBoxSheet({
       return;
     }
 
-    setForm(collectionBoxFormFromItem(item));
-    baselineRef.current = collectionBoxBaselineFromItem(item);
+    setSession(collectionBoxSessionFromItem(item));
   }, [
+    visible,
     item.collectionStatus,
     item.rating,
     item.comment,
@@ -133,7 +130,6 @@ export function CollectionBoxSheet({
     item.readVolumeCount,
     item.tags,
     item.watchedEpisodeNumbers.length,
-    visible,
   ]);
 
   function save() {
@@ -148,11 +144,7 @@ export function CollectionBoxSheet({
       return;
     }
 
-    setForm((current) => ({
-      ...current,
-      tagDraft: '',
-      tags: [...current.tags, nextTag],
-    }));
+    patchForm({ tagDraft: '', tags: [...tags, nextTag] });
   }
 
   return (
@@ -190,368 +182,367 @@ export function CollectionBoxSheet({
           </Pressable>
         </View>
 
-          <ScrollView
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-            ref={contentScrollRef}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>收藏状态</Text>
-              <View
-                accessibilityLabel="收藏状态"
-                accessibilityRole="radiogroup"
-                style={styles.statusOptions}
-              >
-                {STATUS_OPTIONS.map((option) => {
-                  const isSelected = status === option;
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          ref={contentScrollRef}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>收藏状态</Text>
+            <View
+              accessibilityLabel="收藏状态"
+              accessibilityRole="radiogroup"
+              style={styles.statusOptions}
+            >
+              {STATUS_OPTIONS.map((option) => {
+                const isSelected = status === option;
 
-                  return (
-                    <Pressable
-                      accessibilityLabel={getCollectionStatusLabel(
-                        item.type ?? 2,
-                        option,
-                      )}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: isSelected }}
-                      key={option}
-                      onPress={() => {
-                        playSelectionHaptic();
-                        patchForm({ status: option });
-                      }}
-                      style={({ pressed }) => [
-                        styles.statusOption,
-                        isSelected && styles.selectedStatusOption,
-                        pressed && styles.pressed,
+                return (
+                  <Pressable
+                    accessibilityLabel={getCollectionStatusLabel(
+                      subjectType,
+                      option,
+                    )}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    key={option}
+                    onPress={() => {
+                      playSelectionHaptic();
+                      patchForm({ status: option });
+                    }}
+                    style={({ pressed }) => [
+                      styles.statusOption,
+                      isSelected && styles.selectedStatusOption,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        isSelected && styles.selectedStatusText,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.statusText,
-                          isSelected && styles.selectedStatusText,
-                        ]}
-                      >
-                        {getCollectionStatusLabel(item.type ?? 2, option)}
-                      </Text>
-                      <View
-                        style={[
-                          styles.selectionIndicator,
-                          isSelected && styles.selectedIndicator,
-                        ]}
-                      >
-                        {isSelected ? (
-                          <SymbolView
-                            name={{
-                              android: 'check',
-                              ios: 'checkmark',
-                              web: 'check',
-                            }}
-                            size={12}
-                            tintColor={colors.surface}
-                            weight="bold"
-                          />
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>个人记录</Text>
-              <View style={styles.records}>
-                {showsProgress ? (
-                  <>
-                    <View style={styles.recordRow}>
-                      <Text style={styles.recordTitle}>观看进度</Text>
-                      <View style={styles.progressField}>
-                        <View style={styles.progressControl}>
-                          <TextInput
-                            accessibilityLabel="已看集数"
-                            keyboardType="number-pad"
-                            onChangeText={(value) =>
-                              patchForm({
-                                watchedCount: value.replace(/\D/g, ''),
-                              })
-                            }
-                            selectTextOnFocus
-                            style={styles.progressInput}
-                            value={watchedCount}
-                          />
-                        </View>
-                        <TextInput
-                          accessibilityElementsHidden
-                          editable={false}
-                          importantForAccessibility="no"
-                          style={[
-                            styles.progressTotal,
-                            { width: progressTotalWidth },
-                          ]}
-                          value={`/ ${item.totalEpisodes}`}
-                        />
-                      </View>
-                    </View>
-                    <View style={styles.recordDivider} />
-                  </>
-                ) : null}
-
-                {showsReadingProgress ? (
-                  <>
-                    <View style={styles.recordRow}>
-                      <Text style={styles.recordTitle}>阅读进度</Text>
-                      <View style={styles.readingFields}>
-                        <View style={styles.readingField}>
-                          <TextInput
-                            accessibilityLabel="已读章节"
-                            keyboardType="number-pad"
-                            onChangeText={(value) =>
-                              patchForm({
-                                readChapterCount: value.replace(/\D/g, ''),
-                              })
-                            }
-                            selectTextOnFocus
-                            style={styles.readingInput}
-                            value={readChapterCount}
-                          />
-                          <Text style={styles.readingUnit}>章</Text>
-                        </View>
-                        <View style={styles.readingField}>
-                          <TextInput
-                            accessibilityLabel="已读卷数"
-                            keyboardType="number-pad"
-                            onChangeText={(value) =>
-                              patchForm({
-                                readVolumeCount: value.replace(/\D/g, ''),
-                              })
-                            }
-                            selectTextOnFocus
-                            style={styles.readingInput}
-                            value={readVolumeCount}
-                          />
-                          <Text style={styles.readingUnit}>卷</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.recordDivider} />
-                  </>
-                ) : null}
-
-                {canEditPersonalData ? (
-                  <View style={styles.ratingRecord}>
-                    <View style={styles.ratingHeading}>
-                      <Text style={styles.recordTitle}>我的评分</Text>
-                      {rating ? (
-                        <View style={styles.currentRating}>
-                          <RatingStars rating={rating} size={12} />
-                          <Text style={styles.currentRatingText}>
-                            {rating} 分
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.unsetText}>未评分</Text>
-                      )}
-                    </View>
-                    <View style={styles.ratingOptions}>
-                      {RATING_OPTIONS.map((option) => {
-                        const isSelected = rating === option;
-
-                        return (
-                          <Pressable
-                            accessibilityLabel={`${option} 分`}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: isSelected }}
-                            key={option}
-                            onPress={() => {
-                              playSelectionHaptic();
-                              patchForm({
-                                rating: isSelected ? undefined : option,
-                              });
-                            }}
-                            style={({ pressed }) => [
-                              styles.ratingOption,
-                              isSelected && styles.selectedRatingOption,
-                              pressed && styles.pressed,
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.ratingOptionText,
-                                isSelected &&
-                                  styles.selectedRatingOptionText,
-                              ]}
-                            >
-                              {option}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.inactiveNotice}>
-                    <SymbolView
-                      name={{
-                        android: 'info',
-                        ios: 'info.circle',
-                        web: 'info',
-                      }}
-                      size={15}
-                      tintColor={colors.subtle}
-                    />
-                    <Text style={styles.inactiveNoticeText}>
-                      {collectionInactiveNotice(
-                        status,
-                        item.type ?? 2,
-                        supportsProgress,
-                        item.readChapterCount !== undefined,
-                      )}
+                      {getCollectionStatusLabel(subjectType, option)}
                     </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {item.comment !== undefined ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>吐槽</Text>
-                <TextInput
-                  accessibilityLabel="吐槽"
-                  maxLength={1000}
-                  multiline
-                  onChangeText={(value) => patchForm({ comment: value })}
-                  onFocus={() => {
-                    setTimeout(() => {
-                      contentScrollRef.current?.scrollToEnd({ animated: true });
-                    }, 250);
-                  }}
-                  placeholder="写下你对这个条目的简短记录"
-                  placeholderTextColor={colors.subtle}
-                  style={styles.commentInput}
-                  textAlignVertical="top"
-                  value={comment}
-                />
-              </View>
-            ) : null}
-
-            {item.tags !== undefined ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>收藏标签</Text>
-                <View style={styles.tagsEditor}>
-                  {tags.map((tag) => (
-                    <View key={tag} style={styles.tagChip}>
-                      <Text numberOfLines={1} style={styles.tagText}>
-                        {tag}
-                      </Text>
-                      <Pressable
-                        accessibilityLabel={`删除标签 ${tag}`}
-                        accessibilityRole="button"
-                        hitSlop={6}
-                        onPress={() =>
-                          setForm((current) => ({
-                            ...current,
-                            tags: current.tags.filter(
-                              (currentTag) => currentTag !== tag,
-                            ),
-                          }))
-                        }
-                      >
+                    <View
+                      style={[
+                        styles.selectionIndicator,
+                        isSelected && styles.selectedIndicator,
+                      ]}
+                    >
+                      {isSelected ? (
                         <SymbolView
                           name={{
-                            android: 'close',
-                            ios: 'xmark',
-                            web: 'close',
+                            android: 'check',
+                            ios: 'checkmark',
+                            web: 'check',
                           }}
-                          size={10}
-                          tintColor={colors.muted}
-                          weight="semibold"
+                          size={12}
+                          tintColor={colors.surface}
+                          weight="bold"
                         />
-                      </Pressable>
+                      ) : null}
                     </View>
-                  ))}
-                  <TextInput
-                    accessibilityLabel="添加收藏标签"
-                    autoCapitalize="none"
-                    onChangeText={(value) =>
-                      patchForm({ tagDraft: value.replace(/\s/g, '') })
-                    }
-                    onSubmitEditing={addTag}
-                    placeholder={
-                      tags.length === 0 ? '输入标签后按回车' : '添加标签'
-                    }
-                    placeholderTextColor={colors.subtle}
-                    returnKeyType="done"
-                    style={styles.tagInput}
-                    value={tagDraft}
-                  />
-                </View>
-              </View>
-            ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
 
-            {item.isPrivate !== undefined ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>可见范围</Text>
-                <View style={styles.privacyRow}>
-                  <View style={styles.privacyCopy}>
-                    <Text style={styles.privacyTitle}>仅自己可见</Text>
-                    <Text style={styles.privacyDescription}>
-                      隐藏这条收藏记录
-                    </Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>个人记录</Text>
+            <View style={styles.records}>
+              {showsProgress ? (
+                <>
+                  <View style={styles.recordRow}>
+                    <Text style={styles.recordTitle}>观看进度</Text>
+                    <View style={styles.progressField}>
+                      <View style={styles.progressControl}>
+                        <TextInput
+                          accessibilityLabel="已看集数"
+                          keyboardType="number-pad"
+                          onChangeText={(value) =>
+                            patchForm({
+                              watchedCount: value.replace(/\D/g, ''),
+                            })
+                          }
+                          selectTextOnFocus
+                          style={styles.progressInput}
+                          value={watchedCount}
+                        />
+                      </View>
+                      <TextInput
+                        accessibilityElementsHidden
+                        editable={false}
+                        importantForAccessibility="no"
+                        style={[
+                          styles.progressTotal,
+                          { width: progressTotalWidth },
+                        ]}
+                        value={`/ ${item.totalEpisodes}`}
+                      />
+                    </View>
                   </View>
-                  <Switch
-                    accessibilityLabel="仅自己可见"
-                    ios_backgroundColor={colors.track}
-                    onValueChange={(value) => patchForm({ isPrivate: value })}
-                    trackColor={{
-                      false: colors.track,
-                      true: colors.accentSoft,
-                    }}
-                    value={isPrivate}
-                  />
-                </View>
-              </View>
-            ) : null}
-            <View style={styles.footer}>
-              {item.collectionStatus ? (
-                <Pressable
-                  accessibilityLabel="取消收藏"
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: isSaving }}
-                  disabled={isSaving}
-                  onPress={onRemove}
-                  style={({ pressed }) => [
-                    styles.footerButton,
-                    styles.removeButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.removeText}>取消收藏</Text>
-                </Pressable>
+                  <View style={styles.recordDivider} />
+                </>
               ) : null}
+
+              {showsReadingProgress ? (
+                <>
+                  <View style={styles.recordRow}>
+                    <Text style={styles.recordTitle}>阅读进度</Text>
+                    <View style={styles.readingFields}>
+                      <View style={styles.readingField}>
+                        <TextInput
+                          accessibilityLabel="已读章节"
+                          keyboardType="number-pad"
+                          onChangeText={(value) =>
+                            patchForm({
+                              readChapterCount: value.replace(/\D/g, ''),
+                            })
+                          }
+                          selectTextOnFocus
+                          style={styles.readingInput}
+                          value={readChapterCount}
+                        />
+                        <Text style={styles.readingUnit}>章</Text>
+                      </View>
+                      <View style={styles.readingField}>
+                        <TextInput
+                          accessibilityLabel="已读卷数"
+                          keyboardType="number-pad"
+                          onChangeText={(value) =>
+                            patchForm({
+                              readVolumeCount: value.replace(/\D/g, ''),
+                            })
+                          }
+                          selectTextOnFocus
+                          style={styles.readingInput}
+                          value={readVolumeCount}
+                        />
+                        <Text style={styles.readingUnit}>卷</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.recordDivider} />
+                </>
+              ) : null}
+
+              {canEditPersonalData ? (
+                <View style={styles.ratingRecord}>
+                  <View style={styles.ratingHeading}>
+                    <Text style={styles.recordTitle}>我的评分</Text>
+                    {rating ? (
+                      <View style={styles.currentRating}>
+                        <RatingStars rating={rating} size={12} />
+                        <Text style={styles.currentRatingText}>
+                          {rating} 分
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.unsetText}>未评分</Text>
+                    )}
+                  </View>
+                  <View style={styles.ratingOptions}>
+                    {RATING_OPTIONS.map((option) => {
+                      const isSelected = rating === option;
+
+                      return (
+                        <Pressable
+                          accessibilityLabel={`${option} 分`}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isSelected }}
+                          key={option}
+                          onPress={() => {
+                            playSelectionHaptic();
+                            patchForm({
+                              rating: isSelected ? undefined : option,
+                            });
+                          }}
+                          style={({ pressed }) => [
+                            styles.ratingOption,
+                            isSelected && styles.selectedRatingOption,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.ratingOptionText,
+                              isSelected &&
+                                styles.selectedRatingOptionText,
+                            ]}
+                          >
+                            {option}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.inactiveNotice}>
+                  <SymbolView
+                    name={{
+                      android: 'info',
+                      ios: 'info.circle',
+                      web: 'info',
+                    }}
+                    size={15}
+                    tintColor={colors.subtle}
+                  />
+                  <Text style={styles.inactiveNoticeText}>
+                    {collectionInactiveNotice(
+                      status,
+                      subjectType,
+                      supportsProgress,
+                      supportsReadingProgress,
+                    )}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {item.comment !== undefined ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>吐槽</Text>
+              <TextInput
+                accessibilityLabel="吐槽"
+                maxLength={1000}
+                multiline
+                onChangeText={(value) => patchForm({ comment: value })}
+                onFocus={() => {
+                  setTimeout(() => {
+                    contentScrollRef.current?.scrollToEnd({ animated: true });
+                  }, 250);
+                }}
+                placeholder="写下你对这个条目的简短记录"
+                placeholderTextColor={colors.subtle}
+                style={styles.commentInput}
+                textAlignVertical="top"
+                value={comment}
+              />
+            </View>
+          ) : null}
+
+          {item.tags !== undefined ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>收藏标签</Text>
+              <View style={styles.tagsEditor}>
+                {tags.map((tag) => (
+                  <View key={tag} style={styles.tagChip}>
+                    <Text numberOfLines={1} style={styles.tagText}>
+                      {tag}
+                    </Text>
+                    <Pressable
+                      accessibilityLabel={`删除标签 ${tag}`}
+                      accessibilityRole="button"
+                      hitSlop={6}
+                      onPress={() =>
+                        patchForm({
+                          tags: tags.filter(
+                            (currentTag) => currentTag !== tag,
+                          ),
+                        })
+                      }
+                    >
+                      <SymbolView
+                        name={{
+                          android: 'close',
+                          ios: 'xmark',
+                          web: 'close',
+                        }}
+                        size={10}
+                        tintColor={colors.muted}
+                        weight="semibold"
+                      />
+                    </Pressable>
+                  </View>
+                ))}
+                <TextInput
+                  accessibilityLabel="添加收藏标签"
+                  autoCapitalize="none"
+                  onChangeText={(value) =>
+                    patchForm({ tagDraft: value.replace(/\s/g, '') })
+                  }
+                  onSubmitEditing={addTag}
+                  placeholder={
+                    tags.length === 0 ? '输入标签后按回车' : '添加标签'
+                  }
+                  placeholderTextColor={colors.subtle}
+                  returnKeyType="done"
+                  style={styles.tagInput}
+                  value={tagDraft}
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {item.isPrivate !== undefined ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>可见范围</Text>
+              <View style={styles.privacyRow}>
+                <View style={styles.privacyCopy}>
+                  <Text style={styles.privacyTitle}>仅自己可见</Text>
+                  <Text style={styles.privacyDescription}>
+                    隐藏这条收藏记录
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="仅自己可见"
+                  ios_backgroundColor={colors.track}
+                  onValueChange={(value) => patchForm({ isPrivate: value })}
+                  trackColor={{
+                    false: colors.track,
+                    true: colors.accentSoft,
+                  }}
+                  value={isPrivate}
+                />
+              </View>
+            </View>
+          ) : null}
+          <View style={styles.footer}>
+            {item.collectionStatus ? (
               <Pressable
-                accessibilityLabel={status ? '保存收藏' : '请先选择收藏状态'}
+                accessibilityLabel="取消收藏"
                 accessibilityRole="button"
-                accessibilityState={{ disabled: !status || isSaving }}
-                disabled={!status || isSaving}
-                onPress={save}
+                accessibilityState={{ disabled: isSaving }}
+                disabled={isSaving}
+                onPress={onRemove}
                 style={({ pressed }) => [
                   styles.footerButton,
-                  styles.saveButton,
-                  (!status || isSaving) && styles.disabledButton,
+                  styles.removeButton,
                   pressed && styles.pressed,
                 ]}
               >
-                {isSaving ? (
-                  <ActivityIndicator color={colors.surface} />
-                ) : (
-                  <Text style={styles.saveText}>
-                    {status ? '保存' : '选择状态'}
-                  </Text>
-                )}
+                <Text style={styles.removeText}>取消收藏</Text>
               </Pressable>
-            </View>
-          </ScrollView>
-        </View>
+            ) : null}
+            <Pressable
+              accessibilityLabel={status ? '保存收藏' : '请先选择收藏状态'}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !status || isSaving }}
+              disabled={!status || isSaving}
+              onPress={save}
+              style={({ pressed }) => [
+                styles.footerButton,
+                styles.saveButton,
+                (!status || isSaving) && styles.disabledButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              {isSaving ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <Text style={styles.saveText}>
+                  {status ? '保存' : '选择状态'}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
     </AppSheet>
   );
 }

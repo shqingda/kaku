@@ -1,8 +1,12 @@
+import type { PersonalCollectionUpdate } from '../collections/model.ts';
 import type {
   CollectionStatus,
   WatchingItem,
 } from '../watching/model.ts';
-import { canRateCollectionStatus } from '../watching/progress.ts';
+import {
+  canRateCollectionStatus,
+  resizeWatchedEpisodes,
+} from '../watching/progress.ts';
 import { getCollectionStatusLabel } from '../catalog/subject-types.ts';
 
 export type CollectionBoxDraft = {
@@ -59,16 +63,26 @@ export function collectionBoxBaselineFromItem(
   };
 }
 
+export type CollectionBoxSession = {
+  baseline: CollectionBoxDraft;
+  form: CollectionBoxForm;
+};
+
+export function collectionBoxSessionFromItem(
+  item: WatchingItem,
+): CollectionBoxSession {
+  return {
+    baseline: collectionBoxBaselineFromItem(item),
+    form: collectionBoxFormFromItem(item),
+  };
+}
+
 export function isCollectionBoxFormDirty(
   form: CollectionBoxForm,
-  baseline: CollectionBoxDraft | null,
+  baseline: CollectionBoxDraft,
 ) {
-  if (!baseline) {
-    return false;
-  }
-
   return (
-    (form.status ?? undefined) !== (baseline.collectionStatus ?? undefined) ||
+    form.status !== baseline.collectionStatus ||
     Number(form.watchedCount) !== baseline.watchedCount ||
     form.rating !== baseline.rating ||
     form.comment !== baseline.comment ||
@@ -117,6 +131,119 @@ export function collectionBoxDraftFromForm(
   };
 }
 
+export type CollectionBoxCapabilities = {
+  supportsWatchProgress: boolean;
+  supportsReadingProgress: boolean;
+};
+
+// Bangumi v0 API 对携带 type/rate/进度字段的每次 PUT 都会生成时间线事件，
+// 而官网只在真正变化时才发。这里把草稿映射成更新字段，并剔除与当前收藏
+// 相同的字段，让纯吐槽/标签/可见范围编辑和私有公开切换保持安静。
+export function collectionBoxUpdateFromDraft(
+  draft: CollectionBoxDraft,
+  item: WatchingItem,
+  capabilities: CollectionBoxCapabilities,
+): PersonalCollectionUpdate {
+  const isActive = canRateCollectionStatus(draft.collectionStatus);
+
+  return omitUnchanged(
+    {
+      collectionStatus: draft.collectionStatus ?? null,
+      comment: draft.comment,
+      isPrivate: draft.isPrivate,
+      rating: isActive ? draft.rating : undefined,
+      readChapterCount: recordProgressCount(
+        capabilities.supportsReadingProgress,
+        isActive,
+        draft.readChapterCount,
+      ),
+      readVolumeCount: recordProgressCount(
+        capabilities.supportsReadingProgress,
+        isActive,
+        draft.readVolumeCount,
+      ),
+      tags: draft.tags,
+      watchedEpisodeNumbers: recordWatchedEpisodes(
+        capabilities.supportsWatchProgress,
+        isActive,
+        draft,
+        item,
+      ),
+    },
+    item,
+  );
+}
+
+function recordProgressCount(
+  supported: boolean,
+  isActive: boolean,
+  count: number | undefined,
+) {
+  if (!supported) {
+    return undefined;
+  }
+
+  return isActive ? count : 0;
+}
+
+function recordWatchedEpisodes(
+  supported: boolean,
+  isActive: boolean,
+  draft: CollectionBoxDraft,
+  item: WatchingItem,
+) {
+  if (!supported) {
+    return undefined;
+  }
+
+  return isActive
+    ? resizeWatchedEpisodes(
+        item.watchedEpisodeNumbers,
+        draft.watchedCount,
+        item.totalEpisodes,
+      )
+    : [];
+}
+
+function omitUnchanged(
+  update: PersonalCollectionUpdate,
+  item: WatchingItem,
+): PersonalCollectionUpdate {
+  const result = { ...update };
+
+  if (
+    (result.collectionStatus ?? null) === (item.collectionStatus ?? null)
+  ) {
+    delete result.collectionStatus;
+  }
+  if (result.rating !== undefined && result.rating === item.rating) {
+    delete result.rating;
+  }
+  if (
+    result.readChapterCount !== undefined &&
+    result.readChapterCount === (item.readChapterCount ?? 0)
+  ) {
+    delete result.readChapterCount;
+  }
+  if (
+    result.readVolumeCount !== undefined &&
+    result.readVolumeCount === (item.readVolumeCount ?? 0)
+  ) {
+    delete result.readVolumeCount;
+  }
+  if (
+    result.watchedEpisodeNumbers &&
+    sameWatchedEpisodes(
+      result.watchedEpisodeNumbers,
+      item.watchedEpisodeNumbers,
+    )
+  ) {
+    delete result.watchedEpisodeNumbers;
+  }
+
+  return result;
+}
+
 export function collectionInactiveNotice(
   status: CollectionStatus | undefined,
   subjectType: number,
@@ -150,4 +277,13 @@ function tagsDiffer(current: string[], expected: string[]) {
   }
 
   return current.some((tag, index) => tag !== expected[index]);
+}
+
+function sameWatchedEpisodes(left: number[], right: number[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const sortedLeft = [...left].sort((a, b) => a - b);
+  const sortedRight = [...right].sort((a, b) => a - b);
+  return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
