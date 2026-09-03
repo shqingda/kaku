@@ -173,8 +173,15 @@ export function AppSheet({
           (finished) => {
             if (!finished) return;
             if (translateY.value < dismissDistance) {
-              // 投影与判定一致，正常情况下不会走到这里；兜底滑完剩余距离。
-              translateY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING);
+              // 投影与判定一致，正常情况下不会走到这里；兜底滑完剩余距离，
+              // 滑到后同样要回调 onClose，否则弹层已离屏但 visible 仍为 true。
+              translateY.value = withSpring(
+                windowHeight,
+                SHEET_DISMISS_SPRING,
+                (done) => {
+                  if (done) runOnJS(onClose)();
+                },
+              );
               return;
             }
             runOnJS(onClose)();
