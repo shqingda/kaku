@@ -18,6 +18,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withDecay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -248,10 +249,22 @@ export function FullscreenImageViewer({
         return;
       }
       if (shouldDismissSheet(dismissY.value, event.velocityY, dismissDistance)) {
-        dismissY.value = withTiming(windowHeight, { duration: 220 }, (finished) => {
-          if (finished) runOnJS(onClose)();
-        });
-        dismissOpacity.value = withTiming(0, { duration: 220 });
+        // 甩动关闭：以手指速度继续减速滑出（速度交接），惯性停在屏幕内时
+        // 用弹簧滑完剩余距离再收起，保证任何速度下都能完成关闭。
+        dismissOpacity.value = withTiming(0, { duration: 200 });
+        dismissY.value = withDecay(
+          { deceleration: 0.997, velocity: Math.max(event.velocityY, 600) },
+          (finished) => {
+            if (!finished) return;
+            if (dismissY.value >= windowHeight * 0.95) {
+              runOnJS(onClose)();
+              return;
+            }
+            dismissY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING, (done) => {
+              if (done) runOnJS(onClose)();
+            });
+          },
+        );
         return;
       }
       dismissY.value = withSpring(0, SHEET_DISMISS_SPRING);

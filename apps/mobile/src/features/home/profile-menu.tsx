@@ -1,10 +1,9 @@
-import { type ComponentProps, useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Animated,
-  AccessibilityInfo,
   Dimensions,
   Modal,
   Platform,
@@ -18,10 +17,14 @@ import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { AuthSession } from '@/features/auth/model';
 import { useNotifications } from '@/features/notifications/use-notifications';
+import { useReduceMotion } from '@/lib/use-reduce-motion';
 import { useTheme } from '@/features/theme/theme-provider';
 
 const MENU_WIDTH = 252;
 const MENU_EDGE_MARGIN = 12;
+// 菜单不是动量驱动的手势，用临界阻尼弹簧（ratio ≈ 1.0），
+// 打开与关闭走同一条路径，随时可以从当前值中断并反向。
+const MENU_SPRING = { damping: 37, mass: 1, stiffness: 340 } as const;
 
 export function ProfileMenu({ session }: { session: AuthSession }) {
   const colors = useTheme();
@@ -31,23 +34,13 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
   const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
   const triggerRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReduceMotion();
   const [anchor, setAnchor] = useState({
     right: 0,
     top: 0,
   });
   const progress = useRef(new Animated.Value(0)).current;
   const useNativeDriver = Platform.OS !== 'web';
-
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setReduceMotion,
-    );
-
-    return () => subscription.remove();
-  }, []);
 
   function openMenu() {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
@@ -57,34 +50,36 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
         top: y + height + 8,
       });
       setVisible(true);
-      progress.stopAnimation();
-      progress.setValue(0);
       if (reduceMotion) {
+        progress.stopAnimation();
         progress.setValue(1);
         return;
       }
+      // 不先归零：再次打开时从当前值继续，动画可中断。
+      progress.stopAnimation();
       Animated.spring(progress, {
-        damping: 24,
-        mass: 0.9,
-        stiffness: 340,
         toValue: 1,
         useNativeDriver,
+        ...MENU_SPRING,
       }).start();
     });
   }
 
   function closeMenu() {
-    progress.stopAnimation();
     if (reduceMotion) {
+      progress.stopAnimation();
       progress.setValue(0);
       setVisible(false);
       return;
     }
-    Animated.timing(progress, {
-      duration: 110,
+    progress.stopAnimation();
+    Animated.spring(progress, {
       toValue: 0,
       useNativeDriver,
-    }).start(() => setVisible(false));
+      ...MENU_SPRING,
+    }).start(({ finished }) => {
+      if (finished) setVisible(false);
+    });
   }
 
   function goToAccount() {
