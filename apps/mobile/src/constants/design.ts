@@ -1,9 +1,3 @@
-import { LIGHT_COLORS } from './theme';
-
-// 兼容旧引用：未迁移到 useTheme() 的组件仍使用浅色常量。
-// 新增 token 见 constants/theme.ts。
-export const COLORS = LIGHT_COLORS;
-
 // 间距阶梯：一致的呼吸感。页面级区块间距优先取 xl/xxl，卡片内取 md/lg。
 export const SPACING = {
   xs: 4,

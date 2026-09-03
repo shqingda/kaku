@@ -91,6 +91,54 @@ export default function RootLayout() {
   );
 }
 
+// 带标题栏的屏幕：[路由名, 标题]。样式由 RootNavigator 统一下发，
+// 只有首页、登录回调和条目详情需要单独的配置。
+const TITLED_SCREENS = [
+  ['timeline', '好友动态'],
+  ['account', '账户'],
+  ['settings', '外观与同步'],
+  ['about', '关于 Kaku'],
+  ['diagnostics', '诊断信息'],
+  ['changelog', '更新日志'],
+  ['network-status', '网络诊断'],
+  ['privacy', '隐私政策'],
+  ['notifications', '通知'],
+  ['blog/[id]', '日志'],
+  ['blogs', '日志'],
+  ['community', '社区'],
+  ['channel/[type]', '频道'],
+  ['calendar', '每日放送'],
+  ['browse', '分类浏览'],
+  ['tags', '标签索引'],
+  ['wiki', '维基动态'],
+  ['group/[name]', '小组'],
+  ['group/topic/[id]', '小组话题'],
+  ['directory/[id]', '目录'],
+  ['directories', '目录发现'],
+  ['people', '人物'],
+  ['character/[id]', '角色详情'],
+  ['person/[id]', '人物详情'],
+  ['user/[username]', '用户主页'],
+  ['user/collections/[username]', '收藏'],
+  ['user/blogs/[username]', '日志'],
+  ['user/friends/[username]', '好友'],
+  ['user/entities/[username]', '角色与人物'],
+  ['user/timeline/[username]', '时间线'],
+  ['explore', '综合'],
+  ['rankings', '排行榜'],
+  ['subject/[id]/topic/[topicId]', '讨论'],
+  ['subject/[id]/discussions', '讨论版'],
+  ['subject/[id]/episode/[episodeNumber]', ''],
+  ['subject/[id]/characters', '角色与声优'],
+  ['subject/[id]/info', '条目资料'],
+  ['subject/[id]/indexes', '目录'],
+  ['subject/[id]/relations', '关联条目'],
+  ['subject/[id]/comments', '吐槽箱'],
+  ['subject/[id]/reviews', '评论'],
+  ['subject/[id]/review/[reviewId]', '评论'],
+  ['subject/[id]/staff', '制作人员'],
+] as const;
+
 function RootNavigator() {
   const colors = useTheme();
   const scheme = useThemeScheme();
@@ -132,403 +180,28 @@ function RootNavigator() {
           headerTitleStyle: { color: colors.ink },
         }}
       >
-          <Stack.Screen name="index" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="auth/callback" />
+        <Stack.Screen
+          name="subject/[id]"
+          options={{
+            autoHideHomeIndicator: true,
+            headerShown: false,
+          }}
+        />
+        {TITLED_SCREENS.map(([name, title]) => (
           <Stack.Screen
-            name="timeline"
+            key={name}
+            name={name}
             options={{
               headerBackButtonDisplayMode: 'minimal',
               headerShown: true,
               headerShadowVisible: false,
-              title: '好友动态',
+              title,
             }}
           />
-          <Stack.Screen
-            name="account"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '账户',
-            }}
-          />
-          <Stack.Screen
-            name="settings"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '外观与同步',
-            }}
-          />
-          <Stack.Screen
-            name="about"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '关于 Kaku',
-            }}
-          />
-          <Stack.Screen
-            name="diagnostics"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '诊断信息',
-            }}
-          />
-          <Stack.Screen
-            name="changelog"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '更新日志',
-            }}
-          />
-          <Stack.Screen
-            name="network-status"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '网络诊断',
-            }}
-          />
-          <Stack.Screen
-            name="privacy"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '隐私政策',
-            }}
-          />
-          <Stack.Screen
-            name="notifications"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '通知',
-            }}
-          />
-          <Stack.Screen name="auth/callback" />
-          <Stack.Screen
-            name="blog/[id]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '日志',
-            }}
-          />
-          <Stack.Screen
-            name="blogs"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '日志',
-            }}
-          />
-          <Stack.Screen
-            name="community"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '社区',
-            }}
-          />
-          <Stack.Screen
-            name="channel/[type]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '频道',
-            }}
-          />
-          <Stack.Screen
-            name="calendar"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '每日放送',
-            }}
-          />
-          <Stack.Screen
-            name="browse"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '分类浏览',
-            }}
-          />
-          <Stack.Screen
-            name="tags"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '标签索引',
-            }}
-          />
-          <Stack.Screen
-            name="wiki"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '维基动态',
-            }}
-          />
-          <Stack.Screen
-            name="group/[name]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '小组',
-            }}
-          />
-          <Stack.Screen
-            name="group/topic/[id]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '小组话题',
-            }}
-          />
-          <Stack.Screen
-            name="directory/[id]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '目录',
-            }}
-          />
-          <Stack.Screen
-            name="directories"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '目录发现',
-            }}
-          />
-          <Stack.Screen
-            name="people"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '人物',
-            }}
-          />
-          <Stack.Screen
-            name="character/[id]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '角色详情',
-            }}
-          />
-          <Stack.Screen
-            name="person/[id]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '人物详情',
-            }}
-          />
-          <Stack.Screen
-            name="user/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '用户主页',
-            }}
-          />
-          <Stack.Screen
-            name="user/collections/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '收藏',
-            }}
-          />
-          <Stack.Screen
-            name="user/blogs/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '日志',
-            }}
-          />
-          <Stack.Screen
-            name="user/friends/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '好友',
-            }}
-          />
-          <Stack.Screen
-            name="user/entities/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '角色与人物',
-            }}
-          />
-          <Stack.Screen
-            name="user/timeline/[username]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '时间线',
-            }}
-          />
-          <Stack.Screen
-            name="explore"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '综合',
-            }}
-          />
-          <Stack.Screen
-            name="rankings"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '排行榜',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]"
-            options={{
-              autoHideHomeIndicator: true,
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/topic/[topicId]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '讨论',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/discussions"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '讨论版',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/episode/[episodeNumber]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/characters"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '角色与声优',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/info"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '条目资料',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/indexes"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '目录',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/relations"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '关联条目',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/comments"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '吐槽箱',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/reviews"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '评论',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/review/[reviewId]"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '评论',
-            }}
-          />
-          <Stack.Screen
-            name="subject/[id]/staff"
-            options={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerShown: true,
-              headerShadowVisible: false,
-              title: '制作人员',
-            }}
-          />
-          </Stack>
+        ))}
+      </Stack>
       <OfflineBanner />
     </>
   );
