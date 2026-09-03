@@ -28,6 +28,7 @@ import {
 } from '@/features/discover/use-discover';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
+import { PressableScale } from '@/features/shared/pressable-scale';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -390,7 +391,7 @@ function QuickActionRow({
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityHint={meta}
@@ -426,7 +427,7 @@ function QuickActionRow({
           tintColor={colors.subtle}
           weight="semibold"
         />
-    </Pressable>
+    </PressableScale>
   );
 }
 

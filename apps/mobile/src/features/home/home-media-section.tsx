@@ -2,7 +2,6 @@ import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
 import { useMemo } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +15,7 @@ import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
+import { SkeletonBox } from '@/features/shared/skeleton';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
 
@@ -93,9 +93,15 @@ export function HomeMediaSection({
       />
 
       {loading ? (
-        <View style={styles.state}>
-          <ActivityIndicator color={colors.accent} size="small" />
-          <Text style={styles.stateText}>正在读取</Text>
+        // 与封面卡同构的骨架：宽度和圆角一致，数据到达时不跳版。
+        <View style={styles.skeletonRow}>
+          {[0, 1, 2, 3].map((index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <SkeletonBox borderRadius={14} height={146} width={104} />
+              <SkeletonBox height={13} width="88%" />
+              <SkeletonBox height={11} width="55%" />
+            </View>
+          ))}
         </View>
       ) : error && items.length === 0 ? (
         <Pressable
@@ -212,6 +218,17 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   typeTabs: { paddingBottom: 2, paddingTop: 4 },
   cachedNotice: { marginTop: 10 },
   list: { gap: 13, paddingRight: 4, paddingTop: 10 },
+  skeletonRow: {
+    flexDirection: 'row',
+    gap: 13,
+    marginTop: 10,
+    paddingRight: 4,
+  },
+  skeletonCard: {
+    alignItems: 'flex-start',
+    gap: 9,
+    width: 104,
+  },
   card: { width: 104 },
   cardButton: { width: '100%' },
   cover: {

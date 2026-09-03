@@ -36,6 +36,7 @@ import {
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { HeaderIconButton } from '@/features/shared/header-icon-button';
+import { SkeletonBox } from '@/features/shared/skeleton';
 import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
@@ -318,9 +319,13 @@ export default function SubjectScreen() {
           onPress={() => router.dismissTo('/')}
           top={insets.top + bannerOffset}
         />
-        <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>正在读取条目</Text>
-          <Text style={styles.errorText}>正在从 Bangumi 获取公开资料。</Text>
+        {/* 骨架与真实布局同构：封面、年份、标题、收藏盒、简介，数据到达时不跳版。 */}
+        <View style={styles.skeleton}>
+          <SkeletonBox borderRadius={24} height={238} width={170} />
+          <SkeletonBox height={18} width={96} />
+          <SkeletonBox height={26} width="62%" />
+          <SkeletonBox borderRadius={22} height={132} width="100%" />
+          <SkeletonBox borderRadius={22} height={168} width="100%" />
         </View>
       </View>
     );
@@ -707,6 +712,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   pressed: { opacity: 0.62 },
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
+  skeleton: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
   errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
   errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
   errorRetry: {
