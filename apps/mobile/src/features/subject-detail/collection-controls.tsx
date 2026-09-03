@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { router, usePathname } from 'expo-router';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -33,7 +33,7 @@ export function CollectionControls({
   variant?: 'panel' | 'compact';
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const pathname = usePathname();

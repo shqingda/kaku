@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { router, Stack } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +13,7 @@ export function InvalidRouteState({
   title?: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

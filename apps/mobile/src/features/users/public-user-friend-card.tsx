@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -16,7 +15,7 @@ export function PublicUserFriendCard({
   onPress: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -40,11 +39,11 @@ export function PublicUserFriendCard({
           />
         ) : null}
       </View>
-      <Text numberOfLines={1} style={styles.nickname}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.nickname}>
         {friend.nickname}
       </Text>
       {!compact ? (
-        <Text numberOfLines={1} style={styles.username}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.username}>
           @{friend.username}
         </Text>
       ) : null}

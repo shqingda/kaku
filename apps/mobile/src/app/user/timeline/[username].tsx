@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -31,7 +31,7 @@ const UserTimelineRow = memo(function UserTimelineRow({
   item: PublicTimelineItem;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View
@@ -60,7 +60,7 @@ const UserTimelineRow = memo(function UserTimelineRow({
 
 export default function PublicUserTimelineScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const timelineQuery = usePublicUserTimeline(username);
   const timeline = usePagedList(timelineQuery);

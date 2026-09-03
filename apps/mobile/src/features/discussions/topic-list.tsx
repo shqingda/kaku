@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -22,7 +22,7 @@ export function TopicList({
   topics,
 }: TopicListProps) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.list}>
@@ -54,7 +54,7 @@ export function TopicList({
                     <Text style={styles.episodeBadgeText}>EP.{topic.episodeNumber}</Text>
                   </View>
                 ) : null}
-                <Text numberOfLines={2} style={styles.topicTitle}>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.topicTitle}>
                   {topic.title}
                 </Text>
               </View>

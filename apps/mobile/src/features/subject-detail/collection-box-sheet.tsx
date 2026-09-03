@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -62,7 +62,7 @@ export function CollectionBoxSheet({
   visible: boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const contentScrollRef = useRef<ScrollView>(null);
   const [session, setSession] = useState(() =>
@@ -432,7 +432,7 @@ export function CollectionBoxSheet({
               <View style={styles.tagsEditor}>
                 {tags.map((tag) => (
                   <View key={tag} style={styles.tagChip}>
-                    <Text numberOfLines={1} style={styles.tagText}>
+                    <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.tagText}>
                       {tag}
                     </Text>
                     <Pressable

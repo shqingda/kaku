@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function RankingsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { type } = useLocalSearchParams<{ type?: string }>();
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>

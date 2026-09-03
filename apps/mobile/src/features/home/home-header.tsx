@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -20,7 +19,7 @@ import { ProfileMenu } from './profile-menu';
 
 export function HomeHeader({ session }: { session: AuthSession | null }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { addSearch } = useSearchHistory();
   const [searchDraft, setSearchDraft] = useSearchDraft();
 

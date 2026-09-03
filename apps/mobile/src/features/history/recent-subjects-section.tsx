@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -18,7 +17,7 @@ export function RecentSubjectsSection({
   onClear: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   if (!items.length) return null;
 
@@ -92,6 +91,7 @@ function RecentSubjectCard({
           </Link.AppleZoom>
           <Text
             ellipsizeMode="tail"
+            maxFontSizeMultiplier={1.3}
             numberOfLines={2}
             style={styles.cardTitle}
           >

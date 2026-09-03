@@ -45,7 +45,7 @@ function formatAirDate(date?: string) {
 
 export default function EpisodeScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const pathname = usePathname();
   const { episodeNumber: episodeParam, id } = useLocalSearchParams<{
     episodeNumber: string;
@@ -372,6 +372,7 @@ export default function EpisodeScreen() {
                           weight="semibold"
                         />
                         <Text
+                          maxFontSizeMultiplier={1.3}
                           numberOfLines={1}
                           style={styles.episodeNavText}
                         >{`上一${episodeUnit}`}</Text>
@@ -391,6 +392,7 @@ export default function EpisodeScreen() {
                         ]}
                       >
                         <Text
+                          maxFontSizeMultiplier={1.3}
                           numberOfLines={1}
                           style={styles.episodeNavText}
                         >{`下一${episodeUnit}`}</Text>

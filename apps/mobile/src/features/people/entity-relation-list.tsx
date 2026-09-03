@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -91,7 +90,7 @@ export function EntityRelationRow({
   kind: '人物' | '角色';
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const queryClient = useQueryClient();
   const prefetchSubject = usePrefetchSubject();
 
@@ -148,12 +147,13 @@ export function EntityRelationRow({
             ) : null}
           </View>
           <View style={styles.peerMain}>
-            <Text numberOfLines={1} style={styles.peerName}>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.peerName}>
               {item.peer.name}
             </Text>
             {item.peer.appearances.slice(0, 2).map((appearance, index) => (
               <Text
                 key={`${appearance.subjectId}-${appearance.relation}-${index}`}
+                maxFontSizeMultiplier={1.3}
                 numberOfLines={1}
                 style={styles.appearance}
               >
@@ -205,7 +205,7 @@ export function EntityRelationRow({
           </View>
         </Link.AppleZoom>
         <View style={styles.subjectMain}>
-          <Text numberOfLines={2} style={styles.subjectTitle}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.subjectTitle}>
             {item.subject.title}
           </Text>
           <Text style={styles.relation}>{item.subject.relation}</Text>

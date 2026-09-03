@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -28,7 +27,7 @@ const TYPE_LABELS: Record<number, string> = {
 
 export default function SubjectRelationsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const relationsQuery = useSubjectRelations(subjectId ?? 0);
@@ -105,7 +104,7 @@ export default function SubjectRelationsScreen() {
                       {TYPE_LABELS[item.type] ?? '条目'}
                     </Text>
                   </View>
-                  <Text numberOfLines={3} style={styles.name}>
+                  <Text maxFontSizeMultiplier={1.3} numberOfLines={3} style={styles.name}>
                     {item.title}
                   </Text>
                 </View>

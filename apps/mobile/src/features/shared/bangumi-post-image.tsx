@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -14,7 +14,7 @@ const FALLBACK_ASPECT_RATIO = 1.35;
 // 全屏预览（复用条目封面的全屏查看器）。
 export function BangumiPostImage({ uri }: { uri: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [aspectRatio, setAspectRatio] = useState(FALLBACK_ASPECT_RATIO);
   const [viewerVisible, setViewerVisible] = useState(false);
 

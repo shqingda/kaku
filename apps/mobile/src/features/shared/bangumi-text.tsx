@@ -61,7 +61,7 @@ function BangumiRichBody({
   style?: StyleProp<TextStyle>;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   const flattened = StyleSheet.flatten(style);
   const containerStyle = flattened?.marginTop

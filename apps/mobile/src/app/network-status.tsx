@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stack } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import {
@@ -124,7 +124,7 @@ function formatUptime(uptime: number | null) {
 
 export default function NetworkStatusScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const statusQuery = useBangumiStatus();
   const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>({});
   const probeRunRef = useRef(0);
@@ -344,7 +344,7 @@ function ProbeRow({
         <Text style={styles.probeName}>{name}</Text>
         <Text style={styles.probeHost}>{host}</Text>
       </View>
-      <Text numberOfLines={1} style={[styles.probeState, { color: tint }]}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={[styles.probeState, { color: tint }]}>
         {stateText}
       </Text>
     </View>
@@ -369,7 +369,7 @@ function ComponentCard({
   return (
     <View style={[styles.componentCard, hasDivider && styles.rowDivider]}>
       <View style={styles.componentHeader}>
-        <Text numberOfLines={1} style={styles.componentLabel}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.componentLabel}>
           {component.label}
         </Text>
         <View style={[styles.levelPill, { backgroundColor: `${tint}1F` }]}>

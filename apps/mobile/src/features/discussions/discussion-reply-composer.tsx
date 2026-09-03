@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -43,7 +43,7 @@ export function DiscussionReplyComposer({
   visible: boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
@@ -170,7 +170,7 @@ export function DiscussionReplyComposer({
                 weight="semibold"
               />
             </Pressable>
-            <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+            <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
               {isEditing
                 ? '编辑回复'
                 : replyingTo

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -14,7 +13,7 @@ export function RecentSearches({
   onSelect: (keyword: string) => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   if (!items.length) return null;
 
@@ -48,7 +47,7 @@ export function RecentSearches({
               pressed && styles.itemPressed,
             ]}
           >
-            <Text numberOfLines={1} style={styles.itemText}>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.itemText}>
               {item}
             </Text>
           </Pressable>

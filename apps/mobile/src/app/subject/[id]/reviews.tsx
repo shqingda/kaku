@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,7 +53,7 @@ const ReviewRow = memo(function ReviewRow({
 
 export default function SubjectReviewsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const reviewsQuery = useSubjectReviews(subjectId ?? 0);
@@ -137,7 +137,7 @@ export default function SubjectReviewsScreen() {
 
 function EmptyState() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.state}>

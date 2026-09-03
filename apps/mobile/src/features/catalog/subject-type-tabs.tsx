@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
@@ -22,7 +21,7 @@ export function SubjectTypeTabs({
   types?: ReadonlyArray<{ id: number; label: string }>;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <ScrollView

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -16,7 +15,7 @@ export function PublicUserBlogRow({
   onPress: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -29,7 +28,7 @@ export function PublicUserBlogRow({
         pressed && styles.pressed,
       ]}
     >
-      <Text numberOfLines={2} style={styles.title}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.title}>
         {item.title}
       </Text>
       <Text numberOfLines={2} style={styles.summary}>

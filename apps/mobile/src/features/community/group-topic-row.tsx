@@ -20,7 +20,7 @@ export function GroupTopicRow({
   topic: PublicGroupTopicSummary;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const byline = [
     showGroup ? topic.groupTitle ?? '小组' : undefined,
     topic.author,
@@ -56,10 +56,10 @@ export function GroupTopicRow({
         ) : null}
       </View>
       <View style={styles.main}>
-        <Text numberOfLines={2} style={styles.title}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.title}>
           {topic.title}
         </Text>
-        <Text numberOfLines={1} style={styles.meta}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.meta}>
           {byline}
         </Text>
       </View>
@@ -139,4 +139,3 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   pressed: { opacity: 0.58 },
 });
-import { useMemo } from 'react';

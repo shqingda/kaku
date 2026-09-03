@@ -26,7 +26,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function CalendarScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [selectedDay, setSelectedDay] = useState(currentCalendarWeekdayId);
   const calendarQuery = useBangumiCalendar();
   const selectedCalendarDay = useMemo(
@@ -139,7 +139,7 @@ function CalendarRow({
   item: DiscoverSubject;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const prefetchSubject = usePrefetchSubject();
 
   return (
@@ -174,10 +174,10 @@ function CalendarRow({
         ) : null}
       </View>
       <View style={styles.rowCopy}>
-        <Text numberOfLines={2} style={styles.rowTitle}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.rowTitle}>
           {item.title}
         </Text>
-        <Text numberOfLines={1} style={styles.rowMeta}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowMeta}>
           {item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}
           {item.date ? ` · ${item.date}` : ''}
         </Text>
@@ -202,7 +202,7 @@ function CalendarState({
   text: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.state}>

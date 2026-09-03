@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Platform,
@@ -29,7 +29,7 @@ export function SubjectSearchField({
   value: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const inputRef = useRef<TextInput>(null);
 
   function clearInput() {

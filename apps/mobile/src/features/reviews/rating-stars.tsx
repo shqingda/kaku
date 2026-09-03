@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
@@ -12,7 +11,7 @@ type RatingStarsProps = {
 
 export function RatingStars({ rating, size = 14 }: RatingStarsProps) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const fivePointRating = Math.max(0, Math.min(5, rating / 2));
 
   return (

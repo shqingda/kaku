@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -31,7 +31,7 @@ export function AppState({
   title: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isOffline = useIsOffline();
   const isError = Boolean(action);
   // 出现时做一次纯 opacity 淡入（减少动态效果也安全），避免状态卡突兀弹出。

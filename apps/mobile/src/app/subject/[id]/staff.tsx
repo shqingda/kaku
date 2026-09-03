@@ -49,7 +49,7 @@ type StaffSection = {
 
 function useThemedStyles() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return { colors, styles };
 }
@@ -125,7 +125,7 @@ const StaffRow = memo(function StaffRow({ item }: { item: StaffCredit }) {
     <>
       <StaffAvatar item={item} withZoom />
       <View style={styles.staffMain}>
-        <Text numberOfLines={1} style={styles.staffName}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.staffName}>
           {item.name}
         </Text>
         <Text style={styles.staffType}>

@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
@@ -22,7 +22,7 @@ export function ProfileOverflow({
   username: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const blocklistQuery = useBlocklist();
   const setBlocked = useSetUserBlocked(username);
   const [reportVisible, setReportVisible] = useState(false);

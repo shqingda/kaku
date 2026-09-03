@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
@@ -33,7 +33,7 @@ import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
 
 function useThemedStyles() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return { colors, styles };
 }
@@ -248,7 +248,7 @@ function ChannelCard({ item }: { item: ChannelSubject }) {
             </View>
           </Link.AppleZoom>
           <Text maxFontSizeMultiplier={1.35} numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
-          <Text numberOfLines={1} style={styles.cardMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.cardMeta}>
             {item.attentionCount !== undefined
               ? `${item.attentionCount} 人关注`
               : item.score

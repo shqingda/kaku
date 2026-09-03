@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +27,7 @@ const compactNumber = new Intl.NumberFormat('zh-CN', {
 
 export default function TagsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { type } = useLocalSearchParams<{ type?: string }>();
   const [subjectType, setSubjectType] = useState<number>(() =>
     getSubjectTypeFromSlug(type));
@@ -143,7 +143,7 @@ const TagCard = memo(function TagCard({ item, onPress, styles }: {
       onPress={onPress}
       style={({ pressed }) => [styles.tag, pressed && styles.pressed]}
     >
-      <Text numberOfLines={1} style={styles.tagName}>{item.name}</Text>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.tagName}>{item.name}</Text>
       <Text style={styles.tagCount}>{compactNumber.format(item.count)}</Text>
     </Pressable>
   );

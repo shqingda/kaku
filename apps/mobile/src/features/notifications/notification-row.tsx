@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -81,7 +80,7 @@ export function NotificationRow({
   item: UserNotification;
   onRead: (id: number) => void;
 }) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -114,7 +113,7 @@ export function NotificationRow({
       </View>
       <View style={styles.copy}>
         <View style={styles.heading}>
-          <Text numberOfLines={1} style={styles.sender}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.sender}>
             {item.sender.nickname}
           </Text>
           <Text style={styles.time}>{formatActivityTime(item.createdAt)}</Text>
@@ -122,7 +121,7 @@ export function NotificationRow({
         </View>
         <Text style={styles.action}>{item.action}</Text>
         {item.title ? (
-          <Text numberOfLines={2} style={styles.title}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.title}>
             {item.title}
           </Text>
         ) : null}

@@ -1,5 +1,4 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -27,7 +26,7 @@ export function FriendAction({
   username: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const friendshipQuery = useUserFriendship(username);
   const setFriend = useSetUserFriend(username);
   const isFriend = friendshipQuery.data === true;

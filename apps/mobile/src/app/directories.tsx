@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -33,7 +33,7 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function DirectoriesScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const pathname = usePathname();
   const [sort, setSort] = useState<IndexSort>('latest');
   const { session } = useAuth();
@@ -199,7 +199,7 @@ const IndexRow = memo(function IndexRow({
   item: PublicIndexSummary;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View
@@ -238,7 +238,7 @@ const IndexRow = memo(function IndexRow({
         </View>
         <View style={styles.rowMain}>
           <View style={styles.titleRow}>
-            <Text numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
             <View style={styles.countPill}>
               <Text style={styles.countText}>{item.itemCount} 项</Text>
             </View>
@@ -246,7 +246,7 @@ const IndexRow = memo(function IndexRow({
           <Text numberOfLines={2} style={styles.description}>
             {item.description || '暂无简介'}
           </Text>
-          <Text numberOfLines={1} style={styles.rowMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowMeta}>
             {item.author} · {formatActivityTime(item.updatedAt)}
           </Text>
         </View>

@@ -1,4 +1,4 @@
-import { Component, useMemo, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
@@ -59,7 +59,7 @@ function ErrorFallback({
   onRetry: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View accessibilityRole="alert" style={styles.screen}>

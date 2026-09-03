@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { router, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -9,7 +8,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function NotFoundScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   function goBack() {
     if (router.canGoBack()) {
       router.back();

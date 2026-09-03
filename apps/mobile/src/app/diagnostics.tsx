@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Constants from 'expo-constants';
 import { Stack, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -48,7 +48,7 @@ function buildDiagnosticReport(records: DiagnosticRecord[]) {
 
 export default function DiagnosticsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [records, setRecords] = useState<DiagnosticRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -204,7 +204,7 @@ export default function DiagnosticsScreen() {
                     ]}
                   >
                     <View style={styles.recordHeader}>
-                      <Text numberOfLines={1} style={styles.recordName}>
+                      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.recordName}>
                         {record.name}
                       </Text>
                       <Text style={styles.recordTime}>

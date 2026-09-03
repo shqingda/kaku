@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -26,7 +26,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function GroupScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { name } = useLocalSearchParams<{ name: string }>();
   const pathname = usePathname();
   const { session } = useAuth();

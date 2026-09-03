@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import {
   Pressable,
@@ -36,7 +36,7 @@ export function BangumiEmojiPicker({
   onSelect: (sticker: string) => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [categoryKey, setCategoryKey] = useState(EMOJI_CATEGORIES[0].key);
   const category =
     EMOJI_CATEGORIES.find((item) => item.key === categoryKey) ??
@@ -119,7 +119,7 @@ export function BangumiRichTextToolbar({
   onInsert: (text: string) => boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const reduceMotion = useReduceMotion();
   const [panel, setPanel] = useState<'emoji' | 'image' | null>(null);
   const [imageUrl, setImageUrl] = useState('');

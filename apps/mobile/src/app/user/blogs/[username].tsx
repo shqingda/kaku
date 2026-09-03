@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -33,7 +33,7 @@ const UserBlogRow = memo(function UserBlogRow({
   onPressItem: (id: number) => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View
@@ -54,7 +54,7 @@ const UserBlogRow = memo(function UserBlogRow({
 
 export default function PublicUserBlogsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const blogsQuery = usePublicUserBlogs(username);
   const blogs = usePagedList(blogsQuery);

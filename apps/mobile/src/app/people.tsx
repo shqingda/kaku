@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, Stack } from 'expo-router';
@@ -42,7 +42,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function PeopleScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [kind, setKind] = useState<PeopleKind>('character');
   const [sort, setSort] = useState<PeopleSort>('collects');
   const [type, setType] = useState<number>();
@@ -154,7 +154,7 @@ export default function PeopleScreen() {
             </View>
             {keyword ? (
               <View style={styles.searchSummary}>
-                <Text numberOfLines={1} style={styles.searchSummaryText}>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.searchSummaryText}>
                   “{keyword}” · {searchQuery.data?.pages[0]?.total ?? 0} 个结果
                 </Text>
                 <Pressable
@@ -228,7 +228,7 @@ export default function PeopleScreen() {
 
 function FilterRow({ children, label }: { children: React.ReactNode; label: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.filterSection}>
@@ -251,7 +251,7 @@ function FilterButton({ label, onPress, selected, wide = false }: {
   wide?: boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -279,7 +279,7 @@ const PersonRow = memo(function PersonRow({ hasDivider, isFirst, isLast, item }:
   item: PublicPersonSummary;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   // <Link asChild> 的 Slot 不接受数组 style，必须 flatten 成单一对象，
   // 否则 flexDirection 会丢失导致整个行变成竖排。
   const rowStyle = StyleSheet.flatten([
@@ -320,13 +320,13 @@ const PersonRow = memo(function PersonRow({ hasDivider, isFirst, isLast, item }:
             ) : null}
           </View>
           <View style={styles.rowMain}>
-            <Text numberOfLines={1} style={styles.rowTitle}>{item.name}</Text>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowTitle}>{item.name}</Text>
             {item.categories.length > 0 ? (
-              <Text numberOfLines={1} style={styles.categories}>
+              <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.categories}>
                 {item.categories.join(' · ')}
               </Text>
             ) : null}
-            <Text numberOfLines={2} style={styles.rowMeta}>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.rowMeta}>
               {item.metadata || (item.kind === 'character' ? '虚构角色' : '现实人物')}
             </Text>
             {item.commentCount > 0 ? (

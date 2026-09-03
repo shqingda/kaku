@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import {
@@ -25,7 +25,7 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function GlobalBlogsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [filter, setFilter] = useState<BlogFilter>('all');
   const blogsQuery = useGlobalBlogs(filter);
   const blogs = usePagedList(blogsQuery);
@@ -144,7 +144,7 @@ const BlogRow = memo(function BlogRow({
   onPressItem: (id: number) => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View
@@ -177,11 +177,11 @@ const BlogRow = memo(function BlogRow({
           ) : null}
         </View>
         <View style={styles.rowMain}>
-          <Text numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
           <Text numberOfLines={2} style={styles.summary}>
             {item.summary || '暂无摘要'}
           </Text>
-          <Text numberOfLines={1} style={styles.rowMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowMeta}>
             {item.author} · {formatActivityTime(item.updatedAt)} · {item.replyCount} 回复
           </Text>
         </View>

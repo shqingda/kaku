@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -72,7 +72,7 @@ const CollectionRow = memo(function CollectionRow({
   onPressItem: (id: number) => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View
@@ -94,7 +94,7 @@ const CollectionRow = memo(function CollectionRow({
 
 export default function PublicUserCollectionsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { status, type, username } = useLocalSearchParams<{
     status?: string;
     type?: string;
@@ -249,7 +249,7 @@ function CollectionStatusTabs({
   subjectType: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <ScrollView

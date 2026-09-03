@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
-import { useMemo } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -51,7 +50,7 @@ export function HomeMediaSection({
   username: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   function openAll() {
     router.push({
@@ -141,7 +140,7 @@ export function HomeMediaSection({
 
 function MediaCard({ item }: { item: PublicUserCollection }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const prefetchSubject = usePrefetchSubject();
   const progress =
     supportsWatchProgress(item.subjectType) && item.totalEpisodes > 0
@@ -190,7 +189,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           >
             {item.title}
           </Text>
-          <Text numberOfLines={1} style={styles.cardMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.cardMeta}>
             {progress}
           </Text>
         </Pressable>

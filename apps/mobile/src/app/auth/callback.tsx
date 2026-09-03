@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type Href, router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
@@ -16,7 +16,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function AuthCallbackScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { code } = useLocalSearchParams<{ code?: string }>();
   const { completeSignIn, isSigningIn, signIn } = useAuth();
   const [error, setError] = useState<string>();

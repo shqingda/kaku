@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -18,7 +17,7 @@ export function PublicUserTimelineRow({
   onPress?: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable

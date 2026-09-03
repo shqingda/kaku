@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Fragment, useMemo } from 'react';
+import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -17,7 +17,7 @@ export function FriendTimelineRow({
   item: FriendTimelineItem;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   // 条目动态进条目页；日志动态与日志标题一样，直接进日志详情页。
   const destination = item.subjectId
     ? {
@@ -82,7 +82,7 @@ export function FriendTimelineRow({
       </Pressable>
       <View style={styles.copy}>
         <View style={styles.metaRow}>
-          <Text numberOfLines={1} style={styles.nickname}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.nickname}>
             {item.user.nickname}
           </Text>
           <Text style={styles.time}>{formatActivityTime(item.createdAt)}</Text>

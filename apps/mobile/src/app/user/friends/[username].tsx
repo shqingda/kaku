@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -36,7 +36,7 @@ const UserFriendRow = memo(function UserFriendRow({
 
 export default function PublicUserFriendsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const friendsQuery = usePublicUserFriends(username);
   const friends = usePagedList(friendsQuery);

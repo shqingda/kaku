@@ -1,5 +1,4 @@
 // 账户页：只做组合与整页状态；各区块的实现在 features/account/ 下。
-import { useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,7 +14,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function AccountScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { isLoading, session } = useAuth();
 
   return (

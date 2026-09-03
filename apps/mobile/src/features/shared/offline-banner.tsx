@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +9,7 @@ import { useIsOffline } from '@/lib/use-connectivity';
 export function OfflineBanner() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isOffline = useIsOffline();
 
   if (!isOffline) {

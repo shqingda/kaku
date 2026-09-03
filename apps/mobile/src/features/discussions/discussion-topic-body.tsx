@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -7,7 +6,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function DiscussionTopicBody({ body }: { body?: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   if (!body) return null;
 

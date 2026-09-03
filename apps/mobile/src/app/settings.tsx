@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ComponentProps } from 'react';
+import { useEffect, type ComponentProps } from 'react';
 import {
   Platform,
   Pressable,
@@ -103,7 +103,7 @@ function getSyncStatus({
 
 export default function SettingsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { session } = useAuth();
   const {
     cloudError,
@@ -261,7 +261,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>设备间同步</Text>
-                <Text numberOfLines={1} style={styles.rowDescription}>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowDescription}>
                   登录后即可在设备间同步。
                 </Text>
               </View>
@@ -329,7 +329,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>推送通知</Text>
-                <Text numberOfLines={1} style={styles.rowDescription}>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowDescription}>
                   登录后即可在这台设备接收未读通知。
                 </Text>
               </View>
@@ -412,7 +412,7 @@ function SyncStatusRow({
           weight="medium"
         />
       )}
-      <Text numberOfLines={1} style={styles.statusLabel}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.statusLabel}>
         {label}
       </Text>
     </>

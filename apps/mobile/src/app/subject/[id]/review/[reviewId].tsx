@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -40,7 +40,7 @@ export default function SubjectReviewScreen() {
 
 export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id, reviewId, replyId } = useLocalSearchParams<{
     id?: string;
     reviewId?: string;

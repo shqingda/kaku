@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -30,7 +30,7 @@ const TABS: { kind: PublicUserEntityKind; label: string }[] = [
 
 export default function PublicUserEntitiesScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const [kind, setKind] = useState<PublicUserEntityKind>('character');
   const listRef = useScrollToTopButton();

@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -24,7 +24,7 @@ export function PublicUserCollectionRow({
   trailing?: ReactNode;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const prefetchSubject = usePrefetchSubject();
 
   const progress =
@@ -69,10 +69,10 @@ export function PublicUserCollectionRow({
         ) : null}
       </View>
       <View style={styles.main}>
-        <Text numberOfLines={2} style={styles.title}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.title}>
           {item.title}
         </Text>
-        <Text numberOfLines={1} style={styles.meta}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.meta}>
           {meta}
         </Text>
       </View>

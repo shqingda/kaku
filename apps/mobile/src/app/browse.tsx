@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -40,7 +40,7 @@ const SORTS: Array<{ id: BrowseSort; label: string }> = [
 
 function useThemedStyles() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return { colors, styles };
 }

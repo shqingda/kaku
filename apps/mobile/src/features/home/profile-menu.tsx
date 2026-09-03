@@ -1,4 +1,4 @@
-import { type ComponentProps, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -28,7 +28,7 @@ const MENU_SPRING = { damping: 37, mass: 1, stiffness: 340 } as const;
 
 export function ProfileMenu({ session }: { session: AuthSession }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { signOut } = useAuth();
   const notificationsQuery = useNotifications();
   const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
@@ -300,7 +300,7 @@ function MenuItem({
   label: string;
   onPress: () => void;
 }) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable

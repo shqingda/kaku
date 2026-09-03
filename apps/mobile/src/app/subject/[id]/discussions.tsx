@@ -28,7 +28,7 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectDiscussionsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const pathname = usePathname();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();

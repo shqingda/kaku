@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,7 +57,7 @@ const CommentRow = memo(function CommentRow({
 
 export default function SubjectCommentsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const commentsQuery = useSubjectComments(subjectId ?? 0);

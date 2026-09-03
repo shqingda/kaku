@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -25,7 +24,7 @@ export function ReviewPreviewSection({
   total?: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.section}>
@@ -68,7 +67,7 @@ export function ReviewPreviewSection({
               ]}
             >
               <View style={styles.main}>
-                <Text numberOfLines={2} style={styles.reviewTitle}>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.reviewTitle}>
                   {review.title}
                 </Text>
                 <Text numberOfLines={1} style={styles.summary}>

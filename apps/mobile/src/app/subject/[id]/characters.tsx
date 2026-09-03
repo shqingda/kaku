@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -16,7 +15,7 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectCharactersScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const charactersQuery = useSubjectCharacters(subjectId ?? 0);
@@ -114,6 +113,7 @@ export default function SubjectCharactersScreen() {
                     >
                       <Text
                         ellipsizeMode="tail"
+                        maxFontSizeMultiplier={1.3}
                         numberOfLines={1}
                         style={styles.name}
                       >

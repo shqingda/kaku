@@ -1,4 +1,4 @@
-import { useMemo, type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
@@ -73,7 +73,7 @@ const legalLinks: AboutLink[] = [
 
 export default function AboutScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const version = Constants.expoConfig?.version ?? '开发版';
 
   return (
@@ -108,7 +108,7 @@ export default function AboutScreen() {
 
 function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLink[] }) {
   const router = useRouter();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.group}>

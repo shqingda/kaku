@@ -22,7 +22,7 @@ import { formatActivityTime } from '@/lib/format-activity-time';
 
 export default function WikiScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const revisionsQuery = useWikiRevisions();
   const revisions = useMemo(
     () => revisionsQuery.data?.items ?? [],
@@ -127,11 +127,11 @@ function RevisionRow({
           />
         </View>
         <View style={styles.rowMain}>
-          <Text numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
-          <Text numberOfLines={2} style={styles.note}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.rowTitle}>{item.title}</Text>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.note}>
             {item.note || '更新条目信息'}
           </Text>
-          <Text numberOfLines={1} style={styles.rowMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowMeta}>
             {item.author} · {formatActivityTime(item.editedAt)}
           </Text>
         </View>

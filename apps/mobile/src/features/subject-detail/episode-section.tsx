@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Pressable,
@@ -46,7 +46,7 @@ export function EpisodeSection({
   watchedEpisodeNumbers: number[];
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isTrack = kind === 'track';
   const todayDate = todayDateString();
   const [layout, setLayout] = useState<EpisodeLayout>(
@@ -247,7 +247,7 @@ export function EpisodeSection({
                   </Text>
                 </View>
                 <View style={styles.episodeRowMain}>
-                  <Text numberOfLines={1} style={styles.episodeRowTitle}>
+                  <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.episodeRowTitle}>
                     第 {episodeNumber} {isTrack ? '曲' : '集'}
                     {episode?.title ? ` · ${episode.title}` : ''}
                   </Text>

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -10,7 +9,7 @@ export function EmptyDiscussionReplies({
   text?: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.empty}>

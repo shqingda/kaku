@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,7 +43,7 @@ const SubjectIndexRow = memo(function SubjectIndexRow({
 
 export default function SubjectIndexesScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const indexesQuery = useSubjectIndexes(subjectId ?? 0);

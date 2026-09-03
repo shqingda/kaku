@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -26,7 +26,7 @@ export function SkeletonBox({
   width?: number | `${number}%`;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const reduceMotion = useReduceMotion();
   const shimmer = useSharedValue(0);
 

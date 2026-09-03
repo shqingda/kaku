@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import {
@@ -33,7 +33,7 @@ const compactNumber = new Intl.NumberFormat('zh-CN', {
 
 export default function CommunityScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
   const topics = usePagedList(topicsQuery);
@@ -138,7 +138,7 @@ export default function CommunityScreen() {
                           />
                         ) : null}
                       </View>
-                      <Text numberOfLines={2} style={styles.groupTitle}>
+                      <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.groupTitle}>
                         {group.title}
                       </Text>
                       <Text style={styles.groupMeta}>

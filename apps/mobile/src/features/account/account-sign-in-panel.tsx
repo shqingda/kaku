@@ -1,5 +1,4 @@
 // 未登录面板：连接 Bangumi 的介绍、错误提示与登录入口。
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,7 +10,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function AccountSignInPanel() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { error, isSigningIn, signIn } = useAuth();
 
   async function handleSignIn() {

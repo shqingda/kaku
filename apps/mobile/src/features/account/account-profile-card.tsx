@@ -1,5 +1,4 @@
 // 已登录的资料卡：头像、昵称与跳转公开主页的入口。
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -11,7 +10,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function AccountProfileCard() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { session } = useAuth();
 
   if (!session) {

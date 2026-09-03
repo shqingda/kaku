@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Stack } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,7 +34,7 @@ const sections = [
 
 export default function PrivacyScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>

@@ -16,7 +16,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export default function NotificationsScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const notificationsQuery = useNotifications();
   const markRead = useMarkNotificationsRead();
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);

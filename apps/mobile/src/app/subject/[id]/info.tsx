@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
   RefreshControl,
@@ -39,7 +38,7 @@ function formatCount(value: number) {
 
 export default function SubjectInfoScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const subjectQuery = useCatalogSubject(subjectId ?? 0);
@@ -163,7 +162,7 @@ function RatingDistribution({
   distribution: Record<number, number>;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const maxCount = Math.max(...Object.values(distribution), 1);
 
   return (

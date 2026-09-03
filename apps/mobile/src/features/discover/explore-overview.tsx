@@ -213,7 +213,7 @@ function ExploreEntry({
       <View style={styles.exploreEntryText}>
         <Text style={styles.exploreEntryTitle}>{title}</Text>
         {featured ? (
-          <Text numberOfLines={1} style={styles.exploreEntryMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.exploreEntryMeta}>
             {meta}
           </Text>
         ) : null}

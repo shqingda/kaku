@@ -1,6 +1,5 @@
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
-import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { HIT_SLOP } from '@/constants/design';
@@ -31,7 +30,7 @@ export function HeaderIconButton({
   variant?: 'inline' | 'floating';
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable

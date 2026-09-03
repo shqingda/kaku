@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -25,7 +24,7 @@ export function CommentPreviewSection({
   total?: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.section}>
@@ -75,13 +74,13 @@ export function CommentPreviewSection({
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text numberOfLines={1} style={styles.author}>
+                      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.author}>
                         {comment.author}
                       </Text>
                     </Pressable>
                   </Link>
                 ) : (
-                  <Text numberOfLines={1} style={styles.author}>
+                  <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.author}>
                     {comment.author}
                   </Text>
                 )}

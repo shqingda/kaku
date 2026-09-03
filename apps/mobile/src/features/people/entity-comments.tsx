@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
@@ -46,7 +46,7 @@ export function EntityComments({
   name: string;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   // FlatList 在 Android 上必须用确定高度 + flex:1 才能滚动（maxHeight 不被

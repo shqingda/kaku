@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,7 +17,7 @@ export function SubjectHero({
   year?: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   return (

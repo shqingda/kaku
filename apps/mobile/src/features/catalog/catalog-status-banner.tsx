@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -21,7 +20,7 @@ export function CatalogStatusBanner({
   onRetry,
 }: CatalogStatusBannerProps) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   if (!isError && !isPending && !isRefreshing && !fromOfflinePack) {
     return null;

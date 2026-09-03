@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -55,7 +55,7 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function useThemedStyles() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return { colors, styles };
 }
@@ -88,7 +88,7 @@ function DetailEntry({
     >
       <View style={styles.detailEntryCopy}>
         <Text style={styles.detailEntryTitle}>{label}</Text>
-        <Text numberOfLines={2} style={styles.detailEntryHint}>{hint}</Text>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.detailEntryHint}>{hint}</Text>
       </View>
       <SymbolView
         name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}

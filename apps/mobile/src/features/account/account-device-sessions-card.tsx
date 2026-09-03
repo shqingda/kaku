@@ -1,5 +1,4 @@
 // 登录设备卡片：设备会话列表、退出单台设备与退出其他登录。
-import { useMemo } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -21,7 +20,7 @@ function formatSessionTime(timestamp: number) {
 
 export function AccountDeviceSessionsCard() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const sessionsQuery = useDeviceSessions();
   const revokeSession = useRevokeDeviceSession();
   const revokeOtherSessions = useRevokeOtherDeviceSessions();

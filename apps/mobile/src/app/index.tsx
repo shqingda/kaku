@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useLayoutEffect, useState, type ComponentProps } from 'react';
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -41,7 +41,7 @@ import { markFirstContent } from '@/lib/startup-timing';
 
 export default function HomeScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isRestoring = useIsRestoring();
 
   // 持久化缓存恢复完成前不挂载业务查询：否则冷启动时 SQLite 里的缓存还没
@@ -59,7 +59,7 @@ export default function HomeScreen() {
 
 function HomeContent() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const queryClient = useQueryClient();
   const [selectedTrackingType, setSelectedTrackingType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
@@ -186,7 +186,7 @@ function TimelineBoundary({
   timelineQuery: ReturnType<typeof useFriendTimeline>;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [composerVisible, setComposerVisible] = useState(false);
   const items = timelineQuery.data?.pages[0]?.items.slice(0, 4) ?? [];
 
@@ -283,7 +283,7 @@ function TimelineBoundary({
 
 function SignedOutHome() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <>
@@ -321,7 +321,7 @@ function SignedOutHome() {
 
 function QuickActions() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const queryClient = useQueryClient();
 
   return (
@@ -388,7 +388,7 @@ function QuickActionRow({
   onPressIn?: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <PressableScale
@@ -413,7 +413,7 @@ function QuickActionRow({
         </View>
         <View style={styles.quickCopy}>
           <Text style={styles.quickLabel}>{label}</Text>
-          <Text numberOfLines={1} style={styles.quickMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.quickMeta}>
             {meta}
           </Text>
         </View>
@@ -433,7 +433,7 @@ function QuickActionRow({
 
 function HomeState({ message }: { message: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.state}>

@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -30,7 +30,7 @@ export function TimelineComposer({
   visible: boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');

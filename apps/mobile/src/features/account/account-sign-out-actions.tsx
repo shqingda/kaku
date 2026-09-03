@@ -1,5 +1,4 @@
 // 退出登录与断开 Bangumi 的操作区（已登录状态显示）。
-import { useMemo } from 'react';
 import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -8,7 +7,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function AccountSignOutActions() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { disconnectBangumi, signOut } = useAuth();
 
   function confirmDisconnect() {

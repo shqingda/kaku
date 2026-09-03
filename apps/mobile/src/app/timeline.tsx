@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -35,7 +35,7 @@ const TimelineRow = memo(function TimelineRow({
 
 export default function FriendTimelineScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const timelineQuery = useFriendTimeline();
   const timeline = usePagedList(timelineQuery);
   const [composerVisible, setComposerVisible] = useState(false);

@@ -1,5 +1,5 @@
 // 账户页共用的菜单行：图标 + 标题/描述 + 可选角标或加载指示。
-import { useMemo, type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
@@ -25,7 +25,7 @@ export function AccountMenuRow({
   loading?: boolean;
   onPress: () => void;
 }) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable

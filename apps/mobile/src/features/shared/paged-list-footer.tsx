@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -29,7 +29,7 @@ export function PagedListFooter({
   total?: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isOffline = useIsOffline();
 
   // iOS 无自动播报：加载更多失败出现时手动播一次（依赖保持空数组）。

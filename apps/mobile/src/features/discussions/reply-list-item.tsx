@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -38,7 +38,7 @@ export const ReplyListItem = memo(function ReplyListItem({
   reply,
 }: ReplyListItemProps) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const isOwner =
     !ownerUsername || reply.authorUsername === ownerUsername;
   const editReply = isOwner ? onEdit : undefined;

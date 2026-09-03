@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -43,7 +43,7 @@ const SHOW_ENTITY_ENTRY = false;
 
 export default function PublicUserScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
@@ -480,7 +480,7 @@ function SectionStatus({
   onRetry: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   if (isPending) {
     return <Text style={styles.inlineEmpty}>正在读取…</Text>;

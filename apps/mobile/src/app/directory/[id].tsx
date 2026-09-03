@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import {
   type Href,
@@ -95,10 +95,10 @@ const IndexItemRow = memo(function IndexItemRow({
         </View>
       )}
       <View style={styles.subjectMain}>
-        <Text numberOfLines={2} style={styles.subjectTitle}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.subjectTitle}>
           {item.title}
         </Text>
-        <Text numberOfLines={2} style={styles.subjectMeta}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.subjectMeta}>
           {getIndexItemLabel(item)}
           {item.kind === 'subject'
             ? ` · ${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`
@@ -124,7 +124,7 @@ const IndexItemRow = memo(function IndexItemRow({
 
 export default function PublicIndexScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const pathname = usePathname();
   const { session } = useAuth();

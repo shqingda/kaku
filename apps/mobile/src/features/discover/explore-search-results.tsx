@@ -191,15 +191,15 @@ function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
           ) : null}
         </View>
         <View style={styles.resultMain}>
-          <Text numberOfLines={2} style={styles.resultTitle}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultTitle}>
             {item.name}
           </Text>
-          <Text numberOfLines={1} style={styles.resultMeta}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.resultMeta}>
             {item.categories.join(' · ') ||
               (item.kind === 'character' ? '角色' : '人物')}
           </Text>
           {item.metadata ? (
-            <Text numberOfLines={2} style={styles.resultMeta}>
+            <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultMeta}>
               {item.metadata}
             </Text>
           ) : null}
@@ -261,7 +261,7 @@ function SubjectSearchResultRow({
           ) : null}
         </View>
         <View style={styles.resultMain}>
-          <Text numberOfLines={2} style={styles.resultTitle}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultTitle}>
             {item.title}
           </Text>
           <Text style={styles.resultMeta}>

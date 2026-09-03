@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Constants from 'expo-constants';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -35,7 +35,7 @@ const EXPAND_SPRING = { damping: 35, mass: 1, stiffness: 300 } as const;
 
 export default function ChangelogScreen() {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const appVersion = Constants.expoConfig?.version;
 
   return (

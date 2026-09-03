@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -15,7 +14,7 @@ export function PublicUserEntityCard({
   onPress: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -37,10 +36,10 @@ export function PublicUserEntityCard({
           />
         ) : null}
       </View>
-      <Text numberOfLines={2} style={styles.name}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.name}>
         {entity.name}
       </Text>
-      <Text numberOfLines={1} style={styles.subtitle}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.subtitle}>
         {entity.subtitle}
       </Text>
     </Pressable>

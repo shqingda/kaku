@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -6,7 +5,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function CachedDataNotice({ onRetry }: { onRetry: () => void }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View accessibilityRole="alert" style={styles.notice}>

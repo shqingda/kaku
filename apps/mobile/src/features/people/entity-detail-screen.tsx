@@ -42,7 +42,7 @@ export function EntityDetailScreen({
   onRetry: () => void;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [portraitVisible, setPortraitVisible] = useState(false);
   const entityKind = kind === '角色' ? 'character' : 'person';
   const entityId = data?.id ?? 0;
@@ -117,7 +117,7 @@ export function EntityDetailScreen({
                       <Text selectable style={styles.name}>
                         {data.name}
                       </Text>
-                      <Text numberOfLines={2} style={styles.kind}>
+                      <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.kind}>
                         {(data.categoryLabels ?? [kind]).join(' · ')}
                       </Text>
                       <Text style={styles.stats}>

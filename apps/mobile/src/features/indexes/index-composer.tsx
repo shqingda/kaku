@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -38,7 +38,7 @@ export function IndexComposer({
   visible: boolean;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');

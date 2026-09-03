@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
@@ -20,7 +20,7 @@ export function ReportButton({
   type: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const [visible, setVisible] = useState(false);
 
   return (

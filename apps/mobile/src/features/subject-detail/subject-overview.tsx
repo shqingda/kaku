@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -19,7 +18,7 @@ function formatCount(count?: number) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.metric}>
@@ -31,12 +30,12 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function Fact({ label, value }: { label: string; value: string }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.fact}>
       <Text style={styles.factLabel}>{label}</Text>
-      <Text numberOfLines={1} style={styles.factValue}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.factValue}>
         {value}
       </Text>
     </View>
@@ -57,7 +56,7 @@ export function SubjectOverview({
   year?: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const rating = subject?.rating;
   const releaseDate =
     subject?.releaseDate?.replaceAll('-', '.') ??
@@ -138,7 +137,7 @@ export function SubjectOverview({
       {subject?.originalTitle && subject.originalTitle !== title ? (
         <View style={styles.originalTitleRow}>
           <Text style={styles.originalTitleLabel}>原名</Text>
-          <Text numberOfLines={1} style={styles.originalTitleValue}>
+          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.originalTitleValue}>
             {subject.originalTitle}
           </Text>
         </View>

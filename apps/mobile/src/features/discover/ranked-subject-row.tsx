@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { useMemo } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -26,7 +25,7 @@ export function RankedSubjectRow({
   position: number;
 }) {
   const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = createStyles(colors);
   const prefetchSubject = usePrefetchSubject();
 
   return (
@@ -64,7 +63,7 @@ export function RankedSubjectRow({
         ) : null}
       </View>
       <View style={styles.main}>
-        <Text numberOfLines={2} style={styles.title}>
+        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.title}>
           {item.title}
         </Text>
         <Text style={styles.meta}>
