@@ -319,14 +319,23 @@ export default function SubjectScreen() {
           onPress={() => router.dismissTo('/')}
           top={insets.top + bannerOffset}
         />
-        {/* 骨架与真实布局同构：封面、年份、标题、收藏盒、简介，数据到达时不跳版。 */}
-        <View style={styles.skeleton}>
-          <SkeletonBox borderRadius={24} height={238} width={170} />
-          <SkeletonBox height={18} width={96} />
-          <SkeletonBox height={26} width="62%" />
-          <SkeletonBox borderRadius={22} height={132} width="100%" />
-          <SkeletonBox borderRadius={22} height={168} width="100%" />
-        </View>
+        {/* 与真实页共用同一滚动容器和顶部内边距：骨架的位置就是
+            数据到达后的位置，加载完成不位移，AppleZoom 落点保持稳定。 */}
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + bannerOffset + 4 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.skeleton}>
+            <SkeletonBox borderRadius={24} height={238} width={170} />
+            <SkeletonBox height={18} width={96} />
+            <SkeletonBox height={26} width="62%" />
+            <SkeletonBox borderRadius={22} height={132} width="100%" />
+            <SkeletonBox borderRadius={22} height={168} width="100%" />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -714,10 +723,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   errorState: { flex: 1, justifyContent: 'center', padding: 32 },
   skeleton: {
     alignItems: 'center',
-    flex: 1,
     gap: 14,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 8,
   },
   errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
   errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },

@@ -3,6 +3,11 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { AppState } from '@/features/shared/app-state';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
+// 离线感知文案依赖连通性 hook，这里固定为在线。
+jest.mock('@/lib/use-connectivity', () => ({
+  useIsOffline: () => false,
+}));
+
 describe('AppState', () => {
   it('renders title and text', async () => {
     const screen = await render(

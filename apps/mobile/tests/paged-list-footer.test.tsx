@@ -3,6 +3,11 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
+// 离线感知文案依赖连通性 hook，这里固定为在线，离线分支单独测。
+jest.mock('@/lib/use-connectivity', () => ({
+  useIsOffline: () => false,
+}));
+
 describe('PagedListFooter', () => {
   it('shows a loading hint without a retry button while fetching more', async () => {
     const onRetry = jest.fn();

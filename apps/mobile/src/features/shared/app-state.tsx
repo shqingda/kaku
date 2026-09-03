@@ -1,6 +1,12 @@
-import { useEffect, useMemo } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { useEffect, useMemo, useRef } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
@@ -28,6 +34,16 @@ export function AppState({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isOffline = useIsOffline();
   const isError = Boolean(action);
+  // 出现时做一次纯 opacity 淡入（减少动态效果也安全），避免状态卡突兀弹出。
+  const fade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fade, {
+      duration: 200,
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  }, [fade]);
 
   // iOS 没有等价于 accessibilityLiveRegion 的自动播报；错误出现时手动播一次，
   // 依赖保持空数组（title/text 在卡片出现时已确定）。
@@ -41,8 +57,7 @@ export function AppState({
     <Animated.View
       accessibilityLiveRegion={isError ? 'assertive' : 'polite'}
       accessibilityRole={isError ? 'alert' : undefined}
-      entering={FadeIn.duration(200)}
-      style={styles.state}
+      style={[styles.state, { opacity: fade }]}
     >
       <Text accessibilityRole="header" style={styles.stateTitle}>
         {title}
