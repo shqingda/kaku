@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import {
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
+import type { PublicGroupTopicSummary } from '@/features/community/model';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import {
   usePublicCommunity,
@@ -22,7 +23,7 @@ import {
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 
 const compactNumber = new Intl.NumberFormat('zh-CN', {
@@ -35,13 +36,9 @@ export default function CommunityScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
-  const listRef = useScrollToTopButton();
+  const topics = usePagedList(topicsQuery);
   const community = communityQuery.data;
-  const topics = useMemo(
-    () => topicsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [topicsQuery.data],
-  );
-  const topicTotal = topicsQuery.data?.pages[0]?.total ?? 0;
+  const topicTotal = topics.total ?? 0;
   const isRefreshing =
     (communityQuery.isRefetching || topicsQuery.isRefetching) &&
     !communityQuery.isPending &&
@@ -51,12 +48,33 @@ export default function CommunityScreen() {
     void Promise.all([communityQuery.refetch(), topicsQuery.refetch()]);
   }
 
+  const openTopic = useCallback((topicId: number) => {
+    router.push({
+      pathname: '/group/topic/[id]',
+      params: { id: String(topicId) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicGroupTopicSummary }) => (
+      <CommunityTopicRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === topics.items.length - 1}
+        item={item}
+        onPressTopic={openTopic}
+        styles={styles}
+      />
+    ),
+    [openTopic, styles, topics.items.length],
+  );
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '社区' }} />
       <FlatList
+        {...topics.listProps}
         contentContainerStyle={styles.content}
-        data={topics}
+        data={topics.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           !topicsQuery.isPending && !topicsQuery.isError ? (
@@ -66,15 +84,8 @@ export default function CommunityScreen() {
           ) : null
         }
         ListFooterComponent={
-          topics.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(topicsQuery.hasNextPage)}
-              isError={topicsQuery.isFetchNextPageError}
-              isFetching={topicsQuery.isFetchingNextPage}
-              loadedCount={topics.length}
-              onRetry={() => void topicsQuery.fetchNextPage()}
-              total={topicTotal}
-            />
+          topics.items.length > 0 ? (
+            <PagedListFooter {...topics.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -140,13 +151,13 @@ export default function CommunityScreen() {
             ) : null}
             <View style={styles.topicHeader}>
               <Text style={styles.sectionTitle}>最新话题</Text>
-              {topics.length > 0 ? (
+              {topics.items.length > 0 ? (
                 <Text style={styles.sectionMeta}>
-                  已加载 {topics.length} · 共 {compactNumber.format(topicTotal)}
+                  已加载 {topics.items.length} · 共 {compactNumber.format(topicTotal)}
                 </Text>
               ) : null}
             </View>
-            {topics.length > 0 && topicsQuery.isError ? (
+            {topics.items.length > 0 && topicsQuery.isError ? (
               <CachedDataNotice onRetry={() => void topicsQuery.refetch()} />
             ) : (
               <DiscussionStatus
@@ -159,56 +170,54 @@ export default function CommunityScreen() {
             )}
           </>
         }
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            topicsQuery.hasNextPage &&
-            !topicsQuery.isFetchingNextPage &&
-            !topicsQuery.isFetchNextPageError
-          ) {
-            void topicsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
             onRefresh={refreshCommunity}
             refreshing={isRefreshing}
           />
         }
-        renderItem={({ index, item }) => (
-          <View
-            style={[
-              styles.topicList,
-              index === 0 && styles.firstTopicList,
-              index === topics.length - 1 &&
-                styles.lastTopicList,
-            ]}
-          >
-            <GroupTopicRow
-              hasDivider={index > 0}
-              onPress={() =>
-                router.push({
-                  pathname: '/group/topic/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-              showGroup
-              topic={item}
-            />
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={topics.scrollToTop}
+        visible={topics.visible}
       />
     </SafeAreaView>
   );
 }
+
+const CommunityTopicRow = memo(function CommunityTopicRow({
+  hasDivider,
+  isFirst,
+  isLast,
+  item,
+  onPressTopic,
+  styles,
+}: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicGroupTopicSummary;
+  onPressTopic: (topicId: number) => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <View
+      style={[
+        styles.topicList,
+        isFirst && styles.firstTopicList,
+        isLast && styles.lastTopicList,
+      ]}
+    >
+      <GroupTopicRow
+        hasDivider={hasDivider}
+        onPress={() => onPressTopic(item.id)}
+        showGroup
+        topic={item}
+      />
+    </View>
+  );
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },

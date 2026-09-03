@@ -26,6 +26,7 @@ import {
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
 import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
@@ -92,13 +93,18 @@ export default function ChannelScreen() {
           <CachedDataNotice onRetry={() => void channelQuery.refetch()} />
         ) : null}
         {channelQuery.isPending && !channelQuery.data ? (
-          <ChannelState title="正在读取热门条目" text={`${label}频道加载中。`} />
+          <View style={styles.stateSlot}>
+            <AppState title="正在读取热门条目" text={`${label}频道加载中。`} />
+          </View>
         ) : channelQuery.isError && !channelQuery.data ? (
-          <ChannelState
-            action={() => void channelQuery.refetch()}
-            title="热门条目读取失败"
-            text="Bangumi 偶尔会响应较慢，稍后重试即可。"
-          />
+          <View style={styles.stateSlot}>
+            <AppState
+              action={() => void channelQuery.refetch()}
+              actionLabel="重试热门条目读取失败"
+              title="热门条目读取失败"
+              text="Bangumi 偶尔会响应较慢，稍后重试即可。"
+            />
+          </View>
         ) : channelItems.length > 0 ? (
           <ScrollView
             contentContainerStyle={styles.hotList}
@@ -110,7 +116,9 @@ export default function ChannelScreen() {
             ))}
           </ScrollView>
         ) : (
-          <ChannelState title="暂无热门条目" text="稍后刷新，或先去分类浏览看看。" />
+          <View style={styles.stateSlot}>
+            <AppState title="暂无热门条目" text="稍后刷新，或先去分类浏览看看。" />
+          </View>
         )}
 
         <SectionHeading meta="快速前往常用功能" title="继续探索" />
@@ -168,13 +176,18 @@ export default function ChannelScreen() {
           <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
         ) : null}
         {rankingQuery.isPending && !rankingQuery.data ? (
-          <ChannelState title="正在读取高分条目" text="排行榜加载中。" />
+          <View style={styles.stateSlot}>
+            <AppState title="正在读取高分条目" text="排行榜加载中。" />
+          </View>
         ) : rankingQuery.isError && !rankingQuery.data ? (
-          <ChannelState
-            action={() => void rankingQuery.refetch()}
-            title="高分条目读取失败"
-            text="已经显示的热门内容不会受影响。"
-          />
+          <View style={styles.stateSlot}>
+            <AppState
+              action={() => void rankingQuery.refetch()}
+              actionLabel="重试高分条目读取失败"
+              title="高分条目读取失败"
+              text="已经显示的热门内容不会受影响。"
+            />
+          </View>
         ) : ranked.length > 0 ? (
           <View style={styles.rankingList}>
             {ranked.map((item, index) => (
@@ -193,7 +206,9 @@ export default function ChannelScreen() {
             ))}
           </View>
         ) : (
-          <ChannelState title="暂无排行数据" text="稍后刷新即可继续查看。" />
+          <View style={styles.stateSlot}>
+            <AppState title="暂无排行数据" text="稍后刷新即可继续查看。" />
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -286,38 +301,6 @@ function SectionHeading({ meta, title }: { meta: string; title: string }) {
   );
 }
 
-function ChannelState({ action, text, title }: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  const { styles } = useThemedStyles();
-
-  return (
-    <View
-      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
-      accessibilityRole={action ? 'alert' : undefined}
-      style={styles.state}
-    >
-      <Text accessibilityRole="header" style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityLabel={`重试${title}`}
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 52, paddingHorizontal: 20 },
@@ -366,10 +349,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rankingHeading: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   allAction: { paddingHorizontal: 4 },
   rankingList: { backgroundColor: colors.surface, borderRadius: 22, marginTop: 16, overflow: 'hidden', paddingHorizontal: 16 },
-  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, marginTop: 16, padding: 30 },
-  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 6, textAlign: 'center' },
-  retry: { alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 13, justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 17 },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  stateSlot: { marginTop: 16 },
   pressed: { opacity: 0.62 },
 });

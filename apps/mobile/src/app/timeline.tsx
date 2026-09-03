@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
@@ -40,12 +41,25 @@ export default function FriendTimelineScreen() {
         data={items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          <TimelineState
-            colors={colors}
-            error={timelineQuery.isError}
-            loading={timelineQuery.isPending}
-            onRetry={() => void timelineQuery.refetch()}
-          />
+          timelineQuery.isPending ? (
+            <AppState
+              actionLabel="重试加载好友动态"
+              text="新的好友活动会显示在这里。"
+              title="正在读取好友动态"
+            />
+          ) : timelineQuery.isError ? (
+            <AppState
+              action={() => void timelineQuery.refetch()}
+              actionLabel="重试加载好友动态"
+              text="Bangumi 偶尔会响应较慢，稍后重试即可。"
+              title="好友动态读取失败"
+            />
+          ) : (
+            <AppState
+              text="新的好友活动会显示在这里。"
+              title="还没有好友动态"
+            />
+          )
         }
         ListFooterComponent={
           items.length > 0 ? (
@@ -117,48 +131,6 @@ export default function FriendTimelineScreen() {
   );
 }
 
-function TimelineState({
-  colors,
-  error,
-  loading,
-  onRetry,
-}: {
-  colors: ThemeColors;
-  error: boolean;
-  loading: boolean;
-  onRetry: () => void;
-}) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View
-      accessibilityLiveRegion={error ? 'assertive' : 'polite'}
-      accessibilityRole={error ? 'alert' : undefined}
-      style={styles.state}
-    >
-      <Text style={styles.stateTitle}>
-        {loading ? '正在读取好友动态' : error ? '好友动态读取失败' : '还没有好友动态'}
-      </Text>
-      <Text style={styles.stateText}>
-        {error ? 'Bangumi 偶尔会响应较慢，稍后重试即可。' : '新的好友活动会显示在这里。'}
-      </Text>
-      {error ? (
-        <Pressable
-          accessibilityLabel="重试加载好友动态"
-          accessibilityRole="button"
-          onPress={onRetry}
-          style={({ pressed }) => [
-            styles.retryButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
@@ -194,14 +166,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     shadowRadius: 12,
   },
   publishFabText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
-  state: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 42,
-  },
-  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
-  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retryButton: { alignItems: 'center', justifyContent: 'center', marginTop: 10, minHeight: 44, paddingHorizontal: 16 },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

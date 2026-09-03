@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { NotificationRow } from '@/features/notifications/notification-row';
 import {
   useMarkNotificationsRead,
@@ -63,32 +64,25 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           notificationsQuery.isPending ? (
-            <NotificationState
-              colors={colors}
-              error={false}
-              loading
-              onRetry={() => void notificationsQuery.refetch()}
+            <AppState
+              text="新的回复、好友和修订消息会显示在这里。"
+              title="正在读取通知"
             />
           ) : notificationsQuery.isError ? (
-            <NotificationState
-              colors={colors}
-              error
-              loading={false}
-              onRetry={() => void notificationsQuery.refetch()}
+            <AppState
+              action={() => void notificationsQuery.refetch()}
+              text="Bangumi 偶尔会响应较慢，稍后重试即可。"
+              title="通知读取失败"
             />
           ) : showUnreadOnly ? (
-            <View style={styles.state}>
-              <Text style={styles.stateTitle}>没有未读通知</Text>
-              <Text style={styles.stateText}>
-                新消息到达后会在这里显示，下拉可以手动刷新。
-              </Text>
-            </View>
+            <AppState
+              text="新消息到达后会在这里显示，下拉可以手动刷新。"
+              title="没有未读通知"
+            />
           ) : (
-            <NotificationState
-              colors={colors}
-              error={false}
-              loading={false}
-              onRetry={() => void notificationsQuery.refetch()}
+            <AppState
+              text="新的回复、好友和修订消息会显示在这里。"
+              title="暂时没有通知"
             />
           )
         }
@@ -163,42 +157,6 @@ function NotificationFilterChip({
   );
 }
 
-function NotificationState({
-  colors,
-  error,
-  loading,
-  onRetry,
-}: {
-  colors: ThemeColors;
-  error: boolean;
-  loading: boolean;
-  onRetry: () => void;
-}) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>
-        {loading ? '正在读取通知' : error ? '通知读取失败' : '暂时没有通知'}
-      </Text>
-      <Text style={styles.stateText}>
-        {error
-          ? 'Bangumi 偶尔会响应较慢，稍后重试即可。'
-          : '新的回复、好友和修订消息会显示在这里。'}
-      </Text>
-      {error ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onRetry}
-          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
@@ -226,10 +184,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   filterChipSelected: { backgroundColor: colors.ink },
   filterChipText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   filterChipTextSelected: { color: colors.surface },
-  state: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 48 },
-  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
-  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retry: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 9 },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

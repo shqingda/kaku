@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import {
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,7 +19,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -29,20 +28,34 @@ export default function GlobalBlogsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<BlogFilter>('all');
   const blogsQuery = useGlobalBlogs(filter);
-  const listRef = useScrollToTopButton();
-  const blogs = useMemo(
-    () => blogsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [blogsQuery.data],
-  );
+  const blogs = usePagedList(blogsQuery);
   const totalPages = blogsQuery.data?.pages[0]?.totalPages;
+  const openBlog = useCallback((id: number) => {
+    router.push({
+      pathname: '/blog/[id]',
+      params: { id: String(id) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: GlobalBlog }) => (
+      <BlogRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === blogs.items.length - 1}
+        item={item}
+        onPressItem={openBlog}
+      />
+    ),
+    [blogs.items.length, openBlog],
+  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '日志' }} />
       <FlatList
+        {...blogs.listProps}
         contentContainerStyle={styles.content}
-        data={blogs}
-        initialNumToRender={10}
+        data={blogs.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           blogsQuery.isPending ? (
@@ -58,14 +71,8 @@ export default function GlobalBlogsScreen() {
           )
         }
         ListFooterComponent={
-          blogs.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(blogsQuery.hasNextPage)}
-              isError={blogsQuery.isFetchNextPageError}
-              isFetching={blogsQuery.isFetchingNextPage}
-              loadedCount={blogs.length}
-              onRetry={() => void blogsQuery.fetchNextPage()}
-            />
+          blogs.items.length > 0 ? (
+            <PagedListFooter {...blogs.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -101,69 +108,40 @@ export default function GlobalBlogsScreen() {
                 );
               })}
             </ScrollView>
-            {blogs.length > 0 && blogsQuery.isError ? (
+            {blogs.items.length > 0 && blogsQuery.isError ? (
               <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
             ) : null}
           </View>
         }
-        maxToRenderPerBatch={10}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            blogsQuery.hasNextPage &&
-            !blogsQuery.isFetchingNextPage &&
-            !blogsQuery.isFetchNextPageError
-          ) {
-            void blogsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void blogsQuery.refetch()}
-            refreshing={blogsQuery.isRefetching && !blogsQuery.isPending}
+            onRefresh={blogs.refresh}
+            refreshing={blogs.refreshing}
           />
         }
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <BlogRow
-            hasDivider={index > 0}
-            isFirst={index === 0}
-            isLast={index === blogs.length - 1}
-            item={item}
-            onPress={() =>
-              router.push({
-                pathname: '/blog/[id]',
-                params: { id: String(item.id) },
-              })
-            }
-          />
-        )}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={blogs.scrollToTop}
+        visible={blogs.visible}
       />
     </SafeAreaView>
   );
 }
 
-function BlogRow({
+const BlogRow = memo(function BlogRow({
   hasDivider,
   isFirst,
   isLast,
   item,
-  onPress,
+  onPressItem,
 }: {
   hasDivider: boolean;
   isFirst: boolean;
   isLast: boolean;
   item: GlobalBlog;
-  onPress: () => void;
+  onPressItem: (id: number) => void;
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -179,7 +157,7 @@ function BlogRow({
       <Pressable
         accessibilityLabel={`打开日志：${item.title}`}
         accessibilityRole="button"
-        onPress={onPress}
+        onPress={() => onPressItem(item.id)}
         style={({ pressed }) => [
           styles.row,
           hasDivider && styles.rowDivider,
@@ -210,8 +188,7 @@ function BlogRow({
       </Pressable>
     </View>
   );
-}
-
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },

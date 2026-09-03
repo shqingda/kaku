@@ -25,6 +25,7 @@ import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import type { DiscoverSubject } from '@/features/discover/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -98,11 +99,24 @@ export default function BrowseScreen() {
         data={items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          <BrowseState
-            error={browseQuery.isError}
-            loading={browseQuery.isPending}
-            onRetry={() => void browseQuery.refetch()}
-          />
+          browseQuery.isPending ? (
+            <AppState
+              text="可以减少筛选条件再试。"
+              title="正在筛选条目"
+            />
+          ) : browseQuery.isError ? (
+            <AppState
+              action={() => void browseQuery.refetch()}
+              actionLabel="重试分类浏览"
+              text="请检查网络后重试。"
+              title="分类浏览失败"
+            />
+          ) : (
+            <AppState
+              text="可以减少筛选条件再试。"
+              title="没有匹配条目"
+            />
+          )
         }
         ListFooterComponent={items.length ? (
           <PagedListFooter
@@ -247,27 +261,6 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
   );
 });
 
-function BrowseState({ error, loading, onRetry }: { error: boolean; loading: boolean; onRetry: () => void }) {
-  const { styles } = useThemedStyles();
-
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{loading ? '正在筛选条目' : error ? '分类浏览失败' : '没有匹配条目'}</Text>
-      <Text style={styles.stateText}>{error ? '请检查网络后重试。' : '可以减少筛选条件再试。'}</Text>
-      {error ? (
-        <Pressable
-          accessibilityLabel="重试分类浏览"
-          accessibilityRole="button"
-          onPress={onRetry}
-          style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 44, paddingHorizontal: 20 },
@@ -292,10 +285,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
   cardTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
   cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
-  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, padding: 34, width: '100%' },
-  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: colors.muted, fontSize: 13, marginTop: 7 },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800', marginTop: 14 },
-  retry: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 72 },
   pressed: { opacity: 0.62 },
 });

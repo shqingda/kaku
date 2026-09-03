@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, Stack } from 'expo-router';
@@ -6,7 +6,6 @@ import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,7 +31,7 @@ import {
 import { useGlobalPeople } from '@/features/people-browser/use-global-people';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { usePeopleSearch } from '@/features/people-browser/use-people-search';
 import {
@@ -59,11 +58,7 @@ export default function PeopleScreen() {
   );
   const searchQuery = usePeopleSearch(kind, keyword);
   const activeQuery = keyword ? searchQuery : peopleQuery;
-  const listRef = useScrollToTopButton();
-  const people = useMemo(
-    () => activeQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [activeQuery.data],
-  );
+  const people = usePagedList(activeQuery);
   const typeOptions = kind === 'character' ? CHARACTER_TYPES : PERSON_TYPES;
   const totalPages = peopleQuery.data?.pages[0]?.totalPages;
 
@@ -85,13 +80,25 @@ export default function PeopleScreen() {
     Keyboard.dismiss();
   }
 
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicPersonSummary }) => (
+      <PersonRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === people.items.length - 1}
+        item={item}
+      />
+    ),
+    [people.items.length],
+  );
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '人物' }} />
       <FlatList
+        {...people.listProps}
         contentContainerStyle={styles.content}
-        data={people}
-        initialNumToRender={10}
+        data={people.items}
         key={keyword ? `search:${kind}` : `browse:${kind}`}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
@@ -114,15 +121,8 @@ export default function PeopleScreen() {
           )
         }
         ListFooterComponent={
-          people.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(activeQuery.hasNextPage)}
-              isError={activeQuery.isFetchNextPageError}
-              isFetching={activeQuery.isFetchingNextPage}
-              loadedCount={people.length}
-              onRetry={() => void activeQuery.fetchNextPage()}
-              total={keyword ? searchQuery.data?.pages[0]?.total : undefined}
-            />
+          people.items.length > 0 ? (
+            <PagedListFooter {...people.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -203,48 +203,24 @@ export default function PeopleScreen() {
                 </FilterRow>
               </>
             )}
-            {people.length > 0 && activeQuery.isError ? (
+            {people.items.length > 0 && activeQuery.isError ? (
               <CachedDataNotice onRetry={() => void activeQuery.refetch()} />
             ) : null}
           </View>
         }
-        maxToRenderPerBatch={10}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            activeQuery.hasNextPage &&
-            !activeQuery.isFetchingNextPage &&
-            !activeQuery.isFetchNextPageError
-          ) {
-            void activeQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void activeQuery.refetch()}
-            refreshing={activeQuery.isRefetching && !activeQuery.isPending}
+            onRefresh={people.refresh}
+            refreshing={people.refreshing}
           />
         }
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <PersonRow
-            hasDivider={index > 0}
-            isFirst={index === 0}
-            isLast={index === people.length - 1}
-            item={item}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
-        windowSize={7}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={people.scrollToTop}
+        visible={people.visible}
       />
     </SafeAreaView>
   );
@@ -296,7 +272,7 @@ function FilterButton({ label, onPress, selected, wide = false }: {
   );
 }
 
-function PersonRow({ hasDivider, isFirst, isLast, item }: {
+const PersonRow = memo(function PersonRow({ hasDivider, isFirst, isLast, item }: {
   hasDivider: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -375,8 +351,7 @@ function PersonRow({ hasDivider, isFirst, isLast, item }: {
       </Link>
     </View>
   );
-}
-
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },

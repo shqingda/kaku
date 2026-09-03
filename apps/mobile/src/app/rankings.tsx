@@ -3,7 +3,6 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -17,6 +16,7 @@ import {
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -88,18 +88,18 @@ export default function RankingsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           rankingQuery.isPending ? (
-            <RankingState
+            <AppState
               text="正在读取 Bangumi 综合排名。"
               title="排行榜加载中"
             />
           ) : rankingQuery.isError ? (
-            <RankingState
+            <AppState
               action={() => void rankingQuery.refetch()}
               text="请检查网络后重试，已经加载的数据不会被覆盖。"
               title="排行榜读取失败"
             />
           ) : (
-            <RankingState
+            <AppState
               text={`Bangumi 暂时没有返回可显示的${subjectTypeLabel}。`}
               title="暂无排行数据"
             />
@@ -201,38 +201,6 @@ const RankingRow = memo(function RankingRow({
   );
 });
 
-function RankingState({
-  action,
-  text,
-  title,
-}: {
-  action?: () => void;
-  text: string;
-  title: string;
-}) {
-  const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>{title}</Text>
-      <Text style={styles.stateText}>{text}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={action}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
@@ -269,35 +237,4 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
   },
-  state: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    padding: 30,
-  },
-  stateTitle: {
-    color: colors.ink,
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  stateText: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 7,
-    textAlign: 'center',
-  },
-  retry: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 13,
-    marginTop: 15,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
-  },
-  retryText: {
-    color: colors.accent,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  pressed: { opacity: 0.62 },
 });

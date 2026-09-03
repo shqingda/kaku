@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,9 +11,10 @@ import {
 } from '@/features/catalog/subject-types';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicTag } from '@/features/tags/model';
@@ -39,48 +40,54 @@ export default function TagsScreen() {
   }, [subjectType, type]);
   const [draft, setDraft] = useState('');
   const tagsQuery = useGlobalTags(subjectType);
-  const listRef = useScrollToTopButton();
-  const items = useMemo(
-    () => tagsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [tagsQuery.data],
-  );
+  const tags = usePagedList(tagsQuery);
 
-  function browseTag(tag = draft) {
-    const normalized = tag.trim();
-    if (!normalized) return;
-    Keyboard.dismiss();
-    router.push({
-      pathname: '/browse',
-      params: { tag: normalized, type: getSubjectTypeSlug(subjectType) },
-    });
-  }
+  const browseTag = useCallback(
+    (tag = draft) => {
+      const normalized = tag.trim();
+      if (!normalized) return;
+      Keyboard.dismiss();
+      router.push({
+        pathname: '/browse',
+        params: { tag: normalized, type: getSubjectTypeSlug(subjectType) },
+      });
+    },
+    [draft, subjectType],
+  );
+  const renderItem = useCallback(
+    ({ item }: { item: PublicTag }) => (
+      <TagCard item={item} onPress={() => browseTag(item.name)} styles={styles} />
+    ),
+    [browseTag, styles],
+  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '标签索引' }} />
       <FlatList
+        {...tags.listProps}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
-        data={items}
+        data={tags.items}
         key={subjectType}
         keyExtractor={(item) => item.name}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          <TagState
-            error={tagsQuery.isError}
-            loading={tagsQuery.isPending}
-            onRetry={() => void tagsQuery.refetch()}
-          />
+          tagsQuery.isPending ? (
+            <AppState text="换一种条目类型看看。" title="正在读取标签" />
+          ) : tagsQuery.isError ? (
+            <AppState
+              action={() => void tagsQuery.refetch()}
+              text="Bangumi 偶尔会响应较慢，请稍后重试。"
+              title="标签加载失败"
+            />
+          ) : (
+            <AppState text="换一种条目类型看看。" title="暂无标签" />
+          )
         }
-        ListFooterComponent={items.length ? (
-          <PagedListFooter
-            hasNextPage={Boolean(tagsQuery.hasNextPage)}
-            isError={tagsQuery.isFetchNextPageError}
-            isFetching={tagsQuery.isFetchingNextPage}
-            loadedCount={items.length}
-            onRetry={() => void tagsQuery.fetchNextPage()}
-          />
+        ListFooterComponent={tags.items.length ? (
+          <PagedListFooter {...tags.footerProps} />
         ) : null}
         ListHeaderComponent={
           <View>
@@ -107,39 +114,24 @@ export default function TagsScreen() {
           </View>
         }
         numColumns={2}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            tagsQuery.hasNextPage &&
-            !tagsQuery.isFetchingNextPage &&
-            !tagsQuery.isFetchNextPageError
-          ) {
-            void tagsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void tagsQuery.refetch()}
-            refreshing={tagsQuery.isRefetching && !tagsQuery.isPending}
+            onRefresh={tags.refresh}
+            refreshing={tags.refreshing}
           />
         }
-        renderItem={({ item }) => (
-          <TagCard item={item} onPress={() => browseTag(item.name)} styles={styles} />
-        )}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={tags.scrollToTop}
+        visible={tags.visible}
       />
     </SafeAreaView>
   );
 }
 
-function TagCard({ item, onPress, styles }: {
+const TagCard = memo(function TagCard({ item, onPress, styles }: {
   item: PublicTag;
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
@@ -155,39 +147,7 @@ function TagCard({ item, onPress, styles }: {
       <Text style={styles.tagCount}>{compactNumber.format(item.count)}</Text>
     </Pressable>
   );
-}
-
-function TagState({ error, loading, onRetry }: {
-  error: boolean;
-  loading: boolean;
-  onRetry: () => void;
-}) {
-  const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={styles.state}>
-      <Text style={styles.stateTitle}>
-        {loading ? '正在读取标签' : error ? '标签加载失败' : '暂无标签'}
-      </Text>
-      <Text style={styles.stateText}>
-        {error ? 'Bangumi 偶尔会响应较慢，请稍后重试。' : '换一种条目类型看看。'}
-      </Text>
-      {error ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onRetry}
-          style={({ pressed }) => [
-            styles.retry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.retryText}>重试</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
@@ -214,10 +174,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   tagName: { color: colors.ink, flex: 1, fontSize: 14, fontWeight: '700' },
   tagCount: { color: colors.subtle, fontSize: 11, marginLeft: 8 },
-  state: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 22, padding: 34, width: '100%' },
-  stateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-  stateText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, textAlign: 'center' },
-  retry: { backgroundColor: colors.accentSoft, borderRadius: 13, marginTop: 14, minHeight: 44, paddingHorizontal: 17, justifyContent: 'center' },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

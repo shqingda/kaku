@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -10,6 +10,7 @@ import { rememberReturnTo } from '@/lib/auth-redirect';
 import { HIT_SLOP } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
+import type { PublicGroupTopicSummary } from '@/features/community/model';
 import {
   usePublicGroup,
   usePublicGroupTopics,
@@ -20,7 +21,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function GroupScreen() {
@@ -32,14 +33,10 @@ export default function GroupScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const groupQuery = usePublicGroup(name);
   const topicsQuery = usePublicGroupTopics(name);
-  const listRef = useScrollToTopButton();
+  const topics = usePagedList(topicsQuery);
   const group = groupQuery.data;
-  const topics = useMemo(
-    () => topicsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [topicsQuery.data],
-  );
   const topicTotal =
-    topicsQuery.data?.pages[0]?.total ?? group?.topicCount ?? 0;
+    topics.total ?? group?.topicCount ?? 0;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const canCollapseDescription = (group?.description.length ?? 0) > 180;
 
@@ -65,12 +62,33 @@ export default function GroupScreen() {
     );
   }
 
+  const openTopic = useCallback((topicId: number) => {
+    router.push({
+      pathname: '/group/topic/[id]',
+      params: { id: String(topicId) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicGroupTopicSummary }) => (
+      <GroupTopicListRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === topics.items.length - 1}
+        item={item}
+        onPressTopic={openTopic}
+        styles={styles}
+      />
+    ),
+    [openTopic, styles, topics.items.length],
+  );
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: group?.title ?? '小组' }} />
       <FlatList
+        {...topics.listProps}
         contentContainerStyle={styles.content}
-        data={topics}
+        data={topics.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           group && !topicsQuery.isPending && !topicsQuery.isError ? (
@@ -171,7 +189,7 @@ export default function GroupScreen() {
                     <Text style={styles.newTopicText}>发话题</Text>
                   </Pressable>
                 </View>
-                {topics.length > 0 && topicsQuery.isError ? (
+                {topics.items.length > 0 && topicsQuery.isError ? (
                   <CachedDataNotice
                     onRetry={() => void topicsQuery.refetch()}
                   />
@@ -189,30 +207,10 @@ export default function GroupScreen() {
           </>
         }
         ListFooterComponent={
-          topics.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={topicsQuery.hasNextPage}
-              isError={topicsQuery.isFetchNextPageError}
-              isFetching={topicsQuery.isFetchingNextPage}
-              loadedCount={topics.length}
-              onRetry={() => void topicsQuery.fetchNextPage()}
-              total={topicTotal}
-            />
+          topics.items.length > 0 ? (
+            <PagedListFooter {...topics.footerProps} />
           ) : null
         }
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            topicsQuery.hasNextPage &&
-            !topicsQuery.isFetchingNextPage &&
-            !topicsQuery.isFetchNextPageError
-          ) {
-            void topicsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
             onRefresh={() =>
@@ -225,32 +223,11 @@ export default function GroupScreen() {
             }
           />
         }
-        renderItem={({ index, item }) => (
-          <View
-            style={[
-              styles.topicList,
-              index === 0 && styles.firstTopicList,
-              index === topics.length - 1 &&
-                styles.lastTopicList,
-            ]}
-          >
-            <GroupTopicRow
-              hasDivider={index > 0}
-              onPress={() =>
-                router.push({
-                  pathname: '/group/topic/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-              topic={item}
-            />
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={topics.scrollToTop}
+        visible={topics.visible}
       />
       <TopicComposer
         onClose={() => setComposerVisible(false)}
@@ -267,6 +244,38 @@ export default function GroupScreen() {
     </SafeAreaView>
   );
 }
+
+const GroupTopicListRow = memo(function GroupTopicListRow({
+  hasDivider,
+  isFirst,
+  isLast,
+  item,
+  onPressTopic,
+  styles,
+}: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicGroupTopicSummary;
+  onPressTopic: (topicId: number) => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <View
+      style={[
+        styles.topicList,
+        isFirst && styles.firstTopicList,
+        isLast && styles.lastTopicList,
+      ]}
+    >
+      <GroupTopicRow
+        hasDivider={hasDivider}
+        onPress={() => onPressTopic(item.id)}
+        topic={item}
+      />
+    </View>
+  );
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
