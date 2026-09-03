@@ -11,11 +11,15 @@ import { useTheme } from '@/features/theme/theme-provider';
 // 失败永不隐藏在空白背后：标题 + 说明 + 显式重试按钮。
 export function AppState({
   action,
+  actionAccessibilityLabel,
   actionLabel = '重试',
   text,
   title,
 }: {
   action?: () => void;
+  // 按钮可见文字固定用 actionLabel（默认「重试」）；
+  // 屏幕想给读屏用户更具体的提示时传 actionAccessibilityLabel。
+  actionAccessibilityLabel?: string;
   actionLabel?: string;
   text: string;
   title: string;
@@ -51,7 +55,7 @@ export function AppState({
       ) : null}
       {action ? (
         <Pressable
-          accessibilityLabel={actionLabel}
+          accessibilityLabel={actionAccessibilityLabel ?? actionLabel}
           accessibilityRole="button"
           onPress={action}
           style={({ pressed }) => [

@@ -1,12 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import {
-  FlatList,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -20,11 +14,10 @@ import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { RankedSubjectRow } from '@/features/discover/ranked-subject-row';
 import { useBangumiRankedSubjects } from '@/features/discover/use-discover';
-import type { DiscoverSubject, DiscoverSubjectPage } from '@/features/discover/model';
-import { readInfiniteItems, readInfinitePages } from '@/lib/query-data';
+import type { DiscoverSubject } from '@/features/discover/model';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function RankingsScreen() {
@@ -44,16 +37,7 @@ export default function RankingsScreen() {
   }, [type]);
   const subjectTypeLabel = getSubjectTypeLabel(subjectType);
   const rankingQuery = useBangumiRankedSubjects(subjectType);
-  const listRef = useScrollToTopButton();
-  const pages = useMemo(
-    () => readInfinitePages<DiscoverSubjectPage>(rankingQuery.data),
-    [rankingQuery.data],
-  );
-  const subjects = useMemo(
-    () => readInfiniteItems<DiscoverSubject>(rankingQuery.data),
-    [rankingQuery.data],
-  );
-  const total = pages[0]?.total;
+  const rankings = usePagedList(rankingQuery);
   const openSubject = useCallback((id: number) => {
     router.push({ pathname: '/subject/[id]', params: { id: String(id) } });
   }, []);
@@ -61,14 +45,14 @@ export default function RankingsScreen() {
     ({ index, item }: { index: number; item: DiscoverSubject }) => (
       <RankingRow
         isFirst={index === 0}
-        isLast={index === subjects.length - 1}
+        isLast={index === rankings.items.length - 1}
         item={item}
         onPressItem={openSubject}
         position={index + 1}
         styles={styles}
       />
     ),
-    [openSubject, styles, subjects.length],
+    [openSubject, rankings.items.length, styles],
   );
 
   return (
@@ -81,10 +65,9 @@ export default function RankingsScreen() {
         }}
       />
       <FlatList
-        ref={listRef.ref}
+        {...rankings.listProps}
         contentContainerStyle={styles.content}
-        data={subjects}
-        initialNumToRender={Platform.OS === 'android' ? 6 : 12}
+        data={rankings.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           rankingQuery.isPending ? (
@@ -106,15 +89,8 @@ export default function RankingsScreen() {
           )
         }
         ListFooterComponent={
-          subjects.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={rankingQuery.hasNextPage}
-              isError={rankingQuery.isFetchNextPageError}
-              isFetching={rankingQuery.isFetchingNextPage}
-              loadedCount={subjects.length}
-              onRetry={() => void rankingQuery.fetchNextPage()}
-              total={total}
-            />
+          rankings.items.length > 0 ? (
+            <PagedListFooter {...rankings.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -135,34 +111,17 @@ export default function RankingsScreen() {
             ) : null}
           </>
         }
-        maxToRenderPerBatch={Platform.OS === 'android' ? 6 : 12}
-        onEndReached={() => {
-          if (
-            rankingQuery.hasNextPage &&
-            !rankingQuery.isFetchingNextPage &&
-            !rankingQuery.isFetchNextPageError
-          ) {
-            void rankingQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onScroll={listRef.handleScroll}
-        scrollEventThrottle={80}
-        removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void rankingQuery.refetch()}
-            refreshing={rankingQuery.isRefetching && !rankingQuery.isPending}
+            onRefresh={rankings.refresh}
+            refreshing={rankings.refreshing}
           />
         }
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        updateCellsBatchingPeriod={Platform.OS === 'android' ? 60 : 40}
-        windowSize={Platform.OS === 'android' ? 5 : 7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={rankings.scrollToTop}
+        visible={rankings.visible}
       />
     </SafeAreaView>
   );

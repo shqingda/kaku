@@ -1,4 +1,4 @@
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import {
   Pressable,
   type PressableProps,
@@ -22,14 +22,21 @@ const PRESS_SCALE_SPRING = { damping: 30, mass: 1, stiffness: 420 } as const;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type PressableScaleProps = PressableProps & {
-  style?: StyleProp<ViewStyle>;
+// 本组件自己解算函数式 style（reanimated 的 animated 组件会丢弃它），
+// 只需要 pressed 一项；hover/focus 在触屏上不存在。
+type PressableScaleStyle =
+  | StyleProp<ViewStyle>
+  | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
+
+type PressableScaleProps = Omit<PressableProps, 'style'> & {
+  style?: PressableScaleStyle;
 };
 
 export const PressableScale = forwardRef<View, PressableScaleProps>(
   function PressableScale({ onPressIn, onPressOut, style, ...props }, ref) {
     const scale = useSharedValue(1);
     const reduceMotion = useReduceMotion();
+    const [pressed, setPressed] = useState(false);
 
     const animatedStyle = useAnimatedStyle(() => {
       if (reduceMotion) {
@@ -41,6 +48,7 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(
     const handlePressIn = useCallback(
       (event: Parameters<NonNullable<PressableProps['onPressIn']>>[0]) => {
         scale.value = withSpring(PRESS_SCALE, PRESS_SCALE_SPRING);
+        setPressed(true);
         onPressIn?.(event);
       },
       [onPressIn, scale],
@@ -49,10 +57,14 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(
     const handlePressOut = useCallback(
       (event: Parameters<NonNullable<PressableProps['onPressOut']>>[0]) => {
         scale.value = withSpring(1, PRESS_SCALE_SPRING);
+        setPressed(false);
         onPressOut?.(event);
       },
       [onPressOut, scale],
     );
+
+    const resolvedStyle =
+      typeof style === 'function' ? style({ pressed }) : style;
 
     return (
       <AnimatedPressable
@@ -60,7 +72,7 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         ref={ref}
-        style={[style, animatedStyle]}
+        style={[resolvedStyle, animatedStyle]}
       />
     );
   },

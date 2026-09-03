@@ -93,11 +93,12 @@ export function HomeMediaSection({
       />
 
       {loading ? (
-        // 与封面卡同构的骨架：宽度和圆角一致，数据到达时不跳版。
+        // 与封面卡同构的骨架：3 张弹性宽度卡（约等于真实卡片的 104pt），
+        // 数据到达时不跳版。
         <View style={styles.skeletonRow}>
-          {[0, 1, 2, 3].map((index) => (
+          {[0, 1, 2].map((index) => (
             <View key={index} style={styles.skeletonCard}>
-              <SkeletonBox borderRadius={14} height={146} width={104} />
+              <SkeletonBox borderRadius={14} height={146} width="100%" />
               <SkeletonBox height={13} width="88%" />
               <SkeletonBox height={11} width="55%" />
             </View>
@@ -226,8 +227,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   skeletonCard: {
     alignItems: 'flex-start',
+    flex: 1,
     gap: 9,
-    width: 104,
   },
   card: { width: 104 },
   cardButton: { width: '100%' },

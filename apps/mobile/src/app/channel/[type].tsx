@@ -100,7 +100,7 @@ export default function ChannelScreen() {
           <View style={styles.stateSlot}>
             <AppState
               action={() => void channelQuery.refetch()}
-              actionLabel="重试热门条目读取失败"
+              actionAccessibilityLabel="重试热门条目读取失败"
               title="热门条目读取失败"
               text="Bangumi 偶尔会响应较慢，稍后重试即可。"
             />
@@ -183,7 +183,7 @@ export default function ChannelScreen() {
           <View style={styles.stateSlot}>
             <AppState
               action={() => void rankingQuery.refetch()}
-              actionLabel="重试高分条目读取失败"
+              actionAccessibilityLabel="重试高分条目读取失败"
               title="高分条目读取失败"
               text="已经显示的热门内容不会受影响。"
             />

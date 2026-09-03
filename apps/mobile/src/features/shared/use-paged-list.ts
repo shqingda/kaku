@@ -98,6 +98,9 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
     total,
     listProps,
     footerProps,
+    // 极少数屏幕（如收藏页切换筛选）需要立即无动画回到列表顶部，
+    // 交给它们直接操作底层 ref；常规置顶仍用 scrollToTop。
+    listRef: listRef.ref,
     refresh,
     // 下拉刷新指示只反映整表刷新：等待首屏（isPending）和翻页都不算。
     refreshing: isRefetching && !isPending && !isFetchingNextPage,

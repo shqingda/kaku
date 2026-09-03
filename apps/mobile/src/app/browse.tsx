@@ -29,7 +29,7 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 
 const SORTS: Array<{ id: BrowseSort; label: string }> = [
   { id: 'rank', label: '排名' },
@@ -71,12 +71,8 @@ export default function BrowseScreen() {
     setTag(nextTag || undefined);
     setSort('rank');
   }, [initialTag, type]);
-  const listRef = useScrollToTopButton();
   const browseQuery = useBrowseSubjects({ sort, subjectType, tag, year });
-  const items = useMemo(
-    () => browseQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [browseQuery.data],
-  );
+  const browse = usePagedList(browseQuery);
   const renderItem = useCallback(
     ({ item }: { item: DiscoverSubject }) => <BrowseCard item={item} />,
     [],
@@ -93,10 +89,10 @@ export default function BrowseScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '分类浏览' }} />
       <FlatList
-        ref={listRef.ref}
+        {...browse.listProps}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.content}
-        data={items}
+        data={browse.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           browseQuery.isPending ? (
@@ -107,7 +103,7 @@ export default function BrowseScreen() {
           ) : browseQuery.isError ? (
             <AppState
               action={() => void browseQuery.refetch()}
-              actionLabel="重试分类浏览"
+              actionAccessibilityLabel="重试分类浏览"
               text="请检查网络后重试。"
               title="分类浏览失败"
             />
@@ -118,14 +114,8 @@ export default function BrowseScreen() {
             />
           )
         }
-        ListFooterComponent={items.length ? (
-          <PagedListFooter
-            hasNextPage={Boolean(browseQuery.hasNextPage)}
-            isError={browseQuery.isFetchNextPageError}
-            isFetching={browseQuery.isFetchingNextPage}
-            loadedCount={items.length}
-            onRetry={() => void browseQuery.fetchNextPage()}
-          />
+        ListFooterComponent={browse.items.length ? (
+          <PagedListFooter {...browse.footerProps} />
         ) : null}
         ListHeaderComponent={
           <View>
@@ -200,36 +190,23 @@ export default function BrowseScreen() {
               {getSubjectTypeLabel(subjectType)} · {SORTS.find((item) => item.id === sort)?.label}
               {year ? ` · ${year}` : ''}{tag ? ` · ${tag}` : ''}
             </Text>
-            {items.length > 0 && browseQuery.isError ? (
+            {browse.items.length > 0 && browseQuery.isError ? (
               <CachedDataNotice onRetry={() => void browseQuery.refetch()} />
             ) : null}
           </View>
         }
         numColumns={2}
-        onEndReached={() => {
-          if (
-            browseQuery.hasNextPage &&
-            !browseQuery.isFetchingNextPage &&
-            !browseQuery.isFetchNextPageError
-          ) {
-            void browseQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onScroll={listRef.handleScroll}
-        scrollEventThrottle={80}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void browseQuery.refetch()}
-            refreshing={browseQuery.isRefetching && !browseQuery.isPending}
+            onRefresh={browse.refresh}
+            refreshing={browse.refreshing}
           />
         }
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={browse.scrollToTop}
+        visible={browse.visible}
       />
     </SafeAreaView>
   );

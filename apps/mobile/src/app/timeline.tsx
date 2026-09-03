@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -16,41 +16,55 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
+import type { FriendTimelineItem } from '@/features/timeline/model';
+
+const TimelineRow = memo(function TimelineRow({
+  hasDivider,
+  item,
+}: {
+  hasDivider: boolean;
+  item: FriendTimelineItem;
+}) {
+  return <FriendTimelineRow hasDivider={hasDivider} item={item} />;
+});
 
 export default function FriendTimelineScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const timelineQuery = useFriendTimeline();
-  const listRef = useScrollToTopButton();
+  const timeline = usePagedList(timelineQuery);
   const [composerVisible, setComposerVisible] = useState(false);
-  const items = useMemo(
-    () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [timelineQuery.data],
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: FriendTimelineItem }) => (
+      <TimelineRow hasDivider={index > 0} item={item} />
+    ),
+    [],
   );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '好友动态' }} />
       <FlatList
+        {...timeline.listProps}
         contentContainerStyle={styles.content}
-        data={items}
+        data={timeline.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           timelineQuery.isPending ? (
             <AppState
-              actionLabel="重试加载好友动态"
+              actionAccessibilityLabel="重试加载好友动态"
               text="新的好友活动会显示在这里。"
               title="正在读取好友动态"
             />
           ) : timelineQuery.isError ? (
             <AppState
               action={() => void timelineQuery.refetch()}
-              actionLabel="重试加载好友动态"
+              actionAccessibilityLabel="重试加载好友动态"
               text="Bangumi 偶尔会响应较慢，稍后重试即可。"
               title="好友动态读取失败"
             />
@@ -62,46 +76,21 @@ export default function FriendTimelineScreen() {
           )
         }
         ListFooterComponent={
-          items.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(timelineQuery.hasNextPage)}
-              isError={timelineQuery.isFetchNextPageError}
-              isFetching={timelineQuery.isFetchingNextPage}
-              loadedCount={items.length}
-              onRetry={() => void timelineQuery.fetchNextPage()}
-            />
+          timeline.items.length > 0 ? (
+            <PagedListFooter {...timeline.footerProps} />
           ) : null
         }
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            timelineQuery.hasNextPage &&
-            !timelineQuery.isFetchingNextPage &&
-            !timelineQuery.isFetchNextPageError
-          ) {
-            void timelineQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void timelineQuery.refetch()}
-            refreshing={
-              timelineQuery.isRefetching && !timelineQuery.isFetchingNextPage
-            }
+            onRefresh={timeline.refresh}
+            refreshing={timeline.refreshing}
           />
         }
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <FriendTimelineRow hasDivider={index > 0} item={item} />
-        )}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={timeline.scrollToTop}
+        visible={timeline.visible}
       />
       <TimelineComposer
         onClose={() => setComposerVisible(false)}

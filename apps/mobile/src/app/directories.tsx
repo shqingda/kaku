@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -28,7 +27,7 @@ import {
 import { useGlobalIndexes } from '@/features/indexes/use-global-indexes';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 
@@ -40,11 +39,7 @@ export default function DirectoriesScreen() {
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
   const indexesQuery = useGlobalIndexes(sort);
-  const listRef = useScrollToTopButton();
-  const indexes = useMemo(
-    () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [indexesQuery.data],
-  );
+  const paged = usePagedList(indexesQuery);
   const totalPages = indexesQuery.data?.pages[0]?.totalPages;
 
   function openComposer() {
@@ -69,12 +64,25 @@ export default function DirectoriesScreen() {
     );
   }
 
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicIndexSummary }) => (
+      <IndexRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === paged.items.length - 1}
+        item={item}
+      />
+    ),
+    [paged.items.length],
+  );
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '目录发现' }} />
       <FlatList
+        {...paged.listProps}
         contentContainerStyle={styles.content}
-        data={indexes}
+        data={paged.items}
         initialNumToRender={10}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
@@ -91,14 +99,8 @@ export default function DirectoriesScreen() {
           )
         }
         ListFooterComponent={
-          indexes.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(indexesQuery.hasNextPage)}
-              isError={indexesQuery.isFetchNextPageError}
-              isFetching={indexesQuery.isFetchingNextPage}
-              loadedCount={indexes.length}
-              onRetry={() => void indexesQuery.fetchNextPage()}
-            />
+          paged.items.length > 0 ? (
+            <PagedListFooter {...paged.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -151,46 +153,24 @@ export default function DirectoriesScreen() {
               />
               <Text style={styles.createButtonText}>新建目录</Text>
             </Pressable>
-            {indexes.length > 0 && indexesQuery.isError ? (
+            {paged.items.length > 0 && indexesQuery.isError ? (
               <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
             ) : null}
           </View>
         }
         maxToRenderPerBatch={10}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            indexesQuery.hasNextPage &&
-            !indexesQuery.isFetchingNextPage &&
-            !indexesQuery.isFetchNextPageError
-          ) {
-            void indexesQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() => void indexesQuery.refetch()}
-            refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
+            onRefresh={paged.refresh}
+            refreshing={paged.refreshing}
           />
         }
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <IndexRow
-            hasDivider={index > 0}
-            isFirst={index === 0}
-            isLast={index === indexes.length - 1}
-            item={item}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={paged.scrollToTop}
+        visible={paged.visible}
       />
       <IndexComposer
         onClose={() => setComposerVisible(false)}
@@ -207,7 +187,7 @@ export default function DirectoriesScreen() {
   );
 }
 
-function IndexRow({
+const IndexRow = memo(function IndexRow({
   hasDivider,
   isFirst,
   isLast,
@@ -273,8 +253,7 @@ function IndexRow({
       </Pressable>
     </View>
   );
-}
-
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },

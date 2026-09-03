@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,7 +22,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import {
   usePersonalCollection,
   useSavePersonalCollection,
@@ -59,6 +58,40 @@ function parseCollectionStatus(value?: string) {
     : undefined;
 }
 
+const CollectionRow = memo(function CollectionRow({
+  canEdit,
+  isFirst,
+  isLast,
+  item,
+  onPressItem,
+}: {
+  canEdit: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicUserCollection;
+  onPressItem: (id: number) => void;
+}) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View
+      style={[
+        styles.item,
+        isFirst && styles.firstItem,
+        isLast && styles.lastItem,
+      ]}
+    >
+      <PublicUserCollectionRow
+        hasDivider={!isFirst}
+        item={item}
+        onPress={() => onPressItem(item.id)}
+        trailing={canEdit ? <CollectionRowEditor item={item} /> : undefined}
+      />
+    </View>
+  );
+});
+
 export default function PublicUserCollectionsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -68,7 +101,6 @@ export default function PublicUserCollectionsScreen() {
     username: string;
   }>();
   const { session } = useAuth();
-  const listRef = useScrollToTopButton();
   const initialType = Number(type);
   const [subjectType, setSubjectType] = useState(() =>
     SUBJECT_TYPES.some((item) => item.id === initialType) ? initialType : 2,
@@ -93,14 +125,28 @@ export default function PublicUserCollectionsScreen() {
     subjectType,
     collectionStatus,
   );
-  const collections = useMemo(
-    () =>
-      collectionsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [collectionsQuery.data],
-  );
-  const total = collectionsQuery.data?.pages[0]?.total ?? 0;
+  const collections = usePagedList(collectionsQuery);
+  const total = collections.total ?? 0;
   const isTrackingPage = collectionStatus === 'doing';
   const canEdit = isTrackingPage && session?.user.username === username;
+  const openSubject = useCallback((id: number) => {
+    router.push({
+      pathname: '/subject/[id]',
+      params: { id: String(id) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicUserCollection }) => (
+      <CollectionRow
+        canEdit={canEdit}
+        isFirst={index === 0}
+        isLast={index === collections.items.length - 1}
+        item={item}
+        onPressItem={openSubject}
+      />
+    ),
+    [canEdit, collections.items.length, openSubject],
+  );
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -114,9 +160,9 @@ export default function PublicUserCollectionsScreen() {
         }}
       />
       <FlatList
-        ref={listRef.ref}
+        {...collections.listProps}
         contentContainerStyle={styles.content}
-        data={collections}
+        data={collections.items}
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
@@ -139,15 +185,8 @@ export default function PublicUserCollectionsScreen() {
           )
         }
         ListFooterComponent={
-          collections.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={collectionsQuery.hasNextPage}
-              isError={collectionsQuery.isFetchNextPageError}
-              isFetching={collectionsQuery.isFetchingNextPage}
-              loadedCount={collections.length}
-              onRetry={() => void collectionsQuery.fetchNextPage()}
-              total={total}
-            />
+          collections.items.length > 0 ? (
+            <PagedListFooter {...collections.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -172,64 +211,29 @@ export default function PublicUserCollectionsScreen() {
             <CollectionStatusTabs
               onChange={(nextStatus) => {
                 setCollectionStatus(nextStatus);
-                listRef.ref.current?.scrollToOffset({ animated: false, offset: 0 });
+                collections.listRef.current?.scrollToOffset({
+                  animated: false,
+                  offset: 0,
+                });
               }}
               selectedStatus={collectionStatus}
               subjectType={subjectType}
             />
-            {collections.length > 0 && collectionsQuery.isError ? (
+            {collections.items.length > 0 && collectionsQuery.isError ? (
               <CachedDataNotice onRetry={() => void collectionsQuery.refetch()} />
             ) : null}
           </>
         }
         maxToRenderPerBatch={12}
-        onEndReached={() => {
-          if (
-            collectionsQuery.hasNextPage &&
-            !collectionsQuery.isFetchingNextPage &&
-            !collectionsQuery.isFetchNextPageError
-          ) {
-            void collectionsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void collectionsQuery.refetch()}
-        onScroll={listRef.handleScroll}
-        refreshing={
-          collectionsQuery.isRefetching && !collectionsQuery.isPending
-        }
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <View
-            style={[
-              styles.item,
-              index === 0 && styles.firstItem,
-              index === collections.length - 1 && styles.lastItem,
-            ]}
-          >
-            <PublicUserCollectionRow
-              hasDivider={index > 0}
-              item={item}
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-              trailing={
-                canEdit ? <CollectionRowEditor item={item} /> : undefined
-              }
-            />
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={80}
+        onRefresh={collections.refresh}
+        refreshing={collections.refreshing}
+        renderItem={renderItem}
         updateCellsBatchingPeriod={40}
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={collections.scrollToTop}
+        visible={collections.visible}
       />
     </SafeAreaView>
   );

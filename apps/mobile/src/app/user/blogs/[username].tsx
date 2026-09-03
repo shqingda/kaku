@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -14,29 +13,78 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { usePublicUserBlogs } from '@/features/users/use-public-user';
+import type { PublicUserBlog } from '@/features/users/model';
+
+const UserBlogRow = memo(function UserBlogRow({
+  hasDivider,
+  isFirst,
+  isLast,
+  item,
+  onPressItem,
+}: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicUserBlog;
+  onPressItem: (id: number) => void;
+}) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View
+      style={[
+        styles.item,
+        isFirst && styles.firstItem,
+        isLast && styles.lastItem,
+      ]}
+    >
+      <PublicUserBlogRow
+        hasDivider={hasDivider}
+        item={item}
+        onPress={() => onPressItem(item.id)}
+      />
+    </View>
+  );
+});
 
 export default function PublicUserBlogsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const blogsQuery = usePublicUserBlogs(username);
-  const listRef = useScrollToTopButton();
-  const blogs = useMemo(
-    () => blogsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [blogsQuery.data],
+  const blogs = usePagedList(blogsQuery);
+  const total = blogs.total ?? 0;
+  const openBlog = useCallback((id: number) => {
+    router.push({
+      pathname: '/blog/[id]',
+      params: { id: String(id) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicUserBlog }) => (
+      <UserBlogRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === blogs.items.length - 1}
+        item={item}
+        onPressItem={openBlog}
+      />
+    ),
+    [blogs.items.length, openBlog],
   );
-  const total = blogsQuery.data?.pages[0]?.total ?? 0;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '日志' }} />
       <FlatList
+        {...blogs.listProps}
         contentContainerStyle={styles.content}
-        data={blogs}
+        data={blogs.items}
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
@@ -53,15 +101,8 @@ export default function PublicUserBlogsScreen() {
           )
         }
         ListFooterComponent={
-          blogs.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={blogsQuery.hasNextPage}
-              isError={blogsQuery.isFetchNextPageError}
-              isFetching={blogsQuery.isFetchingNextPage}
-              loadedCount={blogs.length}
-              onRetry={() => void blogsQuery.fetchNextPage()}
-              total={total}
-            />
+          blogs.items.length > 0 ? (
+            <PagedListFooter {...blogs.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -70,54 +111,20 @@ export default function PublicUserBlogsScreen() {
             <Text style={styles.meta}>
               @{username} · {total ? `${total} 篇` : '读取中'}
             </Text>
-            {blogs.length > 0 && blogsQuery.isError ? (
+            {blogs.items.length > 0 && blogsQuery.isError ? (
               <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
             ) : null}
           </View>
         }
         maxToRenderPerBatch={12}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            blogsQuery.hasNextPage &&
-            !blogsQuery.isFetchingNextPage &&
-            !blogsQuery.isFetchNextPageError
-          ) {
-            void blogsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void blogsQuery.refetch()}
-        refreshing={blogsQuery.isRefetching && !blogsQuery.isPending}
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <View
-            style={[
-              styles.item,
-              index === 0 && styles.firstItem,
-              index === blogs.length - 1 && styles.lastItem,
-            ]}
-          >
-            <PublicUserBlogRow
-              hasDivider={index > 0}
-              item={item}
-              onPress={() =>
-                router.push({
-                  pathname: '/blog/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-            />
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
+        onRefresh={blogs.refresh}
+        refreshing={blogs.refreshing}
+        renderItem={renderItem}
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={blogs.scrollToTop}
+        visible={blogs.visible}
       />
     </SafeAreaView>
   );

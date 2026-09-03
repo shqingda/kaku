@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,13 +7,53 @@ import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
+import type { SubjectComment } from '@/features/reviews/model';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+
+const CommentRow = memo(function CommentRow({
+  isFirst,
+  item,
+  styles,
+}: {
+  isFirst: boolean;
+  item: SubjectComment;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <View style={[styles.card, isFirst && styles.firstCard]}>
+      <View style={styles.commentHeader}>
+        {item.authorUsername ? (
+          <Link
+            asChild
+            href={{
+              pathname: '/user/[username]',
+              params: { username: item.authorUsername },
+            }}
+          >
+            <Pressable
+              style={({ pressed }) => pressed && styles.pressed}
+            >
+              <Text style={styles.author}>{item.author}</Text>
+            </Pressable>
+          </Link>
+        ) : (
+          <Text style={styles.author}>{item.author}</Text>
+        )}
+        {item.rating ? <RatingStars rating={item.rating} /> : null}
+      </View>
+      <Text style={styles.body}>{item.body}</Text>
+      <Text style={styles.footer}>
+        {formatActivityTime(item.updatedAt)}
+      </Text>
+    </View>
+  );
+});
 
 export default function SubjectCommentsScreen() {
   const colors = useTheme();
@@ -21,12 +61,14 @@ export default function SubjectCommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const commentsQuery = useSubjectComments(subjectId ?? 0);
-  const comments = useMemo(
-    () => commentsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [commentsQuery.data],
+  const comments = usePagedList(commentsQuery);
+  const total = comments.total ?? 0;
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: SubjectComment }) => (
+      <CommentRow isFirst={index === 0} item={item} styles={styles} />
+    ),
+    [styles],
   );
-  const total = commentsQuery.data?.pages[0]?.total ?? 0;
-  const scrollToTop = useScrollToTopButton();
 
   if (!subjectId) {
     return <InvalidRouteState message="这个吐槽箱链接缺少有效条目编号。" />;
@@ -36,14 +78,14 @@ export default function SubjectCommentsScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '吐槽箱' }} />
       <FlatList
-        ref={scrollToTop.ref}
+        {...comments.listProps}
         contentContainerStyle={styles.content}
-        data={comments}
+        data={comments.items}
         keyExtractor={(comment) => comment.id}
         ListEmptyComponent={
           !commentsQuery.isPending &&
           !commentsQuery.isError &&
-          comments.length === 0 ? (
+          comments.items.length === 0 ? (
             <View style={styles.state}>
               <Text style={styles.stateTitle}>暂无吐槽</Text>
               <Text style={styles.stateText}>Bangumi 还没有收录相关吐槽。</Text>
@@ -62,7 +104,7 @@ export default function SubjectCommentsScreen() {
             </View>
             <DiscussionStatus
               errorText="吐槽加载失败，请检查网络后重试。"
-              isError={commentsQuery.isError && comments.length === 0}
+              isError={commentsQuery.isError && comments.items.length === 0}
               isPending={commentsQuery.isPending}
               loadingText="正在读取 Bangumi 吐槽…"
               onRetry={() => void commentsQuery.refetch()}
@@ -70,64 +112,17 @@ export default function SubjectCommentsScreen() {
           </>
         }
         ListFooterComponent={
-          comments.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={commentsQuery.hasNextPage}
-              isError={commentsQuery.isFetchNextPageError}
-              isFetching={commentsQuery.isFetchingNextPage}
-              loadedCount={comments.length}
-              onRetry={() => void commentsQuery.fetchNextPage()}
-              total={total}
-            />
+          comments.items.length > 0 ? (
+            <PagedListFooter {...comments.footerProps} />
           ) : null
         }
-        onEndReached={() => {
-          if (
-            commentsQuery.hasNextPage &&
-            !commentsQuery.isFetchingNextPage &&
-            !commentsQuery.isFetchNextPageError
-          ) {
-            void commentsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void commentsQuery.refetch()}
-        onScroll={scrollToTop.handleScroll}
-        refreshing={commentsQuery.isRefetching && !commentsQuery.isPending}
-        renderItem={({ index, item }) => (
-          <View style={[styles.card, index === 0 && styles.firstCard]}>
-            <View style={styles.commentHeader}>
-              {item.authorUsername ? (
-                <Link
-                  asChild
-                  href={{
-                    pathname: '/user/[username]',
-                    params: { username: item.authorUsername },
-                  }}
-                >
-                  <Pressable
-                    style={({ pressed }) => pressed && styles.pressed}
-                  >
-                    <Text style={styles.author}>{item.author}</Text>
-                  </Pressable>
-                </Link>
-              ) : (
-                <Text style={styles.author}>{item.author}</Text>
-              )}
-              {item.rating ? <RatingStars rating={item.rating} /> : null}
-            </View>
-            <Text style={styles.body}>{item.body}</Text>
-            <Text style={styles.footer}>
-              {formatActivityTime(item.updatedAt)}
-            </Text>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={80}
+        onRefresh={comments.refresh}
+        refreshing={comments.refreshing}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={scrollToTop.scrollToTop}
-        visible={scrollToTop.visible}
+        onPress={comments.scrollToTop}
+        visible={comments.visible}
       />
     </SafeAreaView>
   );

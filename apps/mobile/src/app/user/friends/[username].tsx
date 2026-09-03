@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
@@ -13,30 +13,54 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { usePublicUserFriends } from '@/features/users/use-public-user';
+import type { PublicUserFriend } from '@/features/users/model';
+
+const UserFriendRow = memo(function UserFriendRow({
+  friend,
+  onPressItem,
+}: {
+  friend: PublicUserFriend;
+  onPressItem: (username: string) => void;
+}) {
+  return (
+    <PublicUserFriendCard
+      friend={friend}
+      onPress={() => onPressItem(friend.username)}
+    />
+  );
+});
 
 export default function PublicUserFriendsScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const friendsQuery = usePublicUserFriends(username);
-  const listRef = useScrollToTopButton();
-  const friends = useMemo(
-    () => friendsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [friendsQuery.data],
+  const friends = usePagedList(friendsQuery);
+  const openFriend = useCallback((friendUsername: string) => {
+    router.push({
+      pathname: '/user/[username]',
+      params: { username: friendUsername },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ item }: { item: PublicUserFriend }) => (
+      <UserFriendRow friend={item} onPressItem={openFriend} />
+    ),
+    [openFriend],
   );
-  const total = friendsQuery.data?.pages[0]?.total ?? 0;
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '好友' }} />
       <FlatList
+        {...friends.listProps}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
-        data={friends}
+        data={friends.items}
         initialNumToRender={18}
         keyExtractor={(item) => item.username}
         ListEmptyComponent={
@@ -53,61 +77,30 @@ export default function PublicUserFriendsScreen() {
           )
         }
         ListFooterComponent={
-          friends.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={friendsQuery.hasNextPage}
-              isError={friendsQuery.isFetchNextPageError}
-              isFetching={friendsQuery.isFetchingNextPage}
-              loadedCount={friends.length}
-              onRetry={() => void friendsQuery.fetchNextPage()}
-              total={total}
-            />
+          friends.items.length > 0 ? (
+            <PagedListFooter {...friends.footerProps} />
           ) : null
         }
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>公开好友</Text>
             <Text style={styles.meta}>
-              @{username} · {total ? `${total} 位` : '读取中'}
+              @{username} · {friends.total ? `${friends.total} 位` : '读取中'}
             </Text>
-            {friends.length > 0 && friendsQuery.isError ? (
+            {friends.items.length > 0 && friendsQuery.isError ? (
               <CachedDataNotice onRetry={() => void friendsQuery.refetch()} />
             ) : null}
           </View>
         }
         numColumns={3}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            friendsQuery.hasNextPage &&
-            !friendsQuery.isFetchingNextPage &&
-            !friendsQuery.isFetchNextPageError
-          ) {
-            void friendsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void friendsQuery.refetch()}
-        refreshing={friendsQuery.isRefetching && !friendsQuery.isPending}
-        renderItem={({ item }) => (
-          <PublicUserFriendCard
-            friend={item}
-            onPress={() =>
-              router.push({
-                pathname: '/user/[username]',
-                params: { username: item.username },
-              })
-            }
-          />
-        )}
-        showsVerticalScrollIndicator={false}
+        onRefresh={friends.refresh}
+        refreshing={friends.refreshing}
+        renderItem={renderItem}
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={friends.scrollToTop}
+        visible={friends.visible}
       />
     </SafeAreaView>
   );

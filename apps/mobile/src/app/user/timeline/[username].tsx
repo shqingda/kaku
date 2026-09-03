@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
   FlatList,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -14,20 +13,67 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
 import { usePublicUserTimeline } from '@/features/users/use-public-user';
+import type { PublicTimelineItem } from '@/features/users/model';
+
+const UserTimelineRow = memo(function UserTimelineRow({
+  hasDivider,
+  isFirst,
+  isLast,
+  item,
+}: {
+  hasDivider: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicTimelineItem;
+}) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View
+      style={[
+        styles.item,
+        isFirst && styles.firstItem,
+        isLast && styles.lastItem,
+      ]}
+    >
+      <PublicUserTimelineRow
+        hasDivider={hasDivider}
+        item={item}
+        onPress={
+          item.subjectId
+            ? () =>
+                router.push({
+                  pathname: '/subject/[id]',
+                  params: { id: String(item.subjectId) },
+                })
+            : undefined
+        }
+      />
+    </View>
+  );
+});
 
 export default function PublicUserTimelineScreen() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { username } = useLocalSearchParams<{ username: string }>();
   const timelineQuery = usePublicUserTimeline(username);
-  const listRef = useScrollToTopButton();
-  const timeline = useMemo(
-    () => timelineQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [timelineQuery.data],
+  const timeline = usePagedList(timelineQuery);
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: PublicTimelineItem }) => (
+      <UserTimelineRow
+        hasDivider={index > 0}
+        isFirst={index === 0}
+        isLast={index === timeline.items.length - 1}
+        item={item}
+      />
+    ),
+    [timeline.items.length],
   );
 
   return (
@@ -40,8 +86,9 @@ export default function PublicUserTimelineScreen() {
         }}
       />
       <FlatList
+        {...timeline.listProps}
         contentContainerStyle={styles.content}
-        data={timeline}
+        data={timeline.items}
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
@@ -61,72 +108,29 @@ export default function PublicUserTimelineScreen() {
           )
         }
         ListFooterComponent={
-          timeline.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(timelineQuery.hasNextPage)}
-              isError={timelineQuery.isFetchNextPageError}
-              isFetching={timelineQuery.isFetchingNextPage}
-              loadedCount={timeline.length}
-              onRetry={() => void timelineQuery.fetchNextPage()}
-            />
+          timeline.items.length > 0 ? (
+            <PagedListFooter {...timeline.footerProps} />
           ) : null
         }
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>时间线</Text>
             <Text style={styles.subtitle}>@{username} 的公开动态</Text>
-            {timeline.length > 0 && timelineQuery.isError ? (
+            {timeline.items.length > 0 && timelineQuery.isError ? (
               <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
             ) : null}
           </View>
         }
         maxToRenderPerBatch={12}
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            timelineQuery.hasNextPage &&
-            !timelineQuery.isFetchingNextPage &&
-            !timelineQuery.isFetchNextPageError
-          ) {
-            void timelineQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void timelineQuery.refetch()}
-        refreshing={timelineQuery.isRefetching && !timelineQuery.isPending}
-        removeClippedSubviews={Platform.OS === 'android'}
-        renderItem={({ index, item }) => (
-          <View
-            style={[
-              styles.item,
-              index === 0 && styles.firstItem,
-              index === timeline.length - 1 && styles.lastItem,
-            ]}
-          >
-            <PublicUserTimelineRow
-              hasDivider={index > 0}
-              item={item}
-              onPress={
-                item.subjectId
-                  ? () =>
-                      router.push({
-                        pathname: '/subject/[id]',
-                        params: { id: String(item.subjectId) },
-                      })
-                  : undefined
-              }
-            />
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
+        onRefresh={timeline.refresh}
+        refreshing={timeline.refreshing}
+        renderItem={renderItem}
         updateCellsBatchingPeriod={40}
         windowSize={7}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={timeline.scrollToTop}
+        visible={timeline.visible}
       />
     </SafeAreaView>
   );
