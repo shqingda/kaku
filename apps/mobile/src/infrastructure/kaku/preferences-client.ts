@@ -11,7 +11,7 @@ import type { CloudPreferences } from '@/features/preferences/preferences-model'
 import {
   KakuApiError,
   readErrorMessage,
-} from './auth-client';
+} from './auth-client.ts';
 
 const cloudPreferencesSchema = z.object({
   preferences: z.object({

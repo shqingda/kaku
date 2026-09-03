@@ -1,7 +1,7 @@
 import {
   ASCII_EMOJI,
   getBangumiEmojiUrl,
-} from '@/lib/bangumi-emoji';
+} from '../../lib/bangumi-emoji.ts';
 
 export type PickerEmoji = {
   sticker: string;

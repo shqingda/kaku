@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { RecentSubjectsRecord } from '@/features/history/recent-subjects-model';
-import { KakuApiError, readErrorMessage } from './auth-client';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const recentSubjectSchema = z.object({
   coverUrl: z.string().optional(),

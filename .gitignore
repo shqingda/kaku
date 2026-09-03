@@ -17,3 +17,6 @@ apps/api/.dev.vars
 .eas-home/
 .eas-env.sh
 .cache/
+
+# Local agent tooling
+.zcode/

@@ -1,5 +1,5 @@
-import { KakuApiError } from '@/infrastructure/kaku/auth-client';
-import { BangumiRequestError } from '@/infrastructure/bangumi/transport/http-client';
+import { KakuApiError } from '../infrastructure/kaku/auth-client.ts';
+import { BangumiRequestError } from '../infrastructure/bangumi/transport/http-client.ts';
 
 const FALLBACK_MESSAGE = '暂时没有成功，请稍后重试。';
 

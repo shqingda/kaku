@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fetchPublicKaku, KakuApiError, readErrorMessage } from './auth-client';
+import { fetchPublicKaku, KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const publicConfigSchema = z.object({
   config: z.object({

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { SearchHistoryRecord } from '@/features/search/search-history-model';
-import { KakuApiError, readErrorMessage } from './auth-client';
+import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 const responseSchema = z.object({
   history: z.object({

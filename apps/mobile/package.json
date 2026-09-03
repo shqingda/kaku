@@ -60,7 +60,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/*.test.mjs",
-    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-test-coverage --test tests/*.test.mjs",
+    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-test-coverage --test-coverage-lines=92 --test tests/*.test.mjs",
     "build:preview": "pnpm dlx eas-cli@22.2.0 build --profile preview --platform android --non-interactive --no-wait",
     "build:preview:list": "pnpm dlx eas-cli@22.2.0 build:list --platform android --limit 1",
     "build:dev": "pnpm dlx eas-cli@22.2.0 build --profile development --platform android --non-interactive --no-wait",
