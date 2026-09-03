@@ -63,7 +63,9 @@ minimumReleaseAgeExclude:
   - zod@4.5.2
 
 allowBuilds:
+  '@parcel/watcher': true
   '@sentry/cli': true
   dtrace-provider: false
   esbuild: true
+  unrs-resolver: true
   workerd: true

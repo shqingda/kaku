@@ -43,7 +43,12 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@testing-library/react-native": "~14.0.1",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.18",
+    "jest": "~30.5.1",
+    "jest-expo": "~57.0.5",
+    "test-renderer": "~1.2.0",
     "typescript": "~7.0.2"
   },
   "expo": {
@@ -60,6 +65,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/*.test.mjs",
+    "test:ui": "jest",
     "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-test-coverage --test-coverage-lines=92 --test tests/*.test.mjs",
     "build:preview": "pnpm dlx eas-cli@22.2.0 build --profile preview --platform android --non-interactive --no-wait",
     "build:preview:list": "pnpm dlx eas-cli@22.2.0 build:list --platform android --limit 1",

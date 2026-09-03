@@ -52,6 +52,9 @@ jobs:
       - name: Check mobile test coverage
         run: pnpm --filter @kaku/mobile test:coverage
 
+      - name: Run mobile component tests
+        run: pnpm --filter @kaku/mobile test:ui
+
       - name: Bundle iOS app
         run: pnpm --filter @kaku/mobile exec expo export --platform ios --output-dir /tmp/kaku-ios
 
