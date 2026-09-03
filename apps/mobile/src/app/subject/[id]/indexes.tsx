@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,13 +6,40 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
+import type { PublicIndexSummary } from '@/features/indexes/model';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+
+const SubjectIndexRow = memo(function SubjectIndexRow({
+  item,
+  onPressItem,
+  styles,
+}: {
+  item: PublicIndexSummary;
+  onPressItem: (id: number) => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Pressable
+      onPress={() => onPressItem(item.id)}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={styles.indexTitle}>{item.title}</Text>
+      <Text style={styles.indexMeta}>
+        {item.author} · {item.itemCount} 项 ·{' '}
+        {formatActivityTime(item.updatedAt)}
+      </Text>
+    </Pressable>
+  );
+});
 
 export default function SubjectIndexesScreen() {
   const colors = useTheme();
@@ -20,12 +47,20 @@ export default function SubjectIndexesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const indexesQuery = useSubjectIndexes(subjectId ?? 0);
-  const listRef = useScrollToTopButton();
-  const indexes = useMemo(
-    () => indexesQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [indexesQuery.data],
+  const indexes = usePagedList(indexesQuery);
+  const total = indexes.total ?? 0;
+  const openIndex = useCallback((indexId: number) => {
+    router.push({
+      pathname: '/directory/[id]',
+      params: { id: String(indexId) },
+    });
+  }, []);
+  const renderItem = useCallback(
+    ({ item }: { item: PublicIndexSummary }) => (
+      <SubjectIndexRow item={item} onPressItem={openIndex} styles={styles} />
+    ),
+    [openIndex, styles],
   );
-  const total = indexesQuery.data?.pages[0]?.total ?? 0;
 
   if (!subjectId) {
     return <InvalidRouteState message="这个条目目录链接缺少有效编号。" />;
@@ -35,8 +70,9 @@ export default function SubjectIndexesScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '目录' }} />
       <FlatList
+        {...indexes.listProps}
         contentContainerStyle={styles.content}
-        data={indexes}
+        data={indexes.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           !indexesQuery.isPending && !indexesQuery.isError ? (
@@ -52,7 +88,7 @@ export default function SubjectIndexesScreen() {
               <Text style={styles.title}>相关目录</Text>
               <Text style={styles.meta}>
                 {indexesQuery.data
-                  ? `已加载 ${indexes.length} · 共 ${total.toLocaleString('zh-CN')}`
+                  ? `已加载 ${indexes.items.length} · 共 ${total.toLocaleString('zh-CN')}`
                   : '公开内容'}
               </Text>
             </View>
@@ -66,57 +102,17 @@ export default function SubjectIndexesScreen() {
           </>
         }
         ListFooterComponent={
-          indexes.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(indexesQuery.hasNextPage)}
-              isError={indexesQuery.isFetchNextPageError}
-              isFetching={indexesQuery.isFetchingNextPage}
-              loadedCount={indexes.length}
-              onRetry={() => void indexesQuery.fetchNextPage()}
-              total={total}
-            />
+          indexes.items.length > 0 ? (
+            <PagedListFooter {...indexes.footerProps} />
           ) : null
         }
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            indexesQuery.hasNextPage &&
-            !indexesQuery.isFetchingNextPage &&
-            !indexesQuery.isFetchNextPageError
-          ) {
-            void indexesQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
-        onRefresh={() => void indexesQuery.refetch()}
-        refreshing={indexesQuery.isRefetching && !indexesQuery.isPending}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: '/directory/[id]',
-                params: { id: String(item.id) },
-              })
-            }
-            style={({ pressed }) => [
-              styles.card,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.indexTitle}>{item.title}</Text>
-            <Text style={styles.indexMeta}>
-              {item.author} · {item.itemCount} 项 ·{' '}
-              {formatActivityTime(item.updatedAt)}
-            </Text>
-          </Pressable>
-        )}
-        showsVerticalScrollIndicator={false}
+        onRefresh={indexes.refresh}
+        refreshing={indexes.refreshing}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={indexes.scrollToTop}
+        visible={indexes.visible}
       />
     </SafeAreaView>
   );

@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import {
   type Href,
@@ -42,9 +42,85 @@ import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+
+// 目录条目行：按条目类型生成深链，可点击的条目用 AppleZoom 包住封面。
+const IndexItemRow = memo(function IndexItemRow({
+  item,
+  styles,
+}: {
+  item: PublicIndexItem;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const colors = useTheme();
+  const href = getIndexItemHref(item);
+  const row = (
+    <Pressable
+      accessibilityHint={href ? '进入详情' : undefined}
+      accessibilityLabel={`打开${item.title}`}
+      accessibilityRole={href ? 'button' : undefined}
+      style={styles.subjectRow}
+    >
+      {href ? <Link.AppleZoom>
+        <View style={styles.cover}>
+          <Text style={styles.coverFallback}>
+            {item.title.slice(0, 1)}
+          </Text>
+          {item.coverUrl ? (
+            <Image
+              contentFit="cover"
+              recyclingKey={item.coverUrl}
+              source={item.coverUrl}
+              style={StyleSheet.absoluteFill}
+              transition={120}
+            />
+          ) : null}
+        </View>
+      </Link.AppleZoom> : (
+        <View style={styles.cover}>
+          <Text style={styles.coverFallback}>
+            {item.title.slice(0, 1)}
+          </Text>
+          {item.coverUrl ? (
+            <Image
+              contentFit="cover"
+              recyclingKey={item.coverUrl}
+              source={item.coverUrl}
+              style={StyleSheet.absoluteFill}
+              transition={120}
+            />
+          ) : null}
+        </View>
+      )}
+      <View style={styles.subjectMain}>
+        <Text numberOfLines={2} style={styles.subjectTitle}>
+          {item.title}
+        </Text>
+        <Text numberOfLines={2} style={styles.subjectMeta}>
+          {getIndexItemLabel(item)}
+          {item.kind === 'subject'
+            ? ` · ${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`
+            : ''}
+          {item.comment ? ` · ${item.comment}` : ''}
+        </Text>
+      </View>
+      <SymbolView
+        name={{
+          android: 'chevron_right',
+          ios: 'chevron.right',
+          web: 'chevron_right',
+        }}
+        size={14}
+        tintColor={colors.subtle}
+        weight="semibold"
+      />
+    </Pressable>
+  );
+
+  return href ? <Link asChild href={href}>{row}</Link> : row;
+});
 
 export default function PublicIndexScreen() {
   const colors = useTheme();
@@ -56,18 +132,20 @@ export default function PublicIndexScreen() {
   const indexId = parsePositiveIntegerRouteParam(id);
   const indexQuery = usePublicIndex(indexId ?? 0);
   const itemsQuery = usePublicIndexItems(indexId ?? 0);
-  const listRef = useScrollToTopButton();
+  const items = usePagedList(itemsQuery);
   const deleteIndex = useDeleteIndex();
   const collectionQuery = useIndexCollection(indexId ?? 0);
   const setCollection = useSetIndexCollection(indexId ?? 0);
   const index = indexQuery.data;
-  const items = useMemo(
-    () => itemsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [itemsQuery.data],
-  );
-  const itemTotal = itemsQuery.data?.pages[0]?.total ?? 0;
+  const itemTotal = items.total ?? 0;
   const isOwnIndex =
     Boolean(session) && index?.authorUsername === session?.user.username;
+  const renderItem = useCallback(
+    ({ item }: { item: PublicIndexItem }) => (
+      <IndexItemRow item={item} styles={styles} />
+    ),
+    [styles],
+  );
 
   function openMenu() {
     if (!index) {
@@ -160,8 +238,9 @@ export default function PublicIndexScreen() {
         }}
       />
       <FlatList
+        {...items.listProps}
         contentContainerStyle={styles.content}
-        data={items}
+        data={items.items}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         ListEmptyComponent={
           itemsQuery.isPending ? (
@@ -177,15 +256,8 @@ export default function PublicIndexScreen() {
           )
         }
         ListFooterComponent={
-          items.length > 0 ? (
-            <PagedListFooter
-              hasNextPage={Boolean(itemsQuery.hasNextPage)}
-              isError={itemsQuery.isFetchNextPageError}
-              isFetching={itemsQuery.isFetchingNextPage}
-              loadedCount={items.length}
-              onRetry={() => void itemsQuery.fetchNextPage()}
-              total={itemTotal}
-            />
+          items.items.length > 0 ? (
+            <PagedListFooter {...items.footerProps} />
           ) : null
         }
         ListHeaderComponent={
@@ -287,25 +359,12 @@ export default function PublicIndexScreen() {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>收录条目</Text>
                 <Text style={styles.sectionMeta}>
-                  已加载 {items.length} · 共 {itemTotal.toLocaleString('zh-CN')}
+                  已加载 {items.items.length} · 共 {itemTotal.toLocaleString('zh-CN')}
                 </Text>
               </View>
             ) : null}
           </>
         }
-        onScroll={listRef.handleScroll}
-        ref={listRef.ref}
-        scrollEventThrottle={80}
-        onEndReached={() => {
-          if (
-            itemsQuery.hasNextPage &&
-            !itemsQuery.isFetchingNextPage &&
-            !itemsQuery.isFetchNextPageError
-          ) {
-            void itemsQuery.fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.45}
         refreshControl={
           <AppRefreshControl
             onRefresh={() =>
@@ -318,78 +377,11 @@ export default function PublicIndexScreen() {
             }
           />
         }
-        renderItem={({ item }) => {
-          const href = getIndexItemHref(item);
-          const row = (
-            <Pressable
-              accessibilityHint={href ? '进入详情' : undefined}
-              accessibilityLabel={`打开${item.title}`}
-              accessibilityRole={href ? 'button' : undefined}
-              style={styles.subjectRow}
-            >
-              {href ? <Link.AppleZoom>
-                <View style={styles.cover}>
-                  <Text style={styles.coverFallback}>
-                    {item.title.slice(0, 1)}
-                  </Text>
-                  {item.coverUrl ? (
-                    <Image
-                      contentFit="cover"
-                      recyclingKey={item.coverUrl}
-                      source={item.coverUrl}
-                      style={StyleSheet.absoluteFill}
-                      transition={120}
-                    />
-                  ) : null}
-                </View>
-              </Link.AppleZoom> : (
-                <View style={styles.cover}>
-                  <Text style={styles.coverFallback}>
-                    {item.title.slice(0, 1)}
-                  </Text>
-                  {item.coverUrl ? (
-                    <Image
-                      contentFit="cover"
-                      recyclingKey={item.coverUrl}
-                      source={item.coverUrl}
-                      style={StyleSheet.absoluteFill}
-                      transition={120}
-                    />
-                  ) : null}
-                </View>
-              )}
-              <View style={styles.subjectMain}>
-                <Text numberOfLines={2} style={styles.subjectTitle}>
-                  {item.title}
-                </Text>
-                <Text numberOfLines={2} style={styles.subjectMeta}>
-                  {getIndexItemLabel(item)}
-                  {item.kind === 'subject'
-                    ? ` · ${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`
-                    : ''}
-                  {item.comment ? ` · ${item.comment}` : ''}
-                </Text>
-              </View>
-              <SymbolView
-                name={{
-                  android: 'chevron_right',
-                  ios: 'chevron.right',
-                  web: 'chevron_right',
-                }}
-                size={14}
-                tintColor={colors.subtle}
-                weight="semibold"
-              />
-            </Pressable>
-          );
-
-          return href ? <Link asChild href={href}>{row}</Link> : row;
-        }}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
       />
       <ScrollToTopButton
-        onPress={listRef.scrollToTop}
-        visible={listRef.visible}
+        onPress={items.scrollToTop}
+        visible={items.visible}
       />
       <IndexComposer
         editing={
