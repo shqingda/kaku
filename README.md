@@ -159,12 +159,19 @@ pnpm dev:web
 ## 验证
 
 ```bash
-pnpm typecheck
-pnpm test
+pnpm typecheck                             # 全 workspace 类型检查
+pnpm test                                  # 各 workspace 纯逻辑单元测试
+pnpm --filter @kaku/mobile test:coverage   # 移动端行覆盖门禁（92%）
+pnpm --filter @kaku/api test:coverage      # API 行覆盖门禁（75%）
+pnpm --filter @kaku/mobile test:ui         # 组件与 hook 测试（jest-expo + RNTL）
+pnpm test:smoke                            # Maestro 冒烟测试（需模拟器，本地跑）
 pnpm build:web
 ```
 
-测试优先覆盖授权、会话轮换、数据 Adapter、分页、重试、收藏状态与进度等关键纯逻辑。
+测试分三层：纯逻辑（授权、会话轮换、Adapter、分页、重试、收藏状态与
+进度、动效数学）、组件与 hook（共享状态卡、分页脚手架、连通性等）、
+Maestro 冒烟（模拟器关键路径）。CI 跑前三层与覆盖率门禁；各层分工与
+16 条冒烟流程清单见 `docs/testing.md`，UI 验收记录见 `docs/test-records/`。
 
 ## 目录结构
 
