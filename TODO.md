@@ -1,6 +1,21 @@
 # Kaku 待办
 
-> 最后更新：2026-08-30。
+> 最后更新：2026-09-04。
+
+## 测试与优化专项（2026-09-04 交接，详见 docs/handoff-2026-09-04.md）
+
+- [x] 三层测试补全：node:test 纯逻辑 199→344（22 个 Kaku 客户端全覆盖，mobile 行覆盖 86.3%→94.8%，CI 加 92% 门禁）；API 251→283（public-cache/HTML 客户端错误边界）；新增 jest-expo + RNTL 组件测试 41 个（`.test.tsx` 归 jest、`.test.mjs` 归 node:test 双轨）并进 CI。
+- [x] 性能优化：首页按 tab 门控收藏查询（冷启动 5 请求→1，按下预取相邻 tab）；条目离线包后台落盘不再阻塞展示；条目页吐槽/评论预览滚动到底部附近才请求；17 个分页屏统一 usePagedList（memo 行 + Android/iOS 调参）；127 处 createStyles 冗余 useMemo 移除（React Compiler 已兜底）。
+- [x] 代码去重：8 个本地状态卡并入共享 AppState（actionAccessibilityLabel 分离可见文案与读屏标签）；`_layout.tsx` 535→约 200 行（TITLED_SCREENS 表）；`account.tsx` 771→55 行 + features/account/ 7 个子组件；错误边界改 useTheme 修复暗色模式白屏；legacy COLORS 别名删除。
+- [x] UI/UX：图片查看器甩动关闭改 withDecay 速度交接（对齐 AppSheet）；profile 菜单可中断临界阻尼弹簧；新增 PressableScale 按压弹性反馈与 SkeletonBox 骨架屏（条目页首载/首页收藏区，与真实布局同构零位移）；错误态离线感知文案 + iOS AccessibilityInfo 播报；滚动按钮选择触觉；65 处截断文本 maxFontSizeMultiplier=1.3。
+- [x] Maestro 10→16 条（日历/目录/角色分区/主题切换/时间线/剧集，登录流程带门控）+ `pnpm test:smoke` + docs/testing.md 测试指南。
+- [ ] **Maestro 16 条首次真机跑通**：标签均从源码核对但未实跑；预期微调 timeout/滚动（directories 的「目录」tapOn 有歧义风险、episode 门控顺序）；跑完归档 docs/test-records/。
+- [ ] **argent iOS UI 验收会话**：重点走查本轮改动（按压反馈、骨架零位移、viewer 甩动、深色、离线文案），结果归档 test-records。
+- [ ] **profiler 前后对比**：home 冷启动 / 条目打开 / 列表滚动（改动前基线不可补，记录当前值 + 目标）。
+- [ ] **判断性 memo 清理**：非 createStyles 的 useMemo/useCallback（约 170 处）逐个判断；React Compiler 已兜底，仅代码噪音。
+- [ ] **组件测试扩面**：PressableScale、Skeleton、AppSheet、分页屏行组件、use-catalog-subject（需 query mock）；注意 reanimated 组件进 jest 需先在 tests/ui/setup.ts 配 mock。
+- [ ] **已知小问题**（调研发现未修，详见交接文档）：AppSheet withDecay 兜底弹簧缺 onClose 回调；query-keys 用户名规范化不一致（publicUserEntities 小写化、其余原样）；auth-redirect 循环防护仅精确匹配 /account；cached-data-notice 未加 iOS 播报（可选）。
+- [ ] stretch（未承诺）：subject hero 滚动联动视差；scroll-to-top 与 scroll-nav 按钮合并；@expo/ui 评估（已装未用）。
 
 ## 设计与体验
 
