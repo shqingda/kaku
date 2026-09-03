@@ -26,7 +26,8 @@ Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS �
 - 本机已配置 Android 开发环境（`ANDROID_HOME`、JDK 17），之前成功跑过 `expo run:android`
 - `gh` 已登录（`gh auth status`）
 - `apps/mobile/.env` 里有 `EXPO_PUBLIC_SENTRY_DSN`（本地包才能上报崩溃）
-- 先改 `apps/mobile/app.config.js` 的 `version`，再按 [ReSource](https://github.com/kenischu/ReSource/releases) 的条目格式写好 `scripts/release-notes.md`（中文短句、一条一行、写清新增和修复）
+- 先改 `apps/mobile/app.config.js` 的 `version`，再按 [ReSource](https://github.com/kenischu/ReSource/releases) 的条目格式写好 `scripts/release-notes.md`（中文短句、一条一行、写清新增和修复）。安装/覆盖提示可以写在同一文件末尾，App 内更新日志不会收录这些行。
+- 构建脚本会跑 `scripts/sync-changelog.mjs`：若 App 内日志还没有当前版本，就从 `release-notes.md` 自动补上；已经有当前版本则不覆盖手改内容。测试会检查最新一条版本号与 `app.config.js` 一致。
 
 ### 命令
 
@@ -46,10 +47,11 @@ bash scripts/build-split-apks.sh v1.0.9 debug
 
 1. 按渠道设置 `EAS_BUILD_PROFILE`（决定 Android 包名和渠道图标）
 2. 从 `.env` 注入 `EXPO_PUBLIC_*`（DSN 内联进 JS bundle，Sentry 本地包可用）
-3. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
-4. 禁用本地 Sentry source map 上传（保留给 EAS 云端构建）
-5. 本地 `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`，复制为 `kaku-<channel>.apk`
-6. `gh release create` 上传该 APK，说明来自 `scripts/release-notes.md`
+3. 把 `release-notes.md` 同步进 App 内更新日志（当前版本缺失时写入，必要时自动提交）
+4. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
+5. 禁用本地 Sentry source map 上传（保留给 EAS 云端构建）
+6. 本地 `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`，复制为 `kaku-<channel>.apk`
+7. `gh release create` 上传该 APK，说明来自 `scripts/release-notes.md`
 
 产物在 `apps/mobile/dist-split/`（已 gitignore）。
 
@@ -96,7 +98,7 @@ bash scripts/build-split-apks.sh v1.0.9 debug
 
 ## 版本号
 
-- 当前 app 版本 `1.0.9`（`apps/mobile/app.config.js`，发版时先改这里）
+- 当前 app 版本 `1.1.2`（`apps/mobile/app.config.js`，发版时先改这里）
 - EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
 - 本地脚本默认 tag/标题：`v<app 版本>`（与 `app.config.js` 一致，例如 `v1.0.9`）。不要用 `android-1.0.0-<n>`
 

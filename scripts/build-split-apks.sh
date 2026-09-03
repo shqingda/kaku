@@ -47,6 +47,13 @@ if [[ ! -s "${NOTES_FILE}" ]]; then
   exit 1
 fi
 
+echo "==> 同步 App 内更新日志（从 ${NOTES_FILE} 写入 changelog-data.ts）"
+node "${REPO_DIR}/scripts/sync-changelog.mjs"
+if ! git -C "${REPO_DIR}" diff --quiet -- apps/mobile/src/features/changelog/changelog-data.ts; then
+  git -C "${REPO_DIR}" add apps/mobile/src/features/changelog/changelog-data.ts
+  git -C "${REPO_DIR}" commit -m "chore(release): sync in-app changelog for ${TAG}"
+fi
+
 echo "==> 同步原生工程 (expo prebuild, channel=${CHANNEL})"
 pnpm exec expo prebuild --platform android --no-install >/dev/null
 

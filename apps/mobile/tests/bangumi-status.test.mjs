@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CHANGELOG } from '../src/features/changelog/changelog-data.ts';
 import {
   BANGUMI_STATUS_ENDPOINT,
   classifyProbeLatency,
@@ -161,37 +160,4 @@ test('probe latency buckets at the 3s line', () => {
   assert.equal(classifyProbeLatency(7500), 'slow');
 });
 
-test('changelog data stays well-formed and newest first', () => {
-  assert.ok(CHANGELOG.length >= 2);
 
-  const versions = CHANGELOG.map((entry) => entry.version);
-  assert.equal(new Set(versions).size, versions.length, '版本号不应重复');
-
-  for (const entry of CHANGELOG) {
-    assert.match(entry.version, /^\d+\.\d+\.\d+$/);
-    assert.match(entry.date, /^\d{4}-\d{2}-\d{2}$/);
-    assert.ok(entry.notes.length > 0);
-    for (const note of entry.notes) {
-      assert.ok(note.trim().length > 0);
-    }
-  }
-
-  for (let index = 1; index < CHANGELOG.length; index += 1) {
-    const previous = CHANGELOG[index - 1];
-    const current = CHANGELOG[index];
-    const older =
-      previous.date > current.date ||
-      (previous.date === current.date &&
-        compareVersions(previous.version, current.version) > 0);
-    assert.ok(older, `${previous.version} 应排在 ${current.version} 之前`);
-  }
-});
-
-function compareVersions(a, b) {
-  const pa = a.split('.').map(Number);
-  const pb = b.split('.').map(Number);
-  for (let index = 0; index < 3; index += 1) {
-    if (pa[index] !== pb[index]) return pa[index] - pb[index];
-  }
-  return 0;
-}

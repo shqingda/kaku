@@ -28,7 +28,9 @@ This repository is both a product and a learning project.
 Before any deployment, read `RELEASE.md` — it documents both release paths.
 
 - **日常迭代发 GitHub 包**：bump `apps/mobile/app.config.js` version, write
-  `scripts/release-notes.md`, commit, then
+  `scripts/release-notes.md`（中文短句；安装/覆盖提示可放末尾）. The build
+  script runs `scripts/sync-changelog.mjs` so the in-app changelog page
+  picks up the current version automatically. Then
   `bash scripts/build-split-apks.sh v<version> [debug|preview|release]`
   (default tag `v<app version>`, e.g. `v1.0.9` — never `android-1.0.0-n`).
   The script pushes `main` before creating the GitHub Release. It does NOT
