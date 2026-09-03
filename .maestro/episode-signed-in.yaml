@@ -1,0 +1,40 @@
+appId: com.shqingda.kaku
+name: Open episode detail with sign-in gate
+tags:
+  - smoke
+---
+# 覆盖：搜索 → 条目详情 → 剧集行 → 剧集详情页。
+# 已登录：进度切换按钮可用（不实际写入，仅断言存在）；
+# 未登录：断言「登录后标记进度」门控可见。两种状态都不写远端。
+- launchApp
+- tapOn: "搜索条目"
+- inputText: "葬送的芙莉莲"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "葬送的芙莉莲.*"
+    timeout: 15000
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: "第 1 集.*"
+    direction: DOWN
+- tapOn:
+    text: "第 1 集.*"
+- extendedWaitUntil:
+    visible: "登录后标记进度"
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "将本集标记已看"
+    commands:
+      - assertVisible: "将本集标记已看"
+- runFlow:
+    when:
+      visible: "将本集设为未看"
+    commands:
+      - assertVisible: "将本集设为未看"

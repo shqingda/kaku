@@ -1,0 +1,17 @@
+appId: com.shqingda.kaku
+name: Open friend timeline when signed in
+tags:
+  - smoke
+---
+# 覆盖：首页好友动态 → 查看全部动态 → 好友动态页。
+# 未登录时首页不渲染该分区，流程在此直接通过（no-op gate）。
+- launchApp
+- runFlow:
+    when:
+      visible: "查看全部好友动态"
+    commands:
+      - tapOn: "查看全部好友动态"
+      - extendedWaitUntil:
+          visible: "好友动态"
+          timeout: 15000
+      - assertVisible: "好友动态"

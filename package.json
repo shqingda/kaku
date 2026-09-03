@@ -11,6 +11,9 @@
     "dev:web": "pnpm --filter @kaku/web dev",
     "build:web": "pnpm --filter @kaku/web build",
     "test": "pnpm -r test",
+    "test:ui": "pnpm --filter @kaku/mobile test:ui",
+    "test:smoke": "maestro test .maestro/kaku-smoke-ios.yaml",
+    "test:smoke:android": "maestro test .maestro/kaku-smoke-android.yaml",
     "typecheck": "pnpm -r typecheck"
   }
 }

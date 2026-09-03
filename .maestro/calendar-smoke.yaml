@@ -1,0 +1,12 @@
+appId: com.shqingda.kaku
+name: Open daily calendar from explore
+tags:
+  - smoke
+---
+# 覆盖：首页发现入口 → 综合页 → 每日放送分区可见
+- launchApp
+- tapOn: "综合"
+- extendedWaitUntil:
+    visible: "每日放送"
+    timeout: 15000
+- assertVisible: "每日放送"
