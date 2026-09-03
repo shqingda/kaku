@@ -8,6 +8,7 @@ import {
 import { SymbolView } from 'expo-symbols';
 
 import { useTheme } from '@/features/theme/theme-provider';
+import { playSelectionHaptic } from '@/lib/haptics';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 export function ScrollToTopButton({
@@ -55,7 +56,10 @@ export function ScrollToTopButton({
         accessibilityRole="button"
         accessibilityHint="滚动到当前列表顶部"
         hitSlop={8}
-        onPress={onPress}
+        onPress={() => {
+          playSelectionHaptic();
+          onPress();
+        }}
         style={({ pressed }) => [
           styles.button,
           { backgroundColor: colors.surface },

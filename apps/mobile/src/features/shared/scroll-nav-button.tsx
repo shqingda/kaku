@@ -10,6 +10,7 @@ import {
 import { SymbolView } from 'expo-symbols';
 
 import { useTheme } from '@/features/theme/theme-provider';
+import { playSelectionHaptic } from '@/lib/haptics';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 // 底部居中的"回到顶部"胶囊按钮：图标 + 文字，上滑淡入 / 下滑淡出的自然过渡。
@@ -55,7 +56,10 @@ export function ScrollNavButton({
         accessibilityLabel="回到顶部"
         accessibilityRole="button"
         hitSlop={8}
-        onPress={onPress}
+        onPress={() => {
+          playSelectionHaptic();
+          onPress();
+        }}
         style={({ pressed }) => [
           styles.pill,
           { backgroundColor: colors.surface },

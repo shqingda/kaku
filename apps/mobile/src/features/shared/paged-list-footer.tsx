@@ -1,7 +1,15 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { useIsOffline } from '@/lib/use-connectivity';
 import { useTheme } from '@/features/theme/theme-provider';
 
 // Shared by offset- and cursor-based public lists.
@@ -22,6 +30,14 @@ export function PagedListFooter({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const isOffline = useIsOffline();
+
+  // iOS 无自动播报：加载更多失败出现时手动播一次（依赖保持空数组）。
+  useEffect(() => {
+    if (isError) {
+      AccessibilityInfo.announceForAccessibility('后续结果加载失败');
+    }
+  }, []);
 
   if (isFetching) {
     return (
@@ -36,6 +52,9 @@ export function PagedListFooter({
     return (
       <View accessibilityRole="alert" style={styles.footer}>
         <Text style={styles.text}>后续结果加载失败</Text>
+        {isOffline ? (
+          <Text style={styles.offlineText}>离线中，联网后可重试</Text>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           onPress={onRetry}
@@ -89,6 +108,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 12,
       paddingVertical: 7,
     },
+    offlineText: { color: colors.subtle, fontSize: 11 },
     retryText: {
       color: colors.accent,
       fontSize: 12,

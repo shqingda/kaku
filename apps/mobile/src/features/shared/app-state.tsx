@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
+import { useIsOffline } from '@/lib/use-connectivity';
 import { useTheme } from '@/features/theme/theme-provider';
 
 // 统一的空/错误状态：加载失败、空列表、无网络等都通过它呈现。
@@ -20,17 +22,33 @@ export function AppState({
 }) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const isOffline = useIsOffline();
+  const isError = Boolean(action);
+
+  // iOS 没有等价于 accessibilityLiveRegion 的自动播报；错误出现时手动播一次，
+  // 依赖保持空数组（title/text 在卡片出现时已确定）。
+  useEffect(() => {
+    if (isError) {
+      AccessibilityInfo.announceForAccessibility(`${title}，${text}`);
+    }
+  }, []);
 
   return (
-    <View
-      accessibilityLiveRegion={action ? 'assertive' : 'polite'}
-      accessibilityRole={action ? 'alert' : undefined}
+    <Animated.View
+      accessibilityLiveRegion={isError ? 'assertive' : 'polite'}
+      accessibilityRole={isError ? 'alert' : undefined}
+      entering={FadeIn.duration(200)}
       style={styles.state}
     >
       <Text accessibilityRole="header" style={styles.stateTitle}>
         {title}
       </Text>
       <Text style={styles.stateText}>{text}</Text>
+      {isOffline && isError ? (
+        <Text accessibilityRole="text" style={styles.offlineText}>
+          当前离线：联网后将自动恢复重试能力。
+        </Text>
+      ) : null}
       {action ? (
         <Pressable
           accessibilityLabel={actionLabel}
@@ -44,7 +62,7 @@ export function AppState({
           <Text style={styles.retryText}>{actionLabel}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -62,6 +80,13 @@ const createStyles = (colors: ThemeColors) =>
       ...TYPE.caption,
       lineHeight: 20,
       marginTop: SPACING.sm - 1,
+      textAlign: 'center',
+    },
+    offlineText: {
+      color: colors.subtle,
+      fontSize: 11,
+      lineHeight: 15,
+      marginTop: SPACING.xs,
       textAlign: 'center',
     },
     retry: {
