@@ -1,5 +1,6 @@
 import {
   type InfiniteData,
+  type QueryClient,
   useInfiniteQuery,
   useQuery,
 } from '@tanstack/react-query';
@@ -40,6 +41,7 @@ export function usePublicUserCollections(
   username: string,
   subjectType = 2,
   collectionStatus?: CollectionStatus,
+  options?: { enabled?: boolean },
 ) {
   return useInfiniteQuery<
     PublicUserCollectionPage,
@@ -48,7 +50,7 @@ export function usePublicUserCollections(
     ReturnType<typeof queryKeys.publicUserCollections>,
     number
   >({
-    enabled: username.trim().length > 0,
+    enabled: (options?.enabled ?? true) && username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
@@ -66,6 +68,35 @@ export function usePublicUserCollections(
       collectionStatus,
     ),
     retry: shouldRetryBangumiQuery,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function prefetchPublicUserCollections(
+  queryClient: QueryClient,
+  username: string,
+  subjectType: number,
+  collectionStatus?: CollectionStatus,
+) {
+  if (!username.trim()) return;
+  // 首页切换收藏类型时在按下瞬间预取第一页，选中后立即可见。
+  void queryClient.fetchInfiniteQuery({
+    getNextPageParam: (lastPage: PublicUserCollectionPage) =>
+      lastPage.nextOffset,
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) =>
+      getPublicUserCollections(
+        username.trim(),
+        subjectType,
+        pageParam,
+        collectionStatus,
+        signal,
+      ),
+    queryKey: queryKeys.publicUserCollections(
+      username,
+      subjectType,
+      collectionStatus,
+    ),
     staleTime: 10 * 60 * 1000,
   });
 }

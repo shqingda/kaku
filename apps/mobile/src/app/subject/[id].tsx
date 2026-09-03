@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -99,6 +99,78 @@ function DetailEntry({
   );
 }
 
+// 吐槽/评论预览位于长页底部，查询也随之延迟到接近底部才发起；
+// 短页面滚动事件可能不触发，2.5s 后兜底挂载。
+const PREVIEW_SCROLL_THRESHOLD = 600;
+const PREVIEW_FALLBACK_DELAY_MS = 2_500;
+
+function CommentsPreview({
+  onOpenMore,
+  refreshToken,
+  subjectId,
+}: {
+  onOpenMore: () => void;
+  refreshToken: number;
+  subjectId: number;
+}) {
+  const { data, isError, isPending, refetch } = useSubjectComments(subjectId);
+  const appliedRefreshToken = useRef(refreshToken);
+
+  useEffect(() => {
+    if (refreshToken === appliedRefreshToken.current) return;
+    appliedRefreshToken.current = refreshToken;
+    void refetch();
+  }, [refetch, refreshToken]);
+
+  const page = data?.pages[0];
+
+  return (
+    <CommentPreviewSection
+      comments={page?.items.slice(0, 5) ?? []}
+      isError={isError}
+      isPending={isPending}
+      onOpenMore={onOpenMore}
+      onRetry={() => void refetch()}
+      total={page?.total}
+    />
+  );
+}
+
+function ReviewsPreview({
+  onOpenMore,
+  onOpenReview,
+  refreshToken,
+  subjectId,
+}: {
+  onOpenMore: () => void;
+  onOpenReview: (review: { id: string }) => void;
+  refreshToken: number;
+  subjectId: number;
+}) {
+  const { data, isError, isPending, refetch } = useSubjectReviews(subjectId);
+  const appliedRefreshToken = useRef(refreshToken);
+
+  useEffect(() => {
+    if (refreshToken === appliedRefreshToken.current) return;
+    appliedRefreshToken.current = refreshToken;
+    void refetch();
+  }, [refetch, refreshToken]);
+
+  const page = data?.pages[0];
+
+  return (
+    <ReviewPreviewSection
+      isError={isError}
+      isPending={isPending}
+      onOpenMore={onOpenMore}
+      onOpenReview={onOpenReview}
+      onRetry={() => void refetch()}
+      reviews={page?.items.slice(0, 3) ?? []}
+      total={page?.total}
+    />
+  );
+}
+
 function FloatingBackButton({
   onPress,
   top,
@@ -185,8 +257,9 @@ export default function SubjectScreen() {
   const catalogQuery = useCatalogSubject(subjectId ?? 0);
   const collectionQuery = usePersonalCollection(subjectId ?? 0);
   const saveCollection = useSavePersonalCollection(subjectId ?? 0);
-  const commentsQuery = useSubjectComments(subjectId ?? 0);
-  const reviewsQuery = useSubjectReviews(subjectId ?? 0);
+  // 底部的吐槽/评论预览延迟挂载，见 CommentsPreview/ReviewsPreview。
+  const [showPreviews, setShowPreviews] = useState(false);
+  const [previewRefreshToken, setPreviewRefreshToken] = useState(0);
   const catalogSubject = catalogQuery.data;
   const personalCollection = collectionQuery.data;
   const watchedEpisodeNumbers =
@@ -196,6 +269,21 @@ export default function SubjectScreen() {
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
   const detailLabels = getSubjectDetailLabels(subjectType);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowPreviews(true), PREVIEW_FALLBACK_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  function handleScroll(event: { nativeEvent: { contentOffset: { y: number }; contentSize: { height: number }; layoutMeasurement: { height: number } } }) {
+    if (showPreviews) return;
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    if (distanceFromBottom < PREVIEW_SCROLL_THRESHOLD) {
+      setShowPreviews(true);
+    }
+  }
 
   useEffect(() => {
     if (!catalogSubject) return;
@@ -266,10 +354,6 @@ export default function SubjectScreen() {
     );
   }
 
-  const commentsPage = commentsQuery.data?.pages[0];
-  const reviewsPage = reviewsQuery.data?.pages[0];
-  const latestComments = commentsPage?.items.slice(0, 5) ?? [];
-  const latestReviews = reviewsPage?.items.slice(0, 3) ?? [];
   const title = catalogSubject.title;
   const coverUrl = catalogSubject.coverUrl;
   const summary = catalogSubject.summary || '暂无简介';
@@ -320,25 +404,23 @@ export default function SubjectScreen() {
           styles.content,
           { paddingTop: insets.top + bannerOffset + 4 },
         ]}
+        onScroll={handleScroll}
         refreshControl={
           <AppRefreshControl
-            onRefresh={() =>
+            onRefresh={() => {
               void Promise.all([
                 catalogQuery.refetch(),
-                commentsQuery.refetch(),
-                reviewsQuery.refetch(),
                 ...(session ? [collectionQuery.refetch()] : []),
-              ])
-            }
+              ]);
+              setPreviewRefreshToken((token) => token + 1);
+            }}
             refreshing={
-              (catalogQuery.isRefetching ||
-                commentsQuery.isRefetching ||
-                reviewsQuery.isRefetching ||
-                collectionQuery.isRefetching) &&
+              (catalogQuery.isRefetching || collectionQuery.isRefetching) &&
               !catalogQuery.isPending
             }
           />
         }
+        scrollEventThrottle={48}
         showsVerticalScrollIndicator={false}
       >
         <SubjectHero coverUrl={coverUrl} title={title} year={year} />
@@ -506,42 +588,40 @@ export default function SubjectScreen() {
           />
         ) : null}
 
-        <CommentPreviewSection
-          comments={latestComments}
-          isError={commentsQuery.isError}
-          isPending={commentsQuery.isPending}
-          onOpenMore={() =>
-            router.push({
-              pathname: '/subject/[id]/comments',
-              params: { id: String(subjectId) },
-            })
-          }
-          onRetry={() => void commentsQuery.refetch()}
-          total={commentsPage?.total}
-        />
+        {showPreviews ? (
+          <CommentsPreview
+            onOpenMore={() =>
+              router.push({
+                pathname: '/subject/[id]/comments',
+                params: { id: String(subjectId) },
+              })
+            }
+            refreshToken={previewRefreshToken}
+            subjectId={subjectId}
+          />
+        ) : null}
 
-        <ReviewPreviewSection
-          isError={reviewsQuery.isError}
-          isPending={reviewsQuery.isPending}
-          onOpenMore={() =>
-            router.push({
-              pathname: '/subject/[id]/reviews',
-              params: { id: String(subjectId) },
-            })
-          }
-          onOpenReview={(review) =>
-            router.push({
-              pathname: '/subject/[id]/review/[reviewId]',
-              params: {
-                id: String(subjectId),
-                reviewId: review.id,
-              },
-            })
-          }
-          onRetry={() => void reviewsQuery.refetch()}
-          reviews={latestReviews}
-          total={reviewsPage?.total}
-        />
+        {showPreviews ? (
+          <ReviewsPreview
+            onOpenMore={() =>
+              router.push({
+                pathname: '/subject/[id]/reviews',
+                params: { id: String(subjectId) },
+              })
+            }
+            onOpenReview={(review) =>
+              router.push({
+                pathname: '/subject/[id]/review/[reviewId]',
+                params: {
+                  id: String(subjectId),
+                  reviewId: review.id,
+                },
+              })
+            }
+            refreshToken={previewRefreshToken}
+            subjectId={subjectId}
+          />
+        ) : null}
       </ScrollView>
       <FloatingBackButton onPress={goBack} top={insets.top + bannerOffset} />
       <FloatingHomeButton

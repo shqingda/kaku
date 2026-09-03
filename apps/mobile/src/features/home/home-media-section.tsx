@@ -33,6 +33,7 @@ export function HomeMediaSection({
   loading,
   onRetry,
   onSubjectTypeChange,
+  onSubjectTypePressIn,
   subjectType,
   title,
   total,
@@ -43,6 +44,7 @@ export function HomeMediaSection({
   loading: boolean;
   onRetry: () => void;
   onSubjectTypeChange: (subjectType: number) => void;
+  onSubjectTypePressIn?: (subjectType: number) => void;
   subjectType: number;
   title: string;
   total: number;
@@ -85,6 +87,7 @@ export function HomeMediaSection({
       <SubjectTypeTabs
         contentContainerStyle={styles.typeTabs}
         onChange={onSubjectTypeChange}
+        onPressIn={onSubjectTypePressIn}
         selectedType={subjectType}
         types={HOME_TRACKING_TYPES}
       />

@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { getCatalogSubject } from '@/infrastructure/bangumi/catalog/provider';
+import { recordDiagnosticError } from '@/lib/diagnostic-log';
 import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
@@ -24,7 +25,12 @@ export function catalogSubjectQueryOptions(subjectId: number) {
     queryFn: async ({ signal }) => {
       try {
         const subject = await getCatalogSubject(subjectId, signal);
-        await saveOfflineSubject(subject);
+        // 离线包在后台落盘：不阻塞条目展示，失败只记入诊断日志。
+        void saveOfflineSubject(subject).catch((error) => {
+          void recordDiagnosticError(
+            error instanceof Error ? error : new Error(String(error)),
+          );
+        });
         return subject;
       } catch (error) {
         if (signal?.aborted) throw error;

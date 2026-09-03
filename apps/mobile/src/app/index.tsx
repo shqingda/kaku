@@ -32,7 +32,10 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
-import { usePublicUserCollections } from '@/features/users/use-public-user';
+import {
+  prefetchPublicUserCollections,
+  usePublicUserCollections,
+} from '@/features/users/use-public-user';
 import { markFirstContent } from '@/lib/startup-timing';
 
 export default function HomeScreen() {
@@ -56,6 +59,7 @@ export default function HomeScreen() {
 function HomeContent() {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const queryClient = useQueryClient();
   const [selectedTrackingType, setSelectedTrackingType] = useState(2);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
@@ -64,11 +68,21 @@ function HomeContent() {
   useLayoutEffect(() => {
     markFirstContent();
   }, []);
-  const animeQuery = usePublicUserCollections(username, 2, 'doing');
-  const bookQuery = usePublicUserCollections(username, 1, 'doing');
-  const musicQuery = usePublicUserCollections(username, 3, 'doing');
-  const gameQuery = usePublicUserCollections(username, 4, 'doing');
-  const realQuery = usePublicUserCollections(username, 6, 'doing');
+  const animeQuery = usePublicUserCollections(username, 2, 'doing', {
+    enabled: selectedTrackingType === 2,
+  });
+  const bookQuery = usePublicUserCollections(username, 1, 'doing', {
+    enabled: selectedTrackingType === 1,
+  });
+  const musicQuery = usePublicUserCollections(username, 3, 'doing', {
+    enabled: selectedTrackingType === 3,
+  });
+  const gameQuery = usePublicUserCollections(username, 4, 'doing', {
+    enabled: selectedTrackingType === 4,
+  });
+  const realQuery = usePublicUserCollections(username, 6, 'doing', {
+    enabled: selectedTrackingType === 6,
+  });
   const timelineQuery = useFriendTimeline();
   const trackingQueries = {
     1: bookQuery,
@@ -88,12 +102,14 @@ function HomeContent() {
     selectedTrackingType,
     'doing',
   )}的${getSubjectTypeLabel(selectedTrackingType)}`;
-  const showsTrackingSection = Object.values(trackingQueries).some(
-    (query) =>
-      query.isPending ||
-      query.isError ||
-      (query.data?.pages[0]?.total ?? 0) > 0,
-  );
+  // 只挂载当前 tab 的查询；区块是否显示由已加载的数据决定，
+  // 未选中的 tab 在按下时预取，不会因为未加载而闪烁。
+  const showsTrackingSection =
+    selectedQuery.isPending ||
+    selectedQuery.isError ||
+    Object.values(trackingQueries).some(
+      (query) => (query.data?.pages[0]?.total ?? 0) > 0,
+    );
 
   useEffect(() => {
     router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
@@ -103,8 +119,12 @@ function HomeContent() {
   }, []);
 
   function refreshHome() {
+    const loadedOtherTabs = Object.values(trackingQueries).filter(
+      (query) => query !== selectedQuery && query.data,
+    );
     void Promise.all([
-      ...Object.values(trackingQueries).map((query) => query.refetch()),
+      ...loadedOtherTabs.map((query) => query.refetch()),
+      selectedQuery.refetch(),
       timelineQuery.refetch(),
     ]);
   }
@@ -139,6 +159,9 @@ function HomeContent() {
                 loading={selectedQuery.isPending}
                 onRetry={() => void selectedQuery.refetch()}
                 onSubjectTypeChange={setSelectedTrackingType}
+                onSubjectTypePressIn={(type) =>
+                  prefetchPublicUserCollections(queryClient, username, type, 'doing')
+                }
                 subjectType={selectedTrackingType}
                 title={trackingTitle}
                 total={selectedQuery.data?.pages[0]?.total ?? 0}

@@ -11,11 +11,13 @@ import { SUBJECT_TYPES } from './subject-types';
 export function SubjectTypeTabs({
   contentContainerStyle,
   onChange,
+  onPressIn,
   selectedType,
   types = SUBJECT_TYPES,
 }: {
   contentContainerStyle?: StyleProp<ViewStyle>;
   onChange: (subjectType: number) => void;
+  onPressIn?: (subjectType: number) => void;
   selectedType: number;
   types?: ReadonlyArray<{ id: number; label: string }>;
 }) {
@@ -44,6 +46,7 @@ export function SubjectTypeTabs({
               playSelectionHaptic();
               onChange(type.id);
             }}
+            onPressIn={() => onPressIn?.(type.id)}
             style={({ pressed }) => [
               styles.tab,
               isSelected && styles.selectedTab,
