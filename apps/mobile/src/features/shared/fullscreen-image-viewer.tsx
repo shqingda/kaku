@@ -25,12 +25,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   containedTranslation,
-  DISMISS_HEIGHT_RATIO,
   resistedScale,
   RUBBERBAND_CONSTANT,
   settleScale,
   SHEET_DISMISS_SPRING,
-  shouldDismissSheet,
+  shouldDismissImage,
   rubberband,
 } from '@/lib/motion';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
@@ -96,7 +95,6 @@ export function FullscreenImageViewer({
       : null;
   const halfWindowWidth = windowWidth / 2;
   const halfWindowHeight = windowHeight / 2;
-  const dismissDistance = windowHeight * DISMISS_HEIGHT_RATIO;
 
   useEffect(() => {
     if (visible && !mounted) {
@@ -204,6 +202,8 @@ export function FullscreenImageViewer({
 
   const pan = Gesture.Pan()
     .enabled(!reduceMotion)
+    .activeOffsetY(12)
+    .failOffsetX([-36, 36])
     .onStart(() => {
       savedTranslateX.value = translateX.value;
       savedTranslateY.value = translateY.value;
@@ -222,9 +222,10 @@ export function FullscreenImageViewer({
           RUBBERBAND_CONSTANT,
         );
         dismissY.value = distance;
+        // 拖拽中不要把整页透到 0：iOS 上会看起来已经关掉，其实 Modal 还在挡触摸。
         dismissOpacity.value = Math.max(
-          0,
-          1 - distance / (windowHeight * 0.5),
+          0.4,
+          1 - distance / (windowHeight * 0.7),
         );
         return;
       }
@@ -247,23 +248,11 @@ export function FullscreenImageViewer({
       if (scale.value > 1.01) {
         return;
       }
-      if (shouldDismissSheet(dismissY.value, event.velocityY, dismissDistance)) {
-        // 甩动关闭：继承手指速度，用临界阻尼弹簧滑出屏幕后立刻卸掉 Modal。
-        // 不要用高减速的 withDecay——速度要很久才掉到 0，透明度先归零会留下几秒黑屏。
-        dismissOpacity.value = withTiming(0, { duration: 180 });
-        dismissY.value = withSpring(
-          windowHeight,
-          {
-            damping: 35,
-            mass: 1,
-            stiffness: 280,
-            overshootClamping: true,
-            velocity: Math.max(event.velocityY, 0),
-          },
-          () => {
-            runOnJS(onClose)();
-          },
-        );
+      if (
+        shouldDismissImage(event.translationY, event.velocityY, windowHeight)
+      ) {
+        // 达到阈值立刻走和关闭按钮同一条路径。不要等弹簧回调——iOS 上经常不触发。
+        runOnJS(onClose)();
         return;
       }
       dismissY.value = withSpring(0, SHEET_DISMISS_SPRING);

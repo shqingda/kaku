@@ -54,6 +54,28 @@ export function shouldDismissSheet(
   return projected > dismissDistance || velocity > MIN_DISMISS_VELOCITY;
 }
 
+// 图片预览用手指位移，不用橡皮筋压缩后的值。约滑过屏幕 15% 或中等甩动即可关。
+export const IMAGE_DISMISS_HEIGHT_RATIO = 0.15;
+export const MIN_IMAGE_DISMISS_VELOCITY = 700;
+
+export function shouldDismissImage(
+  translationY: number,
+  velocity: number,
+  windowHeight: number,
+): boolean {
+  'worklet';
+  if (windowHeight <= 0) {
+    return translationY > 80;
+  }
+  const distance = windowHeight * IMAGE_DISMISS_HEIGHT_RATIO;
+  const projected = translationY + project(Math.max(velocity, 0));
+  return (
+    translationY > distance ||
+    projected > distance ||
+    velocity > MIN_IMAGE_DISMISS_VELOCITY
+  );
+}
+
 // 图片预览缩放的边界：与 iOS 照片查看器一致，1x 到 4x。
 export const MIN_IMAGE_SCALE = 1;
 export const MAX_IMAGE_SCALE = 4;

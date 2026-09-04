@@ -3,8 +3,10 @@ import test from 'node:test';
 
 import {
   DECELERATION_RATE,
+  IMAGE_DISMISS_HEIGHT_RATIO,
   MAX_IMAGE_SCALE,
   MIN_DISMISS_VELOCITY,
+  MIN_IMAGE_DISMISS_VELOCITY,
   MIN_IMAGE_SCALE,
   RUBBERBAND_CONSTANT,
   containedTranslation,
@@ -12,6 +14,7 @@ import {
   resistedScale,
   rubberband,
   settleScale,
+  shouldDismissImage,
   shouldDismissSheet,
 } from '../src/lib/motion.ts';
 
@@ -63,6 +66,17 @@ test('a hard flick dismisses even when the projection alone would not', () => {
   assert.equal(
     shouldDismissSheet(10, MIN_DISMISS_VELOCITY - 100, tallDismissDistance),
     false,
+  );
+});
+
+test('image preview dismisses after a short downward drag', () => {
+  const windowHeight = 800;
+  const threshold = windowHeight * IMAGE_DISMISS_HEIGHT_RATIO;
+  assert.equal(shouldDismissImage(threshold + 1, 0, windowHeight), true);
+  assert.equal(shouldDismissImage(threshold - 20, 0, windowHeight), false);
+  assert.equal(
+    shouldDismissImage(20, MIN_IMAGE_DISMISS_VELOCITY + 1, windowHeight),
+    true,
   );
 });
 

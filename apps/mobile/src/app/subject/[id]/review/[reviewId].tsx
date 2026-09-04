@@ -197,7 +197,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           windowSize={7}
         />
         {review ? (
-          <View style={styles.replyBar}>
+          <View collapsable={false} style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? `回复${contentLabel}` : `登录后回复${contentLabel}`}
               accessibilityRole="button"
@@ -233,6 +233,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         target={{ id: numericReviewId, kind: 'review' }}
       />
       <ScrollToTopButton
+        bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
       />
@@ -278,10 +279,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   replyBar: {
     backgroundColor: colors.background,
+    elevation: Platform.OS === 'android' ? 8 : 0,
     paddingBottom: 10,
-    paddingLeft: 20,
-    paddingRight: 76,
+    paddingHorizontal: 20,
     paddingTop: 8,
+    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',

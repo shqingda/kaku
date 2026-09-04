@@ -461,7 +461,7 @@ export default function EpisodeScreen() {
           windowSize={7}
         />
         {catalogEpisode ? (
-          <View style={styles.replyBar}>
+          <View collapsable={false} style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
               accessibilityRole="button"
@@ -501,6 +501,7 @@ export default function EpisodeScreen() {
         </>
       ) : null}
       <ScrollToTopButton
+        bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
       />
@@ -605,10 +606,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   replyBar: {
     backgroundColor: colors.background,
+    elevation: Platform.OS === 'android' ? 8 : 0,
     paddingBottom: 10,
-    paddingLeft: 20,
-    paddingRight: 76,
+    paddingHorizontal: 20,
     paddingTop: 8,
+    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',

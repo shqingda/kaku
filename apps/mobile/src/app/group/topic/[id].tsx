@@ -129,6 +129,7 @@ export default function GroupTopicScreen() {
         <FlatList
           contentContainerStyle={styles.listContent}
           data={replies}
+          style={styles.list}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
           ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
@@ -215,7 +216,7 @@ export default function GroupTopicScreen() {
           windowSize={7}
         />
         {topic ? (
-          <View style={styles.replyBar}>
+          <View collapsable={false} style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
               accessibilityRole="button"
@@ -251,6 +252,7 @@ export default function GroupTopicScreen() {
         target={{ id: numericTopicId, kind: 'group-topic' }}
       />
       <ScrollToTopButton
+        bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
       />
@@ -261,6 +263,7 @@ export default function GroupTopicScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   contentView: { flex: 1 },
+  list: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 28 },
   topicHeader: {
     backgroundColor: colors.surface,
@@ -291,11 +294,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 7 },
   replyBar: {
     backgroundColor: colors.background,
+    elevation: Platform.OS === 'android' ? 8 : 0,
     paddingBottom: 10,
-    paddingLeft: 20,
-    // 右侧留给回到顶部按钮（与好友动态同一贴边位置）。
-    paddingRight: 76,
+    paddingHorizontal: 20,
     paddingTop: 8,
+    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',
