@@ -23,6 +23,7 @@ import {
   usePersonalCollection,
   useSavePersonalCollection,
 } from '@/features/collections/use-personal-collection';
+import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
@@ -262,7 +263,10 @@ export default function EpisodeScreen() {
       />
       <FlatList
           style={styles.list}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
+          ]}
           data={replies}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
@@ -460,35 +464,18 @@ export default function EpisodeScreen() {
           windowSize={7}
         />
         {catalogEpisode ? (
-          <View style={styles.replyBar}>
-            <Pressable
-              accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
-              accessibilityRole="button"
-              disabled={isSigningIn}
-              onPress={() => void composer.open()}
-              style={({ pressed }) => [
-                styles.replyButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'chat_bubble_outline',
-                  ios: 'bubble.left',
-                  web: 'chat_bubble_outline',
-                }}
-                size={17}
-                tintColor={colors.muted}
-              />
-              <Text style={styles.replyButtonText}>
-                {isSigningIn
-                  ? '正在登录…'
-                  : session
-                    ? `参与本${isTrack ? '曲' : '集'}讨论…`
-                    : '登录后参与讨论'}
-              </Text>
-            </Pressable>
-          </View>
+          <DiscussionReplyBar
+            accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
+            disabled={isSigningIn}
+            label={
+              isSigningIn
+                ? '正在登录…'
+                : session
+                  ? `参与本${isTrack ? '曲' : '集'}讨论…`
+                  : '登录后参与讨论'
+            }
+            onPress={() => void composer.open()}
+          />
         ) : null}
       {catalogEpisode ? (
         <>
@@ -509,8 +496,8 @@ export default function EpisodeScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  list: { flex: 1, minHeight: 0 },
-  content: { padding: 20, paddingBottom: 28 },
+  list: { flex: 1 },
+  content: { padding: 20 },
   episodeCard: {
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
@@ -601,25 +588,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
-  replyBar: {
-    backgroundColor: colors.background,
-    flexGrow: 0,
-    flexShrink: 0,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 9,
-    minHeight: 48,
-    paddingHorizontal: 17,
-  },
-  replyButtonText: { color: colors.muted, fontSize: 14 },
+
   pressed: { opacity: 0.62 },
 });

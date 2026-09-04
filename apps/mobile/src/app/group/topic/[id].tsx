@@ -1,7 +1,6 @@
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   FlatList,
   Platform,
@@ -17,6 +16,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicGroupTopic } from '@/features/community/use-community';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
+import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { DiscussionTopicBody } from '@/features/discussions/discussion-topic-body';
@@ -126,7 +126,10 @@ export default function GroupTopicScreen() {
         }}
       />
       <FlatList
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
+          ]}
           data={replies}
           style={styles.list}
           initialNumToRender={8}
@@ -215,35 +218,18 @@ export default function GroupTopicScreen() {
           windowSize={7}
         />
         {topic ? (
-          <View style={styles.replyBar}>
-            <Pressable
-              accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
-              accessibilityRole="button"
-              disabled={isSigningIn}
-              onPress={() => void composer.open()}
-              style={({ pressed }) => [
-                styles.replyButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'chat_bubble_outline',
-                  ios: 'bubble.left',
-                  web: 'chat_bubble_outline',
-                }}
-                size={17}
-                tintColor={colors.muted}
-              />
-              <Text style={styles.replyButtonText}>
-                {isSigningIn
-                  ? '正在登录…'
-                  : session
-                    ? '参与讨论…'
-                    : '登录后参与讨论'}
-              </Text>
-            </Pressable>
-          </View>
+          <DiscussionReplyBar
+            accessibilityLabel={session ? '参与小组讨论' : '登录后参与小组讨论'}
+            disabled={isSigningIn}
+            label={
+              isSigningIn
+                ? '正在登录…'
+                : session
+                  ? '参与讨论…'
+                  : '登录后参与讨论'
+            }
+            onPress={() => void composer.open()}
+          />
         ) : null}
       <DiscussionReplyComposer
         {...composer.sheetProps}
@@ -260,8 +246,8 @@ export default function GroupTopicScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  list: { flex: 1, minHeight: 0 },
-  listContent: { padding: 20, paddingBottom: 28 },
+  list: { flex: 1 },
+  listContent: { padding: 20 },
   topicHeader: {
     backgroundColor: colors.surface,
     borderRadius: 22,
@@ -289,25 +275,4 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 10,
   },
   topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 7 },
-  replyBar: {
-    backgroundColor: colors.background,
-    flexGrow: 0,
-    flexShrink: 0,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 9,
-    minHeight: 48,
-    paddingHorizontal: 17,
-  },
-  replyButtonText: { color: colors.muted, fontSize: 14 },
-  pressed: { opacity: 0.62 },
 });

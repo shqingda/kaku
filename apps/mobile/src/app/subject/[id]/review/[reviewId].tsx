@@ -1,7 +1,6 @@
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   FlatList,
@@ -16,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { EmptyDiscussionReplies } from '@/features/discussions/empty-discussion-replies';
+import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { DiscussionReply } from '@/features/discussions/model';
@@ -117,7 +117,10 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
       />
       <FlatList
           style={styles.list}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
+          ]}
           data={replies}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
@@ -196,35 +199,20 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           windowSize={7}
         />
         {review ? (
-          <View style={styles.replyBar}>
-            <Pressable
-              accessibilityLabel={session ? `回复${contentLabel}` : `登录后回复${contentLabel}`}
-              accessibilityRole="button"
-              disabled={isSigningIn}
-              onPress={() => void composer.open()}
-              style={({ pressed }) => [
-                styles.replyButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{
-                  android: 'chat_bubble_outline',
-                  ios: 'bubble.left',
-                  web: 'chat_bubble_outline',
-                }}
-                size={17}
-                tintColor={colors.muted}
-              />
-              <Text style={styles.replyButtonText}>
-                {isSigningIn
-                  ? '正在登录…'
-                  : session
-                    ? `回复这篇${contentLabel}…`
-                    : `登录后回复${contentLabel}`}
-              </Text>
-            </Pressable>
-          </View>
+          <DiscussionReplyBar
+            accessibilityLabel={
+              session ? `回复${contentLabel}` : `登录后回复${contentLabel}`
+            }
+            disabled={isSigningIn}
+            label={
+              isSigningIn
+                ? '正在登录…'
+                : session
+                  ? `回复这篇${contentLabel}…`
+                  : `登录后回复${contentLabel}`
+            }
+            onPress={() => void composer.open()}
+          />
         ) : null}
       <DiscussionReplyComposer
         {...composer.sheetProps}
@@ -241,8 +229,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  list: { flex: 1, minHeight: 0 },
-  listContent: { padding: 20, paddingBottom: 28 },
+  list: { flex: 1 },
+  listContent: { padding: 20 },
   reviewHeader: {
     backgroundColor: colors.surface,
     borderRadius: 22,
@@ -274,25 +262,4 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 22,
     paddingTop: 16,
   },
-  replyBar: {
-    backgroundColor: colors.background,
-    flexGrow: 0,
-    flexShrink: 0,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  replyButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 9,
-    minHeight: 48,
-    paddingHorizontal: 17,
-  },
-  replyButtonText: { color: colors.muted, fontSize: 14 },
-  pressed: { opacity: 0.62 },
 });
