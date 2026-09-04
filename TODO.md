@@ -20,7 +20,7 @@
 
 ## 发版与商店
 
-- [ ] 发布 GitHub `v1.1.4`：提升 App 版本、撰写本次 Release Notes、构建 release APK、安装烟测并创建 GitHub Release。`v1.1.3` 已发布。
+- [ ] 发布 GitHub `v1.1.5`：提升 App 版本、撰写本次 Release Notes、构建 release APK、安装烟测并创建 GitHub Release。`v1.1.4` 已发布。
 - [ ] 配置 App Store Connect API key 和 Google Play 服务账号，凭据就绪后执行 production 构建与提交。
 - [ ] 准备商店截图：首页、条目详情、章节列表、收藏盒、搜索、深色模式；整理中英文商店描述。
 
