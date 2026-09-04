@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -73,54 +73,56 @@ export default function SubjectCharactersScreen() {
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Link
-                asChild
-                href={{
-                  pathname: '/character/[id]',
-                  params: { id: String(item.id) },
-                }}
+              <Pressable
+                accessibilityLabel={`打开角色：${item.name}`}
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: '/character/[id]',
+                    params: { id: String(item.id) },
+                  })
+                }
+                style={({ pressed }) => pressed && styles.pressed}
               >
-                <Pressable style={({ pressed }) => pressed && styles.pressed}>
-                  <View style={styles.portrait}>
-                    <Text style={styles.fallback}>{item.name.slice(0, 1)}</Text>
-                    {item.imageUrl ? (
-                      <Image
-                        contentFit="cover"
-                        contentPosition="top"
-                        recyclingKey={item.imageUrl}
-                        source={item.imageUrl}
-                        style={StyleSheet.absoluteFill}
-                        transition={140}
-                      />
-                    ) : null}
-                  </View>
-                </Pressable>
-              </Link>
+                <View style={styles.portrait}>
+                  <Text style={styles.fallback}>{item.name.slice(0, 1)}</Text>
+                  {item.imageUrl ? (
+                    <Image
+                      contentFit="cover"
+                      contentPosition="top"
+                      recyclingKey={item.imageUrl}
+                      source={item.imageUrl}
+                      style={StyleSheet.absoluteFill}
+                      transition={140}
+                    />
+                  ) : null}
+                </View>
+              </Pressable>
               <View style={styles.main}>
                 <View style={styles.nameLine}>
-                  <Link
-                    asChild
-                    href={{
-                      pathname: '/character/[id]',
-                      params: { id: String(item.id) },
-                    }}
+                  <Pressable
+                    accessibilityLabel={`打开角色：${item.name}`}
+                    accessibilityRole="button"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/character/[id]',
+                        params: { id: String(item.id) },
+                      })
+                    }
+                    style={({ pressed }) => [
+                      styles.nameButton,
+                      pressed && styles.pressed,
+                    ]}
                   >
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.nameButton,
-                        pressed && styles.pressed,
-                      ]}
+                    <Text
+                      ellipsizeMode="tail"
+                      maxFontSizeMultiplier={1.3}
+                      numberOfLines={1}
+                      style={styles.name}
                     >
-                      <Text
-                        ellipsizeMode="tail"
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={1}
-                        style={styles.name}
-                      >
-                        {item.name}
-                      </Text>
-                    </Pressable>
-                  </Link>
+                      {item.name}
+                    </Text>
+                  </Pressable>
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleText}>{item.role}</Text>
                   </View>
@@ -132,23 +134,23 @@ export default function SubjectCharactersScreen() {
                   <View style={styles.actors}>
                     <Text style={styles.actorLabel}>CV · </Text>
                     {item.actors.map((actor, index) => (
-                      <Link
-                        asChild
-                        href={{
-                          pathname: '/person/[id]',
-                          params: { id: String(actor.id) },
-                        }}
+                      <Pressable
+                        accessibilityLabel={`打开人物：${actor.name}`}
+                        accessibilityRole="button"
                         key={actor.id}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/person/[id]',
+                            params: { id: String(actor.id) },
+                          })
+                        }
+                        style={({ pressed }) => pressed && styles.pressed}
                       >
-                        <Pressable
-                          style={({ pressed }) => pressed && styles.pressed}
-                        >
-                          <Text style={styles.actor}>
-                            {index > 0 ? ' / ' : ''}
-                            {actor.name}
-                          </Text>
-                        </Pressable>
-                      </Link>
+                        <Text style={styles.actor}>
+                          {index > 0 ? ' / ' : ''}
+                          {actor.name}
+                        </Text>
+                      </Pressable>
                     ))}
                   </View>
                 ) : null}
@@ -161,7 +163,6 @@ export default function SubjectCharactersScreen() {
     </SafeAreaView>
   );
 }
-
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },

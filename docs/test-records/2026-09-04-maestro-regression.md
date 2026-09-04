@@ -31,3 +31,10 @@ JUnit 结果为 1 个入口 flow、0 failure。入口依次包含基础 smoke �
 - 入口：`.maestro/kaku-regression-ios.yaml`
 - 共用复位：`.maestro/reset-home.yaml`
 - Android 平台入口已补齐但按约定未执行。
+
+## 续接复跑
+
+角色列表导航改为直接调用 Router 后，`subject-sections` 增加了“打开首个角色 →
+进入角色详情 → 返回角色列表”的断言。更新后的 iOS 全量入口再次通过，耗时
+3 分 57 秒，JUnit 为 1 个入口 flow、0 failure；结果写入
+`/tmp/kaku-maestro-ios-final.xml`。Android 仍未执行。

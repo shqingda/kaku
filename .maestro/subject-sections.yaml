@@ -3,7 +3,7 @@ name: Open subject character section
 tags:
   - smoke
 ---
-# 覆盖：搜索 → 条目详情 → 角色与声优分区 → 返回详情
+# 覆盖：搜索 → 条目详情 → 角色与声优分区 → 角色详情 → 返回详情
 # （分区入口带 press-in 预取，这里同时覆盖预取路径的可用性）
 - runFlow:
     file: reset-home.yaml
@@ -29,5 +29,13 @@ tags:
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: subject-characters
+- tapOn:
+    text: "打开角色：.*"
+    index: 0
+- extendedWaitUntil:
+    visible: "全屏查看.*图片"
+    timeout: 15000
+- tapOn: "返回"
+- assertVisible: "角色与声优"
 - tapOn: "返回"
 - assertVisible: "打开收藏盒"

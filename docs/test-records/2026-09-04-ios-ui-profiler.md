@@ -51,3 +51,22 @@ React 报告称编译器全局标记不可用，但组件条目可识别出若�
 - React session：`20260904-062127`
 - React 报告：`/var/folders/xt/kzh0y_2501gbt90v1813y8280000gn/T/argent-profiler-cwd/react-profiler-report.md`
 - Native 报告：`/var/folders/xt/kzh0y_2501gbt90v1813y8280000gn/T/argent-profiler-cwd/native-profiler-20260904-062056-report.md`
+
+## 角色列表专项复测
+
+固定路径重采后，最慢角色列表提交显示 40 个 `CellRenderer` 同时刷新，并为
+每行角色、角色名和声优创建约 200 组 Expo Router `Link` 包装。React Compiler
+已识别该屏幕，但没有消除这次列表级刷新。优化仅把这些行内 `Link` 改为等价的
+`Pressable + router.push`，未增加 `useMemo`、`useCallback` 或缩小列表窗口。
+
+| 指标 | 改前 | 改后 | 结果 |
+| --- | ---: | ---: | --- |
+| 角色页首次挂载 | 98.25ms | 75.86ms | -22.8%，达到 80ms 目标 |
+| 最坏角色列表刷新 | 172.87ms / 40 行 | 60.29ms / 10 行 | 40 行整体刷新消失 |
+| `CellRenderer` 总成本 | 55.7ms / 128 次 | 27.7ms / 88 次 | 总成本约减半 |
+| `Pressable` 总成本 | 38.9ms / 382 次 | 17.7ms / 169 次 | 导航包装显著减少 |
+
+两轮均为 iOS dev client，同一设备、同一 Maestro 固定路径。改前 React session
+为 `20260904-074618`，改后为 `20260904-074949`。改后原生侧记录 4 个
+287–466ms microhang，但仍全部没有 React commit 匹配，且无 leak；不据此继续
+修改产品代码。
