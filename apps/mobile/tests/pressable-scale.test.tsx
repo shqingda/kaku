@@ -12,7 +12,7 @@ describe('PressableScale', () => {
       </PressableScale>,
     );
 
-    fireEvent.press(screen.getByText('封面卡片'));
+    await fireEvent.press(screen.getByText('封面卡片'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
@@ -28,8 +28,8 @@ describe('PressableScale', () => {
     );
     const target = screen.getByText('封面卡片');
 
-    fireEvent(target, 'pressIn');
-    fireEvent(target, 'pressOut');
+    await fireEvent(target, 'pressIn');
+    await fireEvent(target, 'pressOut');
 
     expect(onPressIn).toHaveBeenCalledTimes(1);
     expect(onPressOut).toHaveBeenCalledTimes(1);
