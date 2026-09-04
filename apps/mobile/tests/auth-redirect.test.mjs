@@ -10,8 +10,20 @@ test('rememberReturnTo keeps a normal path and takeReturnTo consumes it once', (
 });
 
 test('rememberReturnTo rejects the account screen so login never loops back to itself', () => {
-  rememberReturnTo('/account');
-  assert.equal(takeReturnTo(), undefined);
+  for (const path of [
+    '/account',
+    '/account?source=directory',
+    '/account#sign-in',
+    '/account/settings',
+  ]) {
+    rememberReturnTo(path);
+    assert.equal(takeReturnTo(), undefined);
+  }
+});
+
+test('rememberReturnTo only rejects the account route boundary', () => {
+  rememberReturnTo('/accountability');
+  assert.equal(takeReturnTo(), '/accountability');
 });
 
 test('rememberReturnTo drops missing paths', () => {
