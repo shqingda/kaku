@@ -3,7 +3,7 @@
 > 日期：2026-09-04
 > 设备：iPhone 17 Pro 模拟器（iOS 26.5）
 > App：dev client `com.shqingda.kaku.debug`，已登录，系统浅色外观
-> 工具：Argent 0.23.0、Maestro 2.8.0、iOS Instruments
+> 工具：Argent 0.23.0 / 0.24.0、Maestro 2.8.0、iOS Instruments
 > 结论：视觉主路径通过；性能数据可作开发态基线，原生 hang 数据失真
 
 ## UI 验收
@@ -11,15 +11,20 @@
 | 检查项 | 结果 | 证据与说明 |
 | --- | --- | --- |
 | 深色主题 | ✅ | 切到深色后截图，再恢复跟随系统；流程通过 |
-| 条目页与骨架布局 | ✅ 可达 / ⚠️ 未量化位移 | 条目从搜索结果正常打开并稳定显示；缓存命中太快，未取得可比较的 skeleton/loading 两帧 |
+| 条目页与骨架布局 | ✅ 0px 位移 | Argent 0.24 下临时延迟调试运行时的 fetch，以同一条目采集骨架与真实页全分辨率两帧；封面纵向边界均为 246–959px |
 | 封面图片查看器 | ✅ | 全屏打开后用 220ms 向下甩动，查看器关闭并回到条目页 |
-| 发现区 press-in | ⚠️ 工具阻塞 | Argent 可读 AX/React 树，但 tap/swipe 未送达 App；中途截图也被排队到 touch-up 后。代码与组件测试仍覆盖 pointer-down 弹簧契约，本次没有新增肉眼证据 |
+| 发现区 press-in | ⚠️ 工具阻塞 | Argent 0.24 仍可读 AX/React 树，但 tap/swipe 未送达 App；单独发送 touch-down 后的全分辨率截图与基线像素差为 0%，touch-up 也未触发导航。代码与组件测试继续覆盖 pointer-down 弹簧契约 |
 | 离线文案 | ⚠️ 未切断网络 | iOS 模拟器没有可安全隔离且不影响宿主 Metro 的断网开关；未以修改整机网络为代价强测。已有错误状态与文案测试继续覆盖 |
 
 可见验收补充 flow 用 Maestro 执行，25 秒通过（0 failure）。截图目录：
 `~/.maestro/tests/2026-09-04_142351/Kaku iOS visual acceptance/takeScreenshot/`，
 包含 `settings-dark.png`、`settings-system.png`、`subject-loaded.png` 和
 `subject-cover-viewer.png`。
+
+Argent 0.24 复验补充：骨架基线与真实内容截图分别为
+`289906000-1788525475296.png`、`177292000-1788525492186.png`，截图差异工具确认
+内容已替换；像素扫描显示两帧中央封面区域均从 y=246 到 y=959，布局位移为
+0px。临时 fetch 延迟在采集后立即恢复，没有修改产品代码或持久状态。
 
 ## React 性能基线
 
