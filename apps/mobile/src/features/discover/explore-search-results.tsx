@@ -19,6 +19,7 @@ import type { PublicPersonSummary } from '@/features/people-browser/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { SubjectSearchField } from '@/features/shared/subject-search-field';
 
 import type { DiscoverSubject } from './model';
 import {
@@ -32,6 +33,7 @@ import { useExploreStyles } from './explore-styles';
 type SearchResult = DiscoverSubject | PublicPersonSummary;
 
 export function ExploreSearchResults({
+  draft,
   hasNextPage,
   isError,
   isFetchNextPageError,
@@ -40,14 +42,17 @@ export function ExploreSearchResults({
   isRefetching,
   items,
   keyword,
+  onChangeDraft,
   onChangeSearchTab,
   onLoadMore,
   onRefresh,
   onRetry,
+  onSubmitSearch,
   searchMode,
   selectedSearchTab,
   total,
 }: {
+  draft: string;
   hasNextPage: boolean;
   isError: boolean;
   isFetchNextPageError: boolean;
@@ -56,10 +61,12 @@ export function ExploreSearchResults({
   isRefetching: boolean;
   items: SearchResult[];
   keyword: string;
+  onChangeDraft: (value: string) => void;
   onChangeSearchTab: (tabId: number) => void;
   onLoadMore: () => void;
   onRefresh: () => void;
   onRetry: () => void;
+  onSubmitSearch: () => void;
   searchMode: ExploreSearchMode;
   selectedSearchTab: number;
   total: number;
@@ -102,6 +109,12 @@ export function ExploreSearchResults({
       }
       ListHeaderComponent={
         <>
+          <SubjectSearchField
+            onChangeText={onChangeDraft}
+            onSubmit={onSubmitSearch}
+            style={styles.searchBar}
+            value={draft}
+          />
           <SubjectTypeTabs
             contentContainerStyle={styles.subjectTypeTabs}
             onChange={onChangeSearchTab}

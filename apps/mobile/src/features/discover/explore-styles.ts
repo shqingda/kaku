@@ -15,7 +15,6 @@ export const createExploreStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
     body: { backgroundColor: colors.background, flex: 1 },
-    searchSlot: { paddingHorizontal: 20 },
     pane: { flex: 1 },
     searchOverlay: {
       ...StyleSheet.absoluteFill,

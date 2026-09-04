@@ -150,14 +150,6 @@ export default function ExploreScreen() {
         }}
       />
       <View style={styles.body}>
-        <View style={styles.searchSlot}>
-          <SubjectSearchField
-            onChangeText={updateDraft}
-            onSubmit={submitSearch}
-            style={styles.searchBar}
-            value={draft}
-          />
-        </View>
         <View style={styles.pane}>
           <ScrollView
             accessibilityElementsHidden={Boolean(keyword)}
@@ -184,6 +176,12 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             style={styles.overviewList}
           >
+            <SubjectSearchField
+              onChangeText={updateDraft}
+              onSubmit={submitSearch}
+              style={styles.searchBar}
+              value={draft}
+            />
             {!draft ? (
               <>
                 <RecentSearches
@@ -216,6 +214,7 @@ export default function ExploreScreen() {
           {keyword ? (
             <View style={styles.searchOverlay}>
               <ExploreSearchResults
+                draft={draft}
                 hasNextPage={Boolean(search.hasNextPage)}
                 isError={search.isError}
                 isFetchNextPageError={search.isFetchNextPageError}
@@ -224,10 +223,12 @@ export default function ExploreScreen() {
                 isRefetching={search.isRefetching}
                 items={search.items}
                 keyword={keyword}
+                onChangeDraft={updateDraft}
                 onChangeSearchTab={applySearchTab}
                 onLoadMore={() => void search.fetchNextPage()}
                 onRefresh={refreshSearchResults}
                 onRetry={() => void search.refetch()}
+                onSubmitSearch={submitSearch}
                 searchMode={searchMode}
                 selectedSearchTab={exploreSearchTabId(
                   searchMode,
