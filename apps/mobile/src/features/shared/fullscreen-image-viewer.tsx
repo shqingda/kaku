@@ -18,7 +18,6 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withDecay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -249,20 +248,20 @@ export function FullscreenImageViewer({
         return;
       }
       if (shouldDismissSheet(dismissY.value, event.velocityY, dismissDistance)) {
-        // 甩动关闭：以手指速度继续减速滑出（速度交接），惯性停在屏幕内时
-        // 用弹簧滑完剩余距离再收起，保证任何速度下都能完成关闭。
-        dismissOpacity.value = withTiming(0, { duration: 200 });
-        dismissY.value = withDecay(
-          { deceleration: 0.997, velocity: Math.max(event.velocityY, 600) },
-          (finished) => {
-            if (!finished) return;
-            if (dismissY.value >= windowHeight * 0.95) {
-              runOnJS(onClose)();
-              return;
-            }
-            dismissY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING, (done) => {
-              if (done) runOnJS(onClose)();
-            });
+        // 甩动关闭：继承手指速度，用临界阻尼弹簧滑出屏幕后立刻卸掉 Modal。
+        // 不要用高减速的 withDecay——速度要很久才掉到 0，透明度先归零会留下几秒黑屏。
+        dismissOpacity.value = withTiming(0, { duration: 180 });
+        dismissY.value = withSpring(
+          windowHeight,
+          {
+            damping: 35,
+            mass: 1,
+            stiffness: 280,
+            overshootClamping: true,
+            velocity: Math.max(event.velocityY, 0),
+          },
+          () => {
+            runOnJS(onClose)();
           },
         );
         return;
@@ -345,9 +344,10 @@ export function FullscreenImageViewer({
       animationType="none"
       onRequestClose={onClose}
       statusBarTranslucent
+      transparent
       visible={mounted}
     >
-      <GestureHandlerRootView style={styles.screen}>
+      <GestureHandlerRootView style={styles.host}>
         <GestureDetector gesture={zoomGestures}>
           <Animated.View
             accessibilityViewIsModal
@@ -442,6 +442,7 @@ export function FullscreenImageViewer({
 }
 
 const styles = StyleSheet.create({
+  host: { flex: 1 },
   screen: { backgroundColor: '#000000', flex: 1 },
   image: {
     alignItems: 'center',

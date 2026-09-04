@@ -251,7 +251,6 @@ export default function GroupTopicScreen() {
         target={{ id: numericTopicId, kind: 'group-topic' }}
       />
       <ScrollToTopButton
-        bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
       />
@@ -293,7 +292,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   replyBar: {
     backgroundColor: colors.background,
     paddingBottom: 10,
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    // 右侧留给回到顶部按钮（与好友动态同一贴边位置）。
+    paddingRight: 76,
     paddingTop: 8,
   },
   replyButton: {

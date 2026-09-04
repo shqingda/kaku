@@ -233,7 +233,6 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
         target={{ id: numericReviewId, kind: 'review' }}
       />
       <ScrollToTopButton
-        bottom={104}
         onPress={scrollToTop.scrollToTop}
         visible={scrollToTop.visible}
       />
@@ -280,7 +279,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   replyBar: {
     backgroundColor: colors.background,
     paddingBottom: 10,
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 76,
     paddingTop: 8,
   },
   replyButton: {
