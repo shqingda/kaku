@@ -217,9 +217,9 @@ test('people keys distinguish characters from persons and comment kinds', () => 
   ]);
 });
 
-test('public user keys nest collections, blogs, friends and timeline', () => {
-  assert.deepEqual(queryKeys.publicUser('soul'), ['users', 'bangumi', 'soul']);
-  assert.deepEqual(queryKeys.publicUserCollections('soul', 2), [
+test('public user keys normalize one username across every nested cache', () => {
+  assert.deepEqual(queryKeys.publicUser('  Soul '), ['users', 'bangumi', 'soul']);
+  assert.deepEqual(queryKeys.publicUserCollections('  Soul ', 2), [
     'users',
     'bangumi',
     'soul',
@@ -227,7 +227,7 @@ test('public user keys nest collections, blogs, friends and timeline', () => {
     2,
     'all',
   ]);
-  assert.deepEqual(queryKeys.publicUserCollections('soul', 2, 'doing'), [
+  assert.deepEqual(queryKeys.publicUserCollections('  Soul ', 2, 'doing'), [
     'users',
     'bangumi',
     'soul',
@@ -235,33 +235,36 @@ test('public user keys nest collections, blogs, friends and timeline', () => {
     2,
     'doing',
   ]);
-  assert.deepEqual(queryKeys.publicUserBlogs('soul'), [
+  assert.deepEqual(queryKeys.publicUserBlogs('  Soul '), [
     'users',
     'bangumi',
     'soul',
     'blogs',
   ]);
-  assert.deepEqual(queryKeys.publicUserFriends('soul'), [
+  assert.deepEqual(queryKeys.publicUserFriends('  Soul '), [
     'users',
     'bangumi',
     'soul',
     'friends',
   ]);
-  assert.deepEqual(queryKeys.publicUserTimeline('soul'), [
+  assert.deepEqual(queryKeys.publicUserTimeline('  Soul '), [
     'users',
     'bangumi',
     'soul',
     'timeline',
   ]);
-});
-
-test('public user entity keys normalize the username', () => {
   assert.deepEqual(queryKeys.publicUserEntities('  Soul ', 'character'), [
     'users',
     'bangumi',
     'soul',
     'entities',
     'character',
+  ]);
+  assert.deepEqual(queryKeys.userFriendship(7, '  Soul '), [
+    'friends',
+    'kaku',
+    7,
+    'soul',
   ]);
 });
 

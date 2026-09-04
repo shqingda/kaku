@@ -51,7 +51,7 @@ export function useSetUserFriend(username: string) {
       queryClient.setQueryData(queryKey, isFriend);
       // 好友关系变化会影响公开好友列表与时间线内容。
       void queryClient.invalidateQueries({
-        queryKey: ['users', 'bangumi', username.trim()],
+        queryKey: queryKeys.publicUser(username),
       });
     },
   });

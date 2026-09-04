@@ -1,3 +1,7 @@
+function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
 export const queryKeys = {
   wikiRevisions: () => ['wiki', 'kaku', 'revisions'] as const,
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
@@ -77,9 +81,14 @@ export const queryKeys = {
       entityId,
     ] as const,
   publicUser: (username: string) =>
-    ['users', 'bangumi', username] as const,
+    ['users', 'bangumi', normalizeUsername(username)] as const,
   userFriendship: (userId: number | undefined, username: string) =>
-    ['friends', 'kaku', userId ?? 'signed-out', username] as const,
+    [
+      'friends',
+      'kaku',
+      userId ?? 'signed-out',
+      normalizeUsername(username),
+    ] as const,
   blocklist: (userId: number | undefined) =>
     ['blocklist', 'kaku', userId ?? 'signed-out'] as const,
   publicUserCollections: (
@@ -90,25 +99,25 @@ export const queryKeys = {
     [
       'users',
       'bangumi',
-      username,
+      normalizeUsername(username),
       'collections',
       subjectType,
       collectionStatus ?? 'all',
     ] as const,
   publicUserBlogs: (username: string) =>
-    ['users', 'bangumi', username, 'blogs'] as const,
+    ['users', 'bangumi', normalizeUsername(username), 'blogs'] as const,
   publicUserFriends: (username: string) =>
-    ['users', 'bangumi', username, 'friends'] as const,
+    ['users', 'bangumi', normalizeUsername(username), 'friends'] as const,
   publicUserEntities: (username: string, kind: string) =>
     [
       'users',
       'bangumi',
-      username.trim().toLowerCase(),
+      normalizeUsername(username),
       'entities',
       kind,
     ] as const,
   publicUserTimeline: (username: string) =>
-    ['users', 'bangumi', username, 'timeline'] as const,
+    ['users', 'bangumi', normalizeUsername(username), 'timeline'] as const,
   subjectIndexes: (subjectId: number) =>
     ['indexes', 'bangumi', 'subject', subjectId] as const,
   publicIndex: (indexId: number) =>
