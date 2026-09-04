@@ -1,10 +1,11 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Open subject comments
 tags:
   - smoke
 ---
 # 覆盖：搜索 → 打开条目 → 进入吐槽箱 → 评论可见
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - tapOn: "搜索条目"
 - inputText: "葬送的芙莉莲"
 - pressKey: Enter
@@ -19,10 +20,10 @@ tags:
     timeout: 15000
 - scrollUntilVisible:
     element:
-      text: "吐槽箱"
+      text: "查看更多吐槽"
     direction: DOWN
-- tapOn: "吐槽箱"
+- tapOn: "查看更多吐槽"
 - extendedWaitUntil:
     visible: "吐槽箱"
     timeout: 10000
-- assertVisible: "发表吐槽"
+- assertVisible: ".*无需登录即可浏览"

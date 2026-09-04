@@ -1,19 +1,28 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Search then clear
 tags:
   - smoke
 ---
 # 覆盖：综合页搜索 → 结果可见 → 清空 → 回到概览（不再叠屏/闪屏）
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - tapOn: "搜索条目"
 - inputText: "葬送的芙莉莲"
 - pressKey: Enter
 - extendedWaitUntil:
     visible: "搜索结果"
     timeout: 15000
-- assertVisible: "芙莉莲.*"
-# iOS 输入框自带清除按钮（a11y "Clear text"）；Android 无此按钮，optional 跳过
-- tapOn:
-    text: "Clear text"
-    optional: true
+- assertVisible: "葬送的芙莉莲.*"
+# iOS 原生清除按钮仅在编辑态出现；先重新聚焦输入框。
+- tapOn: "搜索条目"
+- runFlow:
+    when:
+      visible: "Clear text"
+    commands:
+      - tapOn: "Clear text"
+- runFlow:
+    when:
+      visible: "清空搜索内容"
+    commands:
+      - tapOn: "清空搜索内容"
 - assertVisible: "最近搜索"

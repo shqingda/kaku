@@ -1,0 +1,9 @@
+appId: com.shqingda.kaku.debug
+name: Kaku iOS performance baseline
+tags:
+  - profile
+---
+# 固定性能基线路径：搜索 → 条目打开 → 条目内滚动 → 角色页。
+# 不在采集中重载 Metro，避免 React profiler 会话随运行时断开。
+- runFlow:
+    file: profile-subject-steps.yaml

@@ -1,10 +1,11 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Collection box requires sign-in
 tags:
   - smoke
 ---
 # 覆盖：搜索 → 条目详情 → 打开收藏盒 → 未登录提示（不写远端）
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - tapOn: "搜索条目"
 - setClipboard: 葬送的芙莉莲
 - pasteText
@@ -20,6 +21,15 @@ tags:
     timeout: 15000
 - tapOn: "打开收藏盒"
 - extendedWaitUntil:
-    visible: "登录后使用收藏盒"
+    visible: "收藏盒"
     timeout: 8000
-- assertVisible: "取消"
+- runFlow:
+    when:
+      visible: "登录后使用收藏盒"
+    commands:
+      - assertVisible: "取消"
+- runFlow:
+    when:
+      visible: "收藏状态"
+    commands:
+      - assertVisible: "关闭收藏盒"

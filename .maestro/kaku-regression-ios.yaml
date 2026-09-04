@@ -1,0 +1,30 @@
+# iOS 全量入口：同一台模拟器上的业务流程必须串行，避免并发导航互相污染。
+appId: com.shqingda.kaku.debug
+name: kaku-regression-ios
+---
+- runFlow:
+    file: kaku-smoke-steps.yaml
+- runFlow:
+    file: public-browse-smoke.yaml
+- runFlow:
+    file: subject-comments.yaml
+- runFlow:
+    file: subject-sections.yaml
+- runFlow:
+    file: episode-signed-in.yaml
+- runFlow:
+    file: search-clear.yaml
+- runFlow:
+    file: rankings-smoke.yaml
+- runFlow:
+    file: browse-smoke.yaml
+- runFlow:
+    file: calendar-smoke.yaml
+- runFlow:
+    file: directories-smoke.yaml
+- runFlow:
+    file: settings-theme-toggle.yaml
+- runFlow:
+    file: timeline-smoke.yaml
+- runFlow:
+    file: collection-box-signin.yaml

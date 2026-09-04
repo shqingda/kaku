@@ -24,6 +24,8 @@ Maestro 管真机/模拟器上的关键路径，argent 会话做人工级别的 
 
 流程都在仓库根 `.maestro/`。iOS 开发构建的 bundle id 带 `.debug` 后缀，
 入口流程是 `kaku-smoke-ios.yaml`（会先 openLink 重载 dev client 复位到首页）。
+全量入口按平台持有正确包名，并串行引入其余业务流程；每条业务流程开始时
+共用 `reset-home.yaml` 重载首页，避免前一条流程的路由状态污染下一条。
 需要登录态的流程用 `runFlow.when` 门控，两种登录态都能跑通且不写远端。
 
 | 流程 | 覆盖 |
@@ -46,9 +48,14 @@ Maestro 管真机/模拟器上的关键路径，argent 会话做人工级别的 
 
 ```bash
 pnpm test:smoke          # iOS 模拟器（dev client 需已安装并启动 metro）
+pnpm test:smoke:all      # iOS：入口流程 + 全部独立 smoke 流程
 pnpm test:smoke:android  # Android 模拟器
-maestro test .maestro/rankings-smoke.yaml   # 单条流程
+pnpm test:smoke:android:all # Android：入口流程 + 全部独立 smoke 流程
 ```
+
+性能复测先运行 `maestro test .maestro/kaku-reset-ios.yaml`，在 profiler
+连接后再运行 `maestro test .maestro/kaku-profile-ios.yaml`。两段刻意分开，
+因为 dev client 重载会断开 React profiler。
 
 ## 4. UI 交互验收（argent 会话）
 

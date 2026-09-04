@@ -1,21 +1,26 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Open directories from explore
 tags:
   - smoke
 ---
 # 覆盖：综合页 → 目录入口 → 目录发现页（未登录也能浏览公开目录）
-- launchApp
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    centerElement: true
+    direction: DOWN
+    element:
+      text: "综合"
+- waitForAnimationToEnd
 - tapOn: "综合"
 - extendedWaitUntil:
-    visible: "每日放送"
+    visible: "频道"
     timeout: 15000
 - scrollUntilVisible:
     direction: DOWN
     element:
       text: "目录"
-- tapOn:
-    text: "目录"
-    index: 0
+- tapOn: "目录"
 - extendedWaitUntil:
     visible: "目录发现"
     timeout: 15000

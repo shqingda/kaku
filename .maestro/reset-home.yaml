@@ -1,0 +1,9 @@
+# 前置复位：开发客户端重载 JS bundle 后会回到首页顶部。
+# 独立流程共用此步骤，避免上一个流程遗留的路由影响下一个流程。
+appId: placeholder
+---
+- openLink: "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+- extendedWaitUntil:
+    visible: "打开账户菜单"
+    timeout: 180000
+- waitForAnimationToEnd

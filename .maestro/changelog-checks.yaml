@@ -5,7 +5,7 @@ appId: placeholder
 ---
 - assertVisible: "更新日志"
 - takeScreenshot: changelog
-- tapOn: "版本 1.0.9，展开更新内容"
-- assertVisible: "完成 Firebase 推送接入：带 Google Play 服务的 Android 可以稳定收到 Bangumi 通知"
+- tapOn: "版本 1.1.1，展开更新内容"
+- assertVisible: "长按图标的快捷方式现在显示各自的功能图标：日历、搜索、排行、筛选"
 - takeScreenshot: changelog-expanded
 - tapOn: "返回"

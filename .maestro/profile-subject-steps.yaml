@@ -1,12 +1,8 @@
 appId: placeholder
-name: Open subject character section
+name: Profile subject opening and list scroll
 tags:
-  - smoke
+  - profile
 ---
-# 覆盖：搜索 → 条目详情 → 角色与声优分区 → 返回详情
-# （分区入口带 press-in 预取，这里同时覆盖预取路径的可用性）
-- runFlow:
-    file: reset-home.yaml
 - tapOn: "搜索条目"
 - inputText: "葬送的芙莉莲"
 - pressKey: Enter
@@ -27,7 +23,5 @@ tags:
 - extendedWaitUntil:
     visible: "角色与声优"
     timeout: 15000
-- waitForAnimationToEnd
-- takeScreenshot: subject-characters
 - tapOn: "返回"
 - assertVisible: "打开收藏盒"

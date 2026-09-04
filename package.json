@@ -13,7 +13,9 @@
     "test": "pnpm -r test",
     "test:ui": "pnpm --filter @kaku/mobile test:ui",
     "test:smoke": "maestro test .maestro/kaku-smoke-ios.yaml",
+    "test:smoke:all": "maestro test .maestro/kaku-regression-ios.yaml",
     "test:smoke:android": "maestro test .maestro/kaku-smoke-android.yaml",
+    "test:smoke:android:all": "maestro test .maestro/kaku-regression-android.yaml",
     "typecheck": "pnpm -r typecheck"
   }
 }

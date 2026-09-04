@@ -1,0 +1,30 @@
+# Android 全量入口：与 iOS 复用同一组业务流程，平台入口只负责包名。
+appId: com.shqingda.kaku
+name: kaku-regression-android
+---
+- runFlow:
+    file: kaku-smoke-steps.yaml
+- runFlow:
+    file: public-browse-smoke.yaml
+- runFlow:
+    file: subject-comments.yaml
+- runFlow:
+    file: subject-sections.yaml
+- runFlow:
+    file: episode-signed-in.yaml
+- runFlow:
+    file: search-clear.yaml
+- runFlow:
+    file: rankings-smoke.yaml
+- runFlow:
+    file: browse-smoke.yaml
+- runFlow:
+    file: calendar-smoke.yaml
+- runFlow:
+    file: directories-smoke.yaml
+- runFlow:
+    file: settings-theme-toggle.yaml
+- runFlow:
+    file: timeline-smoke.yaml
+- runFlow:
+    file: collection-box-signin.yaml

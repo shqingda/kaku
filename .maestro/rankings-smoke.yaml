@@ -1,10 +1,17 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Open rankings from home
 tags:
   - smoke
 ---
 # 覆盖：首页发现入口 → 排行榜可见
-- launchApp
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    centerElement: true
+    direction: DOWN
+    element:
+      text: "排行榜"
+- waitForAnimationToEnd
 - tapOn: "排行榜"
 - extendedWaitUntil:
     visible: "动画排行榜"

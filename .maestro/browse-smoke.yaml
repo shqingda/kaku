@@ -1,10 +1,17 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Open category browse from channel
 tags:
   - smoke
 ---
 # 覆盖：频道 → 分类浏览
-- launchApp
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    centerElement: true
+    direction: DOWN
+    element:
+      text: "频道"
+- waitForAnimationToEnd
 - tapOn: "频道"
 - extendedWaitUntil:
     visible: "分类浏览"
@@ -13,4 +20,4 @@ tags:
 - extendedWaitUntil:
     visible: "分类浏览"
     timeout: 15000
-- assertVisible: "排名"
+- assertVisible: "动画 · 排名"

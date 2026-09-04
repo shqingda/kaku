@@ -1,0 +1,7 @@
+appId: com.shqingda.kaku.debug
+name: Reset Kaku iOS to home
+tags:
+  - helper
+---
+- runFlow:
+    file: reset-home.yaml

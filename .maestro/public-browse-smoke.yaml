@@ -1,9 +1,10 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Public browse smoke test
 tags:
   - smoke
 ---
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - assertVisible: Kaku
 - tapOn: 搜索条目
 - setClipboard: 葬送的芙莉莲

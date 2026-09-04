@@ -1,4 +1,4 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Toggle theme in settings
 tags:
   - smoke
@@ -6,7 +6,8 @@ tags:
 # 覆盖：账户菜单 → 外观与同步 → 深色 ↔ 跟随系统
 # 主题是否真正切换用截图作视觉证据；结束时恢复跟随系统，
 # 保证后续流程（截图对比、录屏）仍在默认外观下运行。
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - tapOn: "打开账户菜单"
 - extendedWaitUntil:
     visible: "外观与同步"

@@ -1,4 +1,4 @@
-appId: com.shqingda.kaku
+appId: placeholder
 name: Open episode detail with sign-in gate
 tags:
   - smoke
@@ -6,7 +6,8 @@ tags:
 # 覆盖：搜索 → 条目详情 → 剧集行 → 剧集详情页。
 # 已登录：进度切换按钮可用（不实际写入，仅断言存在）；
 # 未登录：断言「登录后标记进度」门控可见。两种状态都不写远端。
-- launchApp
+- runFlow:
+    file: reset-home.yaml
 - tapOn: "搜索条目"
 - inputText: "葬送的芙莉莲"
 - pressKey: Enter
@@ -26,7 +27,7 @@ tags:
 - tapOn:
     text: "第 1 集.*"
 - extendedWaitUntil:
-    visible: "登录后标记进度"
+    visible: "第 1 集"
     timeout: 15000
 - runFlow:
     when:
@@ -38,3 +39,8 @@ tags:
       visible: "将本集设为未看"
     commands:
       - assertVisible: "将本集设为未看"
+- runFlow:
+    when:
+      visible: "登录后标记进度"
+    commands:
+      - assertVisible: "登录后标记进度"
