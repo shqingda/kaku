@@ -22,7 +22,7 @@ import { useDiscussionReply } from '@/features/discussions/use-discussion-reply'
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { AppSheet } from '@/features/shared/app-sheet';
-import { ScrollNavButton } from '@/features/shared/scroll-nav-button';
+import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -268,8 +268,9 @@ export function EntityComments({
             updateCellsBatchingPeriod={40}
             windowSize={9}
           />
-          <ScrollNavButton
+          <ScrollToTopButton
             onPress={scrollToTop.scrollToTop}
+            variant="pill"
             visible={scrollToTop.visible}
           />
         </View>
