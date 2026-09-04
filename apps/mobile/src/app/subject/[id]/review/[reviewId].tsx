@@ -115,8 +115,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
             ) : null,
         }}
       />
-      <View style={styles.contentView}>
-        <FlatList
+      <FlatList
           style={styles.list}
           contentContainerStyle={styles.listContent}
           data={replies}
@@ -197,7 +196,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           windowSize={7}
         />
         {review ? (
-          <View collapsable={false} style={styles.replyBar}>
+          <View style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? `回复${contentLabel}` : `登录后回复${contentLabel}`}
               accessibilityRole="button"
@@ -227,7 +226,6 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
             </Pressable>
           </View>
         ) : null}
-      </View>
       <DiscussionReplyComposer
         {...composer.sheetProps}
         target={{ id: numericReviewId, kind: 'review' }}
@@ -243,8 +241,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  contentView: { flex: 1 },
-  list: { flex: 1 },
+  list: { flex: 1, minHeight: 0 },
   listContent: { padding: 20, paddingBottom: 28 },
   reviewHeader: {
     backgroundColor: colors.surface,
@@ -279,11 +276,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   replyBar: {
     backgroundColor: colors.background,
-    elevation: Platform.OS === 'android' ? 8 : 0,
+    flexGrow: 0,
+    flexShrink: 0,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
-    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',

@@ -260,8 +260,7 @@ export default function EpisodeScreen() {
       <Stack.Screen
         options={{ title: `第 ${episodeNumber} ${episodeUnit}` }}
       />
-      <View style={styles.contentView}>
-        <FlatList
+      <FlatList
           style={styles.list}
           contentContainerStyle={styles.content}
           data={replies}
@@ -461,7 +460,7 @@ export default function EpisodeScreen() {
           windowSize={7}
         />
         {catalogEpisode ? (
-          <View collapsable={false} style={styles.replyBar}>
+          <View style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
               accessibilityRole="button"
@@ -491,7 +490,6 @@ export default function EpisodeScreen() {
             </Pressable>
           </View>
         ) : null}
-      </View>
       {catalogEpisode ? (
         <>
           <DiscussionReplyComposer
@@ -511,8 +509,7 @@ export default function EpisodeScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  contentView: { flex: 1 },
-  list: { flex: 1 },
+  list: { flex: 1, minHeight: 0 },
   content: { padding: 20, paddingBottom: 28 },
   episodeCard: {
     alignItems: 'flex-start',
@@ -606,11 +603,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
   replyBar: {
     backgroundColor: colors.background,
-    elevation: Platform.OS === 'android' ? 8 : 0,
+    flexGrow: 0,
+    flexShrink: 0,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
-    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',

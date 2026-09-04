@@ -114,8 +114,7 @@ export default function TopicScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '讨论' }} />
-      <View style={styles.contentView}>
-        <FlatList
+      <FlatList
           contentContainerStyle={styles.listContent}
           data={replies}
           style={styles.list}
@@ -201,7 +200,7 @@ export default function TopicScreen() {
           windowSize={7}
         />
         {topic ? (
-          <View collapsable={false} style={styles.replyBar}>
+          <View style={styles.replyBar}>
             <Pressable
               accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
               accessibilityRole="button"
@@ -231,7 +230,6 @@ export default function TopicScreen() {
             </Pressable>
           </View>
         ) : null}
-      </View>
       <DiscussionReplyComposer
         {...composer.sheetProps}
         target={{ id: numericTopicId, kind: 'subject-topic' }}
@@ -247,8 +245,7 @@ export default function TopicScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  contentView: { flex: 1 },
-  list: { flex: 1 },
+  list: { flex: 1, minHeight: 0 },
   listContent: { padding: 20, paddingBottom: 20 },
   topicHeader: {
     backgroundColor: colors.surface,
@@ -275,11 +272,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topicMeta: { color: colors.subtle, fontSize: 13 },
   replyBar: {
     backgroundColor: colors.background,
-    elevation: Platform.OS === 'android' ? 8 : 0,
+    flexGrow: 0,
+    flexShrink: 0,
     paddingBottom: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
-    zIndex: 2,
   },
   replyButton: {
     alignItems: 'center',
