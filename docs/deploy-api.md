@@ -2,9 +2,13 @@
 
 `apps/api` 是部署在 Cloudflare Workers 上的 Hono 服务（worker 名
 `kaku-api`，地址 `https://kaku-api.shqingda.workers.dev`），绑定 D1
-（`kaku-production`）、KV（`KAKU_CONFIG`）和两个 Cron 触发器（每天 03:00
-清理过期认证数据、每 15 分钟推送轮询）。本文描述通用的手动部署流程；
-CI/CD 自动化当前不存在，所有部署都是本机执行 `wrangler deploy`。
+（`kaku-production`）、KV（`KAKU_CONFIG`）和两个 Cron 触发器：
+
+- `0 3 * * *`：清理过期认证数据
+- `*/15 * * * *`：给已登记设备轮询 Bangumi 通知并走 Expo Push
+
+本文只写本机手动部署。CI（`.github/workflows/ci.yml`）跑类型检查、测试和
+覆盖率，**不**自动 `wrangler deploy`。
 
 ## 前提
 
@@ -19,9 +23,9 @@ CI/CD 自动化当前不存在，所有部署都是本机执行 `wrangler deploy
    unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
    ```
 
-## 标准部署流程
+   `unset` 必须和后面的部署命令在**同一个终端会话**里；新开终端要重新做。
 
-在仓库根目录执行：
+## 标准部署流程
 
 以下命令都在仓库根目录执行（`pnpm --filter` 会在 `apps/api` 下运行，
 wrangler 能正确读取该目录的 `wrangler.jsonc`）：
@@ -31,24 +35,48 @@ wrangler 能正确读取该目录的 `wrangler.jsonc`）：
 pnpm --filter @kaku/api typecheck
 pnpm --filter @kaku/api test
 
-# 2. 检查 D1 迁移是否全部应用（有未应用的先 apply）
+# 2. 检查并应用未落地的 D1 迁移
 pnpm --filter @kaku/api exec wrangler d1 migrations list kaku-production --remote
-pnpm --filter @kaku/api exec wrangler d1 migrations apply kaku-production --remote
+pnpm --filter @kaku/api db:migrate:remote
 
-# 3. 部署（构建 + 上传 + 更新 Cron 触发器；不改动 secrets）
+# 3. 部署（构建 + 上传 + 更新 Cron；不改动 secrets）
 pnpm --filter @kaku/api deploy:worker
 ```
 
-注意：第 0 步的 `unset` 代理必须与后面的部署命令在**同一个终端会话**
-里执行，新开终端要重新 unset。
+`wrangler deploy` 读取 `apps/api/wrangler.jsonc`。KV / D1 绑定、Cron、
+`vars`（目前只有 `BANGUMI_REDIRECT_URI`）随配置更新。Secrets 不受影响。
 
-`wrangler deploy` 读取 `apps/api/wrangler.jsonc`；KV/D1 绑定、Cron、
-`vars` 随配置更新，Secrets（`wrangler secret put` 设置的项）不受影响。
+改过 `wrangler.jsonc` 的绑定或兼容性标志后，补跑：
+
+```sh
+pnpm --filter @kaku/api types:worker
+```
+
+把生成的 `src/worker-configuration.d.ts` 一并提交。
+
+## Secrets
+
+用 `wrangler secret put <NAME>` 写生产，不会进 git。当前代码要求：
+
+| 名称 | 用途 |
+| --- | --- |
+| `BANGUMI_CLIENT_ID` | Bangumi OAuth 应用 ID |
+| `BANGUMI_CLIENT_SECRET` | Bangumi OAuth 应用密钥 |
+| `TOKEN_ENCRYPTION_KEY` | AES-GCM 加密 Bangumi token（32 字节 base64） |
+| `EXPO_ACCESS_TOKEN` | Expo Push 代发；缺了 Cron 轮询不会发推送 |
+
+本地开发用 `apps/api/.dev.vars`（从 `.dev.vars.example` 复制，不要提交）。
+`.dev.vars.example` 里没有 `EXPO_ACCESS_TOKEN`：本机不发真实推送也可以跑。
+
+生产回调地址在 `wrangler.jsonc` 的 `vars.BANGUMI_REDIRECT_URI`，不是 secret。
 
 ## 部署后验证
 
 ```sh
-# 公开配置端点，应返回 200 与 JSON
+# 健康检查
+curl -s https://kaku-api.shqingda.workers.dev/health
+
+# 公开配置，应返回 200 与 JSON
 curl -s https://kaku-api.shqingda.workers.dev/config
 
 # 未带会话访问鉴权路由，应返回 401
@@ -56,13 +84,15 @@ curl -s -o /dev/null -w "%{http_code}\n" \
   https://kaku-api.shqingda.workers.dev/me/timeline
 ```
 
-需要真机验证的功能（如好友动态日志跳转、通知推送）在 App 内确认。
+需要真机验证的功能（好友动态、通知推送）在 App 内确认。
 
 ## 回滚
 
+在 `apps/api` 目录执行，否则 wrangler 找不到这个 worker：
+
 ```sh
-npx wrangler deployments list          # 查看历史版本
-npx wrangler rollback                  # 交互选择上一个版本回滚
+pnpm --filter @kaku/api exec wrangler deployments list
+pnpm --filter @kaku/api exec wrangler rollback
 ```
 
 ## 本地开发
@@ -79,4 +109,5 @@ pnpm --filter @kaku/api dev                # wrangler dev 热重载
 - D1 迁移只增不删；新的迁移文件由 `pnpm --filter @kaku/api db:generate`
   从 `drizzle.config.ts` 生成。
 - 免费 Cron 额度足够当前两个触发器；改动 Cron 计划要同步更新
-  `wrangler.jsonc` 的 `triggers.crons`。
+  `wrangler.jsonc` 的 `triggers.crons`，并核对 `apps/api/src/index.ts`
+  里对 `0 3 * * *` 的分支判断。

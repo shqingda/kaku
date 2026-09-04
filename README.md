@@ -171,7 +171,7 @@ pnpm build:web
 测试分三层：纯逻辑（授权、会话轮换、Adapter、分页、重试、收藏状态与
 进度、动效数学）、组件与 hook（共享状态卡、分页脚手架、连通性等）、
 Maestro 冒烟（模拟器关键路径）。CI 跑前三层与覆盖率门禁；各层分工与
-16 条冒烟流程清单见 `docs/testing.md`，UI 验收记录见 `docs/test-records/`。
+全量入口覆盖清单见 `docs/testing.md`。文档索引见 `docs/README.md`。
 
 ## 目录结构
 

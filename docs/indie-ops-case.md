@@ -1,8 +1,9 @@
 # Kaku 独立开发者运营案例
 
-> 日期：2026-08-27  
+> 日期：2026-08-27，事实核对：2026-09-04  
 > 用途：以本仓库为唯一案例，学习独立开发者如何做产品判断、基础设施选择、渠道与发版。  
-> 本文件是事实备忘，不是功能规格。未完成的产品改动仍须另开开发会话、一次只做一小片。
+> 本文件是事实备忘，不是功能规格。未完成的产品改动仍须另开开发会话、一次只做一小片。  
+> 教学结构和课程大纲保留 8 月原文；下面标了日期的状态以仓库代码为准。
 
 ---
 
@@ -51,13 +52,14 @@ Kaku 是面向 iOS / Android 的**第三方 Bangumi 客户端**。一个人维�
 
 安全边界：密码只在 Bangumi 官方页输入；`client_secret` 和 OAuth token 只在服务端；App 回调只带一次性 handoff code。
 
-发布状态（2026-08-27）：
+发布状态（2026-09-04）：
 
-- 功能面已经接近「能当日常客户端用」：浏览、收藏、进度、社区、深色模式、偏好云同步、离线条目包、主屏幕快捷方式、AniList 增强、Expo 推送骨架。
-- **还没上架**。缺 Apple / Google 商店凭据、商店截图与描述。Android 日常包走本地 split APK + GitHub Releases（debug 签名，升级须先卸载）。
-- EAS 免费云构建额度 2026-08 已用尽，约 9/1 重置。正式 Play AAB 等额度恢复。
-- 上游卡住的能力（小组加入/退出、删除动态、角色人物取消收藏）故意不做。
-- 明确不做：i18n（Bangumi 没有外语用户盘）、在上游稳定前做 JS Widget。
+- 功能面已经能当日常客户端用：浏览、收藏、进度、社区、深色模式、偏好云同步、离线条目包、主屏幕快捷方式、通知页、Expo 推送（APNs / FCM）、网络诊断页。
+- 条目页曾经叠过 AniList 旁证，**已经拿掉**。不要再把它写成卖点。
+- **还没上架**。缺 Apple / Google 商店凭据、商店截图与描述。Android 日常包走本地 APK + GitHub Releases（debug 签名，升级须先卸载）。当前 GitHub 最新包是 `v1.1.2`。
+- EAS 免费额度约每月 1 日重置。2026-08 用尽过；9 月余量以 Expo 控制台为准，不要把「8 月用尽」抄进新决策。
+- 上游卡住的能力（小组加入/退出、删除动态、角色人物收藏写接口 500）故意不做。
+- 明确不做：移动端 i18n（Bangumi 没有外语用户盘；官网 `apps/web` 有中英切换，给商店/GitHub 访客看政策）。在上游和 Expo Widget 稳定前不做 JS Widget。
 
 ---
 
@@ -73,7 +75,7 @@ Bangumi 本体是中文 ACG 条目/收藏/讨论社区。2026-05-26 前后 `bgm.
 
 - Kaku 的目标用户 ≈「本来就会用 Bangumi 的人」里，愿意装第三方客户端的那一小截。
 - 不是「全中国安卓用户」，也不是「全球二次元」。
-- 因此：商店语言以中文为主、不值得做 i18n、推送渠道必须按国产安卓 + iOS 来想，而不是按「Firebase 教程默认的海外安卓」来想。
+- 因此：商店语言以中文为主、移动端不值得做 i18n、推送渠道必须按国产安卓 + iOS 来想，而不是按「Firebase 教程默认的海外安卓」来想。
 
 ---
 
@@ -136,24 +138,32 @@ GET https://bgm-status.ry.mk/api/status
 3. Guest 与 Auth、网页与 API 会分别炸。只显示一颗总绿灯会误导。
 4. 第三方服务以后可能改 schema、换域名、关掉。App 不能把它当硬依赖。
 
-### 推荐（尚未实现，需另开开发会话）
+### 已经落地的（2026-09，路由 `/network-status`，账户页「网络诊断」）
 
-**可以接入，但只能当旁证。主检测必须是本机并行探测 + 上次成功结果落盘。**
+主检测是本机并行探测；status.bgm.tv 只当旁证。入口在账户页，不进首页。
 
-建议做成「账户 → 诊断信息」里的一节「服务状态」，不进首页，避免吓到只是缓存慢的用户。
-
-本机并行、短超时（约 3–5s），互不依赖：
+本机探测（`CONNECTIVITY_TARGETS`，超时 8s，≥3s 标偏慢）和旁证是两路请求：
 
 | 探针 | 打谁 | 成功意味着 |
 | --- | --- | --- |
-| 本机网络 | `expo-network` | 设备认为有互联网 |
-| Bangumi API | `https://api.bgm.tv/v0/` 某个极轻公开端点 | 这台设备此刻能直连 Bangumi |
-| Kaku API | `https://kaku-api.shqingda.workers.dev/config` | 这台设备此刻能连 Workers |
-| 全球旁证 | `https://bgm-status.ry.mk/api/status`（可选再 mirror `status.bgm.tv`） | 海外探针觉得 Bangumi 活着 |
+| API 服务 | `https://api.bgm.tv/` | 这台设备此刻能直连 Bangumi API |
+| 主站 | `https://bgm.tv/` | OAuth 跳转和网页域可达 |
+| 镜像域名 | `https://bangumi.tv/` | 镜像域可达 |
+| 新版 API | `https://next.bgm.tv/` | P1 域可达 |
+| 全球旁证（单独请求，不是 CONNECTIVITY_TARGETS） | `https://bgm-status.ry.mk/api/status` | 海外探针觉得 Bangumi 活着 |
 
-把每次成功快照写入本机（sqlite/kv），带时间戳。无网或三次都失败时，展示「上次检测 · 相对时间」，并写明这是缓存。
+旁证失败时页面明确说「无法连接 status.bgm.tv」，不把它当成 App 崩了。
+本机错误记录仍在独立路由 `/diagnostics`，两者不要混。
 
-判定表（给用户看人话，不看 HTTP 码）：
+还没做、不要假装做了：
+
+- 没有单独打 `kaku-api.../config` 的探针行（Workers 是否被墙要用户自己从登录/同步失败判断）。
+- 没有把成功快照写入 sqlite；旁证走 TanStack Query（约 1 分钟 stale）。无网时不会出现「上次检测 · 相对时间」那种专用缓存文案。
+- 判定表仍是设计备忘，UI 没有按那张表合成一句人话。
+
+下面这张表继续当产品文案参考，不是当前 UI 的逐行实现。
+
+判定表（给用户看人话，不看 HTTP 码；当前 UI 未按此合成）：
 
 | 本机网 | Bangumi | Kaku | status.bgm.tv | 对用户说 |
 | --- | --- | --- | --- | --- |
@@ -169,9 +179,10 @@ GET https://bgm-status.ry.mk/api/status
 
 离线可用性边界：
 
-- 诊断页是本地路由，不该依赖 Workers 才能渲染。
-- 无网时只读本地快照。
-- 唯一放弃条件：用户清了本地数据，或公开缓存 24h 过期且内容区已经进不去——与现有离线策略一致。
+- `/diagnostics` 和 `/network-status` 都是本地路由，不该依赖 Workers 才能打开。
+- `/diagnostics` 只读本机错误记录。
+- `/network-status` 的本机探测不依赖 Workers；旁证请求 status 服务，失败就显示失败，目前没有「上次检测时间」专用快照。
+- 内容区仍遵循现有离线策略：公开查询持久化 + 条目离线包。用户清了本地数据，或公开缓存 24h 过期且进不去内容区，诊断也帮不上忙。
 
 不要做：把 status 页面 WebView 塞进 App；不要为了检测再加一个会挂的自建监控机（独立开发者养不起第二套观测）。
 
@@ -217,10 +228,10 @@ GET https://bgm-status.ry.mk/api/status
 
 | 人群 | 设备现实 | 能用的通道 | 现在仓库里的状态 |
 | --- | --- | --- | --- |
-| 国内 iOS | APNs 在国内大体可用 | **APNs**（经 Expo Push） | 已接骨架；需真机 native 包 |
-| 真海外 Android / 国内带 GMS 的机器 | Play 服务活着 | **FCM**（经 Expo Push） | 代码有，缺 `google-services.json`，真机登记失败 |
+| 国内 iOS | APNs 在国内大体可用 | **APNs**（经 Expo Push） | 已接线；要真机 native 包验证送达 |
+| 真海外 Android / 国内带 GMS 的机器 | Play 服务活着 | **FCM**（经 Expo Push） | `google-services.json` 已入库，含 `com.shqingda.kaku` 与 `.debug`。代理环境下 `mtalk.google.com:5228` 不通仍会登不上，见 `TODO.md` |
 | 国内主流 Android（米 OV、部分华为） | 无 GMS，厂商通道 | **厂商推送或国内聚合** | 未做。FCM 对此人群基本等于没有 |
-| 所有人打开 App 时 | 不依赖推送通道 | **拉取未读** | 已有通知页；Cron 15 分钟只服务于已登记 token |
+| 所有人打开 App 时 | 不依赖推送通道 | **拉取未读** | 已有通知页（全部 / 未读筛选）；Cron 15 分钟只服务于已登记 token |
 
 Expo Push 不是第四种全球协议，它只是 **FCM + APNs 的代发件箱**。国内用户「开了代理」**不能**让 FCM 在小米/OPPO 上复活：缺的是 Play 服务和厂商允许的常驻长连接，不是 HTTP 出站。
 
@@ -228,9 +239,9 @@ Expo Push 不是第四种全球协议，它只是 **FCM + APNs 的代发件箱**
 
 保留，当作「海外 Android + 少量带 GMS 的国内机」方案：
 
-1. Firebase 项目 → `google-services.json` 打进 Android 包（debug 与 release 各一份或同一套）。
-2. Expo Notifications 继续拿 Expo Push Token，服务端仍 `POST https://exp.host/--/api/v2/push/send`。
-3. 在设置页把失败原因说成人话（已做：缺 google-services 时不再只说「请稍后重试」）。
+1. Firebase 项目 → `google-services.json` 打进 Android 包（**已做**：debug 与 release 两个 client）。
+2. Expo Notifications 继续拿 Expo Push Token，服务端仍 `POST https://exp.host/--/api/v2/push/send`。生产 Worker 需要 secret `EXPO_ACCESS_TOKEN`。
+3. 在设置页把失败原因说成人话（已做：缺模块、模拟器、缺 google-services 不再只说「请稍后重试」）。
 4. 不要对米 OV 用户承诺「打开开关就能收到」。开关失败要指向真实原因。
 
 FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是 Google 账号、隐私文案和「它打不到目标机」。
@@ -259,7 +270,7 @@ FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是
 独立开发者现阶段建议：
 
 1. **iOS 用 APNs，把它做对。** 这覆盖目标用户里体验最好、付费意愿相对高的一截。
-2. **FCM 作为海外 Android 方案保留**，配好 google-services 即可，不要再叠 OneSignal。
+2. **FCM 作为海外 Android 方案保留**，google-services 已经配上，不要再叠 OneSignal。剩下是代理下 FCM 长连接，不是再接一个 SDK。
 3. **国内 Android 第一年不要承诺推送。** 打开 App 拉未读 + 可选本地提醒（若系统允许）是诚实 MVP。等有真实 DAU 再买聚合的账。
 4. Cron 15 分钟轮询已经依赖 Workers 和用户仍登录。Workers 被墙时，推送登记和投递都会失败——又回到「目标用户必须能出网」。
 
@@ -275,11 +286,13 @@ FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是
 - 发版分两条：日常本地 split APK 不烧 EAS；上架才走云端。
 - 崩溃有 Sentry；敏感信息不进诊断分享。
 - 官网有隐私政策和条款，商店审核会用到。
+- 账户页有「网络诊断」：本机探测 Bangumi 域名 + status.bgm.tv 旁证。
+- `google-services.json` 已进仓库，推送不再卡在「缺配置文件」。
 
 正在疼的：
 
 - 目标用户在墙内，后端在 Cloudflare，数据源也在墙外。三层同命运。
-- 推送骨架按海外教程接了 FCM，和主流设备错位。
+- FCM 配好了，但打不到主流国产机；代理下 GMS 长连接仍可能失败。
 - 没上架：发现渠道只剩 GitHub / 口碑 / Bangumi 小组。debug 签名导致用户升级摩擦。
 - 本地 APK 不传 source map，崩溃能报不能精确定位。
 - 代理环境会让 `git push` / EAS 上传假死（必须 unset `http_proxy` 等）。这是运营流程的一部分，不是偶发。
@@ -287,7 +300,7 @@ FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是
 
 明确不要做的（到有新证据再翻案）：
 
-- i18n。
+- 移动端 i18n（官网中英切换除外）。
 - 为没代理的大陆用户做国内中转（那是另一款产品：合规、成本和「你在镜像 Bangumi」的风险都变了）。
 - 在没 DAU 前接 4 家厂商推送 SDK。
 - 把 status.bgm.tv 当唯一健康信号。
@@ -332,20 +345,16 @@ FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是
 
 ## 9. 给开发会话的备忘（实现时再翻）
 
-若以后要实现「服务状态」：
+「服务状态」已经有第一版（`/network-status`）。若再改：
 
-- 入口：现有 `/diagnostics`，本地可渲染。
-- 主路径：本机并行探测；status.bgm.tv 只读 `/api/status` 的 `components` 里 `api.bgm.tv` 与 `next.bgm.tv/p1`。
-- 快照存本机；失败展示上次时间。
-- 文案用上一节判定表。
-- 不要把检测站 HTML 塞进 WebView。
+- 不要把入口挪到首页，也不要把 status HTML 塞进 WebView。
+- 可补：本机打 `kaku-api.../config`；旁证失败时展示上次成功时间；按判定表合成一句人话。
 - 保持 provider-neutral：检测结果叫「数据源 / Kaku 服务 / 本机网络」，UI 不要写死成唯一商标，adapter 层可以知道 Bangumi。
 
-若以后要补推送：
+推送：
 
-- 先 Firebase + 真机验证海外/GMS Android。
-- iOS 真机验证 APNs。
-- 国内 Android 单独立项，不要藏在「修一下 FCM」里。
+- Firebase 配置已在仓库。下一步是真机验证 APNs，以及代理下 FCM（`mtalk.google.com:5228`）。
+- 国内 Android 厂商通道单独立项，不要藏在「修一下 FCM」里。
 
 若以后要减轻 Cloudflare 单点：
 
