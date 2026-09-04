@@ -10,6 +10,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.3',
+    date: '2026-09-04',
+    notes: [
+      '登录完成后不再卡在账户页，会回到你刚才想去的页面',
+      '收藏或好友变化后，公开主页会马上对上最新状态',
+      '条目角色列表点进角色详情更直接',
+      '长列表「回到顶部」在各页面表现一致',
+    ],
+  },
+  {
     version: '1.1.2',
     date: '2026-09-04',
     notes: [
