@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.4',
+    date: '2026-09-05',
+    notes: [
+      '综合页搜索栏重新跟着页面滚动，不再压住分类标签',
+      '修复 Android 讨论页底部回复栏被列表顶出屏幕',
+      '图片放大后往下拉到一定位置就会关闭，不再卡住或黑屏',
+    ],
+  },
+  {
     version: '1.1.3',
     date: '2026-09-04',
     notes: [

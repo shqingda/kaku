@@ -29,7 +29,7 @@ const sentryPlugin =
 module.exports = {
   expo: {
     name: 'Kaku',
-    version: '1.1.3',
+    version: '1.1.4',
     orientation: 'portrait',
     icon: lightIcon,
     scheme: 'kaku',

@@ -7,7 +7,7 @@ Native 与 TypeScript 构建。
 
 | 应用 | 说明 | 状态 |
 | --- | --- | --- |
-| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 最新包 `v1.1.3` |
+| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 最新包 `v1.1.4` |
 | `apps/api` | OAuth、会话、登录后写入代理、偏好/推送/公开缓存 | Cloudflare Workers 运行中 |
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 

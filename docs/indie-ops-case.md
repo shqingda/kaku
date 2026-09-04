@@ -56,7 +56,7 @@ Kaku 是面向 iOS / Android 的**第三方 Bangumi 客户端**。一个人维�
 
 - 功能面已经能当日常客户端用：浏览、收藏、进度、社区、深色模式、偏好云同步、离线条目包、主屏幕快捷方式、通知页、Expo 推送（APNs / FCM）、网络诊断页。
 - 条目页曾经叠过 AniList 旁证，**已经拿掉**。不要再把它写成卖点。
-- **还没上架**。缺 Apple / Google 商店凭据、商店截图与描述。Android 日常包走本地 APK + GitHub Releases（debug 签名，升级须先卸载）。当前 GitHub 最新包是 `v1.1.3`。
+- **还没上架**。缺 Apple / Google 商店凭据、商店截图与描述。Android 日常包走本地 APK + GitHub Releases（debug 签名，升级须先卸载）。当前 GitHub 最新包是 `v1.1.4`。
 - EAS 免费额度约每月 1 日重置。2026-08 用尽过；9 月余量以 Expo 控制台为准，不要把「8 月用尽」抄进新决策。
 - 上游卡住的能力（小组加入/退出、删除动态、角色人物收藏写接口 500）故意不做。
 - 明确不做：移动端 i18n（Bangumi 没有外语用户盘；官网 `apps/web` 有中英切换，给商店/GitHub 访客看政策）。在上游和 Expo Widget 稳定前不做 JS Widget。
