@@ -1,4 +1,4 @@
-- 综合页搜索栏重新跟着页面滚动，不再压住分类标签
-- 修复 Android 讨论页底部回复栏被列表顶出屏幕
-- 图片放大后往下拉到一定位置就会关闭，不再卡住或黑屏
-- v1.1.3 可直接覆盖安装
+- Discussion replies are now saved as local drafts and restored when you return.
+- Search your complete collection by Chinese or original title.
+- Filter your collection by media type and collection status, with recently updated entries shown first.
+- Offline, incomplete, and failed collection loads now show clear status and retry actions.
