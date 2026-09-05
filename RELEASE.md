@@ -39,6 +39,9 @@ bash scripts/build-split-apks.sh v1.0.9 release
 
 # 其他渠道（tag 仍用 v 版本号，用第二参数区分渠道）
 bash scripts/build-split-apks.sh v1.0.9 debug
+
+# 只构建、不推送、不创建 Release
+bash scripts/build-split-apks.sh v1.0.9 release --build-only
 ```
 
 第一个参数是 GitHub Release **tag，必须是 `v<app 版本>`**，不要用 `android-1.0.0-n`。留空则用 `v<app.config.js 的 version>`。脚本在上传 APK 前会 `git push origin HEAD:main`。

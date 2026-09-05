@@ -3,10 +3,10 @@
 # 不消耗 EAS 云端构建额度。产物用 debug 签名（与 EAS / 旧包签名不同，需卸载重装）。
 #
 # 用法：
-#   bash scripts/build-split-apks.sh [tag] [channel]
-#   tag     例如 v1.0.9（默认 v<app.config.js 版本>，不要用 android-1.0.0-n）
-#   channel debug | release（默认 release）
-#           产物名为 kaku-<channel>.apk
+#   bash scripts/build-split-apks.sh [tag] [channel] [--build-only]
+#   tag         例如 v1.0.9（默认 v<app.config.js 版本>，不要用 android-1.0.0-n）
+#   channel     debug | release（默认 release），产物名为 kaku-<channel>.apk
+#   --build-only  只构建，不 push、不创建 GitHub Release
 set -euo pipefail
 BUILD_ONLY=false
 POSITIONAL=()
