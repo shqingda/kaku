@@ -97,8 +97,3 @@ OAuth 登录、真实写入等需要人工参与的场景也记在那里。
 
 Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时改用 Maestro
 或重新 `describe`，不要对着同一坐标连点。
-
-### Android APK 可选验收
-
-`node scripts/android-release.mjs verify APK DEVICE_SERIAL` 可在有设备时检查包名、
-ABI、安装结果，并跑 smoke / 回归。日常 GitHub 发版不依赖这一步，见 `RELEASE.md`。

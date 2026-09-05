@@ -20,3 +20,8 @@ apps/api/.dev.vars
 
 # Local agent tooling
 .zcode/
+
+# Session handoff notes; not product docs
+HANDOFF.md
+HANDOFF-*.md
+PLAN.md

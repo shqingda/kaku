@@ -187,7 +187,7 @@ apps/
 │       ├── lib/             通用工具
 │       └── types/           跨模块共享类型
 └── web/                     产品官网、政策与支持页面
-docs/                        测试、部署、Argent 与运营备忘
+docs/                        测试、API 部署、Argent；索引见 docs/README.md
 .maestro/                    模拟器冒烟与全量入口
 ```
 

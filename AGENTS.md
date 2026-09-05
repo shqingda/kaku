@@ -23,29 +23,14 @@ This repository is both a product and a learning project.
   functions are NOT reliably workletized under React Compiler — never call them from
   a worklet; inline the logic or move it to a module.
 
-## Releasing Android (发版)
+## Where to look
 
-Before any deployment, read `RELEASE.md` — it documents both release paths.
+- Product and how to run: `README.md`
+- Remaining work: `TODO.md`
+- Android GitHub / Play releases: `RELEASE.md`
+- API deploy: `docs/deploy-api.md`
+- How to test: `docs/testing.md`
 
-- **日常迭代发 GitHub 包**：bump `apps/mobile/app.config.js` version, write
-  `scripts/release-notes.md`（中文短句；安装/覆盖提示可放末尾）. The build
-  script runs `scripts/sync-changelog.mjs` so the in-app changelog page
-  picks up the current version automatically. Then
-  `bash scripts/build-split-apks.sh v<version> [debug|preview|release]`
-  (default tag `v<app version>`, e.g. `v1.0.9` — never `android-1.0.0-n`).
-  The script pushes `main` before creating the GitHub Release. It does NOT
-  consume the monthly EAS free-build quota. Builds **arm64-v8a only**, names
-  the APK `kaku-<channel>.apk` (default `kaku-release.apk`), debug signing
-  (users must uninstall the previous build first). ~10–15 min on the local machine.
-- **正式上架 Play**：use EAS cloud `production` profile (AAB, EAS signing, Sentry
-  source maps). Via GitHub Actions workflow `Release Android APK` (needs repo secret
-  `EXPO_TOKEN`).
-- **EAS quota** is limited per month (resets ~Sep 1). When exhausted, cloud builds
-  fail; fall back to the local script.
-- **Proxy gotcha**: unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy
-  ALL_PROXY` before `git push` or EAS uploads, otherwise connections hang.
-- ABI control uses RN's `-PreactNativeArchitectures` (Expo SDK 57 removed
-  `android.abiFilters` / `expo-build-properties` ABI support — do not re-add them).
-- Local builds disable Sentry source-map upload but inline the DSN (crash reporting
-  still works); EAS builds upload source maps.
-- Release notes are written in Chinese.
+Unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
+before `git push`, GitHub Release, EAS, or wrangler. Clash will hang those
+connections.

@@ -98,7 +98,7 @@ bash scripts/build-split-apks.sh v1.0.9 debug
 
 ## 版本号
 
-- 当前 app 版本 `1.1.5`（`apps/mobile/app.config.js`，发版时先改这里）
+- 当前 app 版本写在 `apps/mobile/app.config.js`，发版时先改这里
 - EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
 - 本地脚本默认 tag/标题：`v<app 版本>`（与 `app.config.js` 一致，例如 `v1.0.9`）。不要用 `android-1.0.0-<n>`
 
