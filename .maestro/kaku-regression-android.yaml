@@ -2,6 +2,9 @@
 appId: com.shqingda.kaku
 name: kaku-regression-android
 ---
+- launchApp:
+    clearState: false
+    stopApp: true
 - runFlow:
     file: kaku-smoke-steps.yaml
 - runFlow:

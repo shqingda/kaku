@@ -12,7 +12,7 @@ Native 与 TypeScript 构建。
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
 还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases
-（debug 签名，覆盖安装须先卸载）。发版见 `RELEASE.md`。
+（debug 签名；是否可覆盖安装以证书一致性和实际升级验证为准）。发版见 `RELEASE.md`。
 
 ## 主要功能
 

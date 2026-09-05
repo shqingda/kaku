@@ -4,7 +4,8 @@
 # 无论上次运行停在哪个页面（含滚动过的首页）都能恢复。
 appId: placeholder
 ---
-- openLink: "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+- runFlow:
+    file: reset-home.yaml
 # 热重载一般 5–15 秒；冷启动 bundle 编译最长给 3 分钟
 - extendedWaitUntil:
     visible: "打开账户菜单"

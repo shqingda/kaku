@@ -1,9 +1,11 @@
-# Android 入口：debug 渠道的 applicationId 没有 .debug 后缀
+# Android release 入口：独立于 Metro；debug 渠道包名带 .debug 后缀。
 appId: com.shqingda.kaku
 name: kaku-smoke-android
 ---
 - launchApp:
     clearState: false
-    stopApp: false
+    stopApp: true
 - runFlow:
     file: kaku-smoke-steps.yaml
+- runFlow:
+    file: public-browse-smoke.yaml

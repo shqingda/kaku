@@ -50,7 +50,7 @@ iOS 入口会先 `openLink` 重载 dev client，再跑共用步骤。全量入�
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
 都能跑通且不写远端。
 
-Android yaml 写的是 **release 包名**。本地 `expo run:android` 打出来的是
+Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 Metro。本地 `expo run:android` 打出来的是
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
 是哪一种包，必要时改 yaml 或装 release APK。
 
@@ -97,3 +97,10 @@ OAuth 登录、真实写入等需要人工参与的场景也记在那里。
 
 Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时改用 Maestro
 或重新 `describe`，不要对着同一坐标连点。
+
+### Android APK 验收入口
+
+`node scripts/android-release.mjs verify APK DEVICE_SERIAL` 检查包名、设备 ABI、安装结果，
+串行执行 smoke 和全量回归，保存 APK 元数据与结果。smoke 包含搜索详情返回。
+登录条件分支以及权限、OAuth、Sentry 和升级须单独填写证据，不能把门控跳过计为通过。
+发布门禁与精确产物发布命令见 RELEASE.md。

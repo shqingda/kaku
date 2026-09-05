@@ -8,6 +8,17 @@
 #   channel debug | release（默认 release）
 #           产物名为 kaku-<channel>.apk
 set -euo pipefail
+BUILD_ONLY=false
+POSITIONAL=()
+for arg in "$@"; do
+  case "$arg" in
+    --build-only) BUILD_ONLY=true ;;
+    --*) echo "未知参数: $arg" >&2; exit 2 ;;
+    *) POSITIONAL+=("$arg") ;;
+  esac
+done
+if (( ${#POSITIONAL[@]} > 2 )); then echo "参数过多" >&2; exit 2; fi
+if (( ${#POSITIONAL[@]} )); then set -- "${POSITIONAL[@]}"; else set --; fi
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MOBILE_DIR="$REPO_DIR/apps/mobile"
@@ -40,6 +51,7 @@ case "${CHANNEL}" in
     ;;
 esac
 
+if [[ "$TAG" != "v$VERSION" ]]; then echo "tag 必须是 v$VERSION" >&2; exit 2; fi
 APK_NAME="kaku-${CHANNEL}.apk"
 
 if [[ ! -s "${NOTES_FILE}" ]]; then
@@ -47,11 +59,9 @@ if [[ ! -s "${NOTES_FILE}" ]]; then
   exit 1
 fi
 
-echo "==> 同步 App 内更新日志（从 ${NOTES_FILE} 写入 changelog-data.ts）"
-node "${REPO_DIR}/scripts/sync-changelog.mjs"
-if ! git -C "${REPO_DIR}" diff --quiet -- apps/mobile/src/features/changelog/changelog-data.ts; then
-  git -C "${REPO_DIR}" add apps/mobile/src/features/changelog/changelog-data.ts
-  git -C "${REPO_DIR}" commit -m "chore(release): sync in-app changelog for ${TAG}"
+# 构建不能隐式提交源码；日志由发版准备步骤同步并审核。
+if [[ -n "$(git -C "$REPO_DIR" status --porcelain --untracked-files=normal)" ]]; then
+  echo "请先检查并提交源码，再构建可追溯产物。" >&2; exit 1
 fi
 
 echo "==> 同步原生工程 (expo prebuild, channel=${CHANNEL})"
@@ -68,13 +78,11 @@ echo "==> 构建 ${ABI} -> ${APK_NAME}"
 cp android/app/build/outputs/apk/release/app-release.apk "${OUT_DIR}/${APK_NAME}"
 du -h "${OUT_DIR}/${APK_NAME}" | sed 's/^/    /'
 
-echo "==> 推送 origin/main（Release tag 必须落在已上传的提交上）"
-git -C "${REPO_DIR}" push origin HEAD:main
+node "$REPO_DIR/scripts/android-release.mjs" manifest "$OUT_DIR/$APK_NAME"
+if [[ "$BUILD_ONLY" == true ]]; then
+  echo "==> 仅构建完成，请运行 android-release.mjs verify 验收此 APK"
+  exit 0
+fi
 
-echo "==> 发布 tag=${TAG} asset=${APK_NAME}"
-gh release create "${TAG}" "${OUT_DIR}/${APK_NAME}" --repo shqingda/kaku \
-  --title "${TAG}" \
-  --notes-file "${NOTES_FILE}" \
-  --target "$(git -C "${REPO_DIR}" rev-parse HEAD)"
-
-echo "==> 完成: https://github.com/shqingda/kaku/releases/tag/${TAG}"
+# 兼容原位置参数；未验收产物会在推送之前被门禁拒绝。
+node "$REPO_DIR/scripts/android-release.mjs" publish "$OUT_DIR/$APK_NAME"
