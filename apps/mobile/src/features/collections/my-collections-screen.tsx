@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { FlatList, Keyboard, Platform, Text, View } from 'react-native';
+import { FlatList, Keyboard, Platform, Pressable, Text, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import Storage from 'expo-sqlite/kv-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -60,14 +60,14 @@ export function MyCollectionsScreen({
   const key = collectionSearchStorageKey(userId);
   const [initial] = useState(() => {
     try {
-      return parseCollectionSearch(Storage.getItemSync(key) ?? null);
+      return { preferences: parseCollectionSearch(Storage.getItemSync(key) ?? null), error: '' };
     } catch {
-      return DEFAULT_COLLECTION_SEARCH;
+      return { preferences: DEFAULT_COLLECTION_SEARCH, error: '筛选偏好读取失败，本次使用默认条件' };
     }
   });
   const [preferences, setPreferences] = useState<CollectionSearchPreferences>(
     () => ({
-      ...initial,
+      ...initial.preferences,
       ...(initialType &&
       SEARCH_TYPES.some((type) => type.id === Number(initialType))
         ? { subjectType: Number(initialType) }
@@ -77,12 +77,13 @@ export function MyCollectionsScreen({
         : {}),
     }),
   );
-  const [storageError, setStorageError] = useState('');
+  const [storageError, setStorageError] = useState(initial.error);
   const list = useScrollToTopButton();
   const { complete, items, query, total } = useMyCollections();
   const results = searchCollections(items, preferences);
   const paused = query.fetchStatus === 'paused';
   const incomplete = !complete || query.isError;
+  const inconsistent = !complete && !query.hasNextPage && !query.isPending && !query.isFetching && !query.isError;
   const subjectTypeLabel = getSubjectTypeLabel(preferences.subjectType);
   const collectionStatusLabel = preferences.status
     ? getCollectionStatusLabel(preferences.subjectType, preferences.status)
@@ -178,7 +179,9 @@ export function MyCollectionsScreen({
         keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          query.isPending && items.length === 0 ? (
+          paused && items.length === 0 ? (
+            <AppState title="当前离线" text="恢复联网后继续读取完整收藏。" />
+          ) : query.isPending && items.length === 0 ? (
             <AppState
               text="正在读取完整收藏，搜索会覆盖全部条目。"
               title="收藏加载中"
@@ -231,10 +234,20 @@ export function MyCollectionsScreen({
             {items.length > 0 && query.isError ? (
               <CachedDataNotice onRetry={retry} />
             ) : null}
+            {inconsistent ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="刷新完整收藏" onPress={retry}
+                style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
+                <Text style={{ color: colors.accent }}>刷新完整收藏</Text>
+              </Pressable>
+            ) : null}
             {storageError ? (
-              <Text accessibilityRole="alert" style={styles.subtitle}>
-                {storageError}
-              </Text>
+              <View>
+                <Text accessibilityRole="alert" style={styles.subtitle}>{storageError}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="保存当前筛选" onPress={() => persist(preferences)}
+                  style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
+                  <Text style={{ color: colors.accent }}>保存当前筛选</Text>
+                </Pressable>
+              </View>
             ) : null}
           </>
         }
