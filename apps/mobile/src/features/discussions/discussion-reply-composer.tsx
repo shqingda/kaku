@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -10,6 +10,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useAuth } from '@/features/auth/auth-provider';
+import { replyDraftKey } from './reply-draft';
+import { useReplyDraft } from './use-reply-draft';
 
 import type { ThemeColors } from '@/constants/theme';
 import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
@@ -27,7 +31,21 @@ import {
 
 const MAX_CONTENT_LENGTH = 5000;
 
-export function DiscussionReplyComposer({
+export function DiscussionReplyComposer(props: Omit<ComponentProps<typeof ReplyComposerContent>, 'draftKey'>) {
+  const { session } = useAuth();
+  const [opening, setOpening] = useState({ visible: props.visible, generation: 0 });
+  if (opening.visible !== props.visible) {
+    setOpening({ visible: props.visible, generation: opening.generation + (props.visible ? 1 : 0) });
+  }
+  if (!session) return null;
+  const key = props.editing
+    ? `edit:${session.user.id}:${props.editing.postId}`
+    : replyDraftKey(session.user.id, props.target, props.replyingTo?.id);
+  return <ReplyComposerContent {...props} key={`${key}:${opening.generation}`} draftKey={props.editing ? null : key} />;
+}
+
+function ReplyComposerContent({
+  draftKey,
   editing,
   onClose,
   onEdited,
@@ -35,6 +53,7 @@ export function DiscussionReplyComposer({
   target,
   visible,
 }: {
+  draftKey: string | null;
   editing?: { content: string; postId: number } | null;
   onClose: () => void;
   onEdited?: () => void;
@@ -46,7 +65,11 @@ export function DiscussionReplyComposer({
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
-  const [content, setContent] = useState('');
+  const draft = useReplyDraft(draftKey, editing?.content);
+  const { content, change: setContent } = draft;
+  const [sent, setSent] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const { insertText, onSelectionChange } = useBangumiEmojiInsertion(
     inputRef,
     content,
@@ -59,22 +82,8 @@ export function DiscussionReplyComposer({
   const hasUnsavedChanges = isEditing
     ? content !== editing.content
     : Boolean(content.trim());
-  const canSend = content.trim().length > 0 && !pending;
+  const canSend = content.trim().length > 0 && !pending && draft.loaded && !sent;
   const displayError = createReply.error ?? editReply.error;
-
-  useEffect(() => {
-    if (!visible) {
-      createReply.reset();
-      editReply.reset();
-      return;
-    }
-
-    if (editing) {
-      setContent(editing.content);
-    } else {
-      setContent('');
-    }
-  }, [visible]);
 
   function finishClose() {
     Keyboard.dismiss();
@@ -91,6 +100,12 @@ export function DiscussionReplyComposer({
       return;
     }
 
+    if (!isEditing) {
+      if (!draft.loaded) { finishClose(); return; }
+      if (sent ? draft.complete() : draft.save()) finishClose();
+      return;
+    }
+
     if (hasUnsavedChanges) {
       confirmDiscard(finishClose);
       return;
@@ -102,7 +117,7 @@ export function DiscussionReplyComposer({
   function send() {
     const nextContent = content.trim();
 
-    if (!nextContent || pending) {
+    if (!canSend) {
       return;
     }
 
@@ -111,6 +126,7 @@ export function DiscussionReplyComposer({
         { content: nextContent, postId: editing.postId },
         {
           onSuccess: () => {
+            if (!mounted.current) return;
             playSuccessHaptic();
             Keyboard.dismiss();
             setContent('');
@@ -122,27 +138,25 @@ export function DiscussionReplyComposer({
       return;
     }
 
-    createReply.mutate(
-      {
-        content: nextContent,
-        replyTo: replyingTo ? Number(replyingTo.id) : undefined,
-      },
-      {
-        onSuccess: () => {
-          playSuccessHaptic();
-          Keyboard.dismiss();
-          setContent('');
-          onClose();
-        },
-      },
-    );
+    void createReply.mutateAsync({
+      content: nextContent,
+      replyTo: replyingTo ? Number(replyingTo.id) : undefined,
+    }).then(() => {
+      const cleared = draft.complete();
+      if (!mounted.current) return;
+      setSent(true);
+      playSuccessHaptic();
+      if (cleared) finishClose();
+    }).catch(() => {
+      // The mutation exposes the error; the saved draft remains available.
+    });
   }
 
   return (
     <AppSheet
       onClose={close}
       onShow={focusInput}
-      swipeToDismissEnabled={!hasUnsavedChanges && !pending}
+      swipeToDismissEnabled={!pending && !draft.error && (!isEditing || !hasUnsavedChanges)}
       visible={visible}
     >
       <View
@@ -213,6 +227,7 @@ export function DiscussionReplyComposer({
             accessibilityLabel="回复内容"
             accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
             autoFocus
+            editable={draft.loaded && !pending && !sent}
             maxLength={MAX_CONTENT_LENGTH}
             multiline
             onChangeText={setContent}
@@ -227,7 +242,7 @@ export function DiscussionReplyComposer({
             value={content}
           />
 
-          <BangumiRichTextToolbar onInsert={insertText} />
+          {!pending && !sent && draft.loaded ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
 
           <View style={styles.footer}>
             <Text style={styles.hint}>
@@ -235,6 +250,19 @@ export function DiscussionReplyComposer({
             </Text>
             <Text style={styles.count}>{content.length}/{MAX_CONTENT_LENGTH}</Text>
           </View>
+          {!isEditing && draft.loaded && content && !sent && !pending ? (
+            <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })}
+              style={({ pressed }) => [{ minHeight: 44, justifyContent: 'center' }, pressed && styles.pressed]}>
+              <Text style={styles.hint}>丢弃草稿</Text>
+            </Pressable>
+          ) : null}
+          {!isEditing && draft.loaded && content && !draft.error && !sent ? <Text style={styles.hint}>草稿已保存在本机</Text> : null}
+          {draft.error ? (
+            <Pressable accessibilityRole="button" onPress={() => { if (draft.retry() && sent) finishClose(); }}
+              style={({ pressed }) => [{ minHeight: 44, justifyContent: 'center' }, pressed && styles.pressed]}>
+              <Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text>
+            </Pressable>
+          ) : null}
           {displayError ? (
             <Text accessibilityRole="alert" style={styles.errorText}>
               {displayError.message}
