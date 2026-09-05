@@ -5,9 +5,8 @@ export type CollectionSearchPreferences = {
   keyword: string;
   subjectType: number;
   status?: CollectionStatus;
-  sort: 'updated' | 'title';
 };
-export const DEFAULT_COLLECTION_SEARCH: CollectionSearchPreferences = { keyword: '', subjectType: 0, sort: 'updated' };
+export const DEFAULT_COLLECTION_SEARCH: CollectionSearchPreferences = { keyword: '', subjectType: 0 };
 export const collectionSearchStorageKey = (userId: number) => `kaku:collection-search:v1:${userId}`;
 export function parseCollectionSearch(raw: string | null): CollectionSearchPreferences {
   if (!raw) return DEFAULT_COLLECTION_SEARCH;
@@ -17,7 +16,6 @@ export function parseCollectionSearch(raw: string | null): CollectionSearchPrefe
     keyword: typeof value.keyword === 'string' ? value.keyword : '',
     subjectType: [0, 1, 2, 3, 4, 6].includes(value.subjectType) ? value.subjectType : 0,
     status: ['wish', 'completed', 'doing', 'onHold', 'dropped'].includes(value.status) ? value.status : undefined,
-    sort: value.sort === 'title' ? 'title' : 'updated',
   };
 }
 export function collectSearchPages(pages: PublicUserCollectionPage[]) {
@@ -32,7 +30,6 @@ export function searchCollections(items: PublicUserCollection[], preferences: Co
     (!preferences.subjectType || item.subjectType === preferences.subjectType) &&
     (!preferences.status || item.collectionStatus === preferences.status) &&
     (!keyword || [item.title, item.originalTitle ?? ''].some(name => name.normalize('NFKC').toLocaleLowerCase().includes(keyword))),
-  ).sort((a, b) => preferences.sort === 'title'
-    ? a.title.localeCompare(b.title, 'zh-CN') || a.id - b.id
-    : (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0) || a.id - b.id);
+  ).sort((a, b) =>
+    (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0) || a.id - b.id);
 }

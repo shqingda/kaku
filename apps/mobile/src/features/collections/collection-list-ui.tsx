@@ -109,44 +109,6 @@ export function CollectionStatusTabs({
   );
 }
 
-export function CollectionChoiceTab({
-  label,
-  onPress,
-  selected,
-}: {
-  label: string;
-  onPress: () => void;
-  selected: boolean;
-}) {
-  const colors = useTheme();
-  const styles = createCollectionListStyles(colors);
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={() => {
-        playSelectionHaptic();
-        onPress();
-      }}
-      style={({ pressed }) => [
-        styles.statusTab,
-        selected && styles.statusTabSelected,
-        pressed && styles.pressed,
-      ]}
-    >
-      <Text
-        style={[
-          styles.statusTabText,
-          selected && styles.statusTabTextSelected,
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 export const createCollectionListStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
@@ -174,12 +136,7 @@ export const createCollectionListStyles = (colors: ThemeColors) =>
       marginBottom: 16,
     },
     subjectTypeTabs: { paddingBottom: 14 },
-    statusTabs: { gap: 8, paddingBottom: 14, paddingRight: 20 },
-    sortTabs: {
-      flexDirection: 'row',
-      gap: 8,
-      paddingBottom: 18,
-    },
+    statusTabs: { gap: 8, paddingBottom: 18, paddingRight: 20 },
     statusTab: {
       alignItems: 'center',
       backgroundColor: colors.surface,

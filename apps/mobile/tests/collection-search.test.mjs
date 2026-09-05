@@ -22,8 +22,8 @@ test('type and status combine; recent order uses timestamps without changing inp
   assert.deepEqual(items.map(item => item.id), [1, 2]);
 });
 test('preferences restore safely and keys isolate accounts', () => {
-  const value = { keyword: 'test', subjectType: 6, status: 'doing', sort: 'title' };
-  assert.deepEqual(parseCollectionSearch(JSON.stringify(value)), value);
+  const value = { keyword: 'test', subjectType: 6, status: 'doing' };
+  assert.deepEqual(parseCollectionSearch(JSON.stringify({ ...value, sort: 'title' })), value);
   assert.deepEqual(parseCollectionSearch(null), DEFAULT_COLLECTION_SEARCH);
   assert.equal(parseCollectionSearch('{"subjectType":99,"sort":"wrong"}').subjectType, 0);
   assert.notEqual(collectionSearchStorageKey(1), collectionSearchStorageKey(2));

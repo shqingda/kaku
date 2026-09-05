@@ -21,7 +21,6 @@ import type { PublicUserCollection } from '@/features/users/model';
 
 import { CollectionRowEditor } from './collection-row-editor';
 import {
-  CollectionChoiceTab,
   CollectionRow,
   CollectionStatusTabs,
   COLLECTION_STATUS_OPTIONS,
@@ -229,18 +228,6 @@ export function MyCollectionsScreen({
               selectedStatus={preferences.status}
               subjectType={preferences.subjectType}
             />
-            <View style={styles.sortTabs}>
-              <CollectionChoiceTab
-                label="最近更新"
-                onPress={() => change({ sort: 'updated' })}
-                selected={preferences.sort === 'updated'}
-              />
-              <CollectionChoiceTab
-                label="名称排序"
-                onPress={() => change({ sort: 'title' })}
-                selected={preferences.sort === 'title'}
-              />
-            </View>
             {items.length > 0 && query.isError ? (
               <CachedDataNotice onRetry={retry} />
             ) : null}
