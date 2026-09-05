@@ -1,4 +1,3 @@
-import { QuickProgressButton } from './quick-progress-button';
 import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
 import {
@@ -195,7 +194,6 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           </Text>
         </Pressable>
       </Link>
-      {supportsWatchProgress(item.subjectType) ? <QuickProgressButton subjectId={item.id} /> : null}
     </View>
   );
 }
