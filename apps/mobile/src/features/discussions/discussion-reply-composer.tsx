@@ -65,7 +65,7 @@ function ReplyComposerContent({
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
-  const draft = useReplyDraft(draftKey, editing?.content);
+  const draft = useReplyDraft(draftKey, editing?.content, visible);
   const { content, change: setContent } = draft;
   const [sent, setSent] = useState(false);
   const mounted = useRef(true);
