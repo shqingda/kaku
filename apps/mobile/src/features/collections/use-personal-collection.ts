@@ -40,6 +40,7 @@ export function useSavePersonalCollection(subjectId: number) {
     PersonalCollectionUpdate,
     { previous: PersonalCollection | null | undefined }
   >({
+    scope: { id: JSON.stringify(queryKey) },
     mutationFn: (update: PersonalCollectionUpdate) =>
       savePersonalCollection(request, subjectId, update),
     onError: (_error, _update, context) => {
