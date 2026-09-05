@@ -55,6 +55,28 @@ test('people and subject search keys trim the keyword', () => {
 
 test('signed-in user ids are embedded and signed-out falls back to a placeholder', () => {
   assert.deepEqual(queryKeys.myCollections(7), ['my-collections', 'kaku', 7]);
+  assert.deepEqual(queryKeys.myCollectionSearch(7), [
+    'my-collections',
+    'kaku',
+    7,
+    'search',
+  ]);
+  assert.deepEqual(queryKeys.myCollectionBrowse(7, 2, 'doing'), [
+    'my-collections',
+    'kaku',
+    7,
+    'browse',
+    2,
+    'doing',
+  ]);
+  assert.deepEqual(queryKeys.myCollectionBrowse(undefined, 0), [
+    'my-collections',
+    'kaku',
+    'signed-out',
+    'browse',
+    0,
+    'all',
+  ]);
   assert.deepEqual(queryKeys.myCollections(undefined), [
     'my-collections',
     'kaku',

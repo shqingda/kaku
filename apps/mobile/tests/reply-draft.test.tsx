@@ -23,6 +23,7 @@ test('persists latest edit through unmount and remount; successful send removes 
   const second = await renderHook(() => useReplyDraft(key));
   expect(second.result.current.content).toBe('latest');
   await act(() => { expect(second.result.current.complete()).toBe(true); });
+  expect(second.result.current.phase).toBe('sent');
   await second.unmount();
   const third = await renderHook(() => useReplyDraft(key));
   expect(third.result.current.content).toBe('');

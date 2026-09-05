@@ -67,7 +67,7 @@ function ReplyComposerContent({
   const inputRef = useRef<TextInput>(null);
   const draft = useReplyDraft(draftKey, editing?.content, visible);
   const { content, change: setContent } = draft;
-  const [sent, setSent] = useState(false);
+  const sent = draft.phase === 'sent';
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const { insertText, onSelectionChange } = useBangumiEmojiInsertion(
@@ -101,8 +101,7 @@ function ReplyComposerContent({
     }
 
     if (!isEditing) {
-      if (!draft.loaded) { finishClose(); return; }
-      if (sent ? draft.complete() : draft.save()) finishClose();
+      if (draft.dismiss()) finishClose();
       return;
     }
 
@@ -144,7 +143,6 @@ function ReplyComposerContent({
     }).then(() => {
       const cleared = draft.complete();
       if (!mounted.current) return;
-      setSent(true);
       playSuccessHaptic();
       if (cleared) finishClose();
     }).catch(() => {

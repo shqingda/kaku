@@ -400,23 +400,54 @@ const collectionListPageSchema = z.object({
 
 // Authenticated v0 list includes this user's private collections. No username is
 // accepted from the mobile client; the route supplies the authenticated identity.
-export async function getBangumiPersonalCollectionPage({ accessToken, username, offset, fetcher = fetch }: {
-  accessToken: string; username: string; offset: number; fetcher?: typeof fetch;
+export async function getBangumiPersonalCollectionPage({
+  accessToken,
+  collectionStatus,
+  fetcher = fetch,
+  offset,
+  subjectType,
+  username,
+}: {
+  accessToken: string;
+  collectionStatus?: CollectionStatus;
+  fetcher?: typeof fetch;
+  offset: number;
+  subjectType?: number;
+  username: string;
 }) {
-  const response = await fetcher(`${BANGUMI_API_URL}/v0/users/${encodeURIComponent(username)}/collections?limit=100&offset=${offset}`, {
-    headers: headers(accessToken),
+  const query = new URLSearchParams({
+    limit: '100',
+    offset: String(offset),
   });
+  if (subjectType) {
+    query.set('subject_type', String(subjectType));
+  }
+  if (collectionStatus) {
+    query.set('type', String(collectionStatusToBangumiType[collectionStatus]));
+  }
+
+  const response = await fetcher(
+    `${BANGUMI_API_URL}/v0/users/${encodeURIComponent(username)}/collections?${query}`,
+    {
+      headers: headers(accessToken),
+      signal: AbortSignal.timeout(12_000),
+    },
+  );
   const page = collectionListPageSchema.parse(await readJson(response));
   const nextOffset = offset + page.data.length;
-  if (page.data.length === 0 && offset < page.total) throw new BangumiApiError('收藏分页未返回数据，请刷新后重试', 502);
+  if (page.data.length === 0 && offset < page.total) {
+    throw new BangumiApiError('收藏分页未返回数据，请刷新后重试', 502);
+  }
   return {
     total: page.total,
     nextOffset: nextOffset < page.total ? nextOffset : undefined,
-    items: page.data.map(item => ({
+    items: page.data.map((item) => ({
       id: item.subject.id,
       title: item.subject.name_cn.trim() || item.subject.name,
       originalTitle: item.subject.name,
-      coverUrl: (item.subject.images?.common ?? item.subject.images?.medium)?.replace(/^http:/, 'https:'),
+      coverUrl: (
+        item.subject.images?.common ?? item.subject.images?.medium
+      )?.replace(/^http:/, 'https:'),
       collectionStatus: bangumiTypeToCollectionStatus[item.type],
       subjectType: item.subject_type,
       progress: item.ep_status,

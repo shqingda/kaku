@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -7,17 +12,26 @@ import {
 } from '@/infrastructure/kaku/collections-client';
 import { queryKeys } from '@/lib/query-keys';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
+import type { PublicUserCollectionPage } from '@/features/users/model';
+import { listItemFromPersonalCollection } from './collection-search';
 import {
   mergePersonalCollection,
   type PersonalCollection,
   type PersonalCollectionUpdate,
 } from './model';
 
-export function usePersonalCollection(subjectId: number) {
+export function usePersonalCollection(
+  subjectId: number,
+  options?: { enabled?: boolean },
+) {
   const { request, session } = useAuth();
 
   return useQuery({
-    enabled: Boolean(session) && Number.isInteger(subjectId) && subjectId > 0,
+    enabled:
+      (options?.enabled ?? true) &&
+      Boolean(session) &&
+      Number.isInteger(subjectId) &&
+      subjectId > 0,
     queryFn: ({ signal }) =>
       getPersonalCollection(request, subjectId, signal),
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
@@ -62,7 +76,30 @@ export function useSavePersonalCollection(subjectId: number) {
     },
     onSuccess: (collection) => {
       queryClient.setQueryData(queryKey, collection);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.myCollections(session?.user.id) });
+      if (collection) {
+        queryClient.setQueryData<InfiniteData<PublicUserCollectionPage>>(
+          queryKeys.myCollectionSearch(session?.user.id),
+          (data) => {
+            if (!data) return data;
+            const updatedAt = new Date().toISOString();
+            return {
+              ...data,
+              pages: data.pages.map((page) => ({
+                ...page,
+                items: page.items.map((item) =>
+                  item.id === subjectId
+                    ? listItemFromPersonalCollection(item, collection, updatedAt)
+                    : item,
+                ),
+              })),
+            };
+          },
+        );
+      }
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.myCollections(session?.user.id),
+        predicate: (query) => query.queryKey[3] === 'browse',
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.publicUser(session?.user.username ?? ''),
       });

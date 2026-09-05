@@ -24,17 +24,21 @@ import { collectionBoxUpdateFromDraft } from './collection-box-draft';
 import { CollectionBoxSheet } from './collection-box-sheet';
 
 export function CollectionControls({
+  initiallyOpen = false,
   item,
+  onDismiss,
   onSave,
   variant = 'panel',
 }: {
+  initiallyOpen?: boolean;
   item: WatchingItem;
+  onDismiss?: () => void;
   onSave: (update: PersonalCollectionUpdate) => Promise<void>;
   variant?: 'panel' | 'compact';
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [isSaving, setIsSaving] = useState(false);
   const pathname = usePathname();
   const { session } = useAuth();
@@ -301,7 +305,10 @@ export function CollectionControls({
       <CollectionBoxSheet
         isSaving={isSaving}
         item={item}
-        onClose={() => setIsOpen(false)}
+        onClose={() => {
+          setIsOpen(false);
+          onDismiss?.();
+        }}
         onRemove={openRemovalFlow}
         onSave={saveDraft}
         supportsProgress={supportsProgress}

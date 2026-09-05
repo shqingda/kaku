@@ -577,12 +577,29 @@ test('GET own collection list uses authenticated identity and retains private it
   assert.equal(result.items[0].collectionStatus, 'doing');
   assert.equal(result.nextOffset, 101);
 });
+test('own collection list forwards type and status filters to Bangumi', async () => {
+  const app = createAuthedApp(async (url) => {
+    assert.equal(
+      String(url),
+      'https://api.bgm.tv/v0/users/kaku/collections?limit=100&offset=0&subject_type=2&type=3',
+    );
+    return Response.json({ total: 1, data: [listedCollection] });
+  });
+  const response = await app.request(
+    '/me/collections?subjectType=2&status=doing',
+    { headers: authHeaders },
+    env,
+  );
+  assert.equal(response.status, 200);
+});
 test('own collection list rejects unauthenticated and invalid pagination requests', async () => {
   const app = createAuthedApp(async () => { throw new Error('must not reach upstream'); });
   assert.equal((await app.request('/me/collections', {}, env)).status, 401);
   for (const offset of ['-1', '1.5', 'bad']) {
     assert.equal((await app.request(`/me/collections?offset=${offset}`, { headers: authHeaders }, env)).status, 400);
   }
+  assert.equal((await app.request('/me/collections?subjectType=0', { headers: authHeaders }, env)).status, 400);
+  assert.equal((await app.request('/me/collections?status=watching', { headers: authHeaders }, env)).status, 400);
 });
 test('incomplete and malformed upstream pages fail explicitly', async () => {
   for (const data of [{ total: 10, data: [] }, { total: 1, data: [{}] }]) {

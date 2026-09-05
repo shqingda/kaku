@@ -2,14 +2,26 @@ import { useEffect, useRef, useState, type SetStateAction } from 'react';
 import { AppState } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 
+type DraftPhase = 'editing' | 'sent';
+
 // One mounted composer owns one key. Synchronous writes avoid late saves restoring
 // deleted drafts and persist each edit before a background/unmount can interrupt it.
 export function useReplyDraft(key: string | null, initialContent = '', active = true) {
   const [state, setState] = useState(() => {
     try {
-      return { content: key ? Storage.getItemSync(key) ?? '' : initialContent, error: '', loaded: true };
+      return {
+        content: key ? Storage.getItemSync(key) ?? '' : initialContent,
+        error: '',
+        loaded: true,
+        phase: 'editing' as DraftPhase,
+      };
     } catch {
-      return { content: '', error: '草稿读取失败，请重试后再编辑', loaded: false };
+      return {
+        content: '',
+        error: '草稿读取失败，请重试后再编辑',
+        loaded: false,
+        phase: 'editing' as DraftPhase,
+      };
     }
   });
   const latest = useRef(state.content);
@@ -22,17 +34,22 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
       if (content) Storage.setItemSync(key, content);
       else Storage.removeItemSync(key);
       persisted.current = content;
-      setState(previous => ({ ...previous, error: '' }));
+      setState((previous) => ({ ...previous, error: '' }));
       return true;
     } catch {
-      setState(previous => ({ ...previous, error: sent.current ? '回复已发送，但草稿清理失败，请重试清理，勿重复发送' : '草稿保存失败，内容仍在当前窗口，请重试' }));
+      setState((previous) => ({
+        ...previous,
+        error: sent.current
+          ? '回复已发送，但草稿清理失败，请重试清理，勿重复发送'
+          : '草稿保存失败，内容仍在当前窗口，请重试',
+      }));
       return false;
     }
   }
   function change(value: SetStateAction<string>) {
     const content = typeof value === 'function' ? value(latest.current) : value;
     latest.current = content;
-    setState(previous => ({ ...previous, content }));
+    setState((previous) => ({ ...previous, content }));
     save(content);
   }
   function retry() {
@@ -42,7 +59,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
       const content = key ? Storage.getItemSync(key) ?? '' : initialContent;
       latest.current = content;
       persisted.current = content;
-      setState({ content, error: '', loaded: true });
+      setState({ content, error: '', loaded: true, phase: 'editing' });
       return true;
     } catch {
       return false;
@@ -51,30 +68,53 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   function clear() {
     if (!save('')) return false;
     latest.current = '';
-    setState({ content: '', error: '', loaded: true });
+    setState({
+      content: '',
+      error: '',
+      loaded: true,
+      phase: sent.current ? 'sent' : 'editing',
+    });
     return true;
   }
   function complete() {
     sent.current = true;
+    setState((previous) => ({ ...previous, phase: 'sent' }));
     try {
       // A previous composer may finish sending after a new one opened.
       if (key && Storage.getItemSync(key) !== persisted.current) return true;
     } catch {
-      setState(previous => ({ ...previous, error: '回复已发送，但草稿清理失败，请重试清理，勿重复发送' }));
+      setState((previous) => ({
+        ...previous,
+        error: '回复已发送，但草稿清理失败，请重试清理，勿重复发送',
+        phase: 'sent',
+      }));
       return false;
     }
     return clear();
   }
+  function dismiss() {
+    if (sent.current) return complete();
+    if (!state.loaded) return true;
+    return save();
+  }
   useEffect(() => {
     if (!active) return;
-    const listener = AppState.addEventListener('change', status => {
-      if (status !== 'active' && state.loaded) {
-        if (sent.current) complete();
-        else save();
-      }
+    const listener = AppState.addEventListener('change', (status) => {
+      if (status === 'active' || !state.loaded) return;
+      if (sent.current) complete();
+      else save();
     });
     return () => listener.remove();
   }, [key, state.loaded, active]);
 
-  return { ...state, change, save, retry, clear, complete };
+  return {
+    ...state,
+    phase: sent.current ? 'sent' : state.phase,
+    change,
+    clear,
+    complete,
+    dismiss,
+    retry,
+    save,
+  };
 }

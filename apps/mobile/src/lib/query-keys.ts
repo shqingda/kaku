@@ -2,8 +2,20 @@ function normalizeUsername(username: string) {
   return username.trim().toLowerCase();
 }
 
+function myCollectionsRoot(userId: number | undefined) {
+  return ['my-collections', 'kaku', userId ?? 'signed-out'] as const;
+}
+
 export const queryKeys = {
-  myCollections: (userId: number | undefined) => ['my-collections', 'kaku', userId ?? 'signed-out'] as const,
+  myCollections: myCollectionsRoot,
+  myCollectionBrowse: (
+    userId: number | undefined,
+    subjectType: number,
+    status?: string,
+  ) =>
+    [...myCollectionsRoot(userId), 'browse', subjectType, status ?? 'all'] as const,
+  myCollectionSearch: (userId: number | undefined) =>
+    [...myCollectionsRoot(userId), 'search'] as const,
   wikiRevisions: () => ['wiki', 'kaku', 'revisions'] as const,
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   globalIndexes: (sort: string) => ['indexes', 'kaku', sort] as const,

@@ -119,12 +119,33 @@ test('getMyCollectionPage reads the authenticated collection page', async () => 
     return Response.json(listedPage);
   };
 
-  const result = await getMyCollectionPage(request, 0);
+  const result = await getMyCollectionPage(request, { offset: 0 });
 
   assert.deepEqual(calls, [
     { path: '/me/collections?offset=0', init: { signal: undefined } },
   ]);
   assert.deepEqual(result, listedPage);
+});
+
+test('getMyCollectionPage forwards browse filters', async () => {
+  const calls = [];
+  const request = async (path, init) => {
+    calls.push({ path, init });
+    return Response.json({ ...listedPage, nextOffset: undefined, total: 1 });
+  };
+
+  await getMyCollectionPage(request, {
+    offset: 20,
+    status: 'doing',
+    subjectType: 2,
+  });
+
+  assert.deepEqual(calls, [
+    {
+      path: '/me/collections?offset=20&subjectType=2&status=doing',
+      init: { signal: undefined },
+    },
+  ]);
 });
 
 test('getMyCollectionPage rejects empty or non-advancing pages', async () => {
@@ -134,7 +155,7 @@ test('getMyCollectionPage rejects empty or non-advancing pages', async () => {
         total: 2,
         nextOffset: 0,
         items: listedPage.items,
-      }), 0),
+      }), { offset: 0 }),
     { message: '收藏分页异常，请刷新重试' },
   );
   await assert.rejects(
@@ -143,7 +164,7 @@ test('getMyCollectionPage rejects empty or non-advancing pages', async () => {
         total: 2,
         nextOffset: 1,
         items: [],
-      }), 0),
+      }), { offset: 0 }),
     { message: '收藏分页异常，请刷新重试' },
   );
 });
@@ -152,7 +173,7 @@ test('getMyCollectionPage throws KakuApiError on failure', async () => {
   const request = async () =>
     new Response(JSON.stringify({ message: '登录已过期' }), { status: 401 });
 
-  await assert.rejects(() => getMyCollectionPage(request, 0), {
+  await assert.rejects(() => getMyCollectionPage(request, { offset: 0 }), {
     name: 'KakuApiError',
     status: 401,
     message: '登录已过期',
