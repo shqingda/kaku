@@ -17,36 +17,36 @@ async function open() {
   await render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } })}>
     <QuickProgressButton subjectId={2} />
   </QueryClientProvider>);
-  await fireEvent.press(screen.getByText('记录进度'));
+  await waitFor(() => expect(screen.getByText('看过第 2 集')).toBeTruthy());
 }
 test('double taps make one write and expose a working undo', async () => {
   await open();
   let finishRead!: (value: typeof current) => void;
   jest.mocked(getPersonalCollection).mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
-  const button = screen.getByText('第 2 集 · 标记看过');
+  const button = screen.getByText('看过第 2 集');
   await fireEvent.press(button);
   await fireEvent.press(button);
   await waitFor(() => expect(finishRead).toBeDefined());
   await act(() => { finishRead(current); });
-  await waitFor(() => expect(screen.getByText('撤销本次标记')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('撤销')).toBeTruthy());
   expect(savePersonalCollection).toHaveBeenCalledTimes(1);
   jest.mocked(getPersonalCollection).mockResolvedValue({ ...current, watchedEpisodeNumbers: [1, 2, 3] });
-  await fireEvent.press(screen.getByText('撤销本次标记'));
+  await fireEvent.press(screen.getByText('撤销'));
   await waitFor(() => expect(savePersonalCollection).toHaveBeenLastCalledWith(expect.anything(), 2, { watchedEpisodeNumbers: [1, 3] }));
 });
 test('failed writes show retry and do not report success', async () => {
   jest.mocked(savePersonalCollection).mockRejectedValueOnce(new Error('网络不可用'));
   await open();
-  await fireEvent.press(screen.getByText('第 2 集 · 标记看过'));
-  await waitFor(() => expect(screen.getByText('重试同步')).toBeTruthy());
-  expect(screen.queryByText('第 2 集已看')).toBeNull();
-  await fireEvent.press(screen.getByText('重试同步'));
-  await waitFor(() => expect(screen.getByText('第 2 集已看')).toBeTruthy());
+  await fireEvent.press(screen.getByText('看过第 2 集'));
+  await waitFor(() => expect(screen.getByText('再试一次')).toBeTruthy());
+  expect(screen.queryByText('已记下第 2 集')).toBeNull();
+  await fireEvent.press(screen.getByText('再试一次'));
+  await waitFor(() => expect(screen.getByText('已记下第 2 集')).toBeTruthy());
 });
 test('a newer server progress blocks a stale next-episode action', async () => {
   jest.mocked(getPersonalCollection).mockResolvedValue({ ...current, watchedEpisodeNumbers: [1, 2] });
   await open();
-  await fireEvent.press(screen.getByText('第 2 集 · 标记看过'));
-  await waitFor(() => expect(screen.getByText('进度已变化，请进入章节页确认')).toBeTruthy());
+  await fireEvent.press(screen.getByText('看过第 2 集'));
+  await waitFor(() => expect(screen.getByText('进度刚有更新，去勾选已看集数')).toBeTruthy());
   expect(savePersonalCollection).not.toHaveBeenCalled();
 });
