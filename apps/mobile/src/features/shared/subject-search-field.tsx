@@ -14,6 +14,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export function SubjectSearchField({
+  accessibilityHint = '输入关键词后搜索 Bangumi 条目',
   accessibilityLabel = '搜索条目',
   onChangeText,
   onSubmit,
@@ -21,6 +22,7 @@ export function SubjectSearchField({
   style,
   value,
 }: {
+  accessibilityHint?: string;
   accessibilityLabel?: string;
   onChangeText: (value: string) => void;
   onSubmit: () => void;
@@ -50,7 +52,7 @@ export function SubjectSearchField({
       <TextInput
         ref={inputRef}
         accessibilityLabel={accessibilityLabel}
-        accessibilityHint="输入关键词后搜索 Bangumi 条目"
+        accessibilityHint={accessibilityHint}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
