@@ -10,6 +10,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.5',
+    date: '2026-09-05',
+    notes: [
+      '讨论回复会自动保存为本机草稿，再次打开时可以继续编辑。',
+      '支持按中文名或原名搜索自己的完整收藏。',
+      '支持按条目类型和收藏状态筛选，最近更新的条目排在前面。',
+      '收藏加载离线、不完整或失败时会明确提示，并提供重试入口。',
+    ],
+  },
+  {
     version: '1.1.4',
     date: '2026-09-05',
     notes: [
