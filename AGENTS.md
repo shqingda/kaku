@@ -48,4 +48,4 @@ Before any deployment, read `RELEASE.md` — it documents both release paths.
   `android.abiFilters` / `expo-build-properties` ABI support — do not re-add them).
 - Local builds disable Sentry source-map upload but inline the DSN (crash reporting
   still works); EAS builds upload source maps.
-- Release notes are written in English.
+- Release notes are written in Chinese.

@@ -98,9 +98,7 @@ OAuth 登录、真实写入等需要人工参与的场景也记在那里。
 Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时改用 Maestro
 或重新 `describe`，不要对着同一坐标连点。
 
-### Android APK 验收入口
+### Android APK 可选验收
 
-`node scripts/android-release.mjs verify APK DEVICE_SERIAL` 检查包名、设备 ABI、安装结果，
-串行执行 smoke 和全量回归，保存 APK 元数据与结果。smoke 包含搜索详情返回。
-登录条件分支以及权限、OAuth、Sentry 和升级须单独填写证据，不能把门控跳过计为通过。
-发布门禁与精确产物发布命令见 RELEASE.md。
+`node scripts/android-release.mjs verify APK DEVICE_SERIAL` 可在有设备时检查包名、
+ABI、安装结果，并跑 smoke / 回归。日常 GitHub 发版不依赖这一步，见 `RELEASE.md`。

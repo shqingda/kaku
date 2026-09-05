@@ -7,12 +7,12 @@ Native 与 TypeScript 构建。
 
 | 应用 | 说明 | 状态 |
 | --- | --- | --- |
-| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 最新包 `v1.1.4` |
+| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 最新包 `v1.1.5` |
 | `apps/api` | OAuth、会话、登录后写入代理、偏好/推送/公开缓存 | Cloudflare Workers 运行中 |
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
 还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases
-（debug 签名；是否可覆盖安装以证书一致性和实际升级验证为准）。发版见 `RELEASE.md`。
+（debug 签名，覆盖安装须先卸载）。发版见 `RELEASE.md`。
 
 ## 主要功能
 

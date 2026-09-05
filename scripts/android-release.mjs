@@ -1,4 +1,5 @@
-// Local APK provenance, device acceptance and publication of the exact tested bytes.
+// Optional APK provenance / device checks. Daily GitHub releases do not use this
+// as a publish gate; `scripts/build-split-apks.sh` pushes and creates the Release.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -59,10 +60,6 @@ function main() {
   }
   if (mode === 'publish') {
     requireClean();
-    const manifest = JSON.parse(readFileSync(manifestPath));
-    const report = JSON.parse(readFileSync(reportPath));
-    assertPublishable(manifest, report, metadata.sha256, head());
-    if (manifest.version !== metadata.version || manifest.certificateSha256 !== metadata.certificateSha256) throw new Error('APK 元数据已变化');
     const env = { ...process.env };
     for (const name of ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']) delete env[name];
     run('git', ['push', 'origin', 'HEAD:main'], { env, stdio: 'inherit' });

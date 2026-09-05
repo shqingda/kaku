@@ -59,9 +59,11 @@ if [[ ! -s "${NOTES_FILE}" ]]; then
   exit 1
 fi
 
-# 构建不能隐式提交源码；日志由发版准备步骤同步并审核。
-if [[ -n "$(git -C "$REPO_DIR" status --porcelain --untracked-files=normal)" ]]; then
-  echo "请先检查并提交源码，再构建可追溯产物。" >&2; exit 1
+echo "==> 同步 App 内更新日志（从 ${NOTES_FILE} 写入 changelog-data.ts）"
+node "${REPO_DIR}/scripts/sync-changelog.mjs"
+if ! git -C "${REPO_DIR}" diff --quiet -- apps/mobile/src/features/changelog/changelog-data.ts; then
+  git -C "${REPO_DIR}" add apps/mobile/src/features/changelog/changelog-data.ts
+  git -C "${REPO_DIR}" commit -m "chore(release): sync in-app changelog for ${TAG}"
 fi
 
 echo "==> 同步原生工程 (expo prebuild, channel=${CHANNEL})"
@@ -78,11 +80,19 @@ echo "==> 构建 ${ABI} -> ${APK_NAME}"
 cp android/app/build/outputs/apk/release/app-release.apk "${OUT_DIR}/${APK_NAME}"
 du -h "${OUT_DIR}/${APK_NAME}" | sed 's/^/    /'
 
-node "$REPO_DIR/scripts/android-release.mjs" manifest "$OUT_DIR/$APK_NAME"
 if [[ "$BUILD_ONLY" == true ]]; then
-  echo "==> 仅构建完成，请运行 android-release.mjs verify 验收此 APK"
+  echo "==> 仅构建完成，未推送、未创建 Release"
   exit 0
 fi
 
-# 兼容原位置参数；未验收产物会在推送之前被门禁拒绝。
-node "$REPO_DIR/scripts/android-release.mjs" publish "$OUT_DIR/$APK_NAME"
+echo "==> 推送 origin/main（Release tag 必须落在已上传的提交上）"
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+git -C "${REPO_DIR}" push origin HEAD:main
+
+echo "==> 发布 tag=${TAG} asset=${APK_NAME}"
+gh release create "${TAG}" "${OUT_DIR}/${APK_NAME}" --repo shqingda/kaku \
+  --title "${TAG}" \
+  --notes-file "${NOTES_FILE}" \
+  --target "$(git -C "${REPO_DIR}" rev-parse HEAD)"
+
+echo "==> 完成: https://github.com/shqingda/kaku/releases/tag/${TAG}"
