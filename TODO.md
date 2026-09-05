@@ -18,6 +18,11 @@
 - [ ] 补大字体、VoiceOver 焦点顺序、Reduce Motion、Reduce Transparency 和触控区域验收。
 - [ ] 为少量关键页面建立稳定视觉基准；把首页和角色列表已有的 profiler 基线变成可重复的性能回退阈值。
 
+## 本轮功能设备验收
+
+- [ ] 回复草稿：关开弹层、杀进程恢复、发送失败保留、发送成功清除与账户隔离。
+- [ ] 自己的收藏：搜索输入/清空、非首屏命中、返回位置与真实离线恢复。代码及自动测试已完成；iOS 已观察到完整收藏加载，交互补验见 `docs/test-records/2026-09-05-handoff-followup.md`。
+
 ## 发版与商店
 
 - [ ] 发布 GitHub `v1.1.5`：提升 App 版本、撰写本次 Release Notes、构建 release APK、安装烟测并创建 GitHub Release。`v1.1.4` 已发布。
