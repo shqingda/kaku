@@ -2,7 +2,7 @@
 
 > 最后更新：2026-09-05。只留还有效的事项。
 >
-> GitHub 日常包 `v1.1.5` 已发出。iOS Maestro 全量和性能基线在 `docs/test-records/`。
+> GitHub 日常包 `v1.1.6` 已发出。iOS Maestro 全量和性能基线在 `docs/test-records/`。
 
 ## 设备补验
 

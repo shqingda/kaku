@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.6',
+    date: '2026-09-05',
+    notes: [
+      '打开自己的收藏不再一进来就下载全部条目，按类型和状态分页加载。',
+      '搜索自己的收藏仍然覆盖全部条目。',
+      '收藏列表里点编辑才会读取这一条的详细进度。',
+    ],
+  },
+  {
     version: '1.1.5',
     date: '2026-09-05',
     notes: [
