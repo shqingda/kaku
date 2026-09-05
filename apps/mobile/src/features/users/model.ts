@@ -9,6 +9,7 @@ export type PublicUserCollection = {
   rate?: number;
   subjectType: number;
   title: string;
+  originalTitle?: string;
   totalEpisodes: number;
   updatedAt: string;
 };

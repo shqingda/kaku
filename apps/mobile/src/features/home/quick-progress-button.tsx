@@ -50,6 +50,7 @@ function LoadedProgress({ subjectId }: { subjectId: number }) {
     },
     onSuccess: (collection) => {
       client.setQueryData(queryKey, collection);
+      void client.invalidateQueries({ queryKey: queryKeys.myCollections(session?.user.id) });
       void client.invalidateQueries({ queryKey: queryKeys.publicUser(session?.user.username ?? '') });
     },
     onError: () => { void client.invalidateQueries({ queryKey }); },

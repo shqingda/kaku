@@ -3,6 +3,7 @@ function normalizeUsername(username: string) {
 }
 
 export const queryKeys = {
+  myCollections: (userId: number | undefined) => ['my-collections', 'kaku', userId ?? 'signed-out'] as const,
   wikiRevisions: () => ['wiki', 'kaku', 'revisions'] as const,
   globalBlogs: (type: string) => ['blogs', 'kaku', type] as const,
   globalIndexes: (sort: string) => ['indexes', 'kaku', sort] as const,

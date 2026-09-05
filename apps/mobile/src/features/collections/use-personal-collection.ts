@@ -62,6 +62,7 @@ export function useSavePersonalCollection(subjectId: number) {
     },
     onSuccess: (collection) => {
       queryClient.setQueryData(queryKey, collection);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.myCollections(session?.user.id) });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.publicUser(session?.user.username ?? ''),
       });

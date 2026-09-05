@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  getMyCollectionPage,
   getPersonalCollection,
   savePersonalCollection,
 } from '../src/infrastructure/kaku/collections-client.ts';
@@ -91,6 +92,71 @@ test('savePersonalCollection puts the update payload', async () => {
     },
   ]);
   assert.deepEqual(result, collection);
+});
+
+const listedPage = {
+  total: 2,
+  nextOffset: 1,
+  items: [
+    {
+      id: 12,
+      title: '私有收藏',
+      originalTitle: 'Original',
+      subjectType: 2,
+      collectionStatus: 'doing',
+      progress: 3,
+      volumeProgress: 0,
+      totalEpisodes: 12,
+      updatedAt: '2026-09-05T10:00:00Z',
+    },
+  ],
+};
+
+test('getMyCollectionPage reads the authenticated collection page', async () => {
+  const calls = [];
+  const request = async (path, init) => {
+    calls.push({ path, init });
+    return Response.json(listedPage);
+  };
+
+  const result = await getMyCollectionPage(request, 0);
+
+  assert.deepEqual(calls, [
+    { path: '/me/collections?offset=0', init: { signal: undefined } },
+  ]);
+  assert.deepEqual(result, listedPage);
+});
+
+test('getMyCollectionPage rejects empty or non-advancing pages', async () => {
+  await assert.rejects(
+    () =>
+      getMyCollectionPage(async () => Response.json({
+        total: 2,
+        nextOffset: 0,
+        items: listedPage.items,
+      }), 0),
+    { message: '收藏分页异常，请刷新重试' },
+  );
+  await assert.rejects(
+    () =>
+      getMyCollectionPage(async () => Response.json({
+        total: 2,
+        nextOffset: 1,
+        items: [],
+      }), 0),
+    { message: '收藏分页异常，请刷新重试' },
+  );
+});
+
+test('getMyCollectionPage throws KakuApiError on failure', async () => {
+  const request = async () =>
+    new Response(JSON.stringify({ message: '登录已过期' }), { status: 401 });
+
+  await assert.rejects(() => getMyCollectionPage(request, 0), {
+    name: 'KakuApiError',
+    status: 401,
+    message: '登录已过期',
+  });
 });
 
 test('savePersonalCollection throws KakuApiError on failure', async () => {

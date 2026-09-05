@@ -59,3 +59,51 @@ export async function savePersonalCollection(
 
   return responseSchema.parse(await response.json()).collection;
 }
+
+const collectionListPageSchema = z.object({
+  total: z.number().int().nonnegative(),
+  nextOffset: z.number().int().nonnegative().optional(),
+  items: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      title: z.string(),
+      originalTitle: z.string().optional(),
+      coverUrl: z.string().optional(),
+      subjectType: z.number().int(),
+      collectionStatus: z.enum([
+        'wish',
+        'completed',
+        'doing',
+        'onHold',
+        'dropped',
+      ]),
+      progress: z.number().nonnegative(),
+      volumeProgress: z.number().nonnegative(),
+      totalEpisodes: z.number().nonnegative(),
+      rate: z.number().optional(),
+      updatedAt: z.string(),
+    }),
+  ),
+});
+
+export async function getMyCollectionPage(
+  request: (path: string, init?: RequestInit) => Promise<Response>,
+  offset: number,
+  signal?: AbortSignal,
+) {
+  const response = await request(`/me/collections?offset=${offset}`, { signal });
+
+  if (!response.ok) {
+    throw new KakuApiError(await readErrorMessage(response), response.status);
+  }
+
+  const page = collectionListPageSchema.parse(await response.json());
+  if (
+    page.nextOffset !== undefined &&
+    (page.nextOffset <= offset || page.items.length === 0)
+  ) {
+    throw new Error('收藏分页异常，请刷新重试');
+  }
+
+  return page;
+}
