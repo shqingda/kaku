@@ -13,6 +13,7 @@ import {
   BangumiApiError,
   getBangumiEntityCollection,
   getBangumiPersonalCollection,
+  getBangumiPersonalCollectionPage,
   saveBangumiPersonalCollection,
   setBangumiEntityCollection,
 } from './bangumi-client.ts';
@@ -169,6 +170,30 @@ export function registerCollectionRoutes(
         return body.data.collected;
       },
     );
+  });
+
+  app.get('/me/collections', async (context) => {
+    context.header('Cache-Control', 'private, no-store');
+    const offset = z.coerce.number().int().min(0).max(1_000_000).safeParse(context.req.query('offset') ?? 0);
+    if (!offset.success) return context.json({ error: 'invalid_offset', message: '分页位置不正确' }, 400);
+    const { authentication, store } = await authenticateContext(context, dependencies.createStore, now);
+    if (isAuthenticationResponse(authentication)) return authentication;
+    try {
+      const accessToken = await getValidBangumiAccessToken({ env: context.env, fetcher, now: now(), store, userId: authentication.userId });
+      return context.json(await getBangumiPersonalCollectionPage({ accessToken, username: authentication.user.username, offset: offset.data, fetcher }));
+    } catch (error) {
+      const authError = mapBangumiAuthError(context, error);
+      if (authError) return authError;
+      if (error instanceof BangumiApiError) {
+        if (error.status === 401) {
+          await store.deleteBangumiCredential(authentication.userId);
+          return context.json({ error: 'bangumi_reauthorization_required', message: 'Bangumi 授权已失效，请重新登录。' }, 409);
+        }
+        return context.json({ error: 'bangumi_unavailable', message: error.message }, error.status >= 500 ? 503 : 502);
+      }
+      if (error instanceof z.ZodError) return context.json({ error: 'invalid_upstream_data', message: '收藏数据格式异常，请重试' }, 502);
+      throw error;
+    }
   });
 
   app.get('/me/collections/:subjectId', async (context) => {

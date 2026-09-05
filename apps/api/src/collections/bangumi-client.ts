@@ -383,3 +383,47 @@ export async function saveBangumiPersonalCollection({
     });
   }
 }
+
+const collectionListPageSchema = z.object({
+  total: z.number().int().nonnegative(),
+  data: z.array(userCollectionSchema.extend({
+    updated_at: z.string(),
+    subject: z.object({
+      id: z.number().int().positive(),
+      name: z.string(),
+      name_cn: z.string(),
+      eps: z.number().nonnegative().nullish(),
+      images: z.object({ common: z.string().optional(), medium: z.string().optional() }).nullish(),
+    }),
+  })),
+});
+
+// Authenticated v0 list includes this user's private collections. No username is
+// accepted from the mobile client; the route supplies the authenticated identity.
+export async function getBangumiPersonalCollectionPage({ accessToken, username, offset, fetcher = fetch }: {
+  accessToken: string; username: string; offset: number; fetcher?: typeof fetch;
+}) {
+  const response = await fetcher(`${BANGUMI_API_URL}/v0/users/${encodeURIComponent(username)}/collections?limit=100&offset=${offset}`, {
+    headers: headers(accessToken),
+  });
+  const page = collectionListPageSchema.parse(await readJson(response));
+  const nextOffset = offset + page.data.length;
+  if (page.data.length === 0 && offset < page.total) throw new BangumiApiError('收藏分页未返回数据，请刷新后重试', 502);
+  return {
+    total: page.total,
+    nextOffset: nextOffset < page.total ? nextOffset : undefined,
+    items: page.data.map(item => ({
+      id: item.subject.id,
+      title: item.subject.name_cn.trim() || item.subject.name,
+      originalTitle: item.subject.name,
+      coverUrl: (item.subject.images?.common ?? item.subject.images?.medium)?.replace(/^http:/, 'https:'),
+      collectionStatus: bangumiTypeToCollectionStatus[item.type],
+      subjectType: item.subject_type,
+      progress: item.ep_status,
+      volumeProgress: item.vol_status,
+      totalEpisodes: item.subject.eps ?? 0,
+      rate: item.rate || undefined,
+      updatedAt: item.updated_at,
+    })),
+  };
+}

@@ -561,3 +561,33 @@ test('entity collection writes clear the credential on upstream 401', async () =
   assert.equal(response.status, 409);
   assert.equal(state.credentialDeleted, true);
 });
+
+const listedCollection = { ...storedBookCollection, private: true, updated_at: '2026-09-05T10:00:00Z', subject: { id: 400, name: 'Original', name_cn: '私有收藏', eps: 0 } };
+test('GET own collection list uses authenticated identity and retains private items', async () => {
+  const app = createAuthedApp(async (url, init) => {
+    assert.equal(String(url), 'https://api.bgm.tv/v0/users/kaku/collections?limit=100&offset=100');
+    assert.equal(init.headers.Authorization, 'Bearer bangumi-access-token');
+    return Response.json({ total: 102, data: [listedCollection] });
+  });
+  const response = await app.request('/me/collections?offset=100&username=someone-else', { headers: authHeaders }, env);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  const result = await response.json();
+  assert.equal(result.items[0].title, '私有收藏');
+  assert.equal(result.items[0].collectionStatus, 'doing');
+  assert.equal(result.nextOffset, 101);
+});
+test('own collection list rejects unauthenticated and invalid pagination requests', async () => {
+  const app = createAuthedApp(async () => { throw new Error('must not reach upstream'); });
+  assert.equal((await app.request('/me/collections', {}, env)).status, 401);
+  for (const offset of ['-1', '1.5', 'bad']) {
+    assert.equal((await app.request(`/me/collections?offset=${offset}`, { headers: authHeaders }, env)).status, 400);
+  }
+});
+test('incomplete and malformed upstream pages fail explicitly', async () => {
+  for (const data of [{ total: 10, data: [] }, { total: 1, data: [{}] }]) {
+    const app = createAuthedApp(async () => Response.json(data));
+    const response = await app.request('/me/collections', { headers: authHeaders }, env);
+    assert.ok(response.status >= 500);
+  }
+});
