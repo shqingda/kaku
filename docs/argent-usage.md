@@ -1,6 +1,6 @@
 # Argent 使用手册（Kaku 项目）
 
-> 核对日期：2026-09-04
+> 核对日期：2026-09-10
 > 适用：已配置 argent MCP 的 agent 会话 + 本仓库的模拟器开发与测试
 > 本机 Argent：0.24.0（`argent` 在 PATH 上，当前为 pnpm 全局）
 
@@ -10,7 +10,7 @@
 ## 已经就绪的部分（不用再做）
 
 - argent MCP 已挂在本机 agent 环境（`argent mcp`）
-- iOS dev client 装在 iPhone 17 Pro 模拟器上，bundle id `com.shqingda.kaku.debug`
+- iOS dev client 装在 iPhone 18 Pro（iOS 27.0）模拟器上，bundle id `com.shqingda.kaku.debug`
 - iOS Maestro 全量入口 `.maestro/kaku-regression-ios.yaml` 已在 2026-09-04 实跑通过
 - 视觉验收与性能基线见 `docs/test-records/2026-09-04-ios-ui-profiler.md`
 
@@ -54,7 +54,9 @@ debug 包跑会找不到 App。Android 全量入口还没有实跑。
    `adb reverse tcp:8081 tcp:8081`。
 2. **Xcode 27 无独立 Simulator.app**（改为 DeviceHub）。任何工具的
    `openSimulator: true` 都会报「Unable to find application named 'Simulator'」，
-   设备启动与操作本身不受影响。
+   设备启动与操作本身不受影响。Expo 57 尚未内置 iOS 27 要求的 UIScene
+   生命周期，`apps/mobile/plugins/with-ios-scene-lifecycle.js` 会在 prebuild 时
+   生成单场景入口；上游 Expo 自带支持后插件会自动跳过。
 3. **Maestro 选择器**（详见 `.maestro/kaku-smoke-steps.yaml` 注释）：
    RN 容器设了 `accessibilityLabel` 后 iOS 无障碍树只暴露容器；展开卡片的
    `text` 是 `'expanded'`；`assertVisible` 不支持 `timeout`，长等待用

@@ -69,6 +69,7 @@ module.exports = {
       favicon: './assets/images/kaku-icon.png',
     },
     plugins: [
+      './plugins/with-ios-scene-lifecycle',
       'expo-router',
       'expo-image',
       ['expo-camera', { barcodeScannerEnabled: false }],
