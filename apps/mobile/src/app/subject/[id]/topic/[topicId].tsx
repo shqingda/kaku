@@ -28,6 +28,7 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { ReportButton } from '@/features/reports/report-button';
 import { REPORT_TYPES } from '@/features/reports/types';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
@@ -180,9 +181,13 @@ export default function TopicScreen() {
           }
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
-          onRefresh={() => void topicQuery.refetch()}
           ref={replyNavigation.listRef}
-          refreshing={topicQuery.isRefetching && !topicQuery.isPending}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() => void topicQuery.refetch()}
+              refreshing={topicQuery.isRefetching && !topicQuery.isPending}
+            />
+          }
           removeClippedSubviews={Platform.OS === 'android'}
           onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}

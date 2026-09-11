@@ -24,6 +24,7 @@ import { useDiscussionReply } from '@/features/discussions/use-discussion-reply'
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { useSubjectReview } from '@/features/reviews/use-subject-reviews';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -176,9 +177,13 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           }
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
-          onRefresh={() => void reviewQuery.refetch()}
           ref={replyNavigation.listRef}
-          refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() => void reviewQuery.refetch()}
+              refreshing={reviewQuery.isRefetching && !reviewQuery.isPending}
+            />
+          }
           removeClippedSubviews={Platform.OS === 'android'}
           onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}

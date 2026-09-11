@@ -7,6 +7,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
 import type { PublicIndexSummary } from '@/features/indexes/model';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -106,8 +107,12 @@ export default function SubjectIndexesScreen() {
             <PagedListFooter {...indexes.footerProps} />
           ) : null
         }
-        onRefresh={indexes.refresh}
-        refreshing={indexes.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={indexes.refresh}
+            refreshing={indexes.refreshing}
+          />
+        }
         renderItem={renderItem}
       />
       <ScrollToTopButton

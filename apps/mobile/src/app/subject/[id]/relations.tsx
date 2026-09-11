@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
@@ -63,8 +64,12 @@ export default function SubjectRelationsScreen() {
               </Text>
             </View>
           }
-          onRefresh={() => void relationsQuery.refetch()}
-          refreshing={relationsQuery.isRefetching && !relationsQuery.isPending}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() => void relationsQuery.refetch()}
+              refreshing={relationsQuery.isRefetching && !relationsQuery.isPending}
+            />
+          }
           renderItem={({ item }) => (
             <Link
               asChild

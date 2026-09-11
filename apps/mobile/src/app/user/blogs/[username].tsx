@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
@@ -117,8 +118,12 @@ export default function PublicUserBlogsScreen() {
           </View>
         }
         maxToRenderPerBatch={12}
-        onRefresh={blogs.refresh}
-        refreshing={blogs.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={blogs.refresh}
+            refreshing={blogs.refreshing}
+          />
+        }
         renderItem={renderItem}
         windowSize={7}
       />

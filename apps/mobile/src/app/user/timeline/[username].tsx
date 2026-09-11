@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
@@ -122,8 +123,12 @@ export default function PublicUserTimelineScreen() {
           </View>
         }
         maxToRenderPerBatch={12}
-        onRefresh={timeline.refresh}
-        refreshing={timeline.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={timeline.refresh}
+            refreshing={timeline.refreshing}
+          />
+        }
         renderItem={renderItem}
         updateCellsBatchingPeriod={40}
         windowSize={7}

@@ -33,6 +33,7 @@ import { useDiscussionReply } from '@/features/discussions/use-discussion-reply'
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic } from '@/lib/haptics';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
@@ -272,20 +273,24 @@ export default function EpisodeScreen() {
           keyExtractor={(reply) => reply.id}
           maxToRenderPerBatch={8}
           onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
-          onRefresh={() =>
-            void Promise.all([
-              catalogQuery.refetch(),
-              commentsQuery.refetch(),
-              ...(session ? [collectionQuery.refetch()] : []),
-            ])
-          }
           ref={replyNavigation.listRef}
-          refreshing={
-            (catalogQuery.isRefetching ||
-              commentsQuery.isRefetching ||
-              collectionQuery.isRefetching) &&
-            !catalogQuery.isPending &&
-            !commentsQuery.isPending
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() =>
+                void Promise.all([
+                  catalogQuery.refetch(),
+                  commentsQuery.refetch(),
+                  ...(session ? [collectionQuery.refetch()] : []),
+                ])
+              }
+              refreshing={
+                (catalogQuery.isRefetching ||
+                  commentsQuery.isRefetching ||
+                  collectionQuery.isRefetching) &&
+                !catalogQuery.isPending &&
+                !commentsQuery.isPending
+              }
+            />
           }
           removeClippedSubviews={Platform.OS === 'android'}
           onScroll={scrollToTop.handleScroll}

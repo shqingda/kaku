@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
@@ -61,15 +62,19 @@ export default function SubjectCharactersScreen() {
               </View>
             </>
           }
-          onRefresh={() =>
-            void Promise.all([
-              charactersQuery.refetch(),
-              subjectQuery.refetch(),
-            ])
-          }
-          refreshing={
-            (charactersQuery.isRefetching || subjectQuery.isRefetching) &&
-            !charactersQuery.isPending
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={() =>
+                void Promise.all([
+                  charactersQuery.refetch(),
+                  subjectQuery.refetch(),
+                ])
+              }
+              refreshing={
+                (charactersQuery.isRefetching || subjectQuery.isRefetching) &&
+                !charactersQuery.isPending
+              }
+            />
           }
           renderItem={({ item }) => (
             <View style={styles.card}>

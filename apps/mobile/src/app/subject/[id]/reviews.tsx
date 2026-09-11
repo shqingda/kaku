@@ -7,6 +7,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectReviews } from '@/features/reviews/use-subject-reviews';
 import type { SubjectReview } from '@/features/reviews/model';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -123,8 +124,12 @@ export default function SubjectReviewsScreen() {
             <PagedListFooter {...reviews.footerProps} />
           ) : null
         }
-        onRefresh={reviews.refresh}
-        refreshing={reviews.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={reviews.refresh}
+            refreshing={reviews.refreshing}
+          />
+        }
         renderItem={renderItem}
       />
       <ScrollToTopButton

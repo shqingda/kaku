@@ -16,6 +16,7 @@ import {
   getSubjectTypeLabel,
   SUBJECT_TYPES,
 } from '@/features/catalog/subject-types';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -178,8 +179,12 @@ function PublicUserCollectionsScreen() {
           </>
         }
         maxToRenderPerBatch={12}
-        onRefresh={collections.refresh}
-        refreshing={collections.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={collections.refresh}
+            refreshing={collections.refreshing}
+          />
+        }
         renderItem={renderItem}
         updateCellsBatchingPeriod={40}
         windowSize={7}

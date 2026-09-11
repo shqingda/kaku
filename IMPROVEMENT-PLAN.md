@@ -12,7 +12,7 @@
 
 ## 批次 A：列表体验一致性（梯队①，约 1–2 天）
 
-**A1. 12 个二级屏补下拉刷新** — `usePagedList` 已有 `refresh`/`refreshing`，接上 `AppRefreshControl` 即可。涉及：`subject/[id]/relations|characters|comments|indexes|reviews.tsx`、`review/[reviewId].tsx`、`topic/[topicId].tsx`、`episode/[episodeNumber].tsx`（单集页已有刷新，核对即可）、`user/blogs|friends|collections|timeline/[username].tsx`。
+**A1. 12 个二级屏统一刷新控件（已完成 2026-09-11，范围修正）** — 复核发现这 12 屏在 1.1.4–1.1.6 波次中已接 `onRefresh` 下拉刷新（此前审计信息过期）；真实缺口是用的是 RN 默认灰色 RefreshControl，与全应用其余 21 屏的主题化 `AppRefreshControl`（accent 色 + surface 底）不一致。已全部统一为 `AppRefreshControl`。涉及：`subject/[id]/relations|characters|comments|indexes|reviews|review/[reviewId]|topic/[topicId]|episode/[episodeNumber].tsx`、`user/blogs|friends|collections|timeline/[username].tsx`。
 
 **A2. 通用 `SkeletonList` 组件** — 用现有 `SkeletonBox` 组装列表骨架（行高复用各屏 styles），替换 blogs/channel/notifications 等屏的「正在读取…」静态文字卡 pending 分支；首页冷启动的 `ActivityIndicator`（`index.tsx:434-444`）改为复用 `HomeMediaSection` 现成骨架。原则：加载占位与最终内容同构，消除文字卡→内容跳版。
 

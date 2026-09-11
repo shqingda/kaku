@@ -8,6 +8,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { RatingStars } from '@/features/reviews/rating-stars';
 import { useSubjectComments } from '@/features/reviews/use-subject-reviews';
 import type { SubjectComment } from '@/features/reviews/model';
+import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -116,8 +117,12 @@ export default function SubjectCommentsScreen() {
             <PagedListFooter {...comments.footerProps} />
           ) : null
         }
-        onRefresh={comments.refresh}
-        refreshing={comments.refreshing}
+        refreshControl={
+          <AppRefreshControl
+            onRefresh={comments.refresh}
+            refreshing={comments.refreshing}
+          />
+        }
         renderItem={renderItem}
       />
       <ScrollToTopButton
