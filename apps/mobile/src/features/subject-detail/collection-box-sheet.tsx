@@ -148,13 +148,8 @@ export function CollectionBoxSheet({
   }
 
   return (
-    <AppSheet onClose={requestClose} visible={visible}>
-      <View
-        style={{
-          flexShrink: 1,
-          paddingBottom: Math.max(insets.bottom, 18),
-        }}
-      >
+    <AppSheet
+      header={
         <View style={styles.heading}>
           <Text accessibilityRole="header" style={styles.title}>
             收藏盒
@@ -181,7 +176,16 @@ export function CollectionBoxSheet({
             />
           </Pressable>
         </View>
-
+      }
+      onClose={requestClose}
+      visible={visible}
+    >
+      <View
+        style={{
+          flexShrink: 1,
+          paddingBottom: Math.max(insets.bottom, 18),
+        }}
+      >
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"

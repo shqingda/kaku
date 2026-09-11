@@ -121,16 +121,7 @@ export function IndexComposer({
 
   return (
     <AppSheet
-      onClose={close}
-      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
-      visible={visible}
-    >
-      <View
-        style={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 18) },
-        ]}
-      >
+      header={
         <View style={styles.heading}>
           <Pressable
             accessibilityLabel="关闭"
@@ -175,7 +166,17 @@ export function IndexComposer({
             )}
           </Pressable>
         </View>
-
+      }
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
+      visible={visible}
+    >
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 18) },
+        ]}
+      >
         <TextInput
           accessibilityLabel="目录标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}

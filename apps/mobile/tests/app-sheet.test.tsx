@@ -20,6 +20,8 @@ jest.mock('react-native-gesture-handler', () => {
   let pan: Record<string, jest.Mock>;
   pan = {
     enabled: jest.fn(() => pan),
+    activeOffsetY: jest.fn(() => pan),
+    failOffsetX: jest.fn(() => pan),
     onBegin: jest.fn((callback: () => void) => {
       mockPanCallbacks.onBegin = callback;
       return pan;

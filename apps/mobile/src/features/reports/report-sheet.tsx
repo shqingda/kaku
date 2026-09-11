@@ -100,16 +100,7 @@ export function ReportSheet({
 
   return (
     <AppSheet
-      onClose={close}
-      swipeToDismissEnabled={!hasUnsavedChanges && !createReport.isPending}
-      visible={visible}
-    >
-      <View
-        style={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 18) },
-        ]}
-      >
+      header={
         <View style={styles.heading}>
           <Pressable
             accessibilityLabel="关闭"
@@ -134,7 +125,17 @@ export function ReportSheet({
           </Text>
           <View style={styles.closeButtonSpacer} />
         </View>
-
+      }
+      onClose={close}
+      swipeToDismissEnabled={!hasUnsavedChanges && !createReport.isPending}
+      visible={visible}
+    >
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 18) },
+        ]}
+      >
         <Text style={styles.intro}>请选择举报理由：</Text>
         <View accessibilityRole="radiogroup" style={styles.reasons}>
           {REPORT_REASON_OPTIONS.map((option) => {

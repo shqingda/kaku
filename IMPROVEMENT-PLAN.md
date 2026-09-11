@@ -42,7 +42,7 @@
 
 **C3. 内容过渡动画（已完成 2026-09-11）** — 首页收藏 tab 切换：骨架与内容区淡入 140ms（opacity-only `FadeIn`，reduce-motion 直接出现）；subject 简介展开/收起：新增共享 `ExpandableText`（与 changelog 卡片同一套 measure+spring 模式，进度 0→1、高度从当前值出发、可随时反向，reduce-motion 跳过；收起态改为高度裁切，无省略号——与 changelog 视觉语言一致）。
 
-**C4. AppSheet 拖拽区扩展** — 下拖关闭手势从把手扩展到 heading 区（`app-sheet.tsx:253-257`），保持与内层滚动列表的手势冲突处理注释约定。
+**C4. AppSheet 拖拽区扩展（已完成 2026-09-11）** — AppSheet 新增 `header` 插槽（渲染在下拖手势区内、把手下方），Pan 手势加 `activeOffsetY/failOffsetX`（纵向位移激活、横向移动判失败：标题行按钮保持可点，横向滑动不误触发）。已迁移五个有标题行的弹层：收藏盒、回复框、新建话题、举报、目录编辑器——「按住标题拖动关闭」现在与把手一致。
 
 ---
 

@@ -125,17 +125,7 @@ export function TopicComposer({
 
   return (
     <AppSheet
-      onClose={close}
-      onShow={focusTitle}
-      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
-      visible={visible}
-    >
-      <View
-        style={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 16) },
-        ]}
-      >
+      header={
         <View style={styles.heading}>
           <Pressable
             accessibilityLabel="关闭"
@@ -178,7 +168,18 @@ export function TopicComposer({
             )}
           </Pressable>
         </View>
-
+      }
+      onClose={close}
+      onShow={focusTitle}
+      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
+      visible={visible}
+    >
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
+      >
         <TextInput
           accessibilityLabel="话题标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}

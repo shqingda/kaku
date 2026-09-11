@@ -152,6 +152,56 @@ function ReplyComposerContent({
 
   return (
     <AppSheet
+      header={
+        <View style={styles.heading}>
+          <Pressable
+            accessibilityLabel="关闭"
+            accessibilityRole="button"
+            disabled={pending}
+            hitSlop={8}
+            onPress={close}
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <SymbolView
+              name={{ android: 'close', ios: 'xmark', web: 'close' }}
+              size={17}
+              tintColor={colors.muted}
+              weight="semibold"
+            />
+          </Pressable>
+          <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
+            {isEditing
+              ? '编辑回复'
+              : replyingTo
+                ? `回复 ${replyingTo.author}`
+                : '参与讨论'}
+          </Text>
+          <Pressable
+            accessibilityLabel={isEditing ? '保存回复' : '发送回复'}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !canSend }}
+            disabled={!canSend}
+            hitSlop={5}
+            onPress={send}
+            style={({ pressed }) => [
+              styles.sendButton,
+              !canSend && styles.sendButtonDisabled,
+              pressed && canSend && styles.pressed,
+            ]}
+          >
+            {pending ? (
+              <ActivityIndicator color={colors.surface} size="small" />
+            ) : (
+              <Text style={styles.sendText}>
+                {isEditing ? '保存' : '回复'}
+              </Text>
+            )}
+          </Pressable>
+        </View>
+      }
       onClose={close}
       onShow={focusInput}
       swipeToDismissEnabled={!pending && !draft.error && (!isEditing || !hasUnsavedChanges)}
@@ -163,55 +213,6 @@ function ReplyComposerContent({
           { paddingBottom: Math.max(insets.bottom, 16) },
         ]}
       >
-        <View style={styles.heading}>
-            <Pressable
-              accessibilityLabel="关闭"
-              accessibilityRole="button"
-              disabled={pending}
-              hitSlop={8}
-              onPress={close}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <SymbolView
-                name={{ android: 'close', ios: 'xmark', web: 'close' }}
-                size={17}
-                tintColor={colors.muted}
-                weight="semibold"
-              />
-            </Pressable>
-            <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
-              {isEditing
-                ? '编辑回复'
-                : replyingTo
-                  ? `回复 ${replyingTo.author}`
-                  : '参与讨论'}
-            </Text>
-            <Pressable
-              accessibilityLabel={isEditing ? '保存回复' : '发送回复'}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canSend }}
-              disabled={!canSend}
-              hitSlop={5}
-              onPress={send}
-              style={({ pressed }) => [
-                styles.sendButton,
-                !canSend && styles.sendButtonDisabled,
-                pressed && canSend && styles.pressed,
-              ]}
-            >
-              {pending ? (
-                <ActivityIndicator color={colors.surface} size="small" />
-              ) : (
-                <Text style={styles.sendText}>
-                  {isEditing ? '保存' : '回复'}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-
           {replyingTo && !isEditing ? (
             <View style={styles.reference}>
               <Text style={styles.referenceAuthor}>@{replyingTo.author}</Text>

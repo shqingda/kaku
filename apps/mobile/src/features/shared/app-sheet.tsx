@@ -35,8 +35,11 @@ import { useReduceMotion } from '@/lib/use-reduce-motion';
 // 底部弹层：进入/退出沿同一路径滑下，可被拖拽与反拉打断（interruptibility），
 // 释放时按动量投影决定关闭还是弹回（velocity handoff + momentum projection），
 // 向上拖出展开位时按橡皮筋逐渐抵抗。减少动态效果时退化为不透明度过渡。
+// header：标题行插槽，渲染在下拖手势区内（把手下方），让「按住标题拖动」
+// 成为关闭路径的一部分；内部按钮的点按不受影响（Pan 按位移激活，轻点不算）。
 export function AppSheet({
   children,
+  header,
   keyboardAvoidingBehavior = 'padding',
   onClose,
   onEntered,
@@ -45,6 +48,7 @@ export function AppSheet({
   visible,
 }: {
   children: ReactNode;
+  header?: ReactNode;
   keyboardAvoidingBehavior?: 'height' | 'padding' | 'position' | undefined;
   onClose: () => void;
   onEntered?: () => void;
@@ -140,6 +144,10 @@ export function AppSheet({
 
   const pan = Gesture.Pan()
     .enabled(!reduceMotion && swipeToDismissEnabled)
+    // 纵向位移超过阈值才激活，横向明显移动即判失败：
+    // 标题行里的按钮保持可点，横向滑动不会误触发下拖。
+    .activeOffsetY([-12, 12])
+    .failOffsetX([-24, 24])
     .onBegin(() => {
       cancelAnimation(translateY);
     })
@@ -248,11 +256,14 @@ export function AppSheet({
           pointerEvents={visible ? 'auto' : 'none'}
           style={[styles.sheet, sheetStyle, { backgroundColor: colors.surface }]}
         >
-          {/* 拖拽手势只挂在把手上：若包住整个弹层，Android 上会抢走
-              内部 ScrollView/FlatList 的滚动，导致列表无法滚动。 */}
+          {/* 拖拽手势挂在把手与 header 插槽上：若包住整个弹层，Android 上
+              会抢走内部 ScrollView/FlatList 的滚动，导致列表无法滚动。 */}
           <GestureDetector gesture={pan}>
-            <View style={styles.dragZone}>
-              <View style={[styles.handle, { backgroundColor: colors.track }]} />
+            <View>
+              <View style={styles.dragZone}>
+                <View style={[styles.handle, { backgroundColor: colors.track }]} />
+              </View>
+              {header}
             </View>
           </GestureDetector>
           {children}
