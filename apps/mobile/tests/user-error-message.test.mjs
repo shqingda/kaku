@@ -24,6 +24,15 @@ test('KakuApiError maps auth, permission, missing, and rate-limit statuses', () 
   );
 });
 
+test('KakuApiError 409 always maps to Bangumi reauthorization copy', () => {
+  // 服务端约定：所有 409 都是 bangumi_reauthorization_required（Bangumi
+  // 凭据已被删除），不区分业务域，也不落入 fallback。
+  assert.equal(
+    userErrorMessage(new KakuApiError('conflict', 409)),
+    'Bangumi 授权已失效，请重新登录。',
+  );
+});
+
 test('KakuApiError maps 5xx to service downtime and other statuses to the fallback', () => {
   assert.equal(
     userErrorMessage(new KakuApiError('boom', 500)),
@@ -36,10 +45,6 @@ test('KakuApiError maps 5xx to service downtime and other statuses to the fallba
   assert.equal(
     userErrorMessage(new KakuApiError('bad request', 400)),
     '暂时没有成功，请稍后重试。',
-  );
-  assert.equal(
-    userErrorMessage(new KakuApiError('conflict', 409), '自定义失败提示'),
-    '自定义失败提示',
   );
 });
 

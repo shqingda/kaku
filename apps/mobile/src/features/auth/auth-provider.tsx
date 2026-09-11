@@ -207,9 +207,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         response = await fetchKaku(path, currentSession.sessionToken, init);
       }
 
+      // 服务端约定 409 = Bangumi 授权已失效（凭据已被删除，见各 routes 的
+      // bangumi_reauthorization_required）。Kaku 会话本身仍有效，但此后所有
+      // 个人数据请求都会持续失败；跟随断开授权的产品语义清掉本地会话，
+      // 让账号页回到登录面板引导重新连接。并发请求可能同时命中，clearSession
+      // 与 setError 都是幂等的。
+      if (response.status === 409) {
+        await clearSession();
+        setError('Bangumi 授权已失效，请重新登录。');
+      }
+
       return response;
     },
-    [refreshSession],
+    [clearSession, refreshSession],
   );
 
   const signIn = useCallback(async () => {

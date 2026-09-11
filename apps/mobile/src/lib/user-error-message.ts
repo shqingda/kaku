@@ -14,6 +14,10 @@ export function userErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE) {
         return '内容不存在或已删除。';
       case 429:
         return '请求太频繁，请稍后再试。';
+      case 409:
+        // 服务端约定：所有 409 都表示 Bangumi 授权已失效（凭据已被删除），
+        // 见 apps/api 各 routes 的 bangumi_reauthorization_required。
+        return 'Bangumi 授权已失效，请重新登录。';
     }
     if (error.status >= 500) {
       return '服务暂时不可用，请稍后重试。';
