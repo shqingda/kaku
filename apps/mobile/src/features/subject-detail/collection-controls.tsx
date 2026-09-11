@@ -17,7 +17,7 @@ import { RatingStars } from '@/features/reviews/rating-stars';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { WatchingItem } from '@/features/watching/model';
 import { canRateCollectionStatus } from '@/features/watching/progress';
-import { playSuccessHaptic } from '@/lib/haptics';
+import { playSuccessHaptic, playWarningHaptic } from '@/lib/haptics';
 
 import type { CollectionBoxDraft } from './collection-box-draft';
 import { collectionBoxUpdateFromDraft } from './collection-box-draft';
@@ -67,7 +67,12 @@ export function CollectionControls({
         }),
       );
       setIsOpen(false);
-      playSuccessHaptic();
+      // 取消收藏（draft 不带状态）是不可逆操作，用 warning 区别于普通保存的 success。
+      if (draft.collectionStatus) {
+        playSuccessHaptic();
+      } else {
+        playWarningHaptic();
+      }
     } catch (error) {
       Alert.alert(
         '收藏没有保存',

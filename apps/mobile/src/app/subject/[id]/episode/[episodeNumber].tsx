@@ -32,7 +32,7 @@ import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-di
 import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
-import { playEpisodeToggleHaptic } from '@/lib/haptics';
+import { playEpisodeToggleHaptic, playWarningHaptic } from '@/lib/haptics';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -124,6 +124,7 @@ export default function EpisodeScreen() {
             if (Number.isInteger(postId)) {
               deleteReply.mutate(postId, {
                 onError: (error) => Alert.alert('回复没有删除', userErrorMessage(error)),
+                onSuccess: () => playWarningHaptic(),
               });
             }
           },

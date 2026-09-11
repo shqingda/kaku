@@ -14,6 +14,7 @@ import {
   useNotifications,
 } from '@/features/notifications/use-notifications';
 import { useTheme } from '@/features/theme/theme-provider';
+import { playSuccessHaptic } from '@/lib/haptics';
 
 export default function NotificationsScreen() {
   const colors = useTheme();
@@ -42,7 +43,11 @@ export default function NotificationsScreen() {
                 accessibilityRole="button"
                 disabled={markRead.isPending}
                 hitSlop={8}
-                onPress={() => markRead.mutate(undefined)}
+                onPress={() =>
+                  markRead.mutate(undefined, {
+                    onSuccess: () => playSuccessHaptic(),
+                  })
+                }
                 style={({ pressed }) => pressed && styles.pressed}
               >
                 <SymbolView

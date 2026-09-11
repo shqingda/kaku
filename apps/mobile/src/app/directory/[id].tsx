@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
+import { playWarningHaptic } from '@/lib/haptics';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
@@ -180,7 +181,10 @@ export default function PublicIndexScreen() {
           onPress: () => {
             deleteIndex.mutate(indexId, {
               onError: (error) => Alert.alert('目录没有删除', userErrorMessage(error)),
-              onSuccess: () => router.back(),
+              onSuccess: () => {
+                playWarningHaptic();
+                router.back();
+              },
             });
           },
           style: 'destructive',

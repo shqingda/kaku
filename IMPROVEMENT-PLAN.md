@@ -22,13 +22,13 @@
 
 ---
 
-## 批次 B：按压手感与触感统一（梯队①，约 1 天）
+## 批次 B：按压手感与触感统一（梯队①，已完成 2026-09-11）
 
-**B1. PressableScale 推广** — 组件已实现 pointer-down 缩放 + 可中断弹簧，但目前只被首页引用。推广到：主封面卡（`home-media-section.tsx` MediaCard）、browse 网格卡、rankings 行，替代静态 opacity 按压态。
+**B1. PressableScale 推广（已完成）** — 主封面卡（`home-media-section` MediaCard）、browse 网格卡（BrowseCard）、排行榜行（`ranked-subject-row`，同时覆盖频道页排行区）全部换成 pointer-down 缩放 + 可中断弹簧；保留按压 opacity 作为 reduce-motion 退化反馈（与首页既有用法同一约定）。
 
-**B2. Haptics 补齐** — `lib/haptics.ts` 已有 selection/success/episode 三种，补：破坏性确认后（删回复/删目录/取消收藏）→ warning；校验失败 → error；下拉刷新触发 → light；「全部标记已读」→ success。
+**B2. Haptics 补齐（已完成）** — 新增 warning / error / light 三种触感函数并接线：删除回复成功、删除目录成功、取消收藏成功 → warning；「全部标记已读」→ success；下拉刷新触发（`AppRefreshControl` 中央接线，全 app 生效）→ light。测试环境的 haptics 全局 mock（`tests/ui/setup.ts`）同步补齐。
 
-**B3. browse 年份无效输入显式反馈** — `browse.tsx:85-88` 静默钳制改为输入框下一次错误文案 + error 触感（参照 `bangumi-emoji-picker.tsx:160-166` 的即时报错模式）。
+**B3. browse 年份无效输入显式反馈（已完成）** — 无效年份（非 1900–2100 整数）不再静默钳制成「无筛选」：输入框下方显示错误文案（`accessibilityRole="alert"`，accent 色，与 emoji 面板报错同惯例）+ error 触感，保留键盘让用户修正；修改输入即清除错误。
 
 ---
 

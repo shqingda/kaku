@@ -14,6 +14,9 @@ jest.mock('@/lib/haptics', () => ({
   playSelectionHaptic: jest.fn().mockResolvedValue(undefined),
   playEpisodeToggleHaptic: jest.fn().mockResolvedValue(undefined),
   playSuccessHaptic: jest.fn().mockResolvedValue(undefined),
+  playWarningHaptic: jest.fn().mockResolvedValue(undefined),
+  playErrorHaptic: jest.fn().mockResolvedValue(undefined),
+  playLightHaptic: jest.fn().mockResolvedValue(undefined),
 }));
 
 // reanimated 加载需要 worklets babel 插件，jest 里整体替换为 no-op mock：

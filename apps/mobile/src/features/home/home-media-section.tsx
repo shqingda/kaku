@@ -13,6 +13,7 @@ import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { getCollectionStatusLabel, supportsWatchProgress } from '@/features/catalog/subject-types';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
+import { PressableScale } from '@/features/shared/pressable-scale';
 import { SectionAction } from '@/features/shared/section-action';
 import { SkeletonBox } from '@/features/shared/skeleton';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -156,7 +157,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           params: { id: String(item.id) },
         }}
       >
-        <Pressable
+        <PressableScale
           accessibilityLabel={`打开${item.title}`}
           accessibilityRole="button"
           accessibilityHint="进入条目详情"
@@ -192,7 +193,7 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.cardMeta}>
             {progress}
           </Text>
-        </Pressable>
+        </PressableScale>
       </Link>
     </View>
   );

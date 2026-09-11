@@ -29,7 +29,9 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { PressableScale } from '@/features/shared/pressable-scale';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { playErrorHaptic } from '@/lib/haptics';
 
 const SORTS: Array<{ id: BrowseSort; label: string }> = [
   { id: 'rank', label: '排名' },
@@ -59,6 +61,7 @@ export default function BrowseScreen() {
   const [yearDraft, setYearDraft] = useState('');
   const [tagDraft, setTagDraft] = useState(normalizedInitialTag);
   const [year, setYear] = useState<number>();
+  const [yearError, setYearError] = useState<string>();
   const [tag, setTag] = useState<string | undefined>(
     normalizedInitialTag || undefined,
   );
@@ -79,8 +82,25 @@ export default function BrowseScreen() {
   );
 
   function applyFilters() {
-    const parsedYear = Number(yearDraft);
-    setYear(Number.isInteger(parsedYear) && parsedYear >= 1900 ? parsedYear : undefined);
+    const draft = yearDraft.trim();
+    if (draft === '') {
+      setYearError(undefined);
+      setYear(undefined);
+    } else {
+      const parsedYear = Number(draft);
+      const isValidYear =
+        Number.isInteger(parsedYear) &&
+        parsedYear >= 1900 &&
+        parsedYear <= 2100;
+      // 无效年份显式报错并保留键盘让用户修正，而不是静默钳制成"无筛选"。
+      if (!isValidYear) {
+        setYearError('请输入 1900 到 2100 之间的年份');
+        playErrorHaptic();
+        return;
+      }
+      setYearError(undefined);
+      setYear(parsedYear);
+    }
     setTag(tagDraft.trim() || undefined);
     Keyboard.dismiss();
   }
@@ -154,7 +174,10 @@ export default function BrowseScreen() {
                 accessibilityHint="输入四位年份，例如 2026"
                 keyboardType="number-pad"
                 maxLength={4}
-                onChangeText={setYearDraft}
+                onChangeText={(value) => {
+                  setYearDraft(value);
+                  setYearError(undefined);
+                }}
                 placeholder="年份，如 2026"
                 placeholderTextColor={colors.subtle}
                 style={styles.filterInput}
@@ -186,6 +209,11 @@ export default function BrowseScreen() {
                 <Text style={styles.applyText}>应用</Text>
               </Pressable>
             </View>
+            {yearError ? (
+              <Text accessibilityRole="alert" style={styles.filterError}>
+                {yearError}
+              </Text>
+            ) : null}
             <Text style={styles.resultTitle}>
               {getSubjectTypeLabel(subjectType)} · {SORTS.find((item) => item.id === sort)?.label}
               {year ? ` · ${year}` : ''}{tag ? ` · ${tag}` : ''}
@@ -217,7 +245,7 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
   const prefetchSubject = usePrefetchSubject();
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityLabel={`打开${item.title}`}
       accessibilityRole="button"
       accessibilityHint="进入条目详情"
@@ -234,7 +262,7 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
       </View>
       <Text maxFontSizeMultiplier={1.35} numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
       <Text style={styles.cardMeta}>{item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}</Text>
-    </Pressable>
+    </PressableScale>
   );
 });
 
@@ -252,6 +280,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   sortText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   sortTextSelected: { color: colors.accent },
   filterCard: { alignItems: 'center', backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
+  filterError: { color: colors.accent, fontSize: 11, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
   filterInput: { color: colors.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
   filterDivider: { backgroundColor: colors.divider, height: 24, width: StyleSheet.hairlineWidth },
   applyButton: { alignItems: 'center', backgroundColor: colors.ink, borderRadius: 12, height: 36, justifyContent: 'center', paddingHorizontal: 14 },

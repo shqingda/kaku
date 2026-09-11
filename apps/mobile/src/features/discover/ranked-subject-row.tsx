@@ -1,12 +1,12 @@
 import { Image } from 'expo-image';
 import {
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { PressableScale } from '@/features/shared/pressable-scale';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
@@ -29,7 +29,7 @@ export function RankedSubjectRow({
   const prefetchSubject = usePrefetchSubject();
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityLabel={`排行榜第 ${position} 名：${item.title}`}
       accessibilityRole="button"
       accessibilityHint="进入条目详情"
@@ -72,7 +72,7 @@ export function RankedSubjectRow({
         </Text>
       </View>
       <Text style={styles.chevron}>›</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
