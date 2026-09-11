@@ -86,7 +86,8 @@ export function ScrollToTopButton({
         style={({ pressed }) => [
           styles.button,
           variant === 'pill' ? styles.pill : styles.icon,
-          { backgroundColor: colors.surface },
+          // 描边走主题 token：硬编码的黑色描边在暗色 surface 上不可见。
+          { backgroundColor: colors.surface, borderColor: colors.divider },
           pressed && styles.pressed,
         ]}
       >
@@ -113,10 +114,6 @@ const styles = StyleSheet.create({
   pillContainer: { alignItems: 'center', left: 0, right: 0 },
   button: {
     alignItems: 'center',
-    borderColor:
-      Platform.OS === 'android'
-        ? 'rgba(29, 29, 31, 0.14)'
-        : 'rgba(29, 29, 31, 0.08)',
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     height: 44,

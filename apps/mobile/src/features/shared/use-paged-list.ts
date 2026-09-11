@@ -81,7 +81,8 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
     onEndReachedThreshold: 0.45,
     onScroll: listRef.handleScroll,
     scrollEventThrottle: 80,
-    showsVerticalScrollIndicator: false,
+    // 长列表保留系统滚动指示器帮助定位（此前全局隐藏）。
+    showsVerticalScrollIndicator: true,
   };
 
   const footerProps = {

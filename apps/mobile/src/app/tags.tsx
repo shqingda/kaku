@@ -121,7 +121,6 @@ export default function TagsScreen() {
           />
         }
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
       />
       <ScrollToTopButton
         onPress={tags.scrollToTop}

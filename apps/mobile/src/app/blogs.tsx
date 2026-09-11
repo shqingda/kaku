@@ -120,7 +120,6 @@ export default function GlobalBlogsScreen() {
           />
         }
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
       />
       <ScrollToTopButton
         onPress={blogs.scrollToTop}

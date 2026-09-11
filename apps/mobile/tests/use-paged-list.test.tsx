@@ -143,7 +143,7 @@ describe('usePagedList', () => {
     const listProps = result.current.listProps;
     expect(listProps.onEndReachedThreshold).toBe(0.45);
     expect(listProps.scrollEventThrottle).toBe(80);
-    expect(listProps.showsVerticalScrollIndicator).toBe(false);
+    expect(listProps.showsVerticalScrollIndicator).toBe(true);
     expect([5, 7]).toContain(listProps.windowSize);
     expect(typeof listProps.ref).toBe('object');
     expect(typeof listProps.onScroll).toBe('function');

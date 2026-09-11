@@ -145,7 +145,6 @@ function HomeContent() {
             />
           ) : undefined
         }
-        showsVerticalScrollIndicator={false}
       >
         <HomeHeader session={session} />
 
