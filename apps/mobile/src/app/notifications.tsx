@@ -14,7 +14,8 @@ import {
   useNotifications,
 } from '@/features/notifications/use-notifications';
 import { useTheme } from '@/features/theme/theme-provider';
-import { playSuccessHaptic } from '@/lib/haptics';
+import { playSelectionHaptic, playSuccessHaptic } from '@/lib/haptics';
+import { SwipeableRow } from '@/features/shared/swipeable-row';
 
 export default function NotificationsScreen() {
   const colors = useTheme();
@@ -117,12 +118,37 @@ export default function NotificationsScreen() {
         }
         removeClippedSubviews={Platform.OS === 'android'}
         renderItem={({ index, item }) => (
-          <NotificationRow
-            colors={colors}
-            hasDivider={index > 0}
-            item={item}
-            onRead={(id) => markRead.mutate([id])}
-          />
+          <SwipeableRow
+            actions={
+              item.unread
+                ? [
+                    {
+                      backgroundColor: colors.accent,
+                      foreground: colors.surface,
+                      id: 'mark-read',
+                      label: '已读',
+                      onPress: () => {
+                        playSelectionHaptic();
+                        markRead.mutate([item.id]);
+                      },
+                      symbol: {
+                        android: 'done_all',
+                        ios: 'checkmark.circle',
+                        web: 'done_all',
+                      },
+                    },
+                  ]
+                : []
+            }
+            contentBackgroundColor={colors.background}
+          >
+            <NotificationRow
+              colors={colors}
+              hasDivider={index > 0}
+              item={item}
+              onRead={(id) => markRead.mutate([id])}
+            />
+          </SwipeableRow>
         )}
         showsVerticalScrollIndicator={false}
       />

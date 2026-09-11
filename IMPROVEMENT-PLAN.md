@@ -34,9 +34,7 @@
 
 ## 批次 C：iOS 手势与菜单质感（梯队②，约 2–3 天）
 
-**C1. 行级左滑操作** — 引入 gesture-handler 自带的 `ReanimatedSwipeable`（与现有弹簧体系同构，速度交接天然一致）：
-- 通知列表：左滑已读/删除（乐观更新逻辑已有，`use-notifications.ts:25-59`）；
-- 个人收藏列表：左滑改状态/删除，动作复用 `collection-controls`，删除保留确认。
+**C1. 行级左滑操作（已完成 2026-09-11，动作范围修正）** — 新增共享 `SwipeableRow`（`ReanimatedSwipeable` 子路径导入，内容 1:1 跟手 + 面板按进度显现 + 弹簧速度交接；点按动作先收面板再执行）。通知行：未读行左滑「已读」（乐观更新 + selection 触感）；已读行无动作。收藏行：左滑「编辑」打开既有收藏盒 sheet（`CollectionRowEditor` 增加受控模式）——原计划的「删除」动作受 Bangumi API 限制不可行（取消收藏需跳转官网），「改状态」收敛进编辑器。
 
 **C2. 长按 context menu 替换 Alert 菜单** — 项目已装 `@expo/ui`，优先用其原生 Menu（iOS 上是真正的 context menu，带图标与按压缩放），回退方案 `ActionSheetIOS`：
 - `directory/[id].tsx:155`（目录操作）、`profile-overflow.tsx:58`、`friend-action.tsx:38-57`；

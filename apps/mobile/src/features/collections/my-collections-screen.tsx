@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import Storage from 'expo-sqlite/kv-store';
@@ -17,6 +17,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { SwipeableRow } from '@/features/shared/swipeable-row';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
 
@@ -116,16 +117,11 @@ export function MyCollectionsScreen({
 
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: PublicUserCollection }) => (
-      <CollectionRow
+      <SwipeableCollectionRow
         isFirst={index === 0}
         isLast={index === results.length - 1}
         item={item}
         onPressItem={openSubject}
-        trailing={
-          item.collectionStatus === 'doing' ? (
-            <CollectionRowEditor item={item} />
-          ) : undefined
-        }
       />
     ),
     [openSubject, results.length],
@@ -222,3 +218,52 @@ export function MyCollectionsScreen({
     </SafeAreaView>
   );
 }
+
+// 自己的收藏行：左滑打开收藏编辑器（改状态、进度、评分）。
+// 编辑器实例按行持有开关状态；「看过中」的行保留原有的行内编辑按钮。
+const SwipeableCollectionRow = memo(function SwipeableCollectionRow({
+  isFirst,
+  isLast,
+  item,
+  onPressItem,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+  item: PublicUserCollection;
+  onPressItem: (id: number) => void;
+}) {
+  const colors = useTheme();
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  return (
+    <SwipeableRow
+      actions={[
+        {
+          backgroundColor: colors.surfaceAlt,
+          foreground: colors.ink,
+          id: 'edit-collection',
+          label: '编辑',
+          onPress: () => setEditorOpen(true),
+          symbol: { android: 'edit', ios: 'square.and.pencil', web: 'edit' },
+        },
+      ]}
+      contentBackgroundColor={colors.surface}
+    >
+      <CollectionRow
+        isFirst={isFirst}
+        isLast={isLast}
+        item={item}
+        onPressItem={onPressItem}
+        trailing={
+          item.collectionStatus === 'doing' || editorOpen ? (
+            <CollectionRowEditor
+              item={item}
+              onOpenChange={setEditorOpen}
+              open={editorOpen}
+            />
+          ) : undefined
+        }
+      />
+    </SwipeableRow>
+  );
+});

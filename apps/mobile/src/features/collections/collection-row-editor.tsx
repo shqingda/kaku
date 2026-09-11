@@ -50,10 +50,25 @@ function toCollectionEditorItem(
   };
 }
 
-export function CollectionRowEditor({ item }: { item: PublicUserCollection }) {
+// 行内收藏编辑器的开关。open/onOpenChange 提供时为受控模式（供左滑动作
+// 触发同一套 sheet）；不提供时保持自管状态（行内编辑按钮）。
+export function CollectionRowEditor({
+  item,
+  onOpenChange,
+  open: openProp,
+}: {
+  item: PublicUserCollection;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
+}) {
   const colors = useTheme();
   const styles = createStyles(colors);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const personalQuery = usePersonalCollection(item.id, { enabled: open });
   const saveCollection = useSavePersonalCollection(item.id);
 
