@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import type { ThemeColors } from '@/constants/theme';
 import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
@@ -17,6 +18,7 @@ import { PressableScale } from '@/features/shared/pressable-scale';
 import { SectionAction } from '@/features/shared/section-action';
 import { SkeletonBox } from '@/features/shared/skeleton';
 import { useTheme } from '@/features/theme/theme-provider';
+import { useReduceMotion } from '@/lib/use-reduce-motion';
 import type { PublicUserCollection } from '@/features/users/model';
 
 const HOME_TRACKING_TYPES = [
@@ -52,6 +54,10 @@ export function HomeMediaSection({
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
+  const reduceMotion = useReduceMotion();
+  // 收藏 tab 切换时骨架与内容都是淡入（opacity-only），替换不再突兀；
+  // reduce-motion 时直接出现。
+  const contentEntering = reduceMotion ? undefined : FadeIn.duration(140);
 
   function openAll() {
     router.push({
@@ -95,7 +101,7 @@ export function HomeMediaSection({
       {loading ? (
         // 与封面卡同构的骨架：3 张弹性宽度卡（约等于真实卡片的 104pt），
         // 数据到达时不跳版。
-        <View style={styles.skeletonRow}>
+        <Animated.View entering={contentEntering} style={styles.skeletonRow}>
           {[0, 1, 2].map((index) => (
             <View key={index} style={styles.skeletonCard}>
               <SkeletonBox borderRadius={14} height={146} width="100%" />
@@ -103,7 +109,7 @@ export function HomeMediaSection({
               <SkeletonBox height={11} width="55%" />
             </View>
           ))}
-        </View>
+        </Animated.View>
       ) : error && items.length === 0 ? (
         <Pressable
           accessibilityRole="button"
@@ -117,7 +123,7 @@ export function HomeMediaSection({
           <Text style={styles.stateText}>这里还没有条目</Text>
         </View>
       ) : (
-        <>
+        <Animated.View entering={contentEntering}>
           {error ? (
             <View style={styles.cachedNotice}>
               <CachedDataNotice onRetry={onRetry} />
@@ -133,7 +139,7 @@ export function HomeMediaSection({
               <MediaCard item={item} key={item.id} />
             ))}
           </ScrollView>
-        </>
+        </Animated.View>
       )}
     </View>
   );

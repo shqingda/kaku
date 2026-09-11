@@ -18,6 +18,7 @@ import { userErrorMessage } from '@/lib/user-error-message';
 import { shareBangumiEntity } from '@/lib/share';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { ExpandableText } from '@/features/shared/expandable-text';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
   getSubjectDetailLabels,
@@ -252,7 +253,6 @@ export default function SubjectScreen() {
   const bannerOffset = isOffline ? 48 : 8;
   const { session } = useAuth();
   const { rememberSubject: rememberRecentSubject } = useRecentSubjects();
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const subjectId = parsePositiveIntegerRouteParam(id);
   const queryClient = useQueryClient();
   const catalogQuery = useCatalogSubject(subjectId ?? 0);
@@ -568,25 +568,16 @@ export default function SubjectScreen() {
 
           <View style={styles.panel}>
             <Text style={styles.panelTitle}>简介</Text>
-            <Text
-              numberOfLines={isSummaryExpanded ? undefined : 3}
-              style={styles.summary}
-            >
-              {summary}
-            </Text>
             {summary.length > 100 ? (
-              <Pressable
-                accessibilityLabel={isSummaryExpanded ? '收起简介' : '展开简介'}
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => setIsSummaryExpanded((current) => !current)}
-                style={({ pressed }) => pressed && styles.pressed}
-              >
-                <Text style={styles.summaryToggle}>
-                  {isSummaryExpanded ? '收起' : '展开'}
-                </Text>
-              </Pressable>
-            ) : null}
+              <ExpandableText
+                noun="简介"
+                style={styles.summary}
+                text={summary}
+                toggleLabelStyle={styles.summaryToggle}
+              />
+            ) : (
+              <Text style={styles.summary}>{summary}</Text>
+            )}
           </View>
 
         {hasEpisodeData && totalEpisodes > 0 ? (

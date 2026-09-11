@@ -40,7 +40,7 @@
 - `directory/[id].tsx:155`（目录操作）、`profile-overflow.tsx:58`、`friend-action.tsx:38-57`；
 - 顺带补：搜索历史长按删除、封面长按（分享/举报）。
 
-**C3. 内容过渡动画** — 首页收藏 tab 切换骨架↔内容交叉淡化 120–160ms（opacity-only，reduce-motion 直接跳过）；subject 简介展开/收起弹簧化（复用 `changelog.tsx:101` 的 measure+spring 模式，同屏风格统一）。
+**C3. 内容过渡动画（已完成 2026-09-11）** — 首页收藏 tab 切换：骨架与内容区淡入 140ms（opacity-only `FadeIn`，reduce-motion 直接出现）；subject 简介展开/收起：新增共享 `ExpandableText`（与 changelog 卡片同一套 measure+spring 模式，进度 0→1、高度从当前值出发、可随时反向，reduce-motion 跳过；收起态改为高度裁切，无省略号——与 changelog 视觉语言一致）。
 
 **C4. AppSheet 拖拽区扩展** — 下拖关闭手势从把手扩展到 heading 区（`app-sheet.tsx:253-257`），保持与内层滚动列表的手势冲突处理注释约定。
 
