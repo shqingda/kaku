@@ -38,6 +38,7 @@ import {
 } from '@/features/indexes/use-index-collection';
 import type { PublicIndexItem } from '@/features/indexes/model';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
+import { AppActionMenu } from '@/features/shared/app-action-menu';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
@@ -130,6 +131,7 @@ export default function PublicIndexScreen() {
   const pathname = usePathname();
   const { session } = useAuth();
   const [composerVisible, setComposerVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const indexId = parsePositiveIntegerRouteParam(id);
   const indexQuery = usePublicIndex(indexId ?? 0);
   const itemsQuery = usePublicIndexItems(indexId ?? 0);
@@ -153,18 +155,7 @@ export default function PublicIndexScreen() {
       return;
     }
 
-    Alert.alert(index.title, undefined, [
-      {
-        onPress: () => setComposerVisible(true),
-        text: '编辑目录',
-      },
-      {
-        onPress: confirmDelete,
-        style: 'destructive',
-        text: '删除目录',
-      },
-      { style: 'cancel', text: '取消' },
-    ]);
+    setMenuVisible(true);
   }
 
   function confirmDelete() {
@@ -401,6 +392,25 @@ export default function PublicIndexScreen() {
         onClose={() => setComposerVisible(false)}
         onEdited={() => setComposerVisible(false)}
         visible={composerVisible}
+      />
+      <AppActionMenu
+        actions={[
+          {
+            id: 'edit-index',
+            label: '编辑目录',
+            onPress: () => setComposerVisible(true),
+            symbol: { android: 'edit', ios: 'square.and.pencil', web: 'edit' },
+          },
+          {
+            id: 'delete-index',
+            label: '删除目录',
+            onPress: confirmDelete,
+            symbol: { android: 'delete', ios: 'trash', web: 'delete' },
+          },
+        ]}
+        onClose={() => setMenuVisible(false)}
+        title={index?.title}
+        visible={menuVisible}
       />
     </SafeAreaView>
   );

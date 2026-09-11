@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet } from 'react-native';
 
 import { HIT_SLOP } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
+import { AppActionMenu } from '@/features/shared/app-action-menu';
 import { ReportSheet } from '@/features/reports/report-sheet';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -26,6 +27,7 @@ export function ProfileOverflow({
   const blocklistQuery = useBlocklist();
   const setBlocked = useSetUserBlocked(username);
   const [reportVisible, setReportVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const isBlocked = blocklistQuery.data?.includes(userId) ?? false;
 
   function applyBlock(shouldBlock: boolean) {
@@ -55,18 +57,7 @@ export function ProfileOverflow({
   }
 
   function openMenu() {
-    Alert.alert(nickname, undefined, [
-      {
-        onPress: () => setReportVisible(true),
-        text: '举报该用户',
-      },
-      {
-        onPress: confirmBlock,
-        style: isBlocked ? undefined : 'destructive',
-        text: isBlocked ? '取消屏蔽' : '屏蔽该用户',
-      },
-      { style: 'cancel', text: '取消' },
-    ]);
+    setMenuVisible(true);
   }
 
   return (
@@ -85,6 +76,31 @@ export function ProfileOverflow({
           weight="semibold"
         />
       </Pressable>
+      <AppActionMenu
+        actions={[
+          {
+            id: 'report-user',
+            label: '举报该用户',
+            onPress: () => setReportVisible(true),
+            symbol: { android: 'flag', ios: 'flag', web: 'flag' },
+          },
+          {
+            id: 'block-user',
+            label: isBlocked ? '取消屏蔽' : '屏蔽该用户',
+            onPress: confirmBlock,
+            symbol: isBlocked
+              ? { android: 'visibility', ios: 'eye', web: 'visibility' }
+              : {
+                  android: 'visibility_off',
+                  ios: 'eye.slash',
+                  web: 'visibility_off',
+                },
+          },
+        ]}
+        onClose={() => setMenuVisible(false)}
+        title={nickname}
+        visible={menuVisible}
+      />
       <ReportSheet
         onClose={() => setReportVisible(false)}
         onSubmitted={() =>

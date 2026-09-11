@@ -36,9 +36,7 @@
 
 **C1. 行级左滑操作（已完成 2026-09-11，动作范围修正）** — 新增共享 `SwipeableRow`（`ReanimatedSwipeable` 子路径导入，内容 1:1 跟手 + 面板按进度显现 + 弹簧速度交接；点按动作先收面板再执行）。通知行：未读行左滑「已读」（乐观更新 + selection 触感）；已读行无动作。收藏行：左滑「编辑」打开既有收藏盒 sheet（`CollectionRowEditor` 增加受控模式）——原计划的「删除」动作受 Bangumi API 限制不可行（取消收藏需跳转官网），「改状态」收敛进编辑器。
 
-**C2. 长按 context menu 替换 Alert 菜单** — 项目已装 `@expo/ui`，优先用其原生 Menu（iOS 上是真正的 context menu，带图标与按压缩放），回退方案 `ActionSheetIOS`：
-- `directory/[id].tsx:155`（目录操作）、`profile-overflow.tsx:58`、`friend-action.tsx:38-57`；
-- 顺带补：搜索历史长按删除、封面长按（分享/举报）。
+**C2. Alert 菜单替换（已完成 2026-09-11，方案修正）** — 复核后确认真正「Alert 当菜单」的是两处（`friend-action` 的 Alert 是正当的移除确认，不动）。未采用 `@expo/ui` Menu：其 Menu/ContextMenu 是 SwiftUI 专用（Android 需另一套实现），且 TODO.md 明确不为「已装未用」迁移 @expo/ui。改为新增共享 `AppActionMenu`（基于现有 AppSheet 的底部动作面板，44pt+ 行高带图标，双平台一致）：目录页的「编辑目录/删除目录」、用户页溢出菜单的「举报/屏蔽」均迁入；危险操作仍保留各自的确认对话框。长按增强（搜索历史长按删除、封面长按分享/举报）留待后续批次。
 
 **C3. 内容过渡动画（已完成 2026-09-11）** — 首页收藏 tab 切换：骨架与内容区淡入 140ms（opacity-only `FadeIn`，reduce-motion 直接出现）；subject 简介展开/收起：新增共享 `ExpandableText`（与 changelog 卡片同一套 measure+spring 模式，进度 0→1、高度从当前值出发、可随时反向，reduce-motion 跳过；收起态改为高度裁切，无省略号——与 changelog 视觉语言一致）。
 
