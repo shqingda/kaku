@@ -72,6 +72,8 @@ module.exports = {
       './plugins/with-ios-scene-lifecycle',
       'expo-router',
       'expo-image',
+      'expo-font',
+      'expo-web-browser',
       ['expo-camera', { barcodeScannerEnabled: false }],
       [
         'expo-splash-screen',
