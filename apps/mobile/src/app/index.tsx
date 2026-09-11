@@ -29,6 +29,7 @@ import {
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
 import { PressableScale } from '@/features/shared/pressable-scale';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -46,10 +47,20 @@ export default function HomeScreen() {
 
   // 持久化缓存恢复完成前不挂载业务查询：否则冷启动时 SQLite 里的缓存还没
   // hydrate，6 个查询就会按 staleTime 过期立刻发出网络请求，缓存白做。
+  // 骨架与最终首页同构（页头 + 媒体卡），恢复完成时不跳版。
   if (isRestoring) {
     return (
       <SafeAreaView style={styles.screen}>
-        <HomeState message="正在读取缓存" />
+        <View style={styles.content}>
+          <HomeHeader session={null} />
+          <View style={styles.skeletonSlot}>
+            <SkeletonList
+              accessibilityLabel="正在读取缓存"
+              count={3}
+              rowHeight={150}
+            />
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -445,6 +456,7 @@ function HomeState({ message }: { message: string }) {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
+  skeletonSlot: { marginTop: 24 },
   timelineSection: { marginTop: 34 },
   timelineHeading: {
     alignItems: 'center',

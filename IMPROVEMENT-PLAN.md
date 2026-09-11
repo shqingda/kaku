@@ -14,7 +14,7 @@
 
 **A1. 12 个二级屏统一刷新控件（已完成 2026-09-11，范围修正）** — 复核发现这 12 屏在 1.1.4–1.1.6 波次中已接 `onRefresh` 下拉刷新（此前审计信息过期）；真实缺口是用的是 RN 默认灰色 RefreshControl，与全应用其余 21 屏的主题化 `AppRefreshControl`（accent 色 + surface 底）不一致。已全部统一为 `AppRefreshControl`。涉及：`subject/[id]/relations|characters|comments|indexes|reviews|review/[reviewId]|topic/[topicId]|episode/[episodeNumber].tsx`、`user/blogs|friends|collections|timeline/[username].tsx`。
 
-**A2. 通用 `SkeletonList` 组件** — 用现有 `SkeletonBox` 组装列表骨架（行高复用各屏 styles），替换 blogs/channel/notifications 等屏的「正在读取…」静态文字卡 pending 分支；首页冷启动的 `ActivityIndicator`（`index.tsx:434-444`）改为复用 `HomeMediaSection` 现成骨架。原则：加载占位与最终内容同构，消除文字卡→内容跳版。
+**A2. 通用 `SkeletonList` 组件（核心场景已完成 2026-09-11）** — 新增 `features/shared/skeleton-list.tsx`（vertical 行骨架 / horizontal 封面卡骨架，复用 `SkeletonBox` 呼吸动画，支持读屏标签或装饰隐藏）。已替换：notifications、blogs、channel 热门区的「正在读取…」文字卡 pending 分支；首页冷启动改为「页头 + 媒体卡骨架」同构占位。待后续按同模式替换：DiscussionStatus 的 pending 分支（覆盖 reviews/comments/indexes/topic 四屏）、用户主页系列屏、episode 屏的整屏文字卡。原则：加载占位与最终内容同构，消除文字卡→内容跳版。
 
 **A3. 恢复滚动指示器** — `use-paged-list.ts:84` 默认值改 `true`；主页 ScrollView（`index.tsx:148`）同步恢复。弹层（AppSheet）内部列表保持隐藏。
 

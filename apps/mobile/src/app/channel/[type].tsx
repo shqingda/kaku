@@ -29,6 +29,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
 
 function useThemedStyles() {
@@ -94,7 +95,10 @@ export default function ChannelScreen() {
         ) : null}
         {channelQuery.isPending && !channelQuery.data ? (
           <View style={styles.stateSlot}>
-            <AppState title="正在读取热门条目" text={`${label}频道加载中。`} />
+            <SkeletonList
+              accessibilityLabel="正在读取热门条目"
+              direction="horizontal"
+            />
           </View>
         ) : channelQuery.isError && !channelQuery.data ? (
           <View style={styles.stateSlot}>

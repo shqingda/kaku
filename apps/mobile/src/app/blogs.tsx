@@ -19,6 +19,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
@@ -59,7 +60,11 @@ export default function GlobalBlogsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           blogsQuery.isPending ? (
-            <AppState text="正在读取 Bangumi 最新日志。" title="日志加载中" />
+            <SkeletonList
+              accessibilityLabel="日志加载中"
+              count={4}
+              rowHeight={96}
+            />
           ) : blogsQuery.isError ? (
             <AppState
               action={() => void blogsQuery.refetch()}

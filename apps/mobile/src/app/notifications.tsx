@@ -8,6 +8,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { NotificationRow } from '@/features/notifications/notification-row';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import {
   useMarkNotificationsRead,
   useNotifications,
@@ -64,9 +65,10 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           notificationsQuery.isPending ? (
-            <AppState
-              text="新的回复、好友和修订消息会显示在这里。"
-              title="正在读取通知"
+            <SkeletonList
+              accessibilityLabel="正在读取通知"
+              count={5}
+              rowHeight={84}
             />
           ) : notificationsQuery.isError ? (
             <AppState
