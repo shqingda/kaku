@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -44,6 +44,9 @@ function formatAirDate(date?: string) {
   return date ? date.replaceAll('-', '.') : '放送时间待定';
 }
 
+// 距底部超过这个距离时显示「跳到最新回复」（与回顶按钮的出现阈值一致）。
+const JUMP_TO_LATEST_THRESHOLD = 720;
+
 export default function EpisodeScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
@@ -82,6 +85,45 @@ export default function EpisodeScreen() {
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+
+  // 离开底部较远时出现「跳到最新回复」按钮（与回顶按钮同一阈值）。
+  const [jumpToLatestVisible, setJumpToLatestVisible] = useState(false);
+  const jumpToLatestVisibleRef = useRef(false);
+  const maxScrollOffsetRef = useRef(0);
+  const handleListScroll = useCallback(
+    (event: {
+      nativeEvent: {
+        contentOffset: { y: number };
+        contentSize: { height: number };
+        layoutMeasurement: { height: number };
+      };
+    }) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      maxScrollOffsetRef.current = Math.max(
+        0,
+        contentSize.height - layoutMeasurement.height,
+      );
+      const distanceFromBottom =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      const nextVisible =
+        distanceFromBottom > JUMP_TO_LATEST_THRESHOLD && replies.length > 0;
+      if (jumpToLatestVisibleRef.current !== nextVisible) {
+        jumpToLatestVisibleRef.current = nextVisible;
+        setJumpToLatestVisible(nextVisible);
+      }
+      scrollToTop.handleScroll(event);
+    },
+    [replies.length, scrollToTop.handleScroll],
+  );
+
+  // 用最大偏移而不是 scrollToIndex（末楼）：远索引在可变行高下可能被
+  // FlashList 拒绝，scrollToOffset 超界会被原生钳制到列表末尾。
+  const jumpToLatest = useCallback(() => {
+    void replyNavigation.listRef.current?.scrollToOffset({
+      animated: true,
+      offset: maxScrollOffsetRef.current + 200,
+    });
+  }, [replyNavigation.listRef]);
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -289,7 +331,7 @@ export default function EpisodeScreen() {
               }
             />
           }
-          onScroll={scrollToTop.handleScroll}
+          onScroll={handleListScroll}
           scrollEventThrottle={80}
           ListEmptyComponent={
             commentsQuery.isPending ||
@@ -484,6 +526,14 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
+      <ScrollToTopButton
+        accessibilityHint="滚动到本集最新一条回复"
+        accessibilityLabel="跳到最新回复"
+        bottom={160}
+        icon={{ android: 'arrow_downward', ios: 'arrow.down', web: 'arrow_downward' }}
+        onPress={jumpToLatest}
+        visible={jumpToLatestVisible}
+      />
       <ScrollToTopButton
         bottom={104}
         onPress={scrollToTop.scrollToTop}

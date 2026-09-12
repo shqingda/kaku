@@ -7,11 +7,19 @@ import {
   StyleSheet,
   Text,
 } from 'react-native';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
+
+type ScrollButtonIcon = SymbolViewProps['name'];
+
+const UP_ICON: ScrollButtonIcon = {
+  android: 'arrow_upward',
+  ios: 'arrow.up',
+  web: 'arrow_upward',
+};
 
 function getTransitionDuration(
   reduceMotion: boolean,
@@ -23,13 +31,22 @@ function getTransitionDuration(
   return visible ? 160 : 120;
 }
 
+// 列表滚动按钮：图标、无障碍文案可配（回顶按钮与「跳到最新回复」共用）。
 export function ScrollToTopButton({
+  accessibilityHint = '滚动到当前列表顶部',
+  accessibilityLabel = '回到顶部',
   bottom = 24,
+  icon = UP_ICON,
+  label = '回到顶部',
   onPress,
   variant = 'icon',
   visible,
 }: {
+  accessibilityHint?: string;
+  accessibilityLabel?: string;
   bottom?: number;
+  icon?: ScrollButtonIcon;
+  label?: string;
   onPress: () => void;
   variant?: 'icon' | 'pill';
   visible: boolean;
@@ -45,7 +62,7 @@ export function ScrollToTopButton({
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
     }).start();
-  }, [progress, reduceMotion, visible]);
+  }, [progress, reduceMotion, visible, variant]);
 
   return (
     <Animated.View
@@ -75,9 +92,9 @@ export function ScrollToTopButton({
       ]}
     >
       <Pressable
-        accessibilityLabel="回到顶部"
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
-        accessibilityHint="滚动到当前列表顶部"
         hitSlop={8}
         onPress={() => {
           playSelectionHaptic();
@@ -86,19 +103,13 @@ export function ScrollToTopButton({
         style={({ pressed }) => [
           styles.button,
           variant === 'pill' ? styles.pill : styles.icon,
-          // 描边走主题 token：硬编码的黑色描边在暗色 surface 上不可见。
           { backgroundColor: colors.surface, borderColor: colors.divider },
           pressed && styles.pressed,
         ]}
       >
-        <SymbolView
-          name={{ android: 'arrow_upward', ios: 'arrow.up', web: 'arrow_upward' }}
-          size={variant === 'pill' ? 15 : 18}
-          tintColor={colors.ink}
-          weight="semibold"
-        />
+        <SymbolView name={icon} size={variant === 'pill' ? 15 : 18} tintColor={colors.ink} weight="semibold" />
         {variant === 'pill' ? (
-          <Text style={[styles.label, { color: colors.ink }]}>回到顶部</Text>
+          <Text style={[styles.label, { color: colors.ink }]}>{label}</Text>
         ) : null}
       </Pressable>
     </Animated.View>
