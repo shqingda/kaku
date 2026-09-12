@@ -31,6 +31,11 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
 import { SkeletonList } from '@/features/shared/skeleton-list';
 import { useRestoreScrollOnFocus } from '@/features/shared/use-restore-scroll-on-focus';
+import {
+  ZoomSourceChrome,
+  zoomSourceScreenOptions,
+  zoomSourceScrollProps,
+} from '@/features/shared/zoom-source-layout';
 import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
 
 function useThemedStyles() {
@@ -64,24 +69,27 @@ export default function ChannelScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
-      <Stack.Screen options={{ title: `${label}频道` }} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        onScroll={rememberScrollOffset}
-        ref={scrollRef}
-        refreshControl={
-          <AppRefreshControl
-            onRefresh={refreshChannel}
-            refreshing={
-              (channelQuery.isRefetching || rankingQuery.isRefetching) &&
-              !channelQuery.isPending &&
-              !rankingQuery.isPending
-            }
-          />
-        }
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={80}
-      >
+      <Stack.Screen
+        options={{ title: `${label}频道`, ...zoomSourceScreenOptions }}
+      />
+      <ZoomSourceChrome>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          onScroll={rememberScrollOffset}
+          ref={scrollRef}
+          refreshControl={
+            <AppRefreshControl
+              onRefresh={refreshChannel}
+              refreshing={
+                (channelQuery.isRefetching || rankingQuery.isRefetching) &&
+                !channelQuery.isPending &&
+                !rankingQuery.isPending
+              }
+            />
+          }
+          showsVerticalScrollIndicator={false}
+          {...zoomSourceScrollProps}
+        >
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>KAKU CHANNEL</Text>
           <Text style={styles.title}>{label}频道</Text>
@@ -222,7 +230,8 @@ export default function ChannelScreen() {
             <AppState title="暂无排行数据" text="稍后刷新即可继续查看。" />
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </ZoomSourceChrome>
     </SafeAreaView>
   );
 }

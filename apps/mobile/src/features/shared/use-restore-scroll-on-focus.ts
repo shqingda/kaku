@@ -1,56 +1,126 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { useFocusEffect, useNavigation } from 'expo-router';
 
-// AppleZoom（expo zoom 转场）pop 时，系统会在转场过程中调整源屏幕
-// ScrollView 的 contentOffset（把缩回的卡片对齐到详情页位置），JS 侧若
-// 不干预，页面会先停在偏移后的位置、等到下一次渲染才跳回——即「返回后
-// 先错位、约一秒后恢复」。
-// 处理：离开屏幕（push 开始）瞬间冻结当时的偏移；转场真正结束
-// （transitionEnd 且非 closing）后立即把冻结值恢复给原生滚动视图。
-// 转场期间系统产生的滚动事件不会污染冻结值；位置本来就正确时
-// scrollTo 是无操作，转场手感不受影响。
+// AppleZoom pop 时，系统会改源屏幕 ScrollView 的 contentOffset（把缩回的
+// 封面对齐到详情页落点）。JS 若只在 transitionEnd 里 scrollTo 一次，经常
+// 赶不上：zoom 可能不发这个事件，或发完之后原生还会再改一帧。
+//
+// 处理：离开时冻结偏移；回到本屏后进入一小段守卫窗口，期间任何偏离冻结
+// 值的滚动立刻拨回去。位置本来就对时 scrollTo 是无操作。
+const GUARD_MS = 900;
+const FALLBACK_RESTORE_MS = 420;
+const OFFSET_EPSILON = 0.5;
+
+type Scrollable = {
+  scrollTo: (options: { animated: boolean; y: number }) => void;
+};
+
 export function useRestoreScrollOnFocus(scrollRef: {
-  current: {
-    scrollTo: (options: { animated: boolean; y: number }) => void;
-  } | null;
+  current: Scrollable | null;
 }) {
-  // transitionEnd 事件在泛型 EventMap 之外，这里按事件名订阅。
+  // transitionStart / transitionEnd 不在默认 EventMap 里。
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const navigation = useNavigation<any>();
   const offsetRef = useRef(0);
   const frozenOffsetRef = useRef(0);
+  const pendingRestoreRef = useRef(false);
+  const guardUntilRef = useRef(0);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const forceScrollTo = useCallback(
+    (y: number) => {
+      const node = scrollRef.current;
+      if (!node) return;
+      const target = Math.max(0, y);
+      // JS 侧若认为已经在 target，部分架构会把 scrollTo 优化成空操作，
+      // 先拨 0.01 再拨回去，强制走到原生。
+      node.scrollTo({ animated: false, y: target + 0.01 });
+      node.scrollTo({ animated: false, y: target });
+    },
+    [scrollRef],
+  );
+
+  const restore = useCallback(() => {
+    forceScrollTo(frozenOffsetRef.current);
+  }, [forceScrollTo]);
+
+  const beginGuard = useCallback(() => {
+    if (!pendingRestoreRef.current) return;
+    pendingRestoreRef.current = false;
+    guardUntilRef.current = Date.now() + GUARD_MS;
+    restore();
+    requestAnimationFrame(restore);
+  }, [restore]);
+
+  const freezeCurrentOffset = useCallback(() => {
+    if (pendingRestoreRef.current) return;
+    frozenOffsetRef.current = offsetRef.current;
+    pendingRestoreRef.current = true;
+  }, []);
 
   const handleScroll = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-      offsetRef.current = event.nativeEvent.contentOffset.y;
+      const y = event.nativeEvent.contentOffset.y;
+      const guarding = Date.now() < guardUntilRef.current;
+      if (pendingRestoreRef.current || guarding) {
+        // 离开后到守卫结束前，系统改偏移不能写进冻结值。
+        // 只在回到本屏的守卫窗口里拨回去，转场过程中不去抢 zoom 对齐。
+        if (guarding && Math.abs(y - frozenOffsetRef.current) > OFFSET_EPSILON) {
+          restore();
+        }
+        return;
+      }
+      offsetRef.current = y;
     },
-    [],
+    [restore],
   );
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const onStart = (event: { data?: { closing?: boolean } }) => {
+      if (event.data?.closing) {
+        freezeCurrentOffset();
+        return;
+      }
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      // zoom 有时不发 transitionEnd，按常见转场时长兜底。
+      fallbackTimerRef.current = setTimeout(() => {
+        fallbackTimerRef.current = null;
+        beginGuard();
+      }, FALLBACK_RESTORE_MS);
+    };
+
+    const onEnd = (event: { data?: { closing?: boolean } }) => {
+      if (event.data?.closing) return;
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      beginGuard();
+    };
+
+    const unsubStart = navigation.addListener('transitionStart', onStart);
+    const unsubEnd = navigation.addListener('transitionEnd', onEnd);
+
+    return () => {
+      unsubStart();
+      unsubEnd();
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
+  }, [beginGuard, freezeCurrentOffset, navigation]);
 
   useFocusEffect(
     useCallback(() => {
-      const restore = () => {
-        scrollRef.current?.scrollTo({
-          animated: false,
-          y: Math.max(0, frozenOffsetRef.current),
-        });
-      };
-      const unsubscribe = navigation.addListener(
-        'transitionEnd',
-        (event: { data?: { closing?: boolean } }) => {
-          // closing = 本屏幕正在关闭（push 走向详情），只在回到本屏时恢复。
-          if (event.data?.closing) {
-            return;
-          }
-          restore();
-        },
-      );
       return () => {
-        // blur：正在 push 进详情，冻结进入时的位置。
-        frozenOffsetRef.current = offsetRef.current;
-        unsubscribe();
+        // blur 时再冻一次：有的 zoom push 不走 transitionStart。
+        freezeCurrentOffset();
       };
-    }, [navigation, scrollRef]),
+    }, [freezeCurrentOffset]),
   );
 
   return { handleScroll };

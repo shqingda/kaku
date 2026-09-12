@@ -31,6 +31,11 @@ import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
 import { useRestoreScrollOnFocus } from '@/features/shared/use-restore-scroll-on-focus';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
+import {
+  ZoomSourceChrome,
+  zoomSourceScreenOptions,
+  zoomSourceScrollProps,
+} from '@/features/shared/zoom-source-layout';
 import { readInfiniteItems, readQueryArray } from '@/lib/query-data';
 
 export default function ExploreScreen() {
@@ -150,9 +155,11 @@ export default function ExploreScreen() {
           headerShown: true,
           headerShadowVisible: false,
           title: '综合',
+          ...zoomSourceScreenOptions,
         }}
       />
-      <View style={styles.body}>
+      <ZoomSourceChrome>
+        <View style={styles.body}>
         <View style={styles.pane}>
           <ScrollView
             accessibilityElementsHidden={Boolean(keyword)}
@@ -168,7 +175,7 @@ export default function ExploreScreen() {
             }}
             pointerEvents={keyword ? 'none' : 'auto'}
             ref={overviewScrollRef}
-            scrollEventThrottle={80}
+            {...zoomSourceScrollProps}
             refreshControl={
               <AppRefreshControl
                 onRefresh={refreshOverview}
@@ -246,10 +253,11 @@ export default function ExploreScreen() {
           ) : null}
         </View>
       </View>
-      <ScrollToTopButton
-        onPress={scrollOverviewToTop}
-        visible={overviewScrollVisible && !keyword}
-      />
+        <ScrollToTopButton
+          onPress={scrollOverviewToTop}
+          visible={overviewScrollVisible && !keyword}
+        />
+      </ZoomSourceChrome>
     </SafeAreaView>
   );
 }
