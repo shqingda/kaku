@@ -3,6 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getMyCollectionPage } from '@/infrastructure/kaku/collections-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import {
   collectSearchPages,
   describeMyCollectionLoad,
@@ -22,7 +23,7 @@ export function useMyCollections(preferences: CollectionSearchPreferences) {
           preferences.status,
         ),
     enabled: Boolean(session),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
       getMyCollectionPage(request, {

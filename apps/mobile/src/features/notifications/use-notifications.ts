@@ -6,6 +6,7 @@ import {
   markNotificationsRead,
 } from '@/infrastructure/kaku/notifications-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type { NotificationList } from './model';
 
@@ -16,7 +17,7 @@ export function useNotifications() {
     enabled: Boolean(session),
     queryFn: ({ signal }) => getNotifications(request, signal),
     queryKey: queryKeys.notifications(session?.user.id),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 30 * 1000,
   });

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import {
@@ -26,7 +27,7 @@ export function useDeviceSessions() {
       return parseDeviceSessions(response);
     },
     queryKey: deviceSessionsKey(session?.user.id),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     retry: shouldRetryBangumiQuery,
   });
 }

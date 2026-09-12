@@ -11,6 +11,7 @@ import {
   savePersonalCollection,
 } from '@/infrastructure/kaku/collections-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type { PublicUserCollectionPage } from '@/features/users/model';
 import { listItemFromPersonalCollection } from './collection-search';
@@ -35,7 +36,7 @@ export function usePersonalCollection(
     queryFn: ({ signal }) =>
       getPersonalCollection(request, subjectId, signal),
     queryKey: queryKeys.personalCollection(session?.user.id, subjectId),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     refetchOnWindowFocus: 'always',
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,

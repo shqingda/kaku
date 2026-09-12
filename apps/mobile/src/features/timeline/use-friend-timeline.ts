@@ -6,6 +6,7 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { getFriendTimeline } from '@/infrastructure/kaku/timeline-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type { FriendTimelinePage } from './model';
 
@@ -25,7 +26,7 @@ export function useFriendTimeline() {
     queryFn: ({ pageParam, signal }) =>
       getFriendTimeline(request, pageParam, signal),
     queryKey: queryKeys.friendTimeline(session?.user.id),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
     retryDelay: bangumiRetryDelay,

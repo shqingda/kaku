@@ -6,6 +6,7 @@ import {
   setIndexCollection,
 } from '@/infrastructure/kaku/indexes-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useIndexCollection(indexId: number) {
@@ -14,7 +15,7 @@ export function useIndexCollection(indexId: number) {
   return useQuery({
     enabled: Boolean(session) && indexId > 0,
     queryFn: ({ signal }) => getIndexCollection(request, indexId, signal),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     queryKey: queryKeys.indexCollection(session?.user.id, indexId),
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,

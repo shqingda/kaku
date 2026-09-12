@@ -1,5 +1,5 @@
 import { useAuth } from './auth-provider';
-import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
+import { PRIVATE_QUERY_META, PUBLIC_QUERY_META } from '@/lib/query-persistence';
 
 export type AuthRequest = (
   path: string,
@@ -18,7 +18,7 @@ export function useSessionAwareQuery<T>(run: {
   return {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       session ? run.authenticated(request, signal) : run.public(signal),
-    meta: session ? { private: true } : PUBLIC_QUERY_META,
+    meta: session ? PRIVATE_QUERY_META : PUBLIC_QUERY_META,
     suffix: session?.user.id ?? 'public',
   };
 }

@@ -6,6 +6,7 @@ import {
   setUserBlocked,
 } from '@/infrastructure/kaku/friends-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 
 // 屏蔽列表是被屏蔽用户的 ID 数组，与公开资料的 user.id 比对得到状态。
 export function useBlocklist() {
@@ -14,7 +15,7 @@ export function useBlocklist() {
   return useQuery({
     enabled: Boolean(session),
     queryFn: ({ signal }) => getBlocklist(request, signal),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     queryKey: queryKeys.blocklist(session?.user.id),
     staleTime: 5 * 60 * 1000,
   });

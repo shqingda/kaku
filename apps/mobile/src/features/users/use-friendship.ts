@@ -6,6 +6,7 @@ import {
   setUserFriend,
 } from '@/infrastructure/kaku/friends-client';
 import { queryKeys } from '@/lib/query-keys';
+import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 export function useUserFriendship(username: string) {
@@ -15,7 +16,7 @@ export function useUserFriendship(username: string) {
     enabled: Boolean(session) && username.trim().length > 0,
     queryFn: ({ signal }) =>
       getUserFriendship(request, username.trim(), signal),
-    meta: { private: true },
+    meta: PRIVATE_QUERY_META,
     queryKey: queryKeys.userFriendship(session?.user.id, username.trim()),
     retry: shouldRetryBangumiQuery,
     staleTime: 60 * 1000,
