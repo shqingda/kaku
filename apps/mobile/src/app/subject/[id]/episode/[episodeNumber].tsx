@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -90,6 +91,20 @@ export default function EpisodeScreen() {
   const [jumpToLatestVisible, setJumpToLatestVisible] = useState(false);
   const jumpToLatestVisibleRef = useRef(false);
   const maxScrollOffsetRef = useRef(0);
+  const scrollOffsetRef = useRef(0);
+  const viewportHeightRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const landingFrameRef = useRef<number | null>(null);
+  const reduceMotion = useReducedMotion();
+  const cancelJumpToLatest = useCallback(() => {
+    if (landingFrameRef.current !== null) {
+      cancelAnimationFrame(landingFrameRef.current);
+      landingFrameRef.current = null;
+    }
+  }, []);
+
+  // 换集、离开页面时，不能让上一页排队的滚动落到新列表上。
+  useEffect(() => cancelJumpToLatest, [subjectId, episodeNumber, cancelJumpToLatest]);
   const handleListScroll = useCallback(
     (event: {
       nativeEvent: {
@@ -99,6 +114,9 @@ export default function EpisodeScreen() {
       };
     }) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      scrollOffsetRef.current = contentOffset.y;
+      viewportHeightRef.current = layoutMeasurement.height;
+      contentHeightRef.current = contentSize.height;
       maxScrollOffsetRef.current = Math.max(
         0,
         contentSize.height - layoutMeasurement.height,
@@ -116,14 +134,37 @@ export default function EpisodeScreen() {
     [replies.length, scrollToTop.handleScroll],
   );
 
-  // 用最大偏移而不是 scrollToIndex（末楼）：远索引在可变行高下可能被
-  // FlashList 拒绝，scrollToOffset 超界会被原生钳制到列表末尾。
+  // 远距离只动画最后两屏，避免几百楼挤进一次短促的原生动画。
+  // 仍用 offset：这里的评论行高不固定，不依赖末楼的索引测量。
   const jumpToLatest = useCallback(() => {
-    void replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: maxScrollOffsetRef.current + 200,
+    cancelJumpToLatest();
+    const list = replyNavigation.listRef.current;
+    if (!list) return;
+
+    const bottom = maxScrollOffsetRef.current;
+    const landingDistance = viewportHeightRef.current * 2;
+    if (
+      reduceMotion ||
+      landingDistance <= 0 ||
+      bottom - scrollOffsetRef.current <= landingDistance
+    ) {
+      list.scrollToOffset({ animated: !reduceMotion, offset: bottom + 200 });
+      return;
+    }
+
+    list.scrollToOffset({ animated: false, offset: bottom - landingDistance });
+    // 先提交定位并让目标附近的单元格布局，再从新位置发起原生滚动。
+    // 读取最新底部，吸收这期间可变行高的测量更新。
+    landingFrameRef.current = requestAnimationFrame(() => {
+      landingFrameRef.current = requestAnimationFrame(() => {
+        landingFrameRef.current = null;
+        replyNavigation.listRef.current?.scrollToOffset({
+          animated: true,
+          offset: maxScrollOffsetRef.current + 200,
+        });
+      });
     });
-  }, [replyNavigation.listRef]);
+  }, [cancelJumpToLatest, reduceMotion, replyNavigation.listRef]);
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -143,6 +184,7 @@ export default function EpisodeScreen() {
       : undefined;
 
   function openEpisode(nextNumber: number) {
+    cancelJumpToLatest();
     router.replace({
       pathname: '/subject/[id]/episode/[episodeNumber]',
       params: { id: String(subjectId), episodeNumber: String(nextNumber) },
@@ -332,7 +374,20 @@ export default function EpisodeScreen() {
             />
           }
           onScroll={handleListScroll}
-          scrollEventThrottle={80}
+          onScrollBeginDrag={cancelJumpToLatest}
+          onLayout={(event) => {
+            viewportHeightRef.current = event.nativeEvent.layout.height;
+            maxScrollOffsetRef.current = Math.max(
+              0, contentHeightRef.current - viewportHeightRef.current,
+            );
+          }}
+          onContentSizeChange={(_width, height) => {
+            contentHeightRef.current = height;
+            maxScrollOffsetRef.current = Math.max(
+              0, height - viewportHeightRef.current,
+            );
+          }}
+          scrollEventThrottle={16}
           ListEmptyComponent={
             commentsQuery.isPending ||
             (commentsQuery.isError && !commentsQuery.data) ? null : (
@@ -496,7 +551,10 @@ export default function EpisodeScreen() {
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
-              onOpenReference={replyNavigation.openReply}
+              onOpenReference={(replyId) => {
+                cancelJumpToLatest();
+                replyNavigation.openReply(replyId);
+              }}
               onReply={composer.open}
               ownerUsername={session?.user.username}
               reply={item}
@@ -536,7 +594,10 @@ export default function EpisodeScreen() {
       />
       <ScrollToTopButton
         bottom={104}
-        onPress={scrollToTop.scrollToTop}
+        onPress={() => {
+          cancelJumpToLatest();
+          scrollToTop.scrollToTop();
+        }}
         visible={scrollToTop.visible}
       />
     </SafeAreaView>
