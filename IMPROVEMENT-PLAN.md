@@ -44,13 +44,13 @@
 
 ---
 
-## 批次 D：导航层级（梯队③，约 1–2 天，仅 iOS）
+## 批次 D：导航层级（梯队③）
 
-**D1. iOS 大标题** — blogs/people/rankings/wiki 等长列表屏改 `headerLargeTitle`，删除屏内重复大标题（如 `blogs.tsx:56-60`「日志」出现两次）。获得原生 scroll-edge 缩放/模糊质感。
+**D1 + D3（试验失败，已回退，2026-09-12）** — 在 blogs/people/rankings/wiki 上试验 `headerLargeTitle`（+ `headerBlurEffect`/透明 headerStyle）：在当前 RN screens 版本 + iOS 26/27 模拟器上新架构下，header 会整体不可见（大标题与小标题都不渲染、无材质背景），且列表初始偏移错位约一个 header 高度（ListHeader 被顶出视野）。已整体回退；后续等 react-native-screens 修复或升级后再评估，可参考仓库提交历史中的试验记录。
 
-**D2. 详情页浮动标题条** — `subject/[id]` 深滚超过封面后淡入带 blur 材质的浮动标题条（复用现有材质写法；滚动监听对齐 `use-scroll-to-top-button.ts` 的模式）。
+**D2（已完成 2026-09-12）** — subject 详情深滚后淡入浮动标题条（`subject/[id].tsx`）：滚过封面（320pt 阈值）后浮现 surface 底 + 发丝线的标题条，与三个浮动按钮共存（z 序：条 5 < 按钮 10）；Animated 160ms 淡入 + 轻微下移，reduce-motion 跳过。模拟器验证：深滚出现、回封面区消失。顺带发现：zoom 转场下的详情页支持「向下拖动关闭」（iOS 18+ 系统行为，保留）。
 
-**D3. header scroll edge effect 评估** — SDK 57 已支持 `headerBlurEffect`，先在 2–3 屏试验，效果确认后再推广；Android 完全不动。
+另：AppleZoom 返回错位 bug 已修复（`b9323c5`，根因是有 header 屏幕的 SafeAreaView inset 在 zoom 返回时晚一拍 + zoom 常不发 transitionEnd；方案 = headerTransparent + 冻结 header 高度自垫 + 转场后守卫窗口持续纠偏，含 3 个单测）。
 
 ---
 
