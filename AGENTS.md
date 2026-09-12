@@ -10,6 +10,10 @@ This repository is both a product and a learning project.
   feedback happens on pointer-down and is continuous during the interaction; every
   screen keeps consistent spacing and breathing room. The apple-design skill is the
   reference.
+- Typography and spacing must use the `TYPE.` / `SPACING.` tokens from
+  `apps/mobile/src/constants/design.ts`: new code never hard-codes `fontSize` or
+  spacing numbers; when touching an existing screen, migrate its remaining raw
+  values to tokens in passing.
 - Prefer code the owner can explain in an interview over clever abstractions.
 - Keep the product provider-neutral. Bangumi is an adapter, not the domain model.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.

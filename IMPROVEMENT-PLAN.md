@@ -54,16 +54,13 @@
 
 ---
 
-## 批次 E：可靠性轻量缓解（梯队④，约 1–2 天）
+## 批次 E：可靠性轻量缓解（梯队④，已完成 2026-09-12）
 
-**E1. 409 重授权修复（真 bug，优先）** — 服务端把 Bangumi 授权失效映射为 409 `bangumi_reauthorization_required` 并删除凭据，但客户端无感知：
-- `user-error-message.ts` 加 409 分支 →「Bangumi 授权已过期，请在设置中重新连接」；
-- `auth-provider.tsx` 识别该错误码 → 清本地 session → 引导重新登录（复用现有登录入口与文案）；
-- 补 node:test 单测（该文件已是纯逻辑，可直接测）。
+**E1（已完成，`c2ee665`）** — 409 重授权修复：`user-error-message.ts` 增加 409 分支（「Bangumi 授权已失效，请重新登录」），`auth-provider` 在私有请求收到 409 时清除本地会话并引导重新连接（服务端约定所有 409 均为 `bangumi_reauthorization_required`，17 处已核对）。
 
-**E2. 私有数据本地持久化** — `query-persistence.ts` 支持 `meta.private` 查询写入 SQLite（登出清除逻辑已有 `auth-provider.tsx:152-156`，hydration 时仅在已登录态应用）。收益：登录用户冷启动/弱网下收藏、进度、通知有 stale 数据可显示，不再是白屏 spinner。
+**E2（已完成，`c21ac38`）** — 私有数据本地持久化：新增 `PRIVATE_QUERY_META`（private + persist），10 处登录态查询全部接入；冷启动/弱网下收藏、进度、通知立即有 stale 数据可渲染。安全边界：24h maxAge 水合即弃、登出时 `removeQueries(private)` 触发 persister 重写清除 SQLite 条目、登出态冷启动的水合闪现由同一清理循环自愈。模拟器验证：杀进程冷启动后 1.2s 打开通知页即完整渲染（无转圈）。
 
-**E3. 设计 token 增量规则** — 存量 554 处裸 `fontSize` 不做一次性迁移；立一条规则写入 AGENTS.md：新代码排版必须走 `TYPE.`/`SPACING.` token，改到哪屏顺手收敛哪屏。
+**E3（已完成 2026-09-12）** — 设计 token 增量规则写入 AGENTS.md：新代码排版/间距必须走 `TYPE.`/`SPACING.`，改到哪屏顺手收敛哪屏；存量 554 处裸 `fontSize` 不做一次性迁移。
 
 ---
 
