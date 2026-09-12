@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
+  Animated,
+  Easing,
   Platform,
   Pressable,
   ScrollView,
@@ -14,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { useIsOffline } from '@/lib/use-connectivity';
+import { useReduceMotion } from '@/lib/use-reduce-motion';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { shareBangumiEntity } from '@/lib/share';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -105,6 +108,8 @@ function DetailEntry({
 // 短页面滚动事件可能不触发，2.5s 后兜底挂载。
 const PREVIEW_SCROLL_THRESHOLD = 600;
 const PREVIEW_FALLBACK_DELAY_MS = 2_500;
+// 滚过封面区（顶部内边距 + 238pt 封面 + 间距）后浮现标题条。
+const TITLE_BAR_SCROLL_OFFSET = 320;
 
 function CommentsPreview({
   onOpenMore,
@@ -270,6 +275,22 @@ export default function SubjectScreen() {
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
   const detailLabels = getSubjectDetailLabels(subjectType);
+  const reduceMotion = useReduceMotion();
+
+  // 深滚后条目标题随半透明标题条淡入（滚过封面高度即出现），
+  // 让深处的页面始终回答「我在看哪个条目」。
+  const titleBarFade = useRef(new Animated.Value(0)).current;
+  const titleBarVisibleRef = useRef(false);
+  const [titleBarVisible, setTitleBarVisible] = useState(false);
+
+  useEffect(() => {
+    Animated.timing(titleBarFade, {
+      duration: reduceMotion ? 0 : 160,
+      easing: Easing.out(Easing.cubic),
+      toValue: titleBarVisible ? 1 : 0,
+      useNativeDriver: true,
+    }).start();
+  }, [reduceMotion, titleBarFade, titleBarVisible]);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowPreviews(true), PREVIEW_FALLBACK_DELAY_MS);
@@ -277,6 +298,12 @@ export default function SubjectScreen() {
   }, []);
 
   function handleScroll(event: { nativeEvent: { contentOffset: { y: number }; contentSize: { height: number }; layoutMeasurement: { height: number } } }) {
+    const nextTitleBarVisible =
+      event.nativeEvent.contentOffset.y > TITLE_BAR_SCROLL_OFFSET;
+    if (titleBarVisibleRef.current !== nextTitleBarVisible) {
+      titleBarVisibleRef.current = nextTitleBarVisible;
+      setTitleBarVisible(nextTitleBarVisible);
+    }
     if (showPreviews) return;
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const distanceFromBottom =
@@ -408,6 +435,29 @@ export default function SubjectScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
+      <Animated.View
+        pointerEvents={titleBarVisible ? 'auto' : 'none'}
+        style={[
+          styles.titleBar,
+          {
+            height: insets.top + bannerOffset + 56,
+            opacity: titleBarFade,
+            paddingTop: insets.top + bannerOffset,
+            transform: [
+              {
+                translateY: titleBarFade.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-6, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text numberOfLines={1} style={styles.titleBarText}>
+          {title}
+        </Text>
+      </Animated.View>
       <FloatingShareButton
         path={`/subject/${subjectId}`}
         title={title}
@@ -640,6 +690,27 @@ export default function SubjectScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 48, paddingHorizontal: 20 },
+  titleBar: {
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.divider,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    // 盖过滚动内容（后置的 ScrollView），又低于三个 zIndex 10 的浮动按钮。
+    zIndex: 5,
+  },
+  titleBarText: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '800',
+    height: 56,
+    lineHeight: 56,
+    marginLeft: 64,
+    marginRight: 124,
+    textAlign: 'center',
+  },
   backButton: {
     left: 16,
     position: 'absolute',
