@@ -85,7 +85,7 @@
 
 1. **离线写队列**：所有 mutation 离线即失败（`_layout.tsx` 显式不持久化 mutation），与「进度随时记」定位有落差；
 2. **跨设备进度合并**：集数进度为全量覆盖（LWW），两台设备并发标记会静默回退；且收藏+进度两次上游调用非原子；
-3. **FlashList v2 迁移评估**：RN 0.86 + Reanimated 4 已强制新架构，与 FlashList v2 兼容。先用 profiler 量化单集评论页滚到底的瓶颈（JS vs UI 线程）；若确认是列表渲染瓶颈，在该屏试点（重点回归 `scrollToIndex` 楼层跳转，FlatList 特有调优参数需删除），收益确认后再评估在 `usePagedList` 消费层（26 屏）集中推广，避免单屏迁移造成两套列表行为并存；
+3. **FlashList v2 试点（已完成 2026-09-12，单集评论页）** — `@shopify/flash-list@2.3.2` 已装入单集评论页（唯一一次性加载全量回复的屏）。迁移要点：FlatList 特有调优参数（initialNumToRender/maxToRenderPerBatch/updateCellsBatchingPeriod/windowSize/removeClippedSubviews）全部删除；`onScrollToIndexFailed` 在 v2 已移除（scrollToIndex 返回 Promise 且内部自动重试未渲染区域）；`useReplyNavigation` 的 ref 放宽为 any 以兼容 4 个 FlatList 讨论屏共用。已重建 dev client（FlashList 含原生代码，装包后必须 `pod install` + xcodebuild 重编）。模拟器回归：快速连滚到底无空白格、**引用跳楼 scrollToIndex+高亮向上跨窗口工作正常**、回顶按钮、下拉刷新、换集复位全部通过。性能数值需真机长列表对比后再定；26 屏 `usePagedList` 层的集中推广暂缓，等这条屏的真机使用反馈。
 4. **服务端**：HTML 抓取改版告警通道、rate limiter 原子性；
 5. **上游阻塞**：角色/人物收藏、小组加入退出、删动态、Widget——等 Bangumi 接口恢复。
 
