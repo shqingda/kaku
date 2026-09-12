@@ -1,11 +1,10 @@
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useMemo } from 'react';
+import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
-  FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -263,17 +262,14 @@ export default function EpisodeScreen() {
       <Stack.Screen
         options={{ title: `第 ${episodeNumber} ${episodeUnit}` }}
       />
-      <FlatList
+      <FlashList
           style={styles.list}
           contentContainerStyle={[
             styles.content,
             { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
           ]}
           data={replies}
-          initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
-          maxToRenderPerBatch={8}
-          onScrollToIndexFailed={replyNavigation.handleScrollToIndexFailed}
           ref={replyNavigation.listRef}
           refreshControl={
             <AppRefreshControl
@@ -293,7 +289,6 @@ export default function EpisodeScreen() {
               }
             />
           }
-          removeClippedSubviews={Platform.OS === 'android'}
           onScroll={scrollToTop.handleScroll}
           scrollEventThrottle={80}
           ListEmptyComponent={
@@ -466,8 +461,6 @@ export default function EpisodeScreen() {
             />
           )}
           showsVerticalScrollIndicator={false}
-          updateCellsBatchingPeriod={40}
-          windowSize={7}
         />
         {catalogEpisode ? (
           <DiscussionReplyBar
