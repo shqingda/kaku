@@ -29,6 +29,7 @@ import { useSearchHistory } from '@/features/search/search-history-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { useRestoreScrollOnFocus } from '@/features/shared/use-restore-scroll-on-focus';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { readInfiniteItems, readQueryArray } from '@/lib/query-data';
 
@@ -60,6 +61,8 @@ export default function ExploreScreen() {
     scrollToTop: scrollOverviewToTop,
     visible: overviewScrollVisible,
   } = useScrollToTopButton();
+  const { handleScroll: rememberOverviewOffset } =
+    useRestoreScrollOnFocus(overviewScrollRef);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);
   const rankedQuery = useBangumiRankedSubjects(selectedSearchType);
   const search = useExploreSearch(keyword, selectedSearchType, searchMode);
@@ -159,7 +162,10 @@ export default function ExploreScreen() {
             }
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
-            onScroll={handleOverviewScroll}
+            onScroll={(event) => {
+              rememberOverviewOffset(event);
+              handleOverviewScroll(event);
+            }}
             pointerEvents={keyword ? 'none' : 'auto'}
             ref={overviewScrollRef}
             scrollEventThrottle={80}

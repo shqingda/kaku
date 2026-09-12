@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from 'react';
+import { useRef, useState, type ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
@@ -30,6 +30,7 @@ import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { SectionAction } from '@/features/shared/section-action';
 import { SkeletonList } from '@/features/shared/skeleton-list';
+import { useRestoreScrollOnFocus } from '@/features/shared/use-restore-scroll-on-focus';
 import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
 
 function useThemedStyles() {
@@ -43,6 +44,10 @@ export default function ChannelScreen() {
   const { styles } = useThemedStyles();
   const queryClient = useQueryClient();
   const { type } = useLocalSearchParams<{ type?: string }>();
+  // zoom 转场返回时系统可能改动滚动位置，聚焦时按记录值恢复（见 hook 注释）。
+  const scrollRef = useRef<ScrollView>(null);
+  const { handleScroll: rememberScrollOffset } =
+    useRestoreScrollOnFocus(scrollRef);
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
   const label = getSubjectChannelLabel(subjectType);
   const channelQuery = useChannel(subjectType);
@@ -62,6 +67,8 @@ export default function ChannelScreen() {
       <Stack.Screen options={{ title: `${label}频道` }} />
       <ScrollView
         contentContainerStyle={styles.content}
+        onScroll={rememberScrollOffset}
+        ref={scrollRef}
         refreshControl={
           <AppRefreshControl
             onRefresh={refreshChannel}
@@ -73,6 +80,7 @@ export default function ChannelScreen() {
           />
         }
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={80}
       >
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>KAKU CHANNEL</Text>
