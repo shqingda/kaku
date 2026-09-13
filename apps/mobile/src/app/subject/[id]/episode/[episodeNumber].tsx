@@ -13,6 +13,7 @@ import {
 import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -47,6 +48,8 @@ function formatAirDate(date?: string) {
 
 // 距底部超过这个距离时显示「跳到最新回复」（与回顶按钮的出现阈值一致）。
 const JUMP_TO_LATEST_THRESHOLD = 720;
+// 暂时隐藏入口，待确定合适位置后恢复；保留 FlashList 与定位实现。
+const SHOW_JUMP_TO_LATEST = false;
 
 export default function EpisodeScreen() {
   const colors = useTheme();
@@ -420,7 +423,7 @@ export default function EpisodeScreen() {
                         isWatched ? '将本集设为未看' : '将本集标记已看'
                       }
                       accessibilityRole="button"
-                      hitSlop={8}
+                      hitSlop={HIT_SLOP}
                       disabled={saveCollection.isPending}
                       onPress={() => void toggleRemoteProgress()}
                       style={({ pressed }) => [
@@ -455,7 +458,7 @@ export default function EpisodeScreen() {
                       <Pressable
                         accessibilityLabel={`跳转到上一${episodeUnit}：第 ${previousEpisode.number} ${episodeUnit}`}
                         accessibilityRole="button"
-                        hitSlop={4}
+                        hitSlop={SPACING.xs}
                         onPress={() => openEpisode(previousEpisode.number)}
                         style={({ pressed }) => [
                           styles.episodeNavButton,
@@ -485,7 +488,7 @@ export default function EpisodeScreen() {
                       <Pressable
                         accessibilityLabel={`跳转到下一${episodeUnit}：第 ${nextEpisode.number} ${episodeUnit}`}
                         accessibilityRole="button"
-                        hitSlop={4}
+                        hitSlop={SPACING.xs}
                         onPress={() => openEpisode(nextEpisode.number)}
                         style={({ pressed }) => [
                           styles.episodeNavButton,
@@ -584,16 +587,18 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
+      {SHOW_JUMP_TO_LATEST ? (
+        <ScrollToTopButton
+          accessibilityHint="滚动到本集最新一条回复"
+          accessibilityLabel="跳到最新回复"
+          bottom={SPACING.xxl * 5}
+          icon={{ android: 'arrow_downward', ios: 'arrow.down', web: 'arrow_downward' }}
+          onPress={jumpToLatest}
+          visible={jumpToLatestVisible}
+        />
+      ) : null}
       <ScrollToTopButton
-        accessibilityHint="滚动到本集最新一条回复"
-        accessibilityLabel="跳到最新回复"
-        bottom={160}
-        icon={{ android: 'arrow_downward', ios: 'arrow.down', web: 'arrow_downward' }}
-        onPress={jumpToLatest}
-        visible={jumpToLatestVisible}
-      />
-      <ScrollToTopButton
-        bottom={104}
+        bottom={SPACING.xxl * 3 + SPACING.sm}
         onPress={() => {
           cancelJumpToLatest();
           scrollToTop.scrollToTop();
@@ -607,46 +612,44 @@ export default function EpisodeScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   list: { flex: 1 },
-  content: { padding: 20 },
+  content: { padding: SPACING.lg + SPACING.xs },
   episodeCard: {
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: 24,
-    padding: 22,
+    padding: SPACING.xl,
   },
-  subjectTitle: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  subjectTitle: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   episodeTitle: {
     color: colors.ink,
-    fontSize: 30,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   catalogEpisodeTitle: {
     color: colors.ink,
-    fontSize: 18,
+    ...TYPE.heading,
     fontWeight: '700',
-    lineHeight: 25,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
-  metaLine: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 14 },
+  metaLine: { alignItems: 'center', flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.lg },
   statusBadge: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   watchedStatusBadge: { backgroundColor: colors.accent },
   pressedStatusBadge: { opacity: 0.65 },
-  statusText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  statusText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   watchedStatusText: { color: colors.surface },
-  airDate: { color: colors.subtle, fontSize: 12 },
-  description: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 18 },
+  airDate: { color: colors.subtle, ...TYPE.caption },
+  description: { color: colors.muted, ...TYPE.body, marginTop: SPACING.lg },
   episodeNavRow: {
     alignSelf: 'stretch',
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
+    gap: SPACING.md,
+    marginTop: SPACING.lg + SPACING.xs,
   },
   episodeNavButton: {
     alignItems: 'center',
@@ -654,15 +657,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 14,
     flexDirection: 'row',
     flex: 1,
-    gap: 3,
+    gap: SPACING.xs,
     justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: 14,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg,
   },
   episodeNavText: {
     color: colors.accent,
     flexShrink: 1,
-    fontSize: 14,
+    ...TYPE.body,
     fontWeight: '700',
   },
   episodeNavSpacer: { flex: 1 },
@@ -670,34 +673,34 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    marginTop: 26,
-    paddingHorizontal: 4,
+    marginBottom: SPACING.md,
+    marginTop: SPACING.xl,
+    paddingHorizontal: SPACING.xs,
   },
-  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: '800' },
-  remoteReplyCount: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+  sectionTitle: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
+  remoteReplyCount: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   emptyDiscussion: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 20,
-    padding: 28,
+    padding: SPACING.xl + SPACING.xs,
   },
-  emptyTitle: { color: colors.ink, fontSize: 15, fontWeight: '700' },
-  emptyText: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  emptyTitle: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
+  emptyText: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
+  errorState: { flex: 1, justifyContent: 'center', padding: SPACING.xxl },
+  errorTitle: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '700' },
+  errorText: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
-    marginTop: 18,
-    minHeight: 44,
-    paddingHorizontal: 20,
+    marginTop: SPACING.lg,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg + SPACING.xs,
   },
-  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
 
   pressed: { opacity: 0.62 },
 });
