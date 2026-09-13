@@ -55,7 +55,8 @@
   "expo": {
     "install": {
       "exclude": [
-        "typescript"
+        "typescript",
+        "@shopify/flash-list"
       ]
     }
   },
