@@ -118,7 +118,13 @@ pnpm install
 pnpm dev:mobile
 ```
 
-Metro 启动后可按 `i` 打开 iOS 模拟器。首次安装或原生依赖变化后，需要重新构建开发客户端：
+Metro 启动后可按 `i` 打开 iOS 模拟器。
+
+如果只在本机 iOS 模拟器调试，可先等模拟器启动完成，再用 `pnpm dev:mobile:simulator` 启动 Metro，按 `i` 打开 App。这个命令让模拟器通过 `localhost:8081` 连接 Metro，避免使用局域网 IP；真机继续用 `pnpm dev:mobile`。两种命令不要同时启动，切换前先停止已有的 Metro。
+
+偶尔出现 `xcrun simctl openurl ... code=60`，但 App 最终能正常打开时，通常是模拟器处理开发链接超时。先确认模拟器已完成启动，再按一次 `i`；若仍失败，检查 `http://localhost:8081/status` 是否返回 `packager-status:running`，以及模拟器里是否安装了 Kaku 开发版。
+
+首次安装或原生依赖变化后，需要重新构建开发客户端：
 
 ```bash
 pnpm --filter @kaku/mobile ios
