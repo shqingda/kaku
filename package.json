@@ -8,7 +8,6 @@
   "scripts": {
     "dev:api": "pnpm --filter @kaku/api dev",
     "dev:mobile": "pnpm --filter @kaku/mobile start",
-    "dev:mobile:simulator": "pnpm --filter @kaku/mobile exec expo start --dev-client --localhost",
     "dev:web": "pnpm --filter @kaku/web dev",
     "build:web": "pnpm --filter @kaku/web build",
     "test": "pnpm -r test",
