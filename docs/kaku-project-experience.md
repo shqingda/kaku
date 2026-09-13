@@ -1,6 +1,38 @@
-# Kaku 项目经历与实现详解
+# Kaku 面试讲解：先会介绍，再理解实现
 
-## 可直接用于简历的项目经历
+这份文档按面试的实际顺序写。先看第一部分，把项目介绍讲顺；再看后面的追问。每个技术词都会解释“它是什么、为什么用、项目里怎么做”。不需要一开口就背所有库名、参数和代码。
+
+文中的回答可以拿来练习，但要换成你自己说话的方式。涉及个人开发动机、投入时间和实际测试结果的地方，按真实经历补充。
+
+## 一、面试官说：“先介绍一下你的项目吧”
+
+### 可以直接练习的两分钟版本
+
+> 我有一个独立开发的个人项目，叫 Kaku，是一个第三方 Bangumi 手机客户端，不是在公司任职期间做的业务项目。Bangumi 是一个可以查动画、书籍等作品资料，记录观看进度并参与讨论的社区。Kaku 让用户在手机上完成这些操作，比如搜一部动画、加入在看、标记看到第几集，以及查看和回复单集评论。
+>
+> 这个项目主要分成三个部分：手机 App、配套后端和产品官网，这三部分都由我负责。作品资料和用户收藏仍以 Bangumi 为准，我主要做移动端体验，以及登录、数据获取和保存这些流程的衔接。
+>
+> 技术上，App 用 React Native、Expo 和 TypeScript 开发，面向 iOS 和 Android。React Native 负责页面和交互，Expo 帮我接入手机能力和构建应用。服务端数据用 TanStack Query 管理，主要解决加载、缓存、刷新，以及用户修改数据后页面怎么更新的问题。后端用 Hono，部署在 Cloudflare Workers 上，D1 数据库保存会话和偏好等应用数据。官网用 React 和 Vite。
+>
+> 实现上，我重点处理了几件事。一个是收藏和进度修改，用户点完先看到变化，保存失败就恢复原状态并提示。另一个是登录安全，用户在 Bangumi 官方页面授权，上游授权凭据留在服务端，App 使用 Kaku 自己的登录凭证。另外，我做了本地缓存和最近条目的离线保存，网络不好时尽量保留已有内容，并告诉用户当前数据从哪里来。
+>
+> 验证方面，有业务逻辑测试、页面组件测试，以及模拟器上的操作流程测试。目前服务端和官网已部署，Android 通过 GitHub Releases 分发安装包，还没有正式上架应用商店。
+
+这里已经回答了面试官最关心的五件事：**做什么、谁来做、用了什么、怎么实现、做到什么程度。** 讲到这里先停，让面试官选择追问方向。
+
+### 如果只给你三十秒
+
+> Kaku 是我独立开发的第三方 Bangumi 手机客户端，主要做作品浏览、收藏评分、观看进度和社区讨论。我负责 App、配套后端和官网。App 用 React Native 和 Expo，后端用 Hono 和 Cloudflare。重点处理了登录授权、收藏修改后的即时反馈，以及弱网下的缓存展示。目前 Android 已通过 GitHub Releases 分发，商店还没上架。
+
+### 如果问：“为什么做这个项目？”
+
+这一题需要你自己的动机，不要背一个编造的故事。可以按这个顺序回答：你平时怎样使用 Bangumi → 遇到了什么具体不便 → 为什么决定自己做客户端 → 希望练习什么能力。
+
+如果符合你的实际情况，可以这样组织：
+
+> 我希望把已有的 React 开发经验用到一个完整的手机产品上，而不是只做几个页面。Bangumi 的作品、进度和讨论场景比较完整，适合把移动端、授权登录、后端和发布串起来。具体功能也是围绕自己的使用需求逐步补齐的。
+
+## 二、简历里怎么写
 
 **Kaku（第三方 Bangumi 客户端）｜个人项目 · 独立全栈开发**\
 技术栈：React Native、Expo、TypeScript、TanStack Query、Reanimated、Hono、Drizzle ORM、Cloudflare Workers / D1
@@ -10,526 +42,559 @@
 - 使用 TanStack Query 管理服务端状态，结合查询持久化与条目离线包支持缓存恢复和离线浏览；通过 Zod 校验与 Adapter 转换隔离上游数据结构，统一处理失败、重试和不可用状态。
 - 使用 Reanimated 实现手势交互与动画，在单集讨论页引入 FlashList 支持长评论列表与远距离定位；建立单元、组件及 Maestro 分层测试，并通过 GitHub Actions 执行类型检查、覆盖率门禁和构建验证。
 
+
+这四条是简历的压缩写法。下面把里面的词拆开讲。面试口头回答不用照着这些长句念。
+
+## 三、“你用了什么技术？为什么这么选？”
+
+### 3.1 先把前端、后端和数据库分清楚
+
+**前端**是用户直接操作的部分。在 Kaku 里，主要是手机上的列表、按钮、输入框和页面。
+
+**后端**是运行在服务器上的程序。它接收 App 发来的请求，检查用户身份，向 Bangumi 读取或修改数据，再把结果返回给 App。
+
+**数据库**负责把需要长期保留的数据存下来，比如哪位用户登录了哪些设备。程序重启后，这些记录仍然在。
+
+**API，也叫接口**，是两个程序事先约好的交流方式。例如 App 说“我要查看这部作品”，服务端按约定返回标题、封面地址和章节。它不是一个可见按钮，而是一种请求和回复的约定。
+
+**全栈开发**在这里指：不只写手机页面，也负责配套后端、数据库和交付流程。
+
+可以这样回答：
+
+> 用户看到的是 App，但登录和保存个人数据需要后端配合。我把页面交互放在手机端，把需要保管授权凭据、检查身份的逻辑放在后端，需要长期保存的会话记录放在数据库。
+
+### 3.2 React Native：用 React 的方式写手机界面
+
+如果你熟悉 React 网页开发，可以先这样理解：页面仍然由组件组成，也有参数和状态；但常用组件从网页的 `div`、`span`，变成了手机端的 `View`、`Text` 和列表等组件。
+
+它让一套主要的业务代码面向 iOS 和 Android，减少重复开发。两端并不完全相同，权限、键盘、手势和构建仍然需要分别处理和验证。
+
+**组件**就是可以组合的界面单元，例如“一条评论”或“一个收藏按钮”。**状态**就是会变化并影响界面的数据，例如弹层是否打开。
+
+可以这样回答：
+
+> 我选择 React Native，是因为可以沿用 React 的组件化开发方式，并共享 iOS 和 Android 的大部分业务代码。平台差异仍然单独处理，不是写一次就不需要两端测试。
+
+### 3.3 Expo：帮你把手机应用开发和构建接起来
+
+React Native 负责界面开发；Expo 提供一组配套工具和手机能力，比如安全保存登录信息、接入通知，以及生成和构建原生工程。
+
+**原生工程**可以理解为 Android 和 iOS 各自真正用来编译安装包的项目。**开发客户端**是装在测试设备上的开发版 App，带上项目需要的原生能力，方便加载和调试代码。
+
+新增某些原生依赖时，光刷新 JavaScript 不够，还需要重新编译开发客户端。安装 FlashList 这类依赖时，就要注意构建环境是否已包含相应原生部分。
+
+可以这样回答：
+
+> Expo 主要帮我减少原生能力接入和开发环境的配置工作，让我可以把更多精力放在业务上。但涉及原生依赖、签名和安装包时，仍然需要了解 Android、iOS 的构建流程。
+
+### 3.4 TypeScript：在运行之前，先找一部分写错的数据用法
+
+例如作品 ID 应该是数字，标题应该是文字。TypeScript 能在写代码和检查代码时，提醒你把它们用错了。
+
+```ts
+// 教学示意：约定作品数据长什么样。
+type Subject = {
+  id: number;
+  title: string;
+};
+```
+
+这段的意思是：“作品有一个数字 ID 和一个文字标题。”但服务器真的返回什么，TypeScript 看不到，所以后面还需要 Zod 检查真实收到的数据。
+
+可以这样回答：
+
+> TypeScript 帮我约束组件参数和业务数据结构，减少开发时的误用；外部接口的数据还要再做运行时检查，不能只写一个类型就相信它一定正确。
+
+### 3.5 Hono、Workers、D1、Drizzle：别把四个名字当成一件事
+
+| 名字 | 用人话解释 | 在 Kaku 中干什么 |
+| --- | --- | --- |
+| Hono | 帮你写“收到某个请求后做什么”的工具 | 接登录、刷新会话、保存偏好等请求 |
+| Cloudflare Workers | 托管并运行后端程序的平台 | 让 Hono 写的 API 能被 App 访问 |
+| D1 | 平台提供的数据库 | 保存用户、会话、加密凭据和偏好等 |
+| Drizzle ORM | 用 TypeScript 描述表和操作数据库的工具 | 查会话、更新凭据、定义表结构 |
+
+**ORM**可以先理解为“在代码里操作数据库的一种工具”。数据库真正执行的查询语言叫 **SQL**。用了 ORM 仍要理解查询条件，尤其是“只能删除当前用户自己的会话”这样的条件。
+
+**部署**就是把程序放到可以持续提供服务的环境里。**Serverless**在这里表示不用自己管理一台常驻服务器，平台负责运行环境；它仍然有服务器和资源限制。
+
+**数据库迁移**就是有记录地修改数据库结构，比如新增一列，并让不同环境按相同顺序更新。
+
+可以这样回答：
+
+> 后端用 Hono 写接口，放到 Workers 上运行，D1 保存应用自身的数据，Drizzle 负责表结构和数据库操作。这套组合能继续使用 TypeScript，也适合我独立维护一个配套 API。它是项目规模下的选择，我没有做过大型数据库之间的性能对比。
+
+### 3.6 官网为什么单独用 React 和 Vite
+
+官网负责介绍产品、隐私政策、服务条款和常见问题。它是浏览器里访问的网站，和手机 App 是两个应用。
+
+Vite 负责网页的开发启动和构建。**构建**就是把源码整理成可以运行或发布的产物。官网构建出的网页资源，与手机 App 的安装包不同。
+
+### 3.7 其他几个名字先记住用途
+
+| 名字 | 先记住这句话 | 后面哪里讲 |
+| --- | --- | --- |
+| Expo Router | 决定手机里有哪些页面，以及页面之间怎么跳转 | 第四部分 |
+| TanStack Query | 管从服务器拿到的数据：加载、缓存、刷新、修改 | 第五部分 |
+| Zod | 检查收到的数据格式是否符合约定 | 第八部分 |
+| Adapter | 把外部字段翻译成项目自己的字段 | 第八部分 |
+| Reanimated | 控制界面怎么动，比如弹层拖动和回弹 | 第九部分 |
+| FlashList | 帮长列表复用可见的行，减少重复创建 | 第九部分 |
+
+## 四、“整个项目是怎么做的？数据从哪来？”
+
+### 4.1 用“查看一部动画”把结构讲清楚
+
+可以这样回答：
+
+> 用户点击作品后，我根据作品 ID 打开详情页。查询逻辑先判断是否有缓存，然后按配置请求数据。拿到 Bangumi 的结果后，先检查数据格式，再整理成页面使用的字段，最后显示标题、评分和章节。网络失败时如果有离线保存的资料，就展示旧资料并说明来源；没有可用资料时显示失败和重试入口。
+
+这里有几个词：
+
+- **路由**：规定打开哪个页面，以及把哪个作品 ID 传进去。Kaku 使用 Expo Router 按文件组织这些页面。
+- **请求**：App 向接口发出“我要这份数据”的消息。
+- **响应**：接口返回的数据或失败信息。
+- **业务模型**：项目自己约定的数据样子，例如作品的 `title` 表示标题、`episodes` 表示章节。
+- **hook**：React 中把一组相关逻辑封装起来的函数，通常以 `use` 开头。比如 `useCatalogSubject` 管“读取作品资料”这件事，页面不需要重复写一整套请求逻辑。
+
+### 4.2 为什么有自己的后端，还会直接访问 Bangumi
+
+公开作品资料不一定需要经过 Kaku 后端；涉及登录身份的操作，需要后端持有授权凭据并代为访问 Bangumi。
+
+```text
+浏览公开资料：App → Bangumi → App 展示
+修改个人收藏：App → Kaku 后端检查身份 → Bangumi 保存 → App 更新
+```
+
+上图是主要路径的简化说明，不代表所有公开请求都必须直连。项目也有服务端公开缓存等能力。
+
+### 4.3 D1 里存了一整份作品和收藏吗
+
+没有。作品和个人收藏仍以 Bangumi 为准。Kaku 的数据库主要保存自己需要的用户资料、会话、授权凭据、偏好等记录。
+
+可以这样回答：
+
+> 我没有再维护一套独立的个人收藏主数据。否则用户在 Bangumi 改了进度，两边就可能冲突。Kaku 本地会缓存一份用于展示，但最终保存结果以 Bangumi 为准。
+
+“**主数据**”这里指最终认可的那一份记录；“**缓存**”是为了更快展示而暂存的副本。
+
+## 五、“收藏和进度是怎么保存的？”
+
+### 5.1 先讲用户会看到什么
+
+> 用户把作品从“想看”改为“在看”，我会让页面先显示“在看”，同时向后端提交保存。如果成功，就使用服务端确认的数据；如果失败，就恢复修改前的状态并提示用户。这样不用一直等网络结果才有反馈，也不会把失败当成成功。
+
+这叫**乐观更新**。“乐观”指先假设操作会成功，让页面提前变化；不代表忽略失败。
+
+**回滚**就是失败时恢复原来的状态。**快照**就是修改前保存的一份数据，用来恢复。
+
+### 5.2 为什么用 TanStack Query，不自己写几个 state
+
+**服务端状态**就是由远端决定的数据，例如个人收藏和评论。**本地界面状态**是只影响当前操作的数据，例如“收藏弹层是否打开”。
+
+TanStack Query 负责前一类数据。否则每个页面都要自己处理“正在加载吗、有旧数据吗、失败怎么办、什么时候刷新”，容易遗漏或重复。
+
+两个常见词：
+
+- **query**：读取，例如“查这部作品的收藏状态”。
+- **mutation**：修改，例如“把收藏状态改成在看”。
+
+可以这样回答：
+
+> 我把远端数据交给 Query 管，把弹层开关这类临时状态留在 React 里。收藏保存时，用 mutation 的几个阶段处理提前展示、失败恢复和成功后的缓存更新。
+
+### 5.3 一次修改的五个步骤
+
+1. 取消正在进行的相关查询，减少旧查询结果盖住新操作的机会。
+2. 记住修改前的数据。
+3. 先修改页面使用的缓存，让用户看到变化。
+4. 发出保存请求。
+5. 成功后采用远端结果；失败后回滚，并重新核对远端。
+
+下面是帮助理解的伪代码，不是可直接运行的源码：
+
+```text
+原来的收藏 = 读取缓存()
+先显示(在看)
+
+尝试保存到服务器：
+    成功 → 显示服务器确认的收藏
+    失败 → 恢复原来的收藏，并显示错误
+```
+
+实际代码中的 `onMutate` 表示“请求执行前做什么”，`onError` 表示“失败后做什么”，`onSuccess` 表示“成功后做什么”。先理解上面五步，再看这些名字会容易很多。
+
+源码入口：[收藏读取和保存](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/use-personal-collection.ts)。
+
+### 5.4 什么是 query key 和缓存失效
+
+**query key**就是数据的地址标签。例如“用户 123 的作品 456 的收藏”。只用作品 ID 不够，因为两个用户可能收藏了同一部作品，但状态不同。
+
+```ts
+// 教学示意：不是项目中 key 的原样写法。
+['personal-collection', userId, subjectId]
+```
+
+**使缓存失效**不是“删光所有数据”，而是告诉 Query：“这份旧结果需要重新确认。”是否立即请求，还要看查询当时是否启用、是否在使用等配置。
+
+保存一部作品后，详情页和收藏列表都可能受影响，所以不能只修改一个按钮的文字，相关缓存也要更新或重新获取。
+
+### 5.5 快速连续点，会不会顺序错乱
+
+当前保存逻辑给同一份收藏使用相同的 mutation `scope`。可以把 scope 理解成同一条排队通道：相同 scope 的写请求串行执行，减少先发的请求反而后保存的问题。
+
+这不是对所有并发情况的万能保证。比如不同设备同时修改、连续乐观更新遇到失败，都需要单独考虑。面试可以说明当前措施，不需要承诺“完全没有并发问题”。
+
+### 5.6 “章节进度同步”是不是实时推送
+
+不是这个意思。这里是用户标记已看后，把修改提交给远端，再更新界面。没有把它做成所有设备通过长连接立即收到变化的系统，也没有做离线写入后自动补交的队列。
+
+章节页还支持格子、列表、长篇分段和上一集 / 下一集切换。对应的作品类型不同，展示和可用操作也不同。
+
+## 六、“登录是怎么做的？OAuth 是什么？”
+
+### 6.1 先理解 OAuth：用户授权别人代办，但不交密码
+
+可以把它理解成：你允许一个代办人帮你办理指定事项，给他一张通行证，而不是把你的密码交给他。
+
+Kaku 中的实际流程是：用户去 Bangumi 官方页面登录和授权，Bangumi 给 Kaku 服务端一份授权凭据，之后服务端凭它替用户访问允许的接口。
+
+**OAuth**就是这类授权流程的标准。严格说它解决的是“是否允许访问资源”；项目再根据上游返回的用户资料，建立 Kaku 自己的登录状态。
+
+**token**就是程序使用的凭证，通常是一长串字符。你可以先把它理解成“通行证”，它不是用户密码，也不一定是 JWT。
+
+### 6.2 可以直接回答的登录流程
+
+> 用户点登录后，我打开 Bangumi 官方授权页。授权成功后，Bangumi 先回到 Kaku 后端。后端检查这次授权是否有效，再拿到上游凭据，并加密保存。随后跳回 App，App 用一个短时间有效、只能用一次的交接码换取 Kaku 自己的登录凭证。后面的请求就带 Kaku 的凭证，Bangumi 的凭据不直接给 App。
+
+**回调**就是外部步骤做完后，把结果送回约定地址。**深链**就是可以打开 App 并进入指定位置的链接。
+
+这里有两次“回来”：Bangumi 回到后端，后端再跳回 App。不要把这两个步骤混成一次。
+
+### 6.3 state 和交接码分别干什么
+
+**state**是一份随机标记，用来确认回来的授权结果对应之前发起的流程。好比先拿号，再核对回来的是不是这次办理的事。项目保存它的哈希，限制五分钟有效，并且用后作废。
+
+**handoff code，交接码**是后端给 App 的临时票。App 拿它换正式的 Kaku 会话。当前有效期是一分钟，只能消费一次。
+
+为什么不直接把长期凭据塞进回跳链接？因为链接可能被记录或意外暴露。临时、一次性的码可以缩小暴露后能被使用的时间，但不代表所有深链风险都消失了。
+
+### 6.4 什么是会话？为什么要有两类凭证
+
+**会话，session**就是“一次设备登录及其状态”的记录。服务端通过它知道这个请求代表哪位用户，并决定它是否仍然有效。
+
+项目里要先区分两套东西：
+
+| 凭据 | 谁拿着 | 用来访问谁 |
+| --- | --- | --- |
+| Bangumi 授权凭据 | Kaku 后端 | Bangumi |
+| Kaku 登录凭据 | App | Kaku 后端 |
+
+Kaku 自己的凭据又分为：
+
+- **访问凭证**：日常请求使用，当前有效期一小时。
+- **刷新凭证**：访问凭证过期后用来换新凭证，当前有效期九十天；成功刷新会重新计算有效期。
+
+可以这样回答：
+
+> 访问凭证设得比较短，过期后不要求用户马上重登，而是通过刷新凭证续上。刷新也失败且服务端确认登录失效时，再引导重新登录。这样把日常访问和续期分开。
+
+### 6.5 “刷新凭证轮换”是什么意思
+
+“轮换”就是每次刷新成功后，发新的凭证，旧的不能继续使用。类似用旧票换新票，旧票收回。
+
+服务端更新数据库时，不只看“是不是这个会话”，还检查“数据库里保存的是不是这张旧票”。这样两个请求同时拿同一张旧票刷新，最多一个能完成这次条件更新。
+
+```ts
+// 源码节选：只有会话 ID 和旧凭证哈希都匹配，才允许更新。
+and(
+  eq(sessions.sessionId, input.sessionId),
+  eq(sessions.refreshTokenHash, input.previousRefreshTokenHash),
+)
+```
+
+`eq` 就是“相等”，`and` 就是“两个条件都满足”。不必背代码，但需要理解：**检查旧票和换票的约束落实在数据库更新条件上。**
+
+App 也做了配合：如果已经有一个刷新请求在进行，其他请求等它的结果，不要都去刷新。代码里的 `Promise` 可以理解成“一份将来会成功或失败的结果”，`refreshPromiseRef` 保存正在等待的那一份结果。
+
+### 6.6 加密和哈希有什么区别
+
+**加密**像上锁，持有密钥可以解开。服务端以后还要使用 Bangumi token，所以必须能恢复原文，项目用 AES-GCM 加密存储。AES-GCM 是具体的加密方案，同时可以检查密文是否被篡改。
+
+**哈希**像给一段内容算一个校验指纹，用来核对是否一致，不能拿指纹直接还原原文。Kaku 服务端只需要判断 App 交来的随机凭证对不对，所以保存凭证的哈希即可。
+
+**Base64**只是把内容换成方便传输的字符表示，不是加密。**JWT**是一种特定的 token 格式；Kaku 自己的会话使用随机字符串并查数据库验证，不是 JWT。
+
+**SecureStore**是 App 用来安全保存会话的工具。它和普通数据缓存不是一回事：普通 Query 缓存当前没有额外加密。
+
+可以这样回答：
+
+> 需要再次取出来调用上游的凭据，我加密保存；只需要验证真假的 Kaku 凭据，服务端保存哈希。App 的会话放在 SecureStore，不放进普通查询缓存。
+
+### 6.7 多设备退出怎么实现
+
+每次设备登录有一条会话记录，包含用户、会话 ID、设备名和时间。用户撤销某台设备，就是删除自己名下对应的记录；该设备后续的凭证校验就不能再通过。
+
+“退出其他设备”会保留当前会话；“断开连接”会删除全部 Kaku 会话及服务端保存的 Bangumi 凭据。这不等于已经调用 Bangumi 官方接口撤销所有授权，也不能撤回已经发出去的请求。
+
+源码入口：[登录流程](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[会话数据库操作](/Users/shqingda/Projects/kaku/apps/api/src/auth/store.ts)、[凭据加密](/Users/shqingda/Projects/kaku/apps/api/src/auth/crypto.ts)、[App 会话管理](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-provider.tsx)。
+
+## 七、“缓存和离线是怎么做的？”
+
+### 7.1 先想一个日常场景
+
+你昨天打开过一部动画，今天地铁里网络很差。如果每次都必须等新请求成功才能展示，页面就一直转圈。
+
+缓存的作用是先保留一份已经拿到的数据，下次有机会直接展示。但要告诉用户它可能不是最新的，并且提供重新获取的办法。
+
+可以这样回答：
+
+> 我做了两层。一层是保存查询缓存，App 重启后可以恢复之前的数据；另一层是专门保存最近看过的作品资料和章节，网络请求失败时作为兜底。两层用途和保留时间不同。
+
+### 7.2 持久化、水合、过期分别是什么意思
+
+**持久化**就是从运行时内存写到本地存储。只放内存的内容，关掉程序后可能就没了。
+
+**水合，hydration**在这段代码里，可以直接理解为“把保存的数据读回来，放回 Query 的缓存”。面试不一定要用“水合”这个词，说“恢复缓存”更容易听懂。
+
+**staleTime**表示多久内把数据看作新鲜。过了这段时间，数据需要重新确认，但不表示马上删除。作品查询当前是五分钟。
+
+**maxAge**在持久化配置里限制恢复的缓存快照有多旧，当前是二十四小时。它与 staleTime 不是一个计时器，也不能理解为每条数据都严格满二十四小时立即从磁盘销毁。
+
+**buster**是缓存版本标记。代码改了数据结构后，可以换这个标记，让旧格式的缓存不再被恢复。
+
+### 7.3 查询缓存怎么保存
+
+当前用 SQLite 的键值存储保存。你可以先把**键值存储**理解成一个持久化字典：给一个名字，保存一份内容，以后按名字取回来。
+
+只保存明确允许持久化、且成功拿到过结果的查询。写入做了一秒节流，也就是短时间内多次变化不每次都立即写磁盘。
+
+目前公开查询和部分私有查询都会保存。私有数据指收藏、通知等与账户有关的数据，所以查询的地址标签中需要区分用户，退出时还要清理。
+
+要知道当前边界：普通缓存没有额外加密，代码也记录了登录恢复与私有缓存清理之间存在短暂恢复旧数据的风险。面试说清现有措施即可，不要说“完全没有隐私风险”。
+
+### 7.4 离线包为什么单独做
+
+离线包只保存最近打开的作品资料和章节，最多十部，保留三十天。它比通用查询缓存更有针对性。
+
+```text
+请求作品成功 → 正常展示，并在后台保存离线资料
+请求作品失败 → 找有没有仍有效的离线资料
+               有 → 展示，并提示“正在使用离线包”
+               无 → 展示失败和重试入口
+```
+
+保存失败不会挡住已经拿到的作品展示，但会记录诊断信息。用户主动取消的请求不会当成网络失败，再去强行加载离线包。
+
+### 7.5 离线能不能发评论、改进度
+
+当前没有做“断网先写、联网自动提交”的机制。离线资料主要解决读取问题。图片地址被保存，也不代表图片文件一定下载到了本地。
+
+可以这样回答：
+
+> 目前主要是离线读取，不是离线写入。如果要支持离线改进度，还要处理待提交队列、重试、重复提交以及不同设备的冲突，这部分没有包含在当前实现里。
+
+源码入口：[查询持久化规则](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persistence.ts)、[本地存储](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persister.ts)、[作品查询与失败兜底](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/use-catalog-subject.ts)、[离线包数量和有效期](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/offline-subject-pack-model.ts)。
+
+## 八、“Zod、Adapter、错误处理分别解决什么？”
+
+### 8.1 Zod：先验货
+
+**JSON**是接口常用的数据格式，可以理解为带字段名的数据清单。**Schema**就是这份清单应该满足的规则，例如 ID 必须是数字。
+
+TypeScript 是写代码时检查；Zod 是数据真的送到以后，再按规则检查一次。
+
+```ts
+// 源码节选：按规则检查实际收到的数据，不符合就报错。
+return bangumiSubjectSchema.parse(json);
+```
+
+这里 `parse` 可以理解为“检查并按规则读出”。如果只写 `json as 某种类型`，只是告诉 TypeScript “你相信我”，并没有验货。
+
+可以这样回答：
+
+> 上游数据不完全受我控制，所以会先用 Zod 检查格式，避免缺字段或字段类型变化后，错误一直传到页面里才暴露。
+
+### 8.2 Adapter：验完货，再翻译成自己认识的名字
+
+假设对方叫“姓名”，你的表格叫“名字”，内容类似，但不能让每个页面都自己判断一次。Adapter 就是集中翻译的那一层，中文常叫“适配器”。
+
+在 Kaku 中，Bangumi 的章节号叫 `ep`，评论数叫 `comment`，我转换成业务里更直观的 `number` 和 `discussionCount`。
+
+```ts
+// 从实际转换中摘出的两个字段。
+number: episode.ep,
+discussionCount: episode.comment,
+```
+
+不只是改名字，也会处理中文名为空时用原名、日期为空时如何表示等规则。
+
+可以这样回答：
+
+> 我把外部数据的格式和页面使用的格式分开。外部字段变化时，优先改适配层，不让每个页面都去理解 Bangumi 的原始字段。现在主要接的是 Bangumi，这个分层是在减少耦合，并不是已经接好了多个平台。
+
+**耦合**就是两处代码互相依赖得有多紧。如果改上游一个字段就要改十个页面，依赖就比较紧。
+
+### 8.3 网络失败时为什么不能一直重试
+
+有些失败等等再试可能好，比如超时、暂时限流；有些失败反复请求也没用，比如参数本身不对或无权访问。
+
+**HTTP 状态码**是服务端给请求结果标的类别。项目的重试规则对大部分 4xx 不重试，408 和 429 有例外，并限制重试次数。部分查询配置了逐步增加等待时间的重试延迟，避免失败后马上连续轰炸接口。
+
+**退避**就是失败后先等一会儿再试，多次失败时适当等更久。**限流**就是服务端限制请求频率。
+
+列表翻页失败后，保留前面已经加载的内容，页脚给重试按钮。这里的**分页**就是分批取数据，避免一次取完整列表；但单集评论当前拿的是完整回复数组，不能把所有列表都说成同样的分页方式。
+
+源码入口：[上游数据检查](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/api-v0/client.ts)、[作品和章节转换](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[重试规则](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-retry.ts)。
+
+## 九、“你做过什么体验优化？FlashList 是怎么回事？”
+
+### 9.1 先用弹层解释动画
+
+> 比如底部弹层，我用手势读取用户向下拖了多少，再让弹层跟着移动。松手后，根据距离和速度判断关闭还是回去。回去用弹簧，甩动关闭用逐渐减速的动画，还处理了系统减少动态效果的设置。
+
+**Gesture Handler**负责读取手势。**Reanimated**负责更新动画数值和界面。
+
+**弹簧动画**就是像弹簧一样向目标位置靠近，不是简单规定“匀速走半秒”。**衰减动画**就是从一个速度开始，慢慢减速，类似松手后的惯性。
+
+### 9.2 为什么动画不每帧都 setState
+
+手机画面不断更新，每次更新可以叫一帧。每帧都通过 React 状态驱动整个组件更新，会增加不必要的工作。
+
+Reanimated 的 **shared value** 是供动画读取和更新的数值，例如当前位移。**UI runtime**是执行这类界面动画逻辑的环境。**worklet**是可以在那里执行的小函数。
+
+可以这样回答：
+
+> 连续拖动时，我把位移放在 Reanimated 的共享值里，让动画直接跟随更新。结束后需要关闭弹层等业务操作，再通知 React 这边处理，避免为了每帧位移都重新走组件更新。
+
+当前实现已有取消动画和手势控制，但所有中断是否完全没有位置跳变还需要完善和验证；不要把“使用了 Reanimated”直接等同于“动画已经完美”。
+
+### 9.3 为什么评论有五百条，不能直接渲染五百个完整行
+
+评论长度不同，还可能有图片和引用。如果一次把所有完整行都创建出来，手机要做很多排版和绘制工作。
+
+**列表虚拟化**就是主要处理屏幕附近的内容，远处的行不一直保持完整渲染。**复用**是让离开屏幕的行视图为新的内容服务，减少反复创建。
+
+FlatList 和 FlashList 都是长列表方案；FlashList 更强调复用。项目只先在单集讨论页引入，没有把所有列表一起替换。
+
+### 9.4 “数据已经有了”和“行高已经知道了”有什么区别
+
+数组里已经有第五百条评论，只说明内容取到了；它在手机上会排成几行、多高，还涉及实际布局。
+
+所以按“第几条”定位时，要面对未显示区域的高度估算与测量。**offset，偏移量**则是“从列表起点向下移动了多远”。
+
+引用跳楼是先根据回复 ID 找索引，再定位并高亮；跳到末尾则关注列表底部的位置。
+
+### 9.5 为什么开了动画还是一闪到底
+
+`animated: true` 只是“请用动画”的开关，不是“慢慢滚”的速度设置。跨几十屏的距离在短时间内完成，中间内容就可能快到看不清。
+
+目前做法是：距离近就正常滚；距离很远就先移到末尾前两屏，再把最后两屏滚出来。代码安排了两个画面更新时机后再发出后半段滚动，给附近内容一些布局时间，并重新读取底部位置。
+
+这是一种折中：有一次快速定位，也能看见最后一段运动；它不是从第一条完整连续滚到第五百条。两次等待也不保证所有布局一定完成，实际手感仍需要设备验证。
+
+可以这样回答：
+
+> 我在单集长评论页试用了 FlashList，并区分近距离滚动和远距离定位。远距离只保留最后两屏的可见动画，避免几百条内容在很短时间里闪过去。这个改动做了代码检查，但还没有完整的设备性能对比，所以我不会给它报一个没有测过的提升百分比。
+
+**FPS**是一秒更新多少帧的指标。能滚到某个位置，不等于帧率一定稳定；截图看着正常，也不能证明动画流畅。
+
+源码入口：[弹层手势](/Users/shqingda/Projects/kaku/apps/mobile/src/features/shared/app-sheet.tsx)、[单集评论列表](/Users/shqingda/Projects/kaku/apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx)、[引用跳楼](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-reply-navigation.ts)。
+
+## 十、“你怎么测试？怎么发布？”
+
+### 10.1 测试不是只有“我自己点过”
+
+可以这样回答：
+
+> 我分三层。纯逻辑用例验证数据规则，比如离线资料是否过期、收藏更新怎么合并。组件测试验证界面在加载、失败或用户操作时的表现。设备流程测试在模拟器里实际走搜索、详情和导航。提交代码后，CI 自动跑类型检查、测试和打包检查，提前发现明显回归。
+
+**回归**就是原本能用的功能被新改动弄坏了。**断言**就是测试里明确写“实际结果应该等于什么”。
+
+### 10.2 几个测试工具分别是什么
+
+| 名词 | 日常理解 | 项目中的用途 |
+| --- | --- | --- |
+| 单元 / 纯逻辑测试 | 单独检查一条规则 | 离线包过期、数据转换、认证逻辑等 |
+| Node test | 运行 JavaScript / TypeScript 逻辑测试的工具 | 执行 `.test.mjs` 用例 |
+| Jest | 组织和运行测试的工具 | 配合 Expo 跑组件与 hook 测试 |
+| RNTL | 在测试里渲染 RN 组件并模拟操作的工具 | 检查按钮操作、文字和状态变化 |
+| Maestro | 在模拟器或设备上按脚本操作 App | 搜索、跳转、返回等完整流程 |
+| Mock | 用可控的假对象代替真实依赖 | 模拟接口失败等场景；不能证明真机网络一定正常 |
+| CI / GitHub Actions | 提交后自动执行检查的流程 | 类型检查、测试、覆盖率和构建 |
+
+**类型检查**主要找代码中的类型问题；**测试**检查你明确写出的行为；**设备验收**检查真实运行表现。三者互相补充。
+
+### 10.3 覆盖率 92% 能说明什么
+
+**行覆盖率**表示统计范围内有多少代码行在测试中执行过。当前移动端纯逻辑测试门槛是 92%，API 是 75%。
+
+执行过不代表每一种输入都正确，也不代表所有界面和手机能力都测了。面试说“配置了纯逻辑测试的行覆盖率门槛”，比说“整个 App 测试覆盖 92%”准确。
+
+### 10.4 CI 中“打包通过”是不是 APK 就能用了
+
+不一定。目前 CI 的移动端步骤包括 `expo export`，检查 JavaScript 和资源能否打包。原生安装包还需要 Android 的 Gradle 或 iOS 的 Xcode 编译，还要安装验证。
+
+**APK**是 Android 安装包。**JS bundle**是整理后的 JavaScript 程序，两者不是一个东西。
+
+Maestro 当前在本地运行，没有放进这条 CI。项目记录了 iOS 流程验收，Android 全量验收仍有待办。
+
+### 10.5 当前怎么发布
+
+> 后端和官网部署在 Cloudflare。Android 日常包在本地构建，再通过 GitHub Releases 上传分发。GitHub Release 是带版本说明和下载附件的发布页，和提交代码不是一个动作。目前还没完成 App Store、Google Play 上架。
+
+当前 Android 日常包还存在架构和签名范围限制。**签名**是系统用来识别安装包发布身份的一部分，签名不匹配会影响覆盖安装，不能把开发分发包直接当成商店正式包。
+
+源码入口：[CI 配置](/Users/shqingda/Projects/kaku/.github/workflows/ci.yml)、[测试说明](/Users/shqingda/Projects/kaku/docs/testing.md)、[发布说明](/Users/shqingda/Projects/kaku/RELEASE.md)。
+
+## 十一、“挑一个难点详细讲讲”
+
+不要临时从十几个库名里挑。先选你已经理解、能打开代码解释的一件事。
+
+### 选题 A：收藏修改后的即时反馈
+
+> 一个具体问题是，收藏操作如果必须等网络成功才变化，用户会觉得没点上。但如果只改界面、不处理失败，又会造成界面和实际收藏不一致。
+>
+> 我用 Query 的 mutation 管这个过程。先取消相关查询、保存旧值，再提前更新缓存。请求成功后用远端结果覆盖，失败后恢复旧值并提示。相关收藏列表也要同步更新或重新获取。
+>
+> 这里我学到的是，即时反馈不只是按钮先变色，还要考虑失败恢复和多个页面的数据一致。连续操作和多设备冲突也不能仅靠一次乐观更新就认为解决了。
+
+你需要会解释的词只有：缓存、mutation、快照、回滚。第五部分都讲过。
+
+### 选题 B：不把上游凭据交给 App 的登录流程
+
+> 我希望 App 能代表用户访问 Bangumi，但不让上游授权凭据出现在 App 回跳链接里。所以授权结果先到后端，由后端保存 Bangumi 凭据，再给 App 一张一分钟有效的一次性交接码。
+>
+> App 换到 Kaku 会话后，平时带自己的访问凭证请求。过期时用刷新凭证续期，刷新会换掉旧凭证。客户端合并同时发生的刷新，服务端通过数据库旧凭证匹配条件约束更新。
+>
+> 这样也方便按设备管理登录状态，撤销某一台设备时，不需要把所有设备都退出。
+
+你需要会解释的词是：OAuth、交接码、会话、刷新、加密和哈希。第六部分都讲过。
+
+### 选题 C：网络不好时仍然能看资料
+
+> 我不希望用户一进地铁，之前看过的内容就全部变成转圈。所以一方面保存 Query 缓存，另一方面单独保留最近十部作品的资料和章节。
+>
+> 读取作品失败时，先查有没有仍有效的离线资料。有就展示并明确提示来源，没有就给错误和重试入口。保存离线资料放在后台，不挡住已经成功获取的页面。
+>
+> 这部分解决的是离线读取。离线修改后自动补交涉及冲突和重复提交，我目前没有把它混在这次实现里。
+
+你需要会解释的词是：持久化、缓存恢复、有效期和失败兜底。第七部分都讲过。
+
+## 十二、怎样用这份文档练习
+
+第一遍只练开场介绍，目标是不看文档也能说清“这是给谁做什么的，我负责哪些部分”。
+
+第二遍选一条操作讲完整。推荐“把作品改成在看”：用户点哪里 → 页面先变什么 → 请求发给谁 → 成功怎么办 → 失败怎么办。讲不清的一步，再回对应章节看。
+
+第三遍让别人追问名词。比如说到“缓存”，就让对方问“缓存放哪、什么时候刷新、退出账户怎么办”。能够不用另一个陌生词解释它，才算真正理解。
+
+第四遍打开对应源码，找到自己讲的逻辑。文中多数代码省略了上下文，教学示意更不是生产代码，面试前应把准备讲的路径实际跑一遍。
+
+目前需要如实保留的范围：个人独立开发、未上架商店、没有可用的用户规模或性能提升数字、离线主要支持读取、普通私有缓存未额外加密、FlashList 只在单集页试点且分段动效还需设备验证。这些集中记住即可，不必在开场逐条自我审查。
+
+遇到没有做过的部分，可以说：“这部分目前没做，我现在的实现是……；如果继续做，我会先解决……。”给出已有实现和思考，比硬背一个实际代码里没有的答案更可靠。
+
 ---
 
-## 阅读说明与项目边界
-
-本文用于理解和准备面试，不建议把后面的全部内容放进简历。实现核对日期：2026-09-13。代码片段标为“源码节选”的保留原实现；标为“简化示意”的省略了上下文，不能直接作为完整文件运行。
-
-这是个人独立开发项目，不属于比亚迪在职项目。未提供开发起止时间，因此不编造日期；也不填用户量、商业收益、性能提升百分比。独立开发描述的是个人对产品、实现与交付的责任，不代表不使用开源库或辅助开发工具；面试问到具体开发方式时按实际情况说明。
-
-按仓库项目说明，服务端和官网已部署，Android 安装包通过 GitHub Releases 分发，iOS、Android 仍在开发测试中，尚未上架 App Store / Google Play。这些是项目记录，不是本文重新对生产环境进行探测的结果。
-
-来源：[README.md](/Users/shqingda/Projects/kaku/README.md)、[RELEASE.md](/Users/shqingda/Projects/kaku/RELEASE.md)、[TODO.md](/Users/shqingda/Projects/kaku/TODO.md)。
-
-## 技术栈：每一项在项目里负责什么
-
-| 技术 | 项目中的职责 | 面试时应讲清的区别 |
-| --- | --- | --- |
-| React Native | 移动端页面、列表、输入和交互组件 | 使用原生组件体系，不是把官网装进 WebView |
-| Expo | 开发客户端、原生能力集成、原生工程生成与构建流程 | 引入原生依赖后可能需要重新构建开发客户端 |
-| TypeScript | 业务模型、组件参数、接口调用的静态类型 | 无法单独验证网络实际返回的数据 |
-| Expo Router | 基于文件组织页面、动态参数和导航 | 属于移动端路由；简历技术栈可按篇幅省略 |
-| TanStack Query | 查询、缓存、分页、刷新和 mutation 生命周期 | 管服务端状态；弹层开关等本地 UI 状态仍可用 React state |
-| Reanimated / Gesture Handler | 动画数值、手势事件、弹簧与衰减运动 | 手势与动画可在 UI runtime 执行，不必每帧更新 React state |
-| Hono | API 路由、请求上下文、鉴权与响应 | 是服务端框架，运行环境是 Cloudflare Workers |
-| Zod | 外部响应、请求参数的运行时校验 | 与 TypeScript 配合，避免把类型断言当作校验 |
-| Drizzle ORM | 声明数据库表、构造查询和条件更新 | ORM；不是数据库本身 |
-| Cloudflare Workers / D1 | 执行 API / 提供托管关系数据存储 | D1 使用 SQLite 体系，不能描述成 PostgreSQL |
-| React / Vite | 产品官网、政策和支持页面 | 与移动端分开构建和交付 |
-
-## 第一条：独立完成客户端、API、官网和交付
-
-### 1.1 “独立全栈开发”具体覆盖什么
-
-项目分成三个应用：移动端负责用户交互，API 承担授权、登录后代理和应用自身数据，官网承载产品介绍、隐私政策、服务条款与 FAQ。不是只有界面 Demo，也不是自己重新实现一个 Bangumi 数据平台。
-
-```text
-移动端页面 → feature 查询与业务模型 → 数据源适配层
-                                   ├─ Bangumi 公开接口
-                                   └─ Kaku API → 鉴权 → Bangumi 授权接口
-                                              └─ D1：会话、凭据、偏好等
-产品官网 → 独立的静态资源构建与部署
-```
-
-公开浏览不强制登录。需要授权的操作由 Kaku 服务端持有上游凭据完成。作品资料和个人收藏的业务事实主要来自 Bangumi，D1 不维护另一套可能与远端冲突的个人收藏主库。
-
-“全栈”的重点是能把一条用户操作讲通：页面如何输入、参数如何校验、身份如何确认、远端如何写入、缓存如何更新、失败如何反馈。
-
-来源：[README.md](/Users/shqingda/Projects/kaku/README.md)、[apps/api/src/db/schema.ts](/Users/shqingda/Projects/kaku/apps/api/src/db/schema.ts)。
-
-### 1.2 作品搜索与条目浏览
-
-条目覆盖动画、书籍、音乐、游戏和三次元；发现入口包括搜索、每日放送、排行榜和分类频道。进入详情后展示资料、评分、标签、章节及关联信息。
-
-请求不是直接把 JSON 交给页面：API client 先校验，provider 转成 `CatalogSubject`，查询 hook 再负责缓存和重试。比如作品中文名为空时回退到原名，章节按编号排序，评分排名无效时转成未提供。这些规则放在适配层，页面只展示业务字段。
-
-来源：[apps/mobile/src/infrastructure/bangumi/api-v0/client.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/api-v0/client.ts)、[apps/mobile/src/infrastructure/bangumi/catalog/provider.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[apps/mobile/src/features/catalog/model.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/model.ts)。
-
-### 1.3 收藏评分：怎样做到点下去立即反馈
-
-收藏状态对应想看、看过、在看、搁置与抛弃，个人评分与 Bangumi 同步。修改收藏时先更新当前页面的 Query 缓存，让用户立即看到结果，再等待远端响应。
-
-`useSavePersonalCollection` 的源码节选：
-
-```ts
-onMutate: async (update) => {
-  await queryClient.cancelQueries({ queryKey });
-  const previous = queryClient.getQueryData<PersonalCollection | null>(
-    queryKey,
-  );
-  queryClient.setQueryData<PersonalCollection | null>(
-    queryKey,
-    mergePersonalCollection(previous, update, subjectId),
-  );
-  return { previous };
-},
-onError: (_error, _update, context) => {
-  if (context) {
-    queryClient.setQueryData(queryKey, context.previous);
-  }
-  void queryClient.invalidateQueries({ queryKey });
-},
-```
-
-这里每一步都有作用：
-
-1. 取消当前查询，减少旧响应覆盖新操作的机会。
-2. 保存修改前快照，失败时有明确回滚依据。
-3. 合并更新缓存，让界面先反馈；此时还不能宣称保存成功。
-4. 失败时恢复快照并使查询失效，重新与远端对齐。
-5. 成功时以服务端返回值覆盖缓存，并更新或使关联收藏列表失效。
-
-同一收藏的 mutation 配置 `scope: { id: JSON.stringify(queryKey) }`，用相同 scope 串行执行写请求。这降低了同一条目的请求乱序风险，但不能夸大为已经证明所有快速连续操作、乐观快照和跨设备冲突都被完整解决。
-
-来源：[apps/mobile/src/features/collections/use-personal-collection.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/use-personal-collection.ts)。
-
-### 1.4 章节进度同步
-
-进度包含章节已看状态、章节列表与格子展示、长篇作品分段，以及上一集 / 下一集切换。这里的“同步”指通过登录后的接口更新远端进度，并让客户端状态与远端保持一致，不是设备间 WebSocket 实时推送，也不是离线写入队列。
-
-单集页根据条目类型判断是否支持观看进度，读取个人收藏并调用保存逻辑。不同类型不能盲目套用动画的“已看”语义，例如音乐章节展示为“曲”。
-
-面试可以用“标记本集已看”串起：路由定位条目与章节 → 读取个人进度 → 提交更新 → 缓存反馈 → 保存失败提示。
-
-来源：[apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx)、[apps/mobile/src/features/collections/model.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/model.ts)、[apps/mobile/src/infrastructure/kaku/collections-client.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/kaku/collections-client.ts)。
-
-### 1.5 社区讨论
-
-社区能力包括吐槽箱、长评、条目讨论、单集讨论和小组话题；支持新建话题以及编辑、删除自己的回复。阅读和写入的身份要求不同，不能因为公开内容可读就省略写操作鉴权。
-
-例如讨论查询通过 `useSessionAwareQuery` 选择公开请求或带会话的 Kaku 请求，同时生成与身份一致的缓存标记和 key 后缀。这样登录态查询与匿名查询不会只因 topicId 相同就共用同一个 key。
-
-引用跳楼会查找回复 ID 对应的索引，再定位并短暂高亮，帮助用户确认自己跳到了哪一楼。
-
-来源：[apps/mobile/src/features/discussions/use-bangumi-discussions.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-bangumi-discussions.ts)、[apps/mobile/src/features/auth/session-aware-query.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/session-aware-query.ts)、[apps/mobile/src/features/discussions/use-reply-navigation.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-reply-navigation.ts)。
-
-### 1.6 部署与安装包分发
-
-服务端用 Workers 运行 Hono，D1 保存应用数据，Drizzle 管理表结构与迁移。官网由 React / Vite 构建，通过 Workers Static Assets 提供访问。
-
-Android 日常分发流程是生成原生工程、Gradle 构建、整理更新说明并上传 GitHub Release。当前发版文档记录了 arm64-v8a 架构和 debug 签名的限制；不能把它说成已经完成商店正式签名与审核发布。
-
-需要区分三个动作：部署 API、构建原生 APK、上传安装包。它们对应不同产物与验证步骤；推送 Git 提交也不等于三者都已完成。
-
-来源：[docs/deploy-api.md](/Users/shqingda/Projects/kaku/docs/deploy-api.md)、[RELEASE.md](/Users/shqingda/Projects/kaku/RELEASE.md)、[scripts/build-split-apks.sh](/Users/shqingda/Projects/kaku/scripts/build-split-apks.sh)。
-
-**这一条的口述示例：**
-
-> Kaku 是我独立开发的第三方 Bangumi 客户端。我负责移动端、Hono API 和官网。除了搜索和浏览，核心链路是登录后同步收藏、评分和章节进度，以及参与讨论。收藏修改使用乐观更新和失败回滚，远端仍是最终依据。目前服务端已部署，Android 通过 GitHub Releases 分发，商店上架还没有完成。
-
-## 第二条：OAuth、会话与凭据存储
-
-### 2.1 为什么既有 Bangumi token，又有 Kaku session
-
-Bangumi token 授权服务端访问用户的上游资源；Kaku session 证明当前请求属于哪位用户、哪台设备。两者分开，可以在不把上游凭据交给 App 的情况下管理设备会话。
-
-这里的 Kaku token 是加密安全随机数生成的不透明凭证，服务端查库验证，不是 JWT。不能把“Bearer token”与“JWT”画等号。
-
-### 2.2 OAuth 登录完整路径
-
-```text
-App 打开授权入口
-  → Kaku 生成 state，保存其哈希和过期时间
-  → 跳转 Bangumi 官方授权页
-  → Bangumi 回调 Kaku，返回 code 与 state
-  → Kaku 消费 state、用 code 换取上游 token、核对用户身份
-  → 加密保存上游 token
-  → 回跳 App，仅带一次性 handoff code
-  → App 用 handoff code 换取 Kaku 会话
-```
-
-`state` 对应一次授权事务，用于验证回调与发起的流程匹配；回调消费该事务后不能重复使用。上游授权码与 App 交接码是两种不同的码。
-
-回跳 App 的地址被限定为允许的地址，不能任意传入一个 URL 接收交接码。客户端密钥只在服务端使用，用户的 Bangumi 密码由官方页面处理。
-
-源码节选：
-
-```ts
-const handoffCode = createRandomToken();
-await store.createHandoff({
-  codeHash: await hashToken(handoffCode),
-  createdAt: updatedAt,
-  expiresAt: updatedAt + HANDOFF_TTL_MS,
-  userId: bangumiUser.id,
-});
-
-const appRedirect = new URL(transaction.appRedirectUri);
-appRedirect.searchParams.set('code', handoffCode);
-return context.redirect(appRedirect.toString());
-```
-
-交接码的意义是缩短深链中凭证的可用时间，并让它只能被消费一次；不能据此宣称消除了所有深链劫持风险。
-
-来源：[apps/api/src/auth/routes.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[apps/api/src/auth/store.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/store.ts)。
-
-### 2.3 短期访问凭证与刷新凭证
-
-核对时的参数如下，不是所有项目都必须采用的通用配置：
-
-| 对象 | 有效期 | 用途 |
-| --- | --- | --- |
-| OAuth 事务 state | 5 分钟 | 关联授权发起与回调 |
-| App handoff code | 60 秒 | 一次性交换 Kaku 会话 |
-| Kaku session token | 1 小时 | 日常 API 请求 |
-| Kaku refresh token | 90 天 | 访问凭证过期后刷新会话 |
-
-刷新时会同时更新 session token 和 refresh token，并重新计算有效期。因此目前是随成功刷新延长的刷新窗口，不能把 90 天描述为首次登录起绝对不变的总寿命。
-
-API 读取 `Authorization: Bearer ...`，将 token 哈希后查找有效会话。移动端把 Kaku 会话保存到 SecureStore，不把授权 token 放进普通 Query 缓存。
-
-来源：[apps/api/src/auth/session-service.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/session-service.ts)、[apps/mobile/src/features/auth/auth-storage.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-storage.ts)。
-
-### 2.4 轮换如何避免旧刷新凭证被重复使用
-
-刷新不是只校验一次后无条件覆盖：数据库更新条件同时包含 sessionId 和旧 refresh token 哈希。
-
-`store.rotateSession` 源码节选：
-
-```ts
-.where(
-  and(
-    eq(sessions.sessionId, input.sessionId),
-    eq(sessions.refreshTokenHash, input.previousRefreshTokenHash),
-  ),
-)
-.returning({ sessionId: sessions.sessionId });
-```
-
-第一次更新成功后，旧哈希不再匹配。第二个拿着同样旧凭证的更新拿不到返回行，路由返回 `refresh_reused`。这是条件更新实现的并发保护，不能把它说成已经实现完整的“被盗检测及整个 token 家族撤销”。
-
-客户端同时用 `refreshPromiseRef` 合并并发刷新：同一运行实例里的多个请求遇到过期会话时，复用正在执行的刷新 Promise。这解决客户端重复发起的问题，服务端条件更新则负责最终约束，两者不能互相替代。
-
-来源：[apps/api/src/auth/store.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/store.ts)、[apps/api/src/auth/routes.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[apps/mobile/src/features/auth/auth-provider.tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-provider.tsx)。
-
-### 2.5 哪些凭据加密，哪些只存哈希
-
-| 数据 | 存储方式 | 原因 |
-| --- | --- | --- |
-| Bangumi access / refresh token | 服务端 AES-GCM 加密后存 D1 | 服务端需要解密后调用上游 |
-| Kaku session / refresh token | 服务端保存 SHA-256 哈希 | 验证时比较哈希即可，无需恢复原文 |
-| OAuth state / handoff code | 服务端保存哈希 | 只需查找、验证和一次性消费 |
-| App 的 Kaku 会话 | SecureStore | 客户端需读取凭证发送请求 |
-| 普通查询缓存 | SQLite KV 存储 | 与凭据存储分开，当前没有额外加密 |
-
-AES-GCM 源码节选：
-
-```ts
-const iv = crypto.getRandomValues(new Uint8Array(12));
-const key = await importEncryptionKey(base64Key);
-const encrypted = await crypto.subtle.encrypt(
-  { iv, name: 'AES-GCM' },
-  key,
-  new TextEncoder().encode(value),
-);
-```
-
-实现要求 32 字节密钥，每次生成随机 12 字节 IV，结果以版本号、IV、密文编码保存。GCM 同时提供加密与完整性校验。Base64URL 只是把二进制转为字符串，不是加密。
-
-哈希随机 token 与哈希用户密码的场景不同：这里输入是高熵随机凭证，不能把这一方案直接照搬为用户密码存储方案。也不要宣称已有自动密钥轮换，代码中的密文版本号并不等于完整的轮换机制。
-
-来源：[apps/api/src/auth/crypto.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/crypto.ts)、[apps/api/src/db/schema.ts](/Users/shqingda/Projects/kaku/apps/api/src/db/schema.ts)。
-
-### 2.6 多设备会话和撤销范围
-
-每个会话记录 sessionId、设备名、用户 ID、创建时间、最后使用时间及过期时间。设备名用于展示，不是硬件可信身份。
-
-| 操作 | 当前路由 | 实际范围 |
-| --- | --- | --- |
-| 退出当前会话 | `DELETE /auth/session` | 当前凭证对应的会话 |
-| 退出其他会话 | `DELETE /auth/sessions` | 保留当前会话，撤销其他会话 |
-| 撤销指定会话 | `DELETE /auth/sessions/:sessionId` | 在当前用户范围内删除目标会话 |
-| 断开连接 | `DELETE /auth/connection` | 删除用户全部 Kaku 会话和本地保存的 Bangumi 凭据 |
-
-最后一项不等于已调用 Bangumi 官方撤销授权接口，也不能承诺撤回已经发往上游的请求。“全部会话撤销”的简历表述指 Kaku 自己管理的会话。
-
-来源：[apps/api/src/auth/routes.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[apps/api/src/auth/store.ts](/Users/shqingda/Projects/kaku/apps/api/src/auth/store.ts)。
-
-**这一条的口述示例：**
-
-> 我把上游授权和客户端会话分开了。Bangumi token 加密留在服务端，App 回调只拿一个一分钟有效的一次性交接码，再换取 Kaku 会话。访问凭证一小时有效，刷新时轮换两种凭证；客户端合并并发刷新，数据库通过旧哈希条件更新防止重复使用。每台设备有独立会话，可以单独撤销。
-
-## 第三条：服务端状态、离线与适配层
-
-### 3.1 为什么使用 TanStack Query
-
-作品、收藏、评论属于远端数据，需要解决请求状态、缓存复用、过期、刷新和写入后的关联更新。若每个页面分别用 state 和 effect 处理，容易重复实现，并漏掉请求取消和失败状态。
-
-Query key 表达“这是哪份数据”，例如条目 ID、版本、用户 ID、分页参数。私有查询必须带用户身份，避免不同用户的同类查询占用同一缓存位置。`enabled` 控制缺少有效 ID 或会话时不发请求；`signal` 向底层传递取消意图。
-
-`staleTime` 表示数据在多长时间内视为新鲜，不等于数据一过期就立刻删除，也不等于离线包保留时间。条目查询当前设为 5 分钟，个人收藏查询设为 1 分钟。
-
-来源：[apps/mobile/src/lib/query-keys.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-keys.ts)、[apps/mobile/src/features/catalog/use-catalog-subject.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/use-catalog-subject.ts)、[apps/mobile/src/features/collections/use-personal-collection.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/use-personal-collection.ts)。
-
-### 3.2 查询持久化与恢复
-
-根节点的 `PersistQueryClientProvider` 负责缓存恢复与后续保存；persister 使用 `expo-sqlite/kv-store`，写入节流时间为 1 秒，避免每次缓存变化立即落盘。
-
-筛选规则源码节选：
-
-```ts
-export function shouldPersistPublicQuery(query: PersistableQuery) {
-  return (
-    query.meta?.persist === true &&
-    query.state.status === 'success' &&
-    query.state.dataUpdatedAt > 0
-  );
-}
-```
-
-它只持久化明确允许、状态成功且有有效更新时间的查询。当前公开与私有查询都可能标记 `persist: true`；函数名仍含 Public，属于历史命名，不能据此误认为现在只缓存公开数据。
-
-恢复配置的 `maxAge` 是 24 小时，`buster` 用于使不兼容的旧快照失效。需精确说明：这是持久化缓存恢复的最大年龄策略，不是逐条私有数据的加密销毁计时器。
-
-冷启动先恢复可用缓存，让页面有数据可展示，再按查询配置取新数据。只能说“支持缓存恢复、减少重复等待”，没有实测前不要写“冷启动耗时降低 X%”或“所有页面秒开”。
-
-来源：[apps/mobile/src/app/_layout.tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/app/_layout.tsx)、[apps/mobile/src/lib/query-persistence.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persistence.ts)、[apps/mobile/src/lib/query-persister.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persister.ts)。
-
-### 3.3 私有缓存的隔离与现有取舍
-
-当前实现通过带用户身份的 query key 区分数据，用 `meta.private` 标记私有查询，并在认证状态相关的清理逻辑中调用 `removeQueries`。缓存移除后，persister 的后续写入更新持久化内容。
-
-当前普通缓存没有额外加密。源码也明确记录了退出状态冷启动恢复时，私有缓存可能短暂恢复后才被清理的边界。因此不能把现有实现描述为“完全杜绝私有数据闪现”或“所有本地数据均安全加密”。这与 SecureStore 存会话、服务端加密 token 是不同层面。
-
-如被追问后续改进，可以提出按账户拆分存储、先确定身份再恢复私有缓存、退出时显式清理磁盘。但必须标为改进方向，不能作为已完成成果。
-
-来源：[apps/mobile/src/features/auth/auth-provider.tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-provider.tsx)、[apps/mobile/src/lib/query-persistence.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persistence.ts)。
-
-### 3.4 为什么还需要条目离线包
-
-查询缓存主要用于恢复近期请求结果；离线包是专门保留最近打开的条目资料与章节。当前限制为最多 10 个条目、最长 30 天，使用独立存储 key。
-
-| 维度 | Query 持久化 | 条目离线包 |
-| --- | --- | --- |
-| 保存对象 | 标记允许的成功查询 | `CatalogSubject` 条目与章节 |
-| 主要目的 | 恢复查询缓存 | 网络请求失败时提供条目兜底 |
-| 保留策略 | 恢复快照的 maxAge 24 小时 | 最多 10 个、30 天 |
-| 是否提供写入同步 | 没有自动形成离线写队列 | 不支持离线写入同步 |
-| 是否缓存全部资源 | 不是 | 不是，图片 URL 不等于图片文件已离线保存 |
-
-条目查询的简化示意：
-
-```ts
-try {
-  const subject = await getCatalogSubject(subjectId, signal);
-  // 实际实现异步保存，并捕获落盘失败写入诊断日志。
-  void saveOfflineSubject(subject).catch(recordSaveFailure);
-  return subject;
-} catch (error) {
-  if (signal?.aborted) throw error;
-  const packed = await loadOfflineSubject(subjectId);
-  if (packed) return packed;
-  throw error;
-}
-```
-
-`recordSaveFailure` 是此处说明性的占位名称。真正源码使用 `recordDiagnosticError` 处理错误。落盘不阻塞展示，读取离线包后加上 `offlineSource: 'pack'`，页面显示离线来源提示和重试入口。
-
-取消请求时直接抛出，避免把主动取消解释成网络故障，再不必要地恢复旧资料。没有离线包时继续抛错，不用空对象伪装成加载成功。
-
-来源：[apps/mobile/src/features/catalog/use-catalog-subject.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/use-catalog-subject.ts)、[apps/mobile/src/features/catalog/offline-subject-pack.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/offline-subject-pack.ts)、[apps/mobile/src/features/catalog/offline-subject-pack-model.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/offline-subject-pack-model.ts)。
-
-### 3.5 Zod 与 TypeScript 各解决什么
-
-TypeScript 在开发与构建阶段检查类型，网络 JSON 在运行时仍可能缺字段或类型不对。Zod 在进入业务层前检查真实数据。
-
-源码节选：
-
-```ts
-export async function getBangumiSubject(
-  subjectId: number,
-  signal?: AbortSignal,
-) {
-  const json = await requestJson(`/v0/subjects/${subjectId}`, { signal });
-  return bangumiSubjectSchema.parse(json);
-}
-```
-
-`parse` 失败会抛出校验错误，进入查询错误流程；`json as CatalogSubject` 只是静态断言，无法提供同样的保护。Zod 负责结构规则，不保证数据一定新鲜，也不自动完成不同数据源之间的语义统一。
-
-来源：[apps/mobile/src/infrastructure/bangumi/api-v0/client.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/api-v0/client.ts)、[apps/mobile/src/infrastructure/bangumi/api-v0/schemas.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/api-v0/schemas.ts)。
-
-### 3.6 Adapter 怎么隔离上游结构
-
-以章节为例，Bangumi 用 `ep`、`name_cn`、`comment`，业务模型使用 `number`、`title`、`discussionCount`。转换集中在 provider，而非散落在页面里。
-
-源码节选：
-
-```ts
-function toCatalogEpisode(episode: BangumiEpisodeResponse): CatalogEpisode {
-  return {
-    airDate: episode.airdate || undefined,
-    description: episode.desc,
-    discussionCount: episode.comment,
-    duration: episode.duration || undefined,
-    id: episode.id,
-    number: episode.ep,
-    originalTitle: episode.name,
-    title: preferChineseName(episode.name_cn, episode.name),
-  };
-}
-```
-
-好处是字段命名、空值、中文名回退等规则只需在一处解释和修改；组件依赖业务模型，有利于测试和替换数据源。
-
-边界也要讲清：目前主要接入 Bangumi，部分 hook 名称、ID 和类型语义仍带有来源特征。“尽量保持数据源无关”是已经采取的分层方向，不代表完成了多供应商插件系统，也不代表换一个 provider 就能零成本迁移。
-
-来源：[apps/mobile/src/infrastructure/bangumi/catalog/provider.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[apps/mobile/src/features/catalog/model.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/model.ts)。
-
-### 3.7 失败、重试和不可用状态
-
-需要区分首次加载、有效空结果、有缓存但刷新失败、离线包兜底，以及没有任何可用数据的失败。分页还有独立的加载更多失败，不能让一页失败覆盖整个列表。
-
-`shouldRetryBangumiQuery` 对普通 4xx 不重试，408、429 以及其他可重试错误允许有限重试；判断上限是 `failureCount < 2`。`bangumiRetryDelay` 提供 `min(600 × 2^attemptIndex, 3000)` 毫秒退避，部分查询显式配置它，不能声称全部请求都统一使用了这个延迟。
-
-分页自动加载有三重守卫：还有下一页、当前不在加载、上一次加载没有失败。失败后让用户按页脚重试，避免停在列表底部时不断自动请求失败接口。
-
-离线包通过提示条说明来源，刷新失败保留已有内容，重试入口允许用户恢复。设计目标是“失败可理解、可操作”，不是“失败发生时仍显示无限 loading”。
-
-来源：[apps/mobile/src/lib/query-retry.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-retry.ts)、[apps/mobile/src/features/shared/use-paged-list.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/shared/use-paged-list.ts)、[apps/mobile/src/features/catalog/catalog-status-banner.tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/catalog-status-banner.tsx)。
-
-**这一条的口述示例：**
-
-> 我用 Query 统一管理远端状态，并把成功且允许保存的查询写到本地，重启后先恢复缓存。另有最近十个条目的离线包，网络失败时回退并明确提示来源。外部 JSON 先过 Zod，再映射为页面使用的业务模型。缓存是体验层，收藏和进度仍以远端为准，没有做离线写入同步。
-
-## 第四条：交互、长列表和验证
-
-### 4.1 Reanimated 具体用在哪里
-
-共享 `AppSheet` 使用 shared value 保存位移和遮罩透明度，Gesture Handler 提供拖动事件，动画样式读取这些数值。进入与回弹使用 `withSpring`，甩动关闭使用 `withDecay`，避免为了每帧位移触发一次 React 渲染。
-
-手势更新在 UI runtime 中执行；需要调用 React 回调时通过 `runOnJS` 回到 JS。worklet 调用的辅助函数应为模块级并标记 `'worklet'`，不能假设任意组件内部函数都能直接从 UI runtime 调用。
-
-来源：[apps/mobile/src/features/shared/app-sheet.tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/features/shared/app-sheet.tsx)、[apps/mobile/src/lib/motion.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/motion.ts)、[AGENTS.md](/Users/shqingda/Projects/kaku/AGENTS.md)。
-
-### 4.2 弹簧、速度和中断分别是什么意思
-
-弹簧根据当前位置向目标运动，`withDecay` 根据初始速度衰减；松手时同时考虑距离和速度，比固定“拖过一半就关”更贴近甩动操作。
-
-当前弹层代码在开始手势时取消位移动画，并在拖动时更新 `translateY`；关闭分支给衰减动画传入 `Math.max(event.velocityY, 600)`，包含最低速度，不是所有情况下都严格继承原始速度。减少动态效果时关闭拖动手势，使用透明度过渡。
-
-值得主动理解的实现边界：当前 `onUpdate` 主要直接使用 `event.translationY`，没有完整保存中断瞬间的位移基线；回弹分支也没有都显式传入释放速度。因此简历只能写“实现手势交互与动画”，不能升级为“所有动效都已实现无跳变中断和完整速度连续性”。如果要宣称后者，需要继续实现并验证。
-
-### 4.3 FlashList 为什么适合在单集讨论页试点
-
-单集评论会拿到完整回复数组，评论长度和引用造成不固定行高。数据已在内存中，不代表所有行已完成渲染与测量；这解释了为什么“数组有第 500 条”不等于按索引滚动一定能精确落地。
-
-FlashList 使用视图复用，降低长列表滚动中的组件创建和布局压力。但它不负责减少上游返回的数据量，也不会自动缓存所有图片，更不会让任意长距离动画变慢。
-
-目前只在单集讨论页接入，其他讨论列表仍使用 FlatList。试点的价值是先解决具体场景并验证，不能写成“全站完成 FlashList 改造”或“内存减少 X%”。
-
-来源：[apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx](/Users/shqingda/Projects/kaku/apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx)、[apps/mobile/src/features/discussions/use-bangumi-discussions.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-bangumi-discussions.ts)、[IMPROVEMENT-PLAN.md](/Users/shqingda/Projects/kaku/IMPROVEMENT-PLAN.md)。
-
-### 4.4 远距离定位为什么会像闪一下
-
-当前列表按钮通过 `scrollToOffset({ animated: true, offset })` 发出原生滚动请求。`animated` 是开关，不是速度配置。跨越几百条评论时，过多距离可能压缩到短促动画内；可变行高的后续测量也可能导致位置修正。
-
-现有改动采用分段策略：离底部不超过两屏时直接动画；超过两屏时先无动画定位到末尾前约两屏，再安排原生滚动到末尾。
-
-源码节选：
-
-```ts
-list.scrollToOffset({ animated: false, offset: bottom - landingDistance });
-landingFrameRef.current = requestAnimationFrame(() => {
-  landingFrameRef.current = requestAnimationFrame(() => {
-    landingFrameRef.current = null;
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: true,
-      offset: maxScrollOffsetRef.current + 200,
-    });
-  });
-});
-```
-
-双 `requestAnimationFrame` 给定位与目标附近布局留出提交机会，第二段重新读最新底部。它不是 FlashList 的“所有行已测量完成”通知，所以不能保证在所有负载下足够。
-
-`+200` 是沿用的越界偏移余量，意图借助原生边界限制靠近末尾，不是动画时长，也不是任意行高下必然精确落底的证明。底部估值来自内容高度减视口高度，并在滚动、布局和内容尺寸变化时更新。
-
-拖动、回顶、引用跳楼、换集与卸载会取消排队中的 frame。已经开始的原生滚动交给原生交互处理中断。减少动态效果时直接定位。
-
-验证边界：这次分段修改完成了类型检查，没有设备动效验收。用户此前反馈 500 多条可到达底部，是定位体验反馈，不是修订后全机型流畅度或 FPS 测试。简历不写“全程丝滑”或“彻底消除闪烁”。
-
-### 4.5 引用跳楼与“跳到底部”有何不同
-
-引用跳楼知道目标 replyId，先找到索引，再 `scrollToIndex`，把目标放到视口约 20% 的位置，并设置约 1.6 秒高亮。跳到底部关注边界位置，使用 offset。
-
-共享导航 hook 为 FlatList 保留索引失败后的粗定位和重试逻辑；不能把该回调说成 FlashList v2 的 API。当前共享 ref 使用 `any` 兼容两类列表，属于类型边界上的取舍，后续可用最小公共接口改善。
-
-来源：[apps/mobile/src/features/discussions/use-reply-navigation.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-reply-navigation.ts)。
-
-### 4.6 分层测试各自验证什么
-
-| 层次 | 工具和位置 | 适合验证 | 不替代什么 |
-| --- | --- | --- | --- |
-| 纯逻辑 | Node test；`*.test.mjs` | 数据转换、缓存规则、请求和认证逻辑 | 真实屏幕布局与原生手势 |
-| 组件 / hook | Jest Expo、RNTL；`*.test.tsx` | 用户动作、渲染状态、hook 行为 | 真机帧率和系统权限行为 |
-| 设备流程 | Maestro；`.maestro/` | 首页、搜索、详情、登录门控等实际导航 | 所有业务分支和所有机型 |
-| 设备走查 | Argent 会话与测试记录 | 动效、截图、原生交互和运行时证据 | 自动化测试覆盖率 |
-
-可阅读的具体用例：
-
-- 离线包插入、去重和过期：[apps/mobile/tests/offline-subject-pack.test.mjs](/Users/shqingda/Projects/kaku/apps/mobile/tests/offline-subject-pack.test.mjs)。
-- 收藏合并规则：[apps/mobile/tests/personal-collection.test.mjs](/Users/shqingda/Projects/kaku/apps/mobile/tests/personal-collection.test.mjs)。
-- OAuth 与会话路由：[apps/api/tests/auth-routes.test.mjs](/Users/shqingda/Projects/kaku/apps/api/tests/auth-routes.test.mjs)。
-- 凭据加解密：[apps/api/tests/crypto.test.mjs](/Users/shqingda/Projects/kaku/apps/api/tests/crypto.test.mjs)。
-- 收藏列表组件：[apps/mobile/tests/my-collections-screen.test.tsx](/Users/shqingda/Projects/kaku/apps/mobile/tests/my-collections-screen.test.tsx)。
-
-这表示仓库有这些测试，不表示本文重新运行并确认所有测试都通过。测试的存在也不能替代阅读断言，面试前应至少实际跑过并理解准备讲的用例。
-
-### 4.7 覆盖率门禁与 GitHub Actions
-
-当前 CI 在 PR 和 main 推送时执行依赖检查、Expo 诊断、全 workspace 类型检查、测试、覆盖率检查、移动端组件测试、iOS / Android JS bundle 和官网构建；另有 HTML 解析回归 job。
-
-移动端纯逻辑行覆盖门槛为 92%，API 为 75%。它们来自各自 `test:coverage` 命令的采集范围，不能描述为“整个移动 App 92% 的功能都测过”，也不代表每个页面、原生交互和所有代码文件都被纳入。
-
-CI 源码节选：
-
-```yaml
-- name: Type-check workspace
-  run: pnpm typecheck
-
-- name: Check API test coverage
-  run: pnpm --filter @kaku/api test:coverage
-
-- name: Check mobile test coverage
-  run: pnpm --filter @kaku/mobile test:coverage
-
-- name: Run mobile component tests
-  run: pnpm --filter @kaku/mobile test:ui
-```
-
-`expo export --platform ios/android` 检查 JS 及资源打包，不会完成 Xcode / Gradle 原生编译，也不是安装到设备的验收。Maestro 当前在本地跑，不在该 CI 中；文档记录 iOS 全量入口已跑，Android 全量仍有待验收事项。
-
-来源：[.github/workflows/ci.yml](/Users/shqingda/Projects/kaku/.github/workflows/ci.yml)、[docs/testing.md](/Users/shqingda/Projects/kaku/docs/testing.md)、[apps/mobile/package.json](/Users/shqingda/Projects/kaku/apps/mobile/package.json)、[apps/api/package.json](/Users/shqingda/Projects/kaku/apps/api/package.json)、[TODO.md](/Users/shqingda/Projects/kaku/TODO.md)。
-
-**这一条的口述示例：**
-
-> 交互上，我用 Reanimated 的 shared value 驱动弹层，结合手势、弹簧和衰减运动。长评论列表先在单集页试用 FlashList，并把远距离跳底拆成定位和最后两屏动画。验证分为纯逻辑、组件和设备流程，CI 跑类型、测试、覆盖率和 JS 打包。长距离动效的最终手感还需要设备验证，我没有给它编造性能提升数据。
-
-## 面试前建议实际演示的三条路径
-
-1. **收藏修改**：打开条目 → 修改收藏 / 评分 → 对照 mutation 的快照、成功更新和失败回滚 → 说明远端是最终依据。
-2. **登录与撤销**：展示登录调用链和设备会话页 → 解释 handoff code、两类 token、条件轮换及撤销范围；不要展示真实凭证。
-3. **弱网浏览与长列表**：打开最近访问过的条目 → 说明缓存来源和重试入口 → 打开长评论页并演示引用跳楼与跳底；没有实际测量就不报帧率。
-
-如果面试官继续问“你最难的部分是什么”，可以选择自己已经理解并实际验证的一条讲透：**问题是什么 → 为什么原来的方式不够 → 具体实现 → 如何验证 → 仍有什么边界**。相比罗列所有功能，这样更能体现独立开发中承担的判断与责任。
+本文按 2026-09-13 已核对的项目代码与文档编写。应用发布状态来自仓库记录，未重新探测生产服务。个人动机、日期、测试经历需由你按实际情况补充。
