@@ -5,6 +5,7 @@
 | 文件 | 看什么 |
 | --- | --- |
 | [../README.md](../README.md) | 产品是什么、怎么在本机跑起来 |
+| [architecture.md](/Users/shqingda/Projects/kaku/architecture.md) | 技术分层、数据流、存储边界与代码阅读顺序 |
 | [../AGENTS.md](../AGENTS.md) | 协作约定 |
 | [../TODO.md](../TODO.md) | 还没做完的事 |
 | [../RELEASE.md](../RELEASE.md) | Android GitHub 包和 Play 上架 |
