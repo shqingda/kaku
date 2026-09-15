@@ -92,7 +92,7 @@ dev client 重载会断开 React profiler。基线数字见
 
 argent 是 agent 驱动的模拟器交互：起模拟器、装 debug 构建、按真实用户
 路径走查（动效手感、骨架屏、离线文案、无障碍）。操作手册见
-`docs/argent-usage.md`。结果按 `docs/test-records/` 的既有格式归档。
+`docs/development/argent-usage.md`。结果按 `docs/test-records/` 的既有格式归档。
 OAuth 登录、真实写入等需要人工参与的场景也记在那里。
 
 Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时改用 Maestro

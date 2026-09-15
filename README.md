@@ -3,6 +3,8 @@
 Kaku 是面向 iOS 与 Android 的第三方 Bangumi 客户端，使用 Expo、React
 Native 与 TypeScript 构建。
 
+文档从 [文档导航](/Users/shqingda/Projects/kaku/docs/README.md) 进入：查架构、开发测试、部署发布、面试材料和历史记录。
+
 ## 项目状态
 
 | 应用 | 说明 | 状态 |
@@ -12,7 +14,7 @@ Native 与 TypeScript 构建。
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
 还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases
-（debug 签名，覆盖安装须先卸载）。发版见 `RELEASE.md`。
+（debug 签名，覆盖安装须先卸载）。发版见 `docs/deployment/release.md`。
 
 ## 主要功能
 
@@ -62,32 +64,11 @@ Kaku 不维护一份与远端相冲突的本地收藏。
 
 ## 技术架构
 
-### Mobile
+- 手机端：Expo / React Native，Expo Router 导航，TanStack Query 管理请求与缓存。
+- 后端：Hono / Cloudflare Workers，D1 保存自有用户数据，代理 Bangumi 授权和个人操作。
+- 官网：React / Vite，通过 Cloudflare Workers Static Assets 独立部署。
 
-- Expo SDK 57、React Native 0.86、React 19
-- Expo Router 文件路由
-- TanStack Query 管理服务端状态，公开查询持久化到本机
-- Zod 校验外部数据
-- Expo SecureStore 保存 Kaku 会话
-- 手势与动画走 Reanimated；worklet 约定见 `AGENTS.md`
-
-### API
-
-- Hono on Cloudflare Workers
-- Cloudflare D1 与 Drizzle ORM；KV 存公开配置
-- Bangumi OAuth 2.0；AES-GCM 加密保存 Bangumi 授权凭据
-- 短期 access session 与轮换 refresh session
-- Cron：每天清理过期认证数据，每 15 分钟给已登记设备轮询通知
-- 部署与回滚见 `docs/deploy-api.md`
-
-### Web
-
-- React、TypeScript 与 Vite
-- Cloudflare Workers Static Assets
-- 中英文案切换（仅官网）
-
-业务模型尽量保持数据源无关。Bangumi API 的请求、Schema 与 Adapter 位于
-`infrastructure/bangumi`；页面和业务组件不直接依赖原始响应结构。
+分层、数据流、缓存与登录设计统一看 [技术架构](/Users/shqingda/Projects/kaku/docs/architecture.md)。
 
 ## 安全边界
 
@@ -140,7 +121,7 @@ ID、应用密钥和回调地址；`TOKEN_ENCRYPTION_KEY` 可使用以下命令�
 openssl rand -base64 32
 ```
 
-生产环境另外需要 `EXPO_ACCESS_TOKEN`（推送代发），见 `docs/deploy-api.md`。
+生产环境另外需要 `EXPO_ACCESS_TOKEN`（推送代发），见 `docs/deployment/deploy-api.md`。
 
 ### 启动官网
 
@@ -162,9 +143,9 @@ pnpm build:web
 ```
 
 测试分三层：纯逻辑、组件与 hook、Maestro。CI 跑前两层、覆盖率门禁、
-JS bundle 和官网构建；Maestro 不进 CI。清单见 `docs/testing.md`。
+JS bundle 和官网构建；Maestro 不进 CI。清单见 `docs/development/testing.md`。
 
-文档索引：`docs/README.md`。未完成事项：`TODO.md`。协作约定：`AGENTS.md`。
+文档索引：[文档导航](/Users/shqingda/Projects/kaku/docs/README.md)。未完成事项：`TODO.md`。协作约定：`AGENTS.md`。
 
 ## 目录结构
 
@@ -187,7 +168,7 @@ apps/
 │       ├── lib/             通用工具
 │       └── types/           跨模块共享类型
 └── web/                     产品官网、政策与支持页面
-docs/                        测试、API 部署、Argent；索引见 docs/README.md
+docs/                        架构、开发、部署、学习与记录；从 README.md 进入
 .maestro/                    模拟器冒烟与全量入口
 ```
 
@@ -203,4 +184,4 @@ pnpm --filter @kaku/api deploy:worker
 pnpm --filter @kaku/web deploy
 ```
 
-API 细节见 `docs/deploy-api.md`。Android 安装包见 `RELEASE.md`。
+API 细节见 `docs/deployment/deploy-api.md`。Android 安装包见 `docs/deployment/release.md`。

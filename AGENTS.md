@@ -29,11 +29,14 @@ This repository is both a product and a learning project.
 
 ## Where to look
 
+- Documentation index: `docs/README.md`
+- Technical architecture: `docs/architecture.md`
+
 - Product and how to run: `README.md`
 - Remaining work: `TODO.md`
-- Android GitHub / Play releases: `RELEASE.md`
-- API deploy: `docs/deploy-api.md`
-- How to test: `docs/testing.md`
+- Android GitHub / Play releases: `docs/deployment/release.md`
+- API deploy: `docs/deployment/deploy-api.md`
+- How to test: `docs/development/testing.md`
 
 Unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
 before `git push`, GitHub Release, EAS, or wrangler. Clash will hang those

@@ -545,7 +545,7 @@ Maestro 当前在本地运行，没有放进这条 CI。项目记录了 iOS 流�
 
 当前 Android 日常包还存在架构和签名范围限制。**签名**是系统用来识别安装包发布身份的一部分，签名不匹配会影响覆盖安装，不能把开发分发包直接当成商店正式包。
 
-源码入口：[CI 配置](/Users/shqingda/Projects/kaku/.github/workflows/ci.yml)、[测试说明](/Users/shqingda/Projects/kaku/docs/testing.md)、[发布说明](/Users/shqingda/Projects/kaku/RELEASE.md)。
+源码入口：[CI 配置](/Users/shqingda/Projects/kaku/.github/workflows/ci.yml)、[测试说明](/Users/shqingda/Projects/kaku/docs/development/testing.md)、[发布说明](/Users/shqingda/Projects/kaku/docs/deployment/release.md)。
 
 ## 十一、“挑一个难点详细讲讲”
 

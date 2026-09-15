@@ -297,7 +297,7 @@ CI 负责自动检查与打包验证；`expo export` 成功不等于 APK 或 iOS
 
 手机 Android 发布走仓库构建脚本与 GitHub Release 流程；API 单独执行数据库迁移和 Worker 部署；官网独立构建部署。修改一个应用，不意味着三个应用都要重新发版。
 
-运行命令看 [README](/Users/shqingda/Projects/kaku/README.md)，检查方法看 [测试说明](/Users/shqingda/Projects/kaku/docs/testing.md)，Android 发版看 [RELEASE](/Users/shqingda/Projects/kaku/RELEASE.md)，后端部署看 [deploy-api](/Users/shqingda/Projects/kaku/docs/deploy-api.md)。这些文档负责具体操作，本文负责解释它们之间的关系。
+运行命令看 [README](/Users/shqingda/Projects/kaku/README.md)，检查方法看 [测试说明](/Users/shqingda/Projects/kaku/docs/development/testing.md)，Android 发版看 [RELEASE](/Users/shqingda/Projects/kaku/docs/deployment/release.md)，后端部署看 [deploy-api](/Users/shqingda/Projects/kaku/docs/deployment/deploy-api.md)。这些文档负责具体操作，本文负责解释它们之间的关系。
 
 ## 10. 改一个功能，从哪里下手
 

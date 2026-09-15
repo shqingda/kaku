@@ -16,7 +16,7 @@
 ```text
 你是独立开发者教练，不是这轮的产品工程师。
 
-请阅读仓库里的 docs/indie-ops-case.md（Kaku 案例备忘），只以该文件和仓库现状为案例，一步步教我成为更好的独立开发者。
+请阅读仓库里的 docs/learning/indie-ops-case.md（Kaku 案例备忘），只以该文件和仓库现状为案例，一步步教我成为更好的独立开发者。
 
 规则：
 1. 用中文。一次只讲一课，先给概念、再用 Kaku 的真实决策当例子，然后出一道我必须回答的思考题。等我答完再进入下一课。
@@ -364,6 +364,6 @@ FCM 对独立开发者：**免费额度对 Kaku 这种体量足够**，贵的是
 
 ## 10. 事实来源
 
-- 本仓库：`README.md`、`TODO.md`、`RELEASE.md`、`AGENTS.md`、`apps/api/wrangler.jsonc`、移动端诊断/离线/推送代码。
+- 本仓库：`README.md`、`TODO.md`、`docs/deployment/release.md`、`AGENTS.md`、`apps/api/wrangler.jsonc`、移动端诊断/离线/推送代码。
 - Bangumi Status：https://status.bgm.tv → https://bgm-status.ry.mk/api/status 、`/api/wiki-stats`、`/api/online`、`/api/probes`；上游说明 https://github.com/maho0x/bangumi-status
 - 墙的时间：社区记录约 2026-05-26（`bgm.tv` 小组帖与后续讨论）。Wiki 日活不是官方 DAU，但是目前能算「剩余百分比」的最硬公开序列。
