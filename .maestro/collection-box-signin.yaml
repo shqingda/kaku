@@ -15,10 +15,12 @@ tags:
     timeout: 15000
 - tapOn:
     text: "葬送的芙莉莲.*"
-    index: 1
+    below: "搜索结果"
+    index: 0
 - extendedWaitUntil:
     visible: "打开收藏盒"
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn: "打开收藏盒"
 - extendedWaitUntil:
     visible: "收藏盒"
