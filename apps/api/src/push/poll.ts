@@ -62,8 +62,8 @@ export async function pollRegisteredPushUsers({
         devices: userDevices,
         loadNotifications: () =>
           getBangumiNotifications({ accessToken, fetcher }),
-        saveCursor: (lastNotificationId) =>
-          devices.setLastNotificationId(userId, lastNotificationId),
+        saveCursor: (token, lastNotificationId) =>
+          devices.setLastNotificationId(userId, token, lastNotificationId),
         sendPush: (tokens, payload) =>
           sendExpoPush(fetcher, tokens, payload, {
             accessToken: env.EXPO_ACCESS_TOKEN,

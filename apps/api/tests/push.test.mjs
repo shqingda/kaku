@@ -33,9 +33,9 @@ function createPushStore() {
         const index = devices.findIndex((device) => device.token === token);
         if (index >= 0) devices.splice(index, 1);
       },
-      async deleteByUser(userId) {
+      async deleteByUserAndToken(userId, token) {
         for (let index = devices.length - 1; index >= 0; index -= 1) {
-          if (devices[index].userId === userId) devices.splice(index, 1);
+          if (devices[index].userId === userId && devices[index].token === token) devices.splice(index, 1);
         }
       },
       async listByUser(userId) {
@@ -49,9 +49,9 @@ function createPushStore() {
         if (index >= 0) devices[index] = { ...input };
         else devices.push({ ...input });
       },
-      async setLastNotificationId(userId, lastNotificationId) {
+      async setLastNotificationId(userId, token, lastNotificationId) {
         devices.forEach((device, index) => {
-          if (device.userId === userId) {
+          if (device.userId === userId && device.token === token) {
             devices[index] = { ...device, lastNotificationId };
           }
         });
@@ -118,7 +118,7 @@ test('PUT and DELETE /me/push-devices register and remove a device', async () =>
 
   const removed = await app.request(
     '/me/push-devices',
-    { headers: authHeaders, method: 'DELETE' },
+    { body: JSON.stringify({ token }), headers: { ...authHeaders, 'Content-Type': 'application/json' }, method: 'DELETE' },
     env,
   );
   assert.equal(removed.status, 200);
@@ -183,7 +183,7 @@ test('later polls send only unread items newer than the cursor', async () => {
       total: 2,
       unreadCount: 1,
     }),
-    saveCursor: async (lastNotificationId) => {
+    saveCursor: async (_token, lastNotificationId) => {
       cursor = lastNotificationId;
     },
     sendPush: async (tokens, payload) => {
@@ -258,4 +258,50 @@ test('sendExpoPush still cleans up unregistered devices', async () => {
   );
 
   assert.deepEqual(invalid, ['ExponentPushToken[stale]']);
+});
+
+test('unregistering a device preserves other devices and rejects an unspecified target', async () => {
+  const push = createPushStore();
+  for (const [token, userId] of [['ExpoPushToken[a]', 42], ['ExpoPushToken[b]', 42], ['ExpoPushToken[c]', 43]]) {
+    await push.store.save({ token, userId, platform: 'ios', updatedAt: now, lastNotificationId: 10 });
+  }
+  const app = createApp({ createPushDeviceStore: () => push.store, createStore: createAuthStore, now: () => now });
+  for (const token of [undefined, 'ExpoPushToken[c]', 'ExpoPushToken[a]']) {
+    const response = await app.request('/me/push-devices', {
+      method: 'DELETE', headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }, env);
+    assert.equal(response.status, token ? 200 : 400);
+  }
+  assert.deepEqual(push.devices.map(device => device.token), ['ExpoPushToken[b]', 'ExpoPushToken[c]']);
+});
+
+test('a new device is primed without dropping pending notifications on older devices', async () => {
+  const sent = [];
+  const saved = [];
+  const result = await deliverPushForUser({
+    devices: [
+      { token: 'old', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: 10 },
+      { token: 'new', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: null },
+      { token: 'caught-up', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: 12 },
+    ],
+    loadNotifications: async () => ({ items: [notification(12)], total: 1, unreadCount: 1 }),
+    sendPush: async (tokens) => { sent.push(tokens); return []; },
+    saveCursor: async (token, cursor) => { saved.push([token, cursor]); },
+  });
+  assert.deepEqual(sent, [['old']]);
+  assert.deepEqual(saved, [['old', 12], ['new', 12]]);
+  assert.equal(result.primed, true);
+  assert.equal(result.sent, 1);
+});
+
+test('failed delivery does not advance the affected devices', async () => {
+  const saved = [];
+  await assert.rejects(deliverPushForUser({
+    devices: [{ token: 'old', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: 10 }],
+    loadNotifications: async () => ({ items: [notification(12)], total: 1, unreadCount: 1 }),
+    sendPush: async () => { throw new Error('unavailable'); },
+    saveCursor: async (...args) => { saved.push(args); },
+  }), /unavailable/);
+  assert.deepEqual(saved, []);
 });

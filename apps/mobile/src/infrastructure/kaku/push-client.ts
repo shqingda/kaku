@@ -17,8 +17,13 @@ export async function registerPushDevice(
 
 export async function unregisterPushDevice(
   request: (path: string, init?: RequestInit) => Promise<Response>,
+  token: string,
 ) {
-  const response = await request('/me/push-devices', { method: 'DELETE' });
+  const response = await request('/me/push-devices', {
+    body: JSON.stringify({ token }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'DELETE',
+  });
   if (!response.ok) {
     throw new KakuApiError(await readErrorMessage(response), response.status);
   }

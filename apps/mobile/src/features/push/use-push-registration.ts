@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
@@ -7,7 +7,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import {
   registerPushDevice,
   unregisterPushDevice,
-} from '@/infrastructure/kaku/push-client';
+} from '@/features/push/device-registration';
 import { userErrorMessage } from '@/lib/user-error-message';
 
 import {
@@ -46,21 +46,30 @@ function projectId() {
 
 export function usePushRegistration() {
   const { request, session } = useAuth();
+  const [ready, setReady] = useState(false);
+  const [retryVersion, setRetryVersion] = useState(0);
+  const registrationQueue = useRef<Promise<void>>(Promise.resolve());
   const [enabled, setEnabled] = useState(false);
   const [status, setStatus] = useState<PushStatus>(
     Platform.OS === 'web' ? 'unavailable' : 'off',
   );
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const restoreEnabled = useCallback(() => {
     if (Platform.OS === 'web') return;
-    void Storage.getItem(ENABLED_KEY).then((value) => {
+    return Storage.getItem(ENABLED_KEY).then((value) => {
       setEnabled(value === 'true');
+      setReady(true);
+    }).catch(() => {
+      setStatus('failed');
+      setError('无法读取本机推送设置，请重试。');
     });
   }, []);
 
+  useEffect(() => { void restoreEnabled(); }, [restoreEnabled]);
+
   const syncRegistration = useCallback(
-    async (shouldEnable: boolean) => {
+    async (shouldEnable: boolean, isCurrent: () => boolean) => {
       if (Platform.OS === 'web') {
         setStatus('unavailable');
         return;
@@ -89,8 +98,10 @@ export function usePushRegistration() {
       if (!shouldEnable) {
         try {
           await unregisterPushDevice(request);
-        } catch {
-          // 关闭开关时仍清掉本机标记；服务端失败下次登录会再对齐。
+        } catch (caughtError) {
+          setStatus('failed');
+          setError(describePushRegistrationError(caughtError));
+          return;
         }
         setStatus('off');
         setError(null);
@@ -122,6 +133,7 @@ export function usePushRegistration() {
         const token = await Notifications.getExpoPushTokenAsync({
           projectId: id,
         });
+        if (!isCurrent()) return;
         await registerPushDevice(request, {
           platform: Platform.OS === 'android' ? 'android' : 'ios',
           token: token.data,
@@ -137,10 +149,16 @@ export function usePushRegistration() {
   );
 
   useEffect(() => {
-    void syncRegistration(enabled);
-  }, [enabled, session?.user.id, syncRegistration]);
+    if (!ready) return;
+    let active = true;
+    registrationQueue.current = registrationQueue.current.catch(() => undefined).then(async () => {
+      if (active) await syncRegistration(enabled, () => active);
+    });
+    return () => { active = false; };
+  }, [enabled, ready, retryVersion, syncRegistration]);
 
   const setPushEnabled = useCallback((next: boolean) => {
+    setReady(true);
     setEnabled(next);
     void Storage.setItem(ENABLED_KEY, next ? 'true' : 'false');
   }, []);
@@ -148,7 +166,10 @@ export function usePushRegistration() {
   return {
     enabled,
     error,
-    retry: () => void syncRegistration(enabled),
+    retry: () => {
+      if (!ready) void restoreEnabled();
+      else setRetryVersion((version) => version + 1);
+    },
     setEnabled: setPushEnabled,
     status,
   };

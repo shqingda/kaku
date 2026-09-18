@@ -19,7 +19,7 @@ jest.mock('@/features/auth/auth-storage', () => ({
     clear: jest.fn().mockResolvedValue(undefined),
   },
 }));
-jest.mock('@/infrastructure/kaku/push-client', () => ({ unregisterPushDevice: jest.fn() }));
+jest.mock('@/features/push/device-registration', () => ({ unregisterPushDevice: jest.fn() }));
 jest.mock('@/infrastructure/kaku/auth-client', () => ({
   ...jest.requireActual('@/infrastructure/kaku/auth-client'),
   exchangeHandoffCode: jest.fn(),

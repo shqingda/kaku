@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
 import { pushDevices } from '../db/schema.ts';
@@ -15,12 +15,13 @@ export type StoredPushDevice = {
 
 export type PushDeviceStore = {
   deleteByToken: (token: string) => Promise<void>;
-  deleteByUser: (userId: number) => Promise<void>;
+  deleteByUserAndToken: (userId: number, token: string) => Promise<void>;
   listByUser: (userId: number) => Promise<StoredPushDevice[]>;
   listUserIds: () => Promise<number[]>;
   save: (input: StoredPushDevice) => Promise<void>;
   setLastNotificationId: (
     userId: number,
+    token: string,
     lastNotificationId: number,
   ) => Promise<void>;
 };
@@ -43,8 +44,10 @@ export function createD1PushDeviceStore(database: D1Database): PushDeviceStore {
       await db.delete(pushDevices).where(eq(pushDevices.token, token));
     },
 
-    async deleteByUser(userId) {
-      await db.delete(pushDevices).where(eq(pushDevices.userId, userId));
+    async deleteByUserAndToken(userId, token) {
+      await db.delete(pushDevices).where(and(
+        eq(pushDevices.userId, userId), eq(pushDevices.token, token),
+      ));
     },
 
     async listByUser(userId) {
@@ -83,11 +86,11 @@ export function createD1PushDeviceStore(database: D1Database): PushDeviceStore {
         });
     },
 
-    async setLastNotificationId(userId, lastNotificationId) {
+    async setLastNotificationId(userId, token, lastNotificationId) {
       await db
         .update(pushDevices)
         .set({ lastNotificationId })
-        .where(eq(pushDevices.userId, userId));
+        .where(and(eq(pushDevices.userId, userId), eq(pushDevices.token, token)));
     },
   };
 }

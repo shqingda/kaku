@@ -21,7 +21,7 @@ import {
   isReauthorizationResponse,
   refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
-import { unregisterPushDevice } from '@/infrastructure/kaku/push-client';
+import { unregisterPushDevice } from '@/features/push/device-registration';
 import { isPrivateQuery } from '@/lib/query-persistence';
 import { userErrorMessage } from '@/lib/user-error-message';
 

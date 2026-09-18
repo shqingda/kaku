@@ -9,7 +9,6 @@ import type { Env } from '../env.ts';
 import {
   createD1PushDeviceStore,
   type PushDeviceStore,
-  type PushPlatform,
 } from './store.ts';
 
 const EXPO_PUSH_TOKEN = /^(ExponentPushToken|ExpoPushToken)\[[^\]]+\]$/;
@@ -63,7 +62,7 @@ export function registerPushRoutes(
     const updatedAt = now();
     await store.save({
       lastNotificationId: existing?.lastNotificationId ?? null,
-      platform: body.data.platform as PushPlatform,
+      platform: body.data.platform,
       token: body.data.token,
       updatedAt,
       userId: authentication.userId,
@@ -86,8 +85,16 @@ export function registerPushRoutes(
     );
     if (isAuthenticationResponse(authentication)) return authentication;
 
-    await getStore(context.env, dependencies).deleteByUser(
+    const body = registerSchema.pick({ token: true }).safeParse(
+      await context.req.json().catch(() => null),
+    );
+    if (!body.success) {
+      return context.json({ error: 'invalid_push_device', message: '请指定本机推送设备。' }, 400);
+    }
+
+    await getStore(context.env, dependencies).deleteByUserAndToken(
       authentication.userId,
+      body.data.token,
     );
     return context.json({ ok: true });
   });

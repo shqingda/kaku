@@ -53,17 +53,17 @@ test('unregisterPushDevice sends DELETE', async () => {
     return new Response(null, { status: 204 });
   };
 
-  await unregisterPushDevice(request);
+  await unregisterPushDevice(request, 'ExponentPushToken[abc]');
 
   assert.deepEqual(calls, [
-    { path: '/me/push-devices', init: { method: 'DELETE' } },
+    { path: '/me/push-devices', init: { body: JSON.stringify({ token: 'ExponentPushToken[abc]' }), headers: { 'Content-Type': 'application/json' }, method: 'DELETE' } },
   ]);
 });
 
 test('unregisterPushDevice throws KakuApiError on failure', async () => {
   const request = async () => new Response('boom', { status: 502 });
 
-  await assert.rejects(() => unregisterPushDevice(request), {
+  await assert.rejects(() => unregisterPushDevice(request, 'ExponentPushToken[abc]'), {
     name: 'KakuApiError',
     status: 502,
     message: 'Kaku 服务返回了 502',

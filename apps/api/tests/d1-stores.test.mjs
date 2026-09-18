@@ -241,24 +241,26 @@ test('push device store upserts by token and lists distinct user ids', async () 
   );
 });
 
-test('push device store advances last notification per user and deletes precisely', async () => {
-  await pushStore.setLastNotificationId(42, 99);
+test('push device store advances last notification per device and deletes precisely', async () => {
+  await pushStore.setLastNotificationId(42, 'token-a', 99);
 
   for (const device of await pushStore.listByUser(42)) {
-    assert.equal(device.lastNotificationId, 99);
+    assert.equal(device.lastNotificationId, device.token === 'token-a' ? 99 : null);
   }
   assert.deepEqual(
     (await pushStore.listByUser(43)).map((device) => device.lastNotificationId),
     [null],
   );
 
-  await pushStore.deleteByToken('token-a');
+  await pushStore.deleteByUserAndToken(43, 'token-a');
+  assert.equal((await pushStore.listByUser(42)).length, 2);
+  await pushStore.deleteByUserAndToken(42, 'token-a');
   assert.deepEqual(
     (await pushStore.listByUser(42)).map((device) => device.token),
     ['token-b'],
   );
 
-  await pushStore.deleteByUser(42);
+  await pushStore.deleteByToken('token-b');
   assert.deepEqual(await pushStore.listByUser(42), []);
   assert.deepEqual((await pushStore.listUserIds()).sort(), [43]);
 });
