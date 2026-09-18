@@ -1,0 +1,45 @@
+appId: com.shqingda.kaku.debug
+name: Store screenshot candidates
+---
+# 只采集不提交；先检查演示账号不含个人数据。不会保存收藏或发送回复。
+- runFlow:
+    file: reset-home.yaml
+- takeScreenshot: store-home
+- tapOn: "搜索条目"
+- setClipboard: 葬送的芙莉莲
+- pasteText
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "葬送的芙莉莲.*"
+    timeout: 15000
+- takeScreenshot: store-search
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: store-subject
+- tapOn: "打开收藏盒"
+- extendedWaitUntil:
+    visible: "收藏盒"
+    timeout: 8000
+- takeScreenshot: store-collection
+- runFlow:
+    when:
+      visible: "关闭收藏盒"
+    commands:
+      - tapOn: "关闭收藏盒"
+- runFlow:
+    when:
+      visible: "取消"
+    commands:
+      - tapOn: "取消"
+- scrollUntilVisible:
+    element:
+      text: "第 1 集.*"
+    direction: DOWN
+- takeScreenshot: store-episodes
+- runFlow:
+    file: settings-theme-toggle.yaml

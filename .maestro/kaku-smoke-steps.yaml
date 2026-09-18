@@ -22,8 +22,21 @@ appId: placeholder
       - tapOn: "打开账户菜单"
 - assertVisible: "账户与设备"
 - tapOn: "账户与设备"
-# ---- 更新日志页（gate 在账户页刚落地时求值，恰好区分登录态）----
-# 已登录：账户页直连入口。changelog-checks 的「返回」落回账户页。
+# ---- 更新日志页：先把入口滚入视野，兼容系统大字体 ----
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      text: "更新日志|关于、帮助与隐私"
+# 未登录先处理，避免登录分支返回后因入口滚出视野误入另一分支。
+- runFlow:
+    when:
+      visible: "关于、帮助与隐私"
+    commands:
+      - tapOn: "关于、帮助与隐私"
+      - tapOn: "更新日志"
+      - runFlow:
+          file: changelog-checks.yaml
+      - tapOn: "返回"
 - runFlow:
     when:
       visible: "更新日志"
@@ -31,19 +44,6 @@ appId: placeholder
       - tapOn: "更新日志"
       - runFlow:
           file: changelog-checks.yaml
-# 未登录：经「关于、帮助与隐私」绕行，多一层返回落回账户页。
-# 双重 gate：限定仍停留在账户页，避免在首页被误触发。
-- runFlow:
-    when:
-      visible: "账户"
-      notVisible: "更新日志"
-    commands:
-      - tapOn: "关于、帮助与隐私"
-      - assertVisible: "更新日志"
-      - tapOn: "更新日志"
-      - runFlow:
-          file: changelog-checks.yaml
-      - tapOn: "返回"
 # ---- 网络诊断页（两种登录态此时都在账户页；行在页面底部）----
 - scrollUntilVisible:
     direction: DOWN

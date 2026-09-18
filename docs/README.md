@@ -20,6 +20,8 @@
 | 修改 Bangumi 接入层 | [适配层说明](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/README.md) | 与源码放在一起的模块约定 |
 | 查看协作规则 | [AGENTS](/Users/shqingda/Projects/kaku/AGENTS.md) | 修改、验证、提交与推送约定 |
 
+商店素材：[中英文文案与截图清单](store/listing.md)。
+
 ## 目录约定
 
 ```text

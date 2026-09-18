@@ -4,6 +4,8 @@ import { SymbolView } from 'expo-symbols';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -43,7 +45,7 @@ export default function NotificationsScreen() {
                 accessibilityLabel="全部标记为已读"
                 accessibilityRole="button"
                 disabled={markRead.isPending}
-                hitSlop={8}
+                hitSlop={HIT_SLOP}
                 onPress={() =>
                   markRead.mutate(undefined, {
                     onSuccess: () => playSuccessHaptic(),
@@ -70,7 +72,9 @@ export default function NotificationsScreen() {
         data={visibleNotifications}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          notificationsQuery.isPending ? (
+          notificationsQuery.fetchStatus === 'paused' ? (
+            <AppState title="当前离线" text="恢复联网后继续读取通知。" />
+          ) : notificationsQuery.isPending ? (
             <SkeletonList
               accessibilityLabel="正在读取通知"
               count={5}
@@ -95,19 +99,27 @@ export default function NotificationsScreen() {
           )
         }
         ListHeaderComponent={
-          <View style={styles.filterRow}>
-            <NotificationFilterChip
-              label="全部"
-              onPress={() => setShowUnreadOnly(false)}
-              selected={!showUnreadOnly}
-              styles={styles}
-            />
-            <NotificationFilterChip
-              label={unreadCount > 0 ? `未读 ${unreadCount}` : '未读'}
-              onPress={() => setShowUnreadOnly(true)}
-              selected={showUnreadOnly}
-              styles={styles}
-            />
+          <View>
+            {notificationsQuery.data && (notificationsQuery.isError || notificationsQuery.fetchStatus === 'paused') ? (
+              <CachedDataNotice onRetry={() => void notificationsQuery.refetch()} />
+            ) : null}
+            {markRead.isError ? (
+              <AppState title="标记已读失败" text="请检查网络后重试，未读状态已恢复。" />
+            ) : null}
+            <View style={styles.filterRow}>
+              <NotificationFilterChip
+                label="全部"
+                onPress={() => setShowUnreadOnly(false)}
+                selected={!showUnreadOnly}
+                styles={styles}
+              />
+              <NotificationFilterChip
+                label={unreadCount > 0 ? `未读 ${unreadCount}` : '未读'}
+                onPress={() => setShowUnreadOnly(true)}
+                selected={showUnreadOnly}
+                styles={styles}
+              />
+            </View>
           </View>
         }
         refreshControl={
@@ -195,27 +207,27 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    margin: 20,
+    margin: SPACING.lg,
     overflow: 'hidden',
-    paddingBottom: 8,
-    paddingHorizontal: 18,
+    paddingBottom: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
-    paddingBottom: 12,
-    paddingTop: 14,
+    gap: SPACING.sm,
+    paddingBottom: SPACING.md,
+    paddingTop: SPACING.lg,
   },
   filterChip: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
     borderRadius: 14,
     justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: 14,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg,
   },
   filterChipSelected: { backgroundColor: colors.ink },
-  filterChipText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterChipText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   filterChipTextSelected: { color: colors.surface },
   pressed: { opacity: 0.62 },
 });

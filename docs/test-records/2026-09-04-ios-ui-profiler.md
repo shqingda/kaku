@@ -75,3 +75,11 @@ React 报告称编译器全局标记不可用，但组件条目可识别出若�
 为 `20260904-074618`，改后为 `20260904-074949`。改后原生侧记录 4 个
 287–466ms microhang，但仍全部没有 React commit 匹配，且无 leak；不据此继续
 修改产品代码。
+
+## 可重复阈值检查（2026-09-18 补）
+
+运行 `node scripts/check-performance.mjs /path/to/report.json`。退出码 0 通过，1 性能回退，2 输入或采集环境不匹配。用固定 `.maestro/kaku-profile-ios.yaml` 跑三轮，每轮记录条目首次挂载、角色首次挂载、最慢角色列表更新的 React commit 时间；脚本取三轮中位数。
+
+输入 JSON 字段：`device: "iPhone 17 Pro"`、`os: "iOS 26.5"`、`mode: "development"`、`flow: ".maestro/kaku-profile-ios.yaml"`，以及三个长度为 3 的毫秒数组 `subjectMountMs`、`charactersMountMs`、`charactersUpdateMs`。
+
+临时回退预算为已有基线的 125%：条目 116.33ms、角色挂载 94.83ms、角色刷新 75.37ms。25% 是工程容差，不是生产帧率目标；原始记录没有首页独立耗时，不能凭空补首页阈值。更换设备、OS 或开发/生产模式必须重采基线。当前 iPhone 18 Pro / iOS 27.0 不可直接与上述数据比较，且本轮无可用 React profiler 工具，尚未重采。

@@ -6,3 +6,5 @@
 - [2026-09-04 iOS UI 验收与性能基线](./2026-09-04-ios-ui-profiler.md)
 
 - [2026-09-18 同步、认证与推送回归](./2026-09-18-sync-auth-push-regression.md)
+
+- [2026-09-18 v1.1.8 发布验收](./2026-09-18-release-readiness.md)
