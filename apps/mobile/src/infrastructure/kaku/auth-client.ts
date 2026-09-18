@@ -79,7 +79,7 @@ export async function refreshAuthSession(refreshToken: string) {
   return authSessionSchema.parse(await (await ensureOk(response)).json());
 }
 
-export function fetchKaku(
+export async function fetchKaku(
   path: string,
   sessionToken: string,
   init: RequestInit = {},
@@ -87,11 +87,30 @@ export function fetchKaku(
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${sessionToken}`);
 
-  return fetch(`${KAKU_API_URL}${path}`, {
-    ...init,
-    headers,
-    signal: init.signal ?? AbortSignal.timeout(12_000),
-  });
+  const controller = new AbortController();
+  let timedOut = false;
+  const abort = () => controller.abort();
+  if (init.signal?.aborted) abort();
+  else init.signal?.addEventListener('abort', abort, { once: true });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    abort();
+  }, 12_000);
+  try {
+    return await fetch(`${KAKU_API_URL}${path}`, {
+      ...init, headers, signal: controller.signal,
+    });
+  } catch (error) {
+    if (timedOut) {
+      const timeout = new Error('Kaku 服务响应超时，请稍后重试。');
+      timeout.name = 'TimeoutError';
+      throw timeout;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    init.signal?.removeEventListener('abort', abort);
+  }
 }
 
 export function fetchPublicKaku(path: string, init: RequestInit = {}) {

@@ -158,7 +158,7 @@ test('fetchKaku prefixes the base URL and attaches the bearer token', async (t) 
   assert.ok(calls[0].init.signal instanceof AbortSignal);
 });
 
-test('fetchKaku keeps existing headers and passes the abort signal through', async (t) => {
+test('fetchKaku keeps existing headers and creates a cancellable request', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -176,7 +176,7 @@ test('fetchKaku keeps existing headers and passes the abort signal through', asy
   assert.equal(headers.get('Authorization'), 'Bearer token-1');
   assert.equal(headers.get('Content-Type'), 'application/json');
   assert.equal(calls[0].init.method, 'POST');
-  assert.equal(calls[0].init.signal, controller.signal);
+  assert.ok(calls[0].init.signal instanceof AbortSignal);
 });
 
 test('fetchPublicKaku requests the path without auth and times out by default', async (t) => {
@@ -233,4 +233,29 @@ test('parseDeviceSessions throws KakuApiError for failed responses', async () =>
     assert.equal(error.message, '登录已过期');
     return true;
   });
+});
+
+
+test('fetchKaku still times out when the caller supplies a cancellation signal', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  t.mock.method(globalThis, 'fetch', async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+  }));
+  const external = new AbortController();
+  const pending = fetchKaku('/me/preferences', 'token', { signal: external.signal });
+  const rejected = assert.rejects(pending, { name: 'TimeoutError' });
+  t.mock.timers.tick(12_000);
+  await rejected;
+  assert.equal(external.signal.aborted, false);
+});
+
+test('fetchKaku preserves external cancellation as AbortError', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+  }));
+  const external = new AbortController();
+  const pending = fetchKaku('/me/preferences', 'token', { signal: external.signal });
+  const rejected = assert.rejects(pending, { name: 'AbortError' });
+  external.abort();
+  await rejected;
 });

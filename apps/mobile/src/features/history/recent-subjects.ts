@@ -6,11 +6,12 @@ import {
   type RecentSubjectsRecord,
 } from './recent-subjects-model';
 
+// Legacy unscoped data has no trustworthy owner; cloud data restores per account.
 const RECENT_SUBJECTS_KEY = 'kaku-recent-subjects';
 
-export async function loadRecentSubjects(): Promise<RecentSubjectsRecord> {
+export async function loadRecentSubjects(userId?: number): Promise<RecentSubjectsRecord> {
   try {
-    const value = await Storage.getItem(RECENT_SUBJECTS_KEY);
+    const value = await Storage.getItem(`${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`);
     if (!value) return { items: [], updatedAt: null };
 
     const parsed: unknown = JSON.parse(value);
@@ -20,10 +21,10 @@ export async function loadRecentSubjects(): Promise<RecentSubjectsRecord> {
   }
 }
 
-export async function saveRecentSubjects(record: RecentSubjectsRecord) {
+export async function saveRecentSubjects(record: RecentSubjectsRecord, userId?: number) {
   try {
     await Storage.setItem(
-      RECENT_SUBJECTS_KEY,
+      `${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`,
       JSON.stringify({
         items: record.items.slice(0, RECENT_SUBJECT_LIMIT),
         updatedAt: record.updatedAt,

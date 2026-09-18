@@ -49,137 +49,112 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const preferencesRef = useRef<AppPreferences>(DEFAULT_APP_PREFERENCES);
 
-  useEffect(() => {
-    let cancelled = false;
+  const revisionRef = useRef(0);
+  const writesRef = useRef(Promise.resolve());
+  const dirtyRef = useRef(false);
+  const scopeRef = useRef<{
+    controller: AbortController;
+    queue: Promise<void>;
+  } | null>(null);
 
-    void loadAppPreferences().then((loaded) => {
-      if (cancelled) return;
-      preferencesRef.current = loaded;
-      setPreferences(loaded);
-      setIsReady(true);
-    });
-
-    return () => {
-      cancelled = true;
-    };
+  const applyLocal = useCallback((next: AppPreferences) => {
+    preferencesRef.current = next;
+    setPreferences(next);
+    const task = writesRef.current.catch(() => undefined).then(() => saveAppPreferences(next));
+    writesRef.current = task;
+    return task;
   }, []);
 
-  const pushToCloud = useCallback(
-    async (next: AppPreferences) => {
-      if (!next.syncEnabled || !cloudSyncAvailable) {
-        return;
+  useEffect(() => {
+    let active = true;
+    void loadAppPreferences().then((loaded) => {
+      if (!active) return;
+      if (revisionRef.current === 0) {
+        preferencesRef.current = loaded;
+        setPreferences(loaded);
       }
+      setIsReady(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const enqueue = useCallback((pushOnly: boolean) => {
+    const scope = scopeRef.current;
+    if (!scope) return Promise.resolve();
+    const current = () => scopeRef.current === scope && !scope.controller.signal.aborted;
+    scope.queue = scope.queue.then(async () => {
+      if (!current()) return;
+      const revision = revisionRef.current;
       setSyncing(true);
       try {
-        const response = await request('/me/preferences', {
-          body: buildPreferencesBody(next.theme),
-          headers: { 'Content-Type': 'application/json' },
-          method: 'PUT',
-        });
-        const cloud = await parseCloudPreferences(response);
-        const synced: AppPreferences = {
-          theme: cloud.theme,
-          updatedAt: cloud.updatedAt ?? Date.now(),
-          syncEnabled: next.syncEnabled,
-        };
-        preferencesRef.current = synced;
-        setPreferences(synced);
-        await saveAppPreferences(synced);
-        setCloudError(null);
-      } catch (caughtError) {
-        setCloudError(
-          userErrorMessage(caughtError, '偏好暂未同步到云端，可稍后重试。'),
-        );
-      } finally {
-        setSyncing(false);
-      }
-    },
-    [cloudSyncAvailable, request],
-  );
-
-  const syncFromCloud = useCallback(async () => {
-    if (!preferencesRef.current.syncEnabled || !cloudSyncAvailable) {
-      return;
-    }
-    setSyncing(true);
-    try {
-      const response = await request('/me/preferences');
-      const cloud = await parseCloudPreferences(response);
-      const { applied, pushToCloud: shouldPush } = mergePreferences(
-        preferencesRef.current,
-        cloud,
-      );
-      preferencesRef.current = applied;
-      setPreferences(applied);
-      await saveAppPreferences(applied);
-      if (shouldPush) {
-        await pushToCloud(applied);
-      }
-    } catch (caughtError) {
-      setCloudError(
-        userErrorMessage(caughtError, '偏好同步失败，请稍后重试。'),
-      );
-    } finally {
-      setSyncing(false);
-    }
-  }, [cloudSyncAvailable, pushToCloud, request]);
-
-  useEffect(() => {
-    if (!session) {
-      setCloudError(null);
-      return;
-    }
-    void syncFromCloud();
-  }, [session, syncFromCloud]);
-
-  const setTheme = useCallback(
-    (theme: ThemePreference) => {
-      const next: AppPreferences = {
-        theme,
-        updatedAt: Date.now(),
-        syncEnabled: preferencesRef.current.syncEnabled,
-      };
-      preferencesRef.current = next;
-      setPreferences(next);
-      void saveAppPreferences(next);
-      if (session && next.syncEnabled && cloudSyncAvailable) {
-        void pushToCloud(next);
-      }
-    },
-    [cloudSyncAvailable, pushToCloud, session],
-  );
-
-  const setSyncEnabled = useCallback(
-    (enabled: boolean) => {
-      const next: AppPreferences = {
-        theme: preferencesRef.current.theme,
-        updatedAt: preferencesRef.current.updatedAt,
-        syncEnabled: enabled,
-      };
-      preferencesRef.current = next;
-      setPreferences(next);
-      void saveAppPreferences(next);
-      if (enabled && cloudSyncAvailable) {
-        setCloudError(null);
-        if (session) {
-          void syncFromCloud();
+        let next = preferencesRef.current;
+        let shouldPush = pushOnly || dirtyRef.current;
+        if (!shouldPush) {
+          const cloud = await parseCloudPreferences(await request('/me/preferences', {
+            signal: scope.controller.signal,
+          }));
+          if (!current() || revisionRef.current !== revision) return;
+          const merged = mergePreferences(next, cloud);
+          next = merged.applied;
+          shouldPush = merged.pushToCloud;
+          await applyLocal(next);
         }
+        if (shouldPush && current()) {
+          const cloud = await parseCloudPreferences(await request('/me/preferences', {
+            body: buildPreferencesBody(next.theme),
+            headers: { 'Content-Type': 'application/json' },
+            method: 'PUT', signal: scope.controller.signal,
+          }));
+          if (!current() || revisionRef.current !== revision) return;
+          // The device's privacy switch is never owned by a cloud response.
+          dirtyRef.current = false;
+          await applyLocal({
+            ...preferencesRef.current,
+            theme: cloud.theme,
+            updatedAt: cloud.updatedAt ?? Date.now(),
+          });
+        }
+        if (current()) setCloudError(null);
+      } catch (error) {
+        if (current()) setCloudError(userErrorMessage(error, '偏好同步失败，请稍后重试。'));
+      } finally {
+        if (current()) setSyncing(false);
       }
-    },
-    [cloudSyncAvailable, session, syncFromCloud],
-  );
+    });
+    return scope.queue;
+  }, [applyLocal, request]);
 
-  const retryCloudSync = useCallback(async () => {
-    if (
-      !session ||
-      !cloudError ||
-      !preferencesRef.current.syncEnabled ||
-      !cloudSyncAvailable
-    ) {
-      return;
+  const userId = session?.user.id;
+  useEffect(() => {
+    setCloudError(null);
+    setSyncing(false);
+    if (!isReady || userId === undefined || !cloudSyncAvailable || !preferences.syncEnabled) return;
+    const scope = { controller: new AbortController(), queue: Promise.resolve() };
+    scopeRef.current = scope;
+    void enqueue(false);
+    return () => {
+      scope.controller.abort();
+      if (scopeRef.current === scope) scopeRef.current = null;
+    };
+  }, [cloudSyncAvailable, enqueue, isReady, preferences.syncEnabled, userId]);
+
+  const setTheme = useCallback((theme: ThemePreference) => {
+    revisionRef.current += 1;
+    dirtyRef.current = true;
+    void applyLocal({ ...preferencesRef.current, theme, updatedAt: Date.now() });
+    void enqueue(true);
+  }, [applyLocal, enqueue]);
+
+  const setSyncEnabled = useCallback((enabled: boolean) => {
+    revisionRef.current += 1;
+    if (!enabled) {
+      scopeRef.current?.controller.abort();
+      scopeRef.current = null;
     }
-    await syncFromCloud();
-  }, [cloudError, cloudSyncAvailable, session, syncFromCloud]);
+    void applyLocal({ ...preferencesRef.current, syncEnabled: enabled });
+  }, [applyLocal]);
+
+  const retryCloudSync = useCallback(() => enqueue(false), [enqueue]);
 
   const value = useMemo(
     () => ({
