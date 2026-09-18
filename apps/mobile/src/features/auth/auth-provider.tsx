@@ -18,6 +18,7 @@ import {
   getAppCallbackUrl,
   getBangumiLoginUrl,
   KakuApiError,
+  isReauthorizationResponse,
   refreshAuthSession,
 } from '@/infrastructure/kaku/auth-client';
 import { unregisterPushDevice } from '@/infrastructure/kaku/push-client';
@@ -69,52 +70,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string>();
   const handoffPromiseRef = useRef<Promise<void> | null>(null);
   const handoffCodeRef = useRef<string | undefined>(undefined);
-  const refreshPromiseRef = useRef<Promise<AuthSession> | null>(null);
+  const refreshPromiseRef = useRef<{ session: AuthSession; task: Promise<AuthSession> } | null>(null);
+  const storageWriteRef = useRef<Promise<void>>(Promise.resolve());
+  const sessionVersionRef = useRef(0);
   const sessionRef = useRef<AuthSession | null>(null);
 
-  const commitSession = useCallback(async (nextSession: AuthSession) => {
-    await authStorage.save(nextSession);
+  // SecureStore writes must retain the same order as session changes.
+  const persistSession = useCallback((next: AuthSession | null) => {
+    const task = storageWriteRef.current.catch(() => undefined).then(() =>
+      next ? authStorage.save(next) : authStorage.clear(),
+    );
+    storageWriteRef.current = task;
+    return task;
+  }, []);
+
+  const commitSession = useCallback(async (
+    nextSession: AuthSession,
+    version: number,
+  ) => {
+    if (sessionVersionRef.current !== version) throw new Error('登录状态已变化。');
+    await persistSession(nextSession);
+    if (sessionVersionRef.current !== version) throw new Error('登录状态已变化。');
     sessionRef.current = nextSession;
     setSession(nextSession);
     setError(undefined);
     return nextSession;
-  }, []);
+  }, [persistSession]);
 
   const clearSession = useCallback(async () => {
-    await authStorage.clear();
+    sessionVersionRef.current += 1;
     sessionRef.current = null;
     setSession(null);
-  }, []);
+    await persistSession(null);
+  }, [persistSession]);
 
   const refreshSession = useCallback(
     async (currentSession: AuthSession) => {
-      if (refreshPromiseRef.current) {
-        return refreshPromiseRef.current;
+      const latest = sessionRef.current;
+      if (!latest || latest.sessionId !== currentSession.sessionId) {
+        throw new Error('登录状态已变化，请重试。');
       }
-
+      // Another request may already have rotated these credentials.
+      if (latest.refreshToken !== currentSession.refreshToken) return latest;
+      const pending = refreshPromiseRef.current;
+      if (pending?.session === currentSession) return pending.task;
+      const version = sessionVersionRef.current;
       const task = refreshAuthSession(currentSession.refreshToken)
-        .then(commitSession)
+        .then((next) => commitSession(next, version))
         .catch(async (caughtError) => {
-          if (caughtError instanceof KakuApiError && caughtError.status === 401) {
+          if (
+            sessionVersionRef.current === version &&
+            sessionRef.current === currentSession &&
+            caughtError instanceof KakuApiError && caughtError.status === 401
+          ) {
             await clearSession();
             setError('登录已失效，请重新登录。');
           }
-
           throw caughtError;
         })
         .finally(() => {
-          refreshPromiseRef.current = null;
+          if (refreshPromiseRef.current?.task === task) refreshPromiseRef.current = null;
         });
-      refreshPromiseRef.current = task;
+      refreshPromiseRef.current = { session: currentSession, task };
       return task;
     },
     [clearSession, commitSession],
   );
 
   useEffect(() => {
+    const version = sessionVersionRef.current;
     async function restoreSession() {
       try {
         const storedSession = await authStorage.load();
+        if (sessionVersionRef.current !== version) return;
 
         if (storedSession && isSessionActive(storedSession.expiresAt)) {
           sessionRef.current = storedSession;
@@ -127,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           canRefreshSession(storedSession.refreshExpiresAt)
         ) {
           try {
+            sessionRef.current = storedSession;
             await refreshSession(storedSession);
           } catch (caughtError) {
             if (!(caughtError instanceof KakuApiError) || caughtError.status !== 401) {
@@ -170,8 +199,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ios: 'iOS 设备',
       default: 'Kaku 设备',
     });
+    const version = ++sessionVersionRef.current;
     const task = exchangeHandoffCode(code, deviceName)
-      .then(commitSession)
+      .then((next) => commitSession(next, version))
       .then(() => undefined)
       .catch((caughtError) => {
         handoffCodeRef.current = undefined;
@@ -207,12 +237,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         response = await fetchKaku(path, currentSession.sessionToken, init);
       }
 
-      // 服务端约定 409 = Bangumi 授权已失效（凭据已被删除，见各 routes 的
-      // bangumi_reauthorization_required）。Kaku 会话本身仍有效，但此后所有
-      // 个人数据请求都会持续失败；跟随断开授权的产品语义清掉本地会话，
-      // 让账号页回到登录面板引导重新连接。并发请求可能同时命中，clearSession
-      // 与 setError 都是幂等的。
-      if (response.status === 409) {
+      if (
+        await isReauthorizationResponse(response) &&
+        sessionRef.current === currentSession
+      ) {
         await clearSession();
         setError('Bangumi 授权已失效，请重新登录。');
       }

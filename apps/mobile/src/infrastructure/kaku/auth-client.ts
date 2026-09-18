@@ -21,6 +21,14 @@ export async function readErrorMessage(response: Response) {
   return `Kaku 服务返回了 ${response.status}`;
 }
 
+// Inspect a clone so feature clients can still parse the response body.
+export async function isReauthorizationResponse(response: Response) {
+  if (response.status !== 409) return false;
+  const body: unknown = await response.clone().json().catch(() => null);
+  return body !== null && typeof body === 'object' &&
+    'error' in body && body.error === 'bangumi_reauthorization_required';
+}
+
 export class KakuApiError extends Error {
   readonly status: number;
 
