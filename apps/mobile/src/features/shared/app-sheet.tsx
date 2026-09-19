@@ -21,6 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { SPACING } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import {
   DISMISS_HEIGHT_RATIO,
@@ -218,6 +219,8 @@ export function AppSheet({
     transform: [{ translateY: translateY.value }],
   }));
 
+  // Let the native Modal own accessibility isolation. Marking its descendants
+  // as modal regions can leave the AX tree empty after reopening on iOS.
   return (
     <Modal
       animationType="none"
@@ -228,7 +231,6 @@ export function AppSheet({
     >
       <GestureHandlerRootView style={styles.container}>
         <KeyboardAvoidingView
-          accessibilityViewIsModal
           behavior={keyboardAvoidingBehavior}
           onAccessibilityEscape={onClose}
           style={styles.container}
@@ -245,7 +247,6 @@ export function AppSheet({
           />
         </Animated.View>
         <Animated.View
-          accessibilityViewIsModal
           onAccessibilityEscape={onClose}
           onLayout={(event) => {
             const nextHeight = event.nativeEvent.layout.height;
@@ -288,12 +289,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '92%',
     overflow: 'hidden',
-    paddingHorizontal: 20,
-    paddingTop: 2,
+    paddingHorizontal: SPACING.lg + SPACING.xs,
+    paddingTop: SPACING.xs / 2,
   },
   dragZone: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
   },
   handle: {
     borderRadius: 2,

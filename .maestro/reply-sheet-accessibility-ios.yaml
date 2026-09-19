@@ -1,0 +1,54 @@
+appId: com.shqingda.kaku.debug
+name: Reply sheet accessibility after reopening
+---
+# 前置：iOS 开发客户端、Metro 已运行且已登录。保持已有草稿，不输入或发送内容。
+# 冷启动 + 深链入口避免 dev-client 重载与搜索输入互相抢时序。
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "打开账户菜单"
+    timeout: 60000
+- openLink: "kaku://explore?q=%E8%91%AC%E9%80%81%E7%9A%84%E8%8A%99%E8%8E%89%E8%8E%B2"
+- extendedWaitUntil:
+    visible: "搜索结果"
+    timeout: 15000
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    below: "搜索结果"
+    index: 0
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "第 1 集.*"
+    direction: DOWN
+- tapOn: "第 1 集.*"
+- extendedWaitUntil:
+    visible: "参与讨论"
+    timeout: 15000
+- assertVisible: "第 1 集"
+- tapOn: "参与讨论"
+- extendedWaitUntil:
+    visible: "回复内容.*"
+    timeout: 10000
+- assertVisible: "发送回复"
+# 每次都先证明输入框存在，再证明关闭后消失，最后证明重开可访问。
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "关闭"
+      - extendedWaitUntil:
+          notVisible: "回复内容.*"
+          timeout: 10000
+      - tapOn: "参与讨论"
+      - extendedWaitUntil:
+          visible: "回复内容.*"
+          timeout: 10000
+      - assertVisible: "发送回复"
+      - assertNotVisible: "第 1 集"
+- takeScreenshot: reply-sheet-accessibility-reopened
+- tapOn: "关闭"
+- extendedWaitUntil:
+    notVisible: "回复内容.*"
+    timeout: 10000
+- assertVisible: "参与讨论"

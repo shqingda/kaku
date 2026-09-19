@@ -50,6 +50,11 @@ iOS 入口会先 `openLink` 重载 dev client，再跑共用步骤。全量入�
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
 都能跑通且不写远端。
 
+回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
+需 iOS 开发客户端、Metro 和已登录账号；独立冷启动后连续关闭/重开三次，
+断言输入框及发送按钮仍在原生树中、背景章节不可访问。保留已有草稿，不输入或发送内容。
+该专项不会加入兼容未登录状态的全量入口。
+
 Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 Metro。本地 `expo run:android` 打出来的是
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
 是哪一种包，必要时改 yaml 或装 release APK。

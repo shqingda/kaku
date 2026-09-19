@@ -10,3 +10,5 @@
 - [2026-09-18 v1.1.8 发布验收](./2026-09-18-release-readiness.md)
 
 - [2026-09-19 剩余事项补验](./2026-09-19-remaining-acceptance.md)
+
+- [2026-09-19 回复弹层无障碍树修复](./2026-09-19-reply-sheet-accessibility.md)

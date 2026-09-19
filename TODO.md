@@ -41,7 +41,7 @@
 - [x] 离线→离开通知页→返回→联网恢复读取的组件生命周期闭环通过，使用真实 QueryClient/onlineManager，不切断 Mac 网络。
 - [ ] 真机跨业务页面离线体验：组件自动化不能验证系统网络/原生缓存及设备重启后的表现，随设备验收补。
 - [x] iOS accessibility-large 大字体：首页→账户→更新日志→网络诊断通过，截图检查首页无重叠；通知筛选触控高度统一 44pt。
-- [ ] iOS 27 模拟器回复弹层重开后，Maestro 曾只读到应用根节点，截图仍显示草稿；需复核原生无障碍树/VoiceOver，未因组件测试通过而关闭此项。
+- [x] iOS 27 回复弹层重开后的原生无障碍树缺失：移除原生 Modal 内两层子容器的模态标记，重复开关专项已通过；实际 VoiceOver 朗读仍在下一项验收。见 [修复记录](docs/test-records/2026-09-19-reply-sheet-accessibility.md)。
 - [ ] VoiceOver 实际朗读、Reduce Motion/Reduce Transparency 系统设置与全屏触控验收：本轮可用工具没有可靠的读屏/设置验证接口；现有组件测试保留，仍需设备人工体验。
 - [ ] 重采当前设备性能并补首页独立基线：本轮没有可用 React profiler 工具；当前 iPhone 18 Pro / iOS 27.0 与旧 iPhone 17 Pro / iOS 26.5 不可直接比较。角色/条目阈值脚本已完成，未伪造新采样。
 
