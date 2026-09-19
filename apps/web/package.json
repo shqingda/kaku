@@ -15,12 +15,12 @@
     "@vitejs/plugin-react": "^6.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "vite": "^8.2.2"
+    "vite": "^8.3.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.18",
     "@types/react-dom": "^19.2.5",
     "typescript": "~7.0.2",
-    "wrangler": "^4.127.1"
+    "wrangler": "^4.135.0"
   }
 }

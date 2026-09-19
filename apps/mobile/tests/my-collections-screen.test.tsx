@@ -10,6 +10,7 @@ jest.mock('@/features/shared/app-state', () => {
 jest.mock('expo-router', () => ({ Stack: { Screen: () => null }, router: { push: jest.fn() } }));
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: { user: { id: 1, username: 'tester' } } }) }));
 jest.mock('@/features/collections/collection-row-editor', () => ({ CollectionRowEditor: () => null }));
+jest.mock('@/features/shared/swipeable-row', () => ({ SwipeableRow: ({ children }: { children: React.ReactNode }) => children }));
 jest.mock('@/features/users/public-user-collection-row', () => ({ PublicUserCollectionRow: () => null }));
 jest.mock('expo-sqlite/kv-store', () => ({ __esModule: true, default: { getItemSync: jest.fn(), setItemSync: jest.fn() } }));
 jest.mock('@/features/collections/use-my-collections', () => ({ useMyCollections: () => mockState }));
