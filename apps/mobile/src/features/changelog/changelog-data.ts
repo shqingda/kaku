@@ -10,6 +10,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.9',
+    date: '2026-09-20',
+    notes: [
+      '修复回复弹层重复打开后，读屏无法访问输入框和发送按钮的问题。',
+    ],
+  },
+  {
     version: '1.1.8',
     date: '2026-09-18',
     notes: [
