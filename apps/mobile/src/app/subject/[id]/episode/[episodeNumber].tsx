@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -38,6 +38,7 @@ import { playEpisodeToggleHaptic, playSelectionHaptic, playWarningHaptic } from 
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
+import { useScrollDirectionAction } from '@/features/shared/use-scroll-direction-action';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -46,8 +47,6 @@ function formatAirDate(date?: string) {
   return date ? date.replaceAll('-', '.') : '放送时间待定';
 }
 
-// 距底部超过这个距离时显示「跳到最新回复」（与回顶按钮的出现阈值一致）。
-const JUMP_TO_LATEST_THRESHOLD = 720;
 export default function EpisodeScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
@@ -89,10 +88,14 @@ export default function EpisodeScreen() {
     catalogEpisode?.id,
     replyNavigation.listRef,
   );
+  const {
+    action: scrollAction,
+    begin: beginScrollAction,
+    dismiss: dismissScrollAction,
+    end: endScrollAction,
+    handleScroll: handleScrollAction,
+  } = useScrollDirectionAction();
 
-  // 离开底部较远时出现「跳到最新回复」按钮（与回顶按钮同一阈值）。
-  const [jumpToLatestVisible, setJumpToLatestVisible] = useState(false);
-  const jumpToLatestVisibleRef = useRef(false);
   const maxScrollOffsetRef = useRef(0);
   const scrollOffsetRef = useRef(0);
   const viewportHeightRef = useRef(0);
@@ -115,9 +118,8 @@ export default function EpisodeScreen() {
     scrollOffsetRef.current = 0;
     maxScrollOffsetRef.current = 0;
     contentHeightRef.current = 0;
-    jumpToLatestVisibleRef.current = false;
-    setJumpToLatestVisible(false);
-  }, [catalogEpisode?.id]);
+    dismissScrollAction();
+  }, [catalogEpisode?.id, dismissScrollAction]);
   const handleListScroll = useCallback(
     (event: {
       nativeEvent: {
@@ -135,22 +137,16 @@ export default function EpisodeScreen() {
         0,
         contentSize.height - layoutMeasurement.height,
       );
-      const distanceFromBottom =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const nextVisible =
-        distanceFromBottom > JUMP_TO_LATEST_THRESHOLD && replies.length > 0;
-      if (jumpToLatestVisibleRef.current !== nextVisible) {
-        jumpToLatestVisibleRef.current = nextVisible;
-        setJumpToLatestVisible(nextVisible);
-      }
+      handleScrollAction(contentOffset.y);
     },
-    [replies.length, scrollPosition.track],
+    [handleScrollAction, scrollPosition.track],
   );
 
   // 远距离只动画最后两屏，避免几百楼挤进一次短促的原生动画。
   // 仍用 offset：这里的评论行高不固定，不依赖末楼的索引测量。
   const jumpToLatest = useCallback(() => {
     cancelScrollLanding();
+    dismissScrollAction();
     const list = replyNavigation.listRef.current;
     if (!list) return;
 
@@ -177,10 +173,16 @@ export default function EpisodeScreen() {
         });
       });
     });
-  }, [cancelScrollLanding, reduceMotion, replyNavigation.listRef]);
+  }, [
+    cancelScrollLanding,
+    dismissScrollAction,
+    reduceMotion,
+    replyNavigation.listRef,
+  ]);
 
   const scrollToTop = useCallback(() => {
     cancelScrollLanding();
+    dismissScrollAction();
     const list = replyNavigation.listRef.current;
     if (!list) return;
 
@@ -204,7 +206,12 @@ export default function EpisodeScreen() {
         });
       });
     });
-  }, [cancelScrollLanding, reduceMotion, replyNavigation.listRef]);
+  }, [
+    cancelScrollLanding,
+    dismissScrollAction,
+    reduceMotion,
+    replyNavigation.listRef,
+  ]);
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -435,8 +442,14 @@ export default function EpisodeScreen() {
           }
           onScroll={handleListScroll}
           onMomentumScrollEnd={scrollPosition.save}
-          onScrollBeginDrag={cancelScrollLanding}
-          onScrollEndDrag={scrollPosition.save}
+          onScrollBeginDrag={(event) => {
+            cancelScrollLanding();
+            beginScrollAction(event.nativeEvent.contentOffset.y);
+          }}
+          onScrollEndDrag={() => {
+            endScrollAction();
+            scrollPosition.save();
+          }}
           onLayout={(event) => {
             viewportHeightRef.current = event.nativeEvent.layout.height;
             maxScrollOffsetRef.current = Math.max(
@@ -653,16 +666,23 @@ export default function EpisodeScreen() {
         </>
       ) : null}
       <ScrollToTopButton
+        accessibilityHint="滚动到本集评论顶部"
+        accessibilityLabel="回到顶部"
+        bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
+        onPress={scrollToTop}
+        visible={scrollAction === 'top'}
+      />
+      <ScrollToTopButton
         accessibilityHint="滚动到本集最新一条回复"
         accessibilityLabel="跳到最新回复"
-        bottom={SPACING.xxl * 3 + SPACING.sm}
+        bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
         icon={{
           android: 'arrow_downward',
           ios: 'arrow.down',
           web: 'arrow_downward',
         }}
         onPress={jumpToLatest}
-        visible={jumpToLatestVisible}
+        visible={scrollAction === 'bottom'}
       />
     </SafeAreaView>
   );
