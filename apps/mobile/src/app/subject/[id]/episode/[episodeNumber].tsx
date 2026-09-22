@@ -31,13 +31,13 @@ import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
+import { useEpisodeCommentScrollPosition } from '@/features/discussions/use-episode-comment-scroll-position';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
-import { playEpisodeToggleHaptic, playWarningHaptic } from '@/lib/haptics';
+import { playEpisodeToggleHaptic, playSelectionHaptic, playWarningHaptic } from '@/lib/haptics';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -48,9 +48,6 @@ function formatAirDate(date?: string) {
 
 // 距底部超过这个距离时显示「跳到最新回复」（与回顶按钮的出现阈值一致）。
 const JUMP_TO_LATEST_THRESHOLD = 720;
-// 暂时隐藏入口，待确定合适位置后恢复；保留 FlashList 与定位实现。
-const SHOW_JUMP_TO_LATEST = false;
-
 export default function EpisodeScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
@@ -88,7 +85,10 @@ export default function EpisodeScreen() {
   });
   const replies = commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
+  const scrollPosition = useEpisodeCommentScrollPosition(
+    catalogEpisode?.id,
+    replyNavigation.listRef,
+  );
 
   // 离开底部较远时出现「跳到最新回复」按钮（与回顶按钮同一阈值）。
   const [jumpToLatestVisible, setJumpToLatestVisible] = useState(false);
@@ -99,7 +99,7 @@ export default function EpisodeScreen() {
   const contentHeightRef = useRef(0);
   const landingFrameRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
-  const cancelJumpToLatest = useCallback(() => {
+  const cancelScrollLanding = useCallback(() => {
     if (landingFrameRef.current !== null) {
       cancelAnimationFrame(landingFrameRef.current);
       landingFrameRef.current = null;
@@ -107,7 +107,17 @@ export default function EpisodeScreen() {
   }, []);
 
   // 换集、离开页面时，不能让上一页排队的滚动落到新列表上。
-  useEffect(() => cancelJumpToLatest, [subjectId, episodeNumber, cancelJumpToLatest]);
+  useEffect(
+    () => cancelScrollLanding,
+    [subjectId, episodeNumber, cancelScrollLanding],
+  );
+  useEffect(() => {
+    scrollOffsetRef.current = 0;
+    maxScrollOffsetRef.current = 0;
+    contentHeightRef.current = 0;
+    jumpToLatestVisibleRef.current = false;
+    setJumpToLatestVisible(false);
+  }, [catalogEpisode?.id]);
   const handleListScroll = useCallback(
     (event: {
       nativeEvent: {
@@ -118,6 +128,7 @@ export default function EpisodeScreen() {
     }) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
       scrollOffsetRef.current = contentOffset.y;
+      scrollPosition.track(contentOffset.y);
       viewportHeightRef.current = layoutMeasurement.height;
       contentHeightRef.current = contentSize.height;
       maxScrollOffsetRef.current = Math.max(
@@ -132,15 +143,14 @@ export default function EpisodeScreen() {
         jumpToLatestVisibleRef.current = nextVisible;
         setJumpToLatestVisible(nextVisible);
       }
-      scrollToTop.handleScroll(event);
     },
-    [replies.length, scrollToTop.handleScroll],
+    [replies.length, scrollPosition.track],
   );
 
   // 远距离只动画最后两屏，避免几百楼挤进一次短促的原生动画。
   // 仍用 offset：这里的评论行高不固定，不依赖末楼的索引测量。
   const jumpToLatest = useCallback(() => {
-    cancelJumpToLatest();
+    cancelScrollLanding();
     const list = replyNavigation.listRef.current;
     if (!list) return;
 
@@ -167,7 +177,34 @@ export default function EpisodeScreen() {
         });
       });
     });
-  }, [cancelJumpToLatest, reduceMotion, replyNavigation.listRef]);
+  }, [cancelScrollLanding, reduceMotion, replyNavigation.listRef]);
+
+  const scrollToTop = useCallback(() => {
+    cancelScrollLanding();
+    const list = replyNavigation.listRef.current;
+    if (!list) return;
+
+    const landingDistance = viewportHeightRef.current * 2;
+    if (
+      reduceMotion ||
+      landingDistance <= 0 ||
+      scrollOffsetRef.current <= landingDistance
+    ) {
+      list.scrollToOffset({ animated: !reduceMotion, offset: 0 });
+      return;
+    }
+
+    list.scrollToOffset({ animated: false, offset: landingDistance });
+    landingFrameRef.current = requestAnimationFrame(() => {
+      landingFrameRef.current = requestAnimationFrame(() => {
+        landingFrameRef.current = null;
+        replyNavigation.listRef.current?.scrollToOffset({
+          animated: true,
+          offset: 0,
+        });
+      });
+    });
+  }, [cancelScrollLanding, reduceMotion, replyNavigation.listRef]);
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -187,14 +224,11 @@ export default function EpisodeScreen() {
       : undefined;
 
   function openEpisode(nextNumber: number) {
-    cancelJumpToLatest();
+    cancelScrollLanding();
+    scrollPosition.save();
     router.replace({
       pathname: '/subject/[id]/episode/[episodeNumber]',
       params: { id: String(subjectId), episodeNumber: String(nextNumber) },
-    });
-    replyNavigation.listRef.current?.scrollToOffset({
-      animated: false,
-      offset: 0,
     });
   }
 
@@ -294,6 +328,7 @@ export default function EpisodeScreen() {
       false);
   const subjectTitle = catalogSubject?.title ?? '未知条目';
   const airDate = catalogEpisode?.airDate;
+  const headerTitle = `第 ${episodeNumber} ${episodeUnit}`;
 
   async function toggleRemoteProgress() {
     if (!session) {
@@ -347,7 +382,29 @@ export default function EpisodeScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen
-        options={{ title: `第 ${episodeNumber} ${episodeUnit}` }}
+        options={{
+          headerTitle: () => (
+            <Pressable
+              accessibilityHint="滚动到本集评论顶部"
+              accessibilityLabel={`${headerTitle}，回到顶部`}
+              accessibilityRole="button"
+              hitSlop={HIT_SLOP}
+              onPress={() => {
+                playSelectionHaptic();
+                scrollToTop();
+              }}
+              style={({ pressed }) => [
+                styles.headerTitleButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text numberOfLines={1} style={styles.headerTitleText}>
+                {headerTitle}
+              </Text>
+            </Pressable>
+          ),
+          title: headerTitle,
+        }}
       />
       <FlashList
           style={styles.list}
@@ -377,18 +434,26 @@ export default function EpisodeScreen() {
             />
           }
           onScroll={handleListScroll}
-          onScrollBeginDrag={cancelJumpToLatest}
+          onMomentumScrollEnd={scrollPosition.save}
+          onScrollBeginDrag={cancelScrollLanding}
+          onScrollEndDrag={scrollPosition.save}
           onLayout={(event) => {
             viewportHeightRef.current = event.nativeEvent.layout.height;
             maxScrollOffsetRef.current = Math.max(
               0, contentHeightRef.current - viewportHeightRef.current,
             );
+            if (commentsQuery.data && contentHeightRef.current > 0) {
+              scrollPosition.restore(maxScrollOffsetRef.current);
+            }
           }}
           onContentSizeChange={(_width, height) => {
             contentHeightRef.current = height;
             maxScrollOffsetRef.current = Math.max(
               0, height - viewportHeightRef.current,
             );
+            if (commentsQuery.data && viewportHeightRef.current > 0) {
+              scrollPosition.restore(maxScrollOffsetRef.current);
+            }
           }}
           scrollEventThrottle={16}
           ListEmptyComponent={
@@ -555,7 +620,7 @@ export default function EpisodeScreen() {
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
               onOpenReference={(replyId) => {
-                cancelJumpToLatest();
+                cancelScrollLanding();
                 replyNavigation.openReply(replyId);
               }}
               onReply={composer.open}
@@ -587,23 +652,17 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
-      {SHOW_JUMP_TO_LATEST ? (
-        <ScrollToTopButton
-          accessibilityHint="滚动到本集最新一条回复"
-          accessibilityLabel="跳到最新回复"
-          bottom={SPACING.xxl * 5}
-          icon={{ android: 'arrow_downward', ios: 'arrow.down', web: 'arrow_downward' }}
-          onPress={jumpToLatest}
-          visible={jumpToLatestVisible}
-        />
-      ) : null}
       <ScrollToTopButton
+        accessibilityHint="滚动到本集最新一条回复"
+        accessibilityLabel="跳到最新回复"
         bottom={SPACING.xxl * 3 + SPACING.sm}
-        onPress={() => {
-          cancelJumpToLatest();
-          scrollToTop.scrollToTop();
+        icon={{
+          android: 'arrow_downward',
+          ios: 'arrow.down',
+          web: 'arrow_downward',
         }}
-        visible={scrollToTop.visible}
+        onPress={jumpToLatest}
+        visible={jumpToLatestVisible}
       />
     </SafeAreaView>
   );
@@ -613,6 +672,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   list: { flex: 1 },
   content: { padding: SPACING.lg + SPACING.xs },
+  headerTitleButton: {
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.sm,
+  },
+  headerTitleText: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
   episodeCard: {
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
