@@ -70,8 +70,8 @@ export function useScrollDirectionAction() {
       lastOffsetRef.current = offset;
       if (delta === 0) return;
 
-      // 列表向下浏览时 offset 增大，提供回顶；向上浏览时提供到底部。
-      const next: ScrollDirectionAction = delta > 0 ? 'top' : 'bottom';
+      // 列表向下浏览时 offset 增大，提供到底部；向上浏览时提供回顶。
+      const next: ScrollDirectionAction = delta > 0 ? 'bottom' : 'top';
       if (candidateRef.current !== next) {
         candidateRef.current = next;
         candidateDistanceRef.current = Math.abs(delta);

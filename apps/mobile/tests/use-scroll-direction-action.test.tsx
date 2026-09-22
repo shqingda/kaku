@@ -6,13 +6,13 @@ describe('useScrollDirectionAction', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it('shows top after downward browsing settles and keeps it at rest', async () => {
+  it('shows top after upward browsing settles and keeps it at rest', async () => {
     const { result } = await renderHook(() => useScrollDirectionAction());
 
     await act(async () => {
-      result.current.begin(100);
-      result.current.handleScroll(112, 1000);
-      result.current.handleScroll(130, 1000);
+      result.current.begin(200);
+      result.current.handleScroll(188, 1000);
+      result.current.handleScroll(170, 1000);
       jest.advanceTimersByTime(179);
     });
     expect(result.current.action).toBeNull();
@@ -37,7 +37,7 @@ describe('useScrollDirectionAction', () => {
     expect(result.current.action).toBeNull();
 
     await act(async () => jest.advanceTimersByTime(1));
-    expect(result.current.action).toBe('bottom');
+    expect(result.current.action).toBe('top');
   });
 
   it('ignores tiny motion and programmatic scrolling outside a gesture', async () => {
@@ -61,7 +61,7 @@ describe('useScrollDirectionAction', () => {
       result.current.handleScroll(130, 1000);
       jest.advanceTimersByTime(180);
     });
-    expect(result.current.action).toBe('top');
+    expect(result.current.action).toBe('bottom');
 
     await act(async () => result.current.handleScroll(1000, 1000));
     expect(result.current.action).toBeNull();
@@ -71,7 +71,7 @@ describe('useScrollDirectionAction', () => {
       result.current.handleScroll(860, 1000);
       jest.advanceTimersByTime(180);
     });
-    expect(result.current.action).toBe('bottom');
+    expect(result.current.action).toBe('top');
 
     await act(async () => result.current.handleScroll(0, 1000));
     expect(result.current.action).toBeNull();
