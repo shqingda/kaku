@@ -5,7 +5,7 @@ export type ScrollDirectionAction = 'bottom' | 'top';
 // 先越过微小位移，再保持同一方向一小段时间，避免手指回弹让按钮来回闪。
 const DIRECTION_DISTANCE_THRESHOLD = 24;
 const DIRECTION_SETTLE_MS = 180;
-const IDLE_HIDE_MS = 720;
+const EDGE_EPSILON = 1;
 
 export function useScrollDirectionAction() {
   const [action, setAction] = useState<ScrollDirectionAction | null>(null);
@@ -15,16 +15,10 @@ export function useScrollDirectionAction() {
   const lastOffsetRef = useRef(0);
   const trackingRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearSettleTimer = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = null;
-  }, []);
-
-  const clearIdleTimer = useCallback(() => {
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = null;
   }, []);
 
   const show = useCallback((next: ScrollDirectionAction | null) => {
@@ -38,9 +32,8 @@ export function useScrollDirectionAction() {
     candidateRef.current = null;
     candidateDistanceRef.current = 0;
     clearSettleTimer();
-    clearIdleTimer();
     show(null);
-  }, [clearIdleTimer, clearSettleTimer, show]);
+  }, [clearSettleTimer, show]);
 
   const begin = useCallback(
     (offset: number) => {
@@ -49,10 +42,8 @@ export function useScrollDirectionAction() {
       candidateRef.current = null;
       candidateDistanceRef.current = 0;
       clearSettleTimer();
-      clearIdleTimer();
-      show(null);
     },
-    [clearIdleTimer, clearSettleTimer, show],
+    [clearSettleTimer],
   );
 
   const end = useCallback(() => {
@@ -60,14 +51,26 @@ export function useScrollDirectionAction() {
   }, []);
 
   const handleScroll = useCallback(
-    (offset: number) => {
+    (offset: number, maxOffset: number) => {
+      const atEdge =
+        maxOffset <= 0 ||
+        offset <= EDGE_EPSILON ||
+        offset >= maxOffset - EDGE_EPSILON;
+      if (atEdge) {
+        if (trackingRef.current) lastOffsetRef.current = offset;
+        candidateRef.current = null;
+        candidateDistanceRef.current = 0;
+        clearSettleTimer();
+        show(null);
+        return;
+      }
       if (!trackingRef.current) return;
 
       const delta = offset - lastOffsetRef.current;
       lastOffsetRef.current = offset;
       if (delta === 0) return;
 
-      // 手指向上时 contentOffset 增大，提供回顶；手指向下时提供到底部。
+      // 列表向下浏览时 offset 增大，提供回顶；向上浏览时提供到底部。
       const next: ScrollDirectionAction = delta > 0 ? 'top' : 'bottom';
       if (candidateRef.current !== next) {
         candidateRef.current = next;
@@ -86,23 +89,16 @@ export function useScrollDirectionAction() {
           if (candidateRef.current === next) show(next);
         }, DIRECTION_SETTLE_MS);
       }
-
-      clearIdleTimer();
-      idleTimerRef.current = setTimeout(() => {
-        idleTimerRef.current = null;
-        show(null);
-      }, IDLE_HIDE_MS);
     },
-    [clearIdleTimer, clearSettleTimer, show],
+    [clearSettleTimer, show],
   );
 
   useEffect(
     () => () => {
       trackingRef.current = false;
       clearSettleTimer();
-      clearIdleTimer();
     },
-    [clearIdleTimer, clearSettleTimer],
+    [clearSettleTimer],
   );
 
   return { action, begin, dismiss, end, handleScroll };

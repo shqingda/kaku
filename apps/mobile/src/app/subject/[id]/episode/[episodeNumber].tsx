@@ -137,7 +137,7 @@ export default function EpisodeScreen() {
         0,
         contentSize.height - layoutMeasurement.height,
       );
-      handleScrollAction(contentOffset.y);
+      handleScrollAction(contentOffset.y, maxScrollOffsetRef.current);
     },
     [handleScrollAction, scrollPosition.track],
   );
