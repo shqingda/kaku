@@ -10,6 +10,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.11',
+    date: '2026-09-23',
+    notes: [
+      'Android 单集评论页切换回顶和直达最新回复时，按钮不再整颗闪一下，箭头过渡更平滑。',
+      '短时间反复上下滑动时，方向判断更稳定，减少按钮来回切换。',
+    ],
+  },
+  {
     version: '1.1.10',
     date: '2026-09-23',
     notes: [
