@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.10',
+    date: '2026-09-23',
+    notes: [
+      '单集评论页可以点击标题栏回到顶部；滚动时按浏览方向显示回顶或直达最新回复按钮。',
+      '停止滚动后按钮保持可用，到达顶部或底部时自动隐藏；按钮位置更贴近底部回复栏。',
+      '再次进入同一集评论时，恢复上次浏览的位置，记录只保存在本机。',
+    ],
+  },
+  {
     version: '1.1.9',
     date: '2026-09-20',
     notes: [
