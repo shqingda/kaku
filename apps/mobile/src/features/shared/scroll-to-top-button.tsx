@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
@@ -37,8 +37,8 @@ export function ScrollToTopButton({
   accessibilityLabel = '回到顶部',
   bottom = 24,
   icon = UP_ICON,
+  iconContent,
   label = '回到顶部',
-  onHidden,
   onPress,
   variant = 'icon',
   visible,
@@ -47,8 +47,8 @@ export function ScrollToTopButton({
   accessibilityLabel?: string;
   bottom?: number;
   icon?: ScrollButtonIcon;
+  iconContent?: ReactNode;
   label?: string;
-  onHidden?: () => void;
   onPress: () => void;
   variant?: 'icon' | 'pill';
   visible: boolean;
@@ -64,11 +64,9 @@ export function ScrollToTopButton({
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
     });
-    animation.start(({ finished }) => {
-      if (finished && !visible) onHidden?.();
-    });
+    animation.start();
     return () => animation.stop();
-  }, [onHidden, progress, reduceMotion, visible, variant]);
+  }, [progress, reduceMotion, visible, variant]);
 
   return (
     <Animated.View
@@ -113,7 +111,14 @@ export function ScrollToTopButton({
           pressed && styles.pressed,
         ]}
       >
-        <SymbolView name={icon} size={variant === 'pill' ? 15 : 18} tintColor={colors.ink} weight="semibold" />
+        {iconContent ?? (
+          <SymbolView
+            name={icon}
+            size={variant === 'pill' ? 15 : 18}
+            tintColor={colors.ink}
+            weight="semibold"
+          />
+        )}
         {variant === 'pill' ? (
           <Text style={[styles.label, { color: colors.ink }]}>{label}</Text>
         ) : null}

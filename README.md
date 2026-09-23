@@ -99,12 +99,18 @@ pnpm install
 pnpm dev:mobile
 ```
 
-Metro 启动后可按 `i` 打开 iOS 模拟器。首次安装或原生依赖变化后，需要重新构建开发客户端：
+首次安装或原生依赖变化后，需要重新构建开发客户端：
 
 ```bash
 pnpm --filter @kaku/mobile ios
 pnpm --filter @kaku/mobile android
 ```
+
+iOS 开发客户端已安装时，日常启动先打开模拟器、运行 `pnpm dev:mobile`，
+再执行 `pnpm --filter @kaku/mobile open:ios`。该命令只打开一次开发链接；
+`expo run:ios` 构建完成后的自动双重启动，在当前 Expo SDK 57 / iOS 27
+模拟器上可能触发原生 `AppContextLost` 崩溃。重新构建后若自动启动闪退，
+不必再次构建，直接运行 `open:ios` 即可。
 
 ### 启动 API
 

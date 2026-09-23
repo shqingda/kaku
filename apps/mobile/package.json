@@ -73,6 +73,7 @@
     "build:dev": "pnpm dlx eas-cli@22.2.0 build --profile development --platform android --non-interactive --no-wait",
     "build:production": "pnpm dlx eas-cli@22.2.0 build --profile production --platform all --non-interactive --no-wait",
     "eas:whoami": "pnpm dlx eas-cli@22.2.0 whoami",
+    "open:ios": "xcrun simctl openurl booted 'exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'",
     "open:android": "adb reverse tcp:8081 tcp:8081 && adb shell am start -a android.intent.action.VIEW -d 'exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'"
   },
   "private": true
