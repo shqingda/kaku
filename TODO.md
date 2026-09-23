@@ -67,6 +67,6 @@
 - 不同时维护 Detox/Appium；继续 Jest/RNTL + Maestro。
 - 不为每次 PR 在 GitHub Actions 跑完整 Maestro。
 - 不做无明确收益的 Hero 视差。
-- 不为“已安装未使用”迁移到 `@expo/ui`；出现真正需要系统原生控件的页面时再采用。
+- 不为采用 `@expo/ui` 而迁移现有控件；出现真正需要系统原生控件的页面时再采用。
 - 不为信息类 `cached-data-notice` 增加重复 VoiceOver 播报。
 - 不把判断性 `useMemo`/`useCallback` 清理当成待办；React Compiler 已兜底。

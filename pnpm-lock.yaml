@@ -41,9 +41,6 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@expo/ui':
-        specifier: ~57.0.19
-        version: 57.0.19(2fbef78e01dac6ee2410c65a9b590e04)
       '@kaku/shared':
         specifier: workspace:*
         version: link:../../packages/shared
