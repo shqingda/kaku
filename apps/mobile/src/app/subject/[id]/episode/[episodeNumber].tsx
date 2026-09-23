@@ -5,6 +5,7 @@ import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
   Alert,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +28,7 @@ import {
 import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { EpisodeScrollActionButton } from '@/features/discussions/episode-scroll-action-button';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
@@ -46,6 +48,11 @@ import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 function formatAirDate(date?: string) {
   return date ? date.replaceAll('-', '.') : '放送时间待定';
 }
+
+const ANDROID_SCROLL_DIRECTION_OPTIONS = {
+  distanceThreshold: SPACING.xxl + SPACING.md,
+  settleMs: 320,
+};
 
 export default function EpisodeScreen() {
   const colors = useTheme();
@@ -94,7 +101,9 @@ export default function EpisodeScreen() {
     dismiss: dismissScrollAction,
     end: endScrollAction,
     handleScroll: handleScrollAction,
-  } = useScrollDirectionAction();
+  } = useScrollDirectionAction(
+    Platform.OS === 'android' ? ANDROID_SCROLL_DIRECTION_OPTIONS : undefined,
+  );
 
   const maxScrollOffsetRef = useRef(0);
   const scrollOffsetRef = useRef(0);
@@ -665,25 +674,36 @@ export default function EpisodeScreen() {
           />
         </>
       ) : null}
-      <ScrollToTopButton
-        accessibilityHint="滚动到本集评论顶部"
-        accessibilityLabel="回到顶部"
-        bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-        onPress={scrollToTop}
-        visible={scrollAction === 'top'}
-      />
-      <ScrollToTopButton
-        accessibilityHint="滚动到本集最新一条回复"
-        accessibilityLabel="跳到最新回复"
-        bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-        icon={{
-          android: 'arrow_downward',
-          ios: 'arrow.down',
-          web: 'arrow_downward',
-        }}
-        onPress={jumpToLatest}
-        visible={scrollAction === 'bottom'}
-      />
+      {Platform.OS === 'android' ? (
+        <EpisodeScrollActionButton
+          action={scrollAction}
+          bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
+          onBottom={jumpToLatest}
+          onTop={scrollToTop}
+        />
+      ) : (
+        <>
+          <ScrollToTopButton
+            accessibilityHint="滚动到本集评论顶部"
+            accessibilityLabel="回到顶部"
+            bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
+            onPress={scrollToTop}
+            visible={scrollAction === 'top'}
+          />
+          <ScrollToTopButton
+            accessibilityHint="滚动到本集最新一条回复"
+            accessibilityLabel="跳到最新回复"
+            bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
+            icon={{
+              android: 'arrow_downward',
+              ios: 'arrow.down',
+              web: 'arrow_downward',
+            }}
+            onPress={jumpToLatest}
+            visible={scrollAction === 'bottom'}
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }

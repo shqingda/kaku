@@ -38,6 +38,7 @@ export function ScrollToTopButton({
   bottom = 24,
   icon = UP_ICON,
   label = '回到顶部',
+  onHidden,
   onPress,
   variant = 'icon',
   visible,
@@ -47,6 +48,7 @@ export function ScrollToTopButton({
   bottom?: number;
   icon?: ScrollButtonIcon;
   label?: string;
+  onHidden?: () => void;
   onPress: () => void;
   variant?: 'icon' | 'pill';
   visible: boolean;
@@ -56,13 +58,17 @@ export function ScrollToTopButton({
   const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    Animated.timing(progress, {
+    const animation = Animated.timing(progress, {
       duration: getTransitionDuration(reduceMotion, variant, visible),
       easing: Easing.out(Easing.cubic),
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
-    }).start();
-  }, [progress, reduceMotion, visible, variant]);
+    });
+    animation.start(({ finished }) => {
+      if (finished && !visible) onHidden?.();
+    });
+    return () => animation.stop();
+  }, [onHidden, progress, reduceMotion, visible, variant]);
 
   return (
     <Animated.View

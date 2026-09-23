@@ -76,4 +76,26 @@ describe('useScrollDirectionAction', () => {
     await act(async () => result.current.handleScroll(0, 1000));
     expect(result.current.action).toBeNull();
   });
+
+  it('can require a more deliberate direction change on Android', async () => {
+    const { result } = await renderHook(() =>
+      useScrollDirectionAction({ distanceThreshold: 44, settleMs: 320 }),
+    );
+
+    await act(async () => {
+      result.current.begin(100);
+      result.current.handleScroll(130, 1000);
+      jest.advanceTimersByTime(400);
+    });
+    expect(result.current.action).toBeNull();
+
+    await act(async () => {
+      result.current.handleScroll(150, 1000);
+      jest.advanceTimersByTime(319);
+    });
+    expect(result.current.action).toBeNull();
+
+    await act(async () => jest.advanceTimersByTime(1));
+    expect(result.current.action).toBe('bottom');
+  });
 });

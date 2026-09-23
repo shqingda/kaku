@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { SPACING } from '@/constants/design';
+
 export type ScrollDirectionAction = 'bottom' | 'top';
 
 // 先越过微小位移，再保持同一方向一小段时间，避免手指回弹让按钮来回闪。
-const DIRECTION_DISTANCE_THRESHOLD = 24;
 const DIRECTION_SETTLE_MS = 180;
 const EDGE_EPSILON = 1;
 
-export function useScrollDirectionAction() {
+export function useScrollDirectionAction(options?: {
+  distanceThreshold?: number;
+  settleMs?: number;
+}) {
+  const distanceThreshold = options?.distanceThreshold ?? SPACING.xl;
+  const settleMs = options?.settleMs ?? DIRECTION_SETTLE_MS;
   const [action, setAction] = useState<ScrollDirectionAction | null>(null);
   const actionRef = useRef<ScrollDirectionAction | null>(null);
   const candidateRef = useRef<ScrollDirectionAction | null>(null);
@@ -81,16 +87,16 @@ export function useScrollDirectionAction() {
       }
 
       if (
-        candidateDistanceRef.current >= DIRECTION_DISTANCE_THRESHOLD &&
+        candidateDistanceRef.current >= distanceThreshold &&
         !settleTimerRef.current
       ) {
         settleTimerRef.current = setTimeout(() => {
           settleTimerRef.current = null;
           if (candidateRef.current === next) show(next);
-        }, DIRECTION_SETTLE_MS);
+        }, settleMs);
       }
     },
-    [clearSettleTimer, show],
+    [clearSettleTimer, distanceThreshold, settleMs, show],
   );
 
   useEffect(
