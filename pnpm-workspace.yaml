@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/*
 
+overrides:
+  '@types/react-dom': 19.2.7
+
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.8 || 57.0.16 || 57.0.18 || 57.0.19 || 57.0.21 || 57.0.22 || 57.0.24 || 57.0.26'
   - '@expo/config-plugins@57.0.5 || 57.0.9'
