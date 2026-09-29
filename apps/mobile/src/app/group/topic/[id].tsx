@@ -1,3 +1,6 @@
+import { useTopicReadingPosition } from '@/features/discussions/use-topic-reading-position';
+import { TopicReadingNotice } from '@/features/discussions/topic-reading-notice';
+import { SPACING, TYPE } from '@/constants/design';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
@@ -54,6 +57,7 @@ export default function GroupTopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
+  const reading = useTopicReadingPosition(session?.user.id, `group:${numericTopicId}`, Boolean(numericReplyId));
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
@@ -126,6 +130,9 @@ export default function GroupTopicScreen() {
         }}
       />
       <FlatList
+          onScrollBeginDrag={reading.beginReading}
+          onViewableItemsChanged={reading.onViewableItemsChanged}
+          viewabilityConfig={reading.viewabilityConfig}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
@@ -137,6 +144,13 @@ export default function GroupTopicScreen() {
           ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
           ListHeaderComponent={
             <>
+              {topic ? <TopicReadingNotice
+                saved={Boolean(reading.savedReply)}
+                available={replies.some(reply => reply.id === reading.savedReply)}
+                error={reading.error}
+                onContinue={() => { if (reading.savedReply) replyNavigation.openReply(reading.savedReply); }}
+                onStart={() => { reading.fromStart(); replyNavigation.listRef.current?.scrollToOffset({ animated: false, offset: 0 }); }}
+              /> : null}
               {topic && topicQuery.isError ? (
                 <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
               ) : (
@@ -247,32 +261,32 @@ export default function GroupTopicScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   list: { flex: 1 },
-  listContent: { padding: 20 },
+  listContent: { padding: SPACING.xl },
   topicHeader: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.xl,
   },
-  topicHeaderWithBody: { marginBottom: 10 },
+  topicHeaderWithBody: { marginBottom: SPACING.md },
   topicTitle: {
     color: colors.ink,
     flex: 1,
-    fontSize: 22,
+    fontSize: TYPE.titleLarge.fontSize,
     fontWeight: '800',
-    letterSpacing: -0.4,
-    lineHeight: 30,
+    letterSpacing: TYPE.titleLarge.letterSpacing,
+    lineHeight: TYPE.titleLarge.lineHeight,
   },
   topicTitleRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
   },
   groupName: {
     color: colors.accent,
-    fontSize: 13,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
-    marginTop: 10,
+    marginTop: SPACING.md,
   },
-  topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 7 },
+  topicMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
 });
