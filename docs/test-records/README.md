@@ -12,3 +12,5 @@
 - [2026-09-19 剩余事项补验](./2026-09-19-remaining-acceptance.md)
 
 - [2026-09-19 回复弹层无障碍树修复](./2026-09-19-reply-sheet-accessibility.md)
+
+- [2026-09-29 用户体验改进验证](./2026-09-29-ux-improvements.md)
