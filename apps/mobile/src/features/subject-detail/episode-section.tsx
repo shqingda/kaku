@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CatalogEpisode } from '@/features/catalog/model';
 
@@ -22,7 +22,7 @@ import {
   todayDateString,
 } from './episode-airing';
 
-type EpisodeLayout = 'grid' | 'list';
+import { readEpisodeLayout, saveEpisodeLayout, type EpisodeLayout } from '@/features/preferences/view-preferences';
 
 function formatAirDate(date?: string) {
   return date ? date.replaceAll('-', '.') : '时间待定';
@@ -50,7 +50,7 @@ export function EpisodeSection({
   const isTrack = kind === 'track';
   const todayDate = todayDateString();
   const [layout, setLayout] = useState<EpisodeLayout>(
-    isTrack ? 'list' : 'grid',
+    () => isTrack ? 'list' : readEpisodeLayout(),
   );
   const [rangeIndex, setRangeIndex] = useState(() =>
     getInitialEpisodeRangeIndex(totalEpisodes, watchedEpisodeNumbers),
@@ -84,7 +84,7 @@ export function EpisodeSection({
                   accessibilityState={{ selected: isActive }}
                   hitSlop={HIT_SLOP}
                   key={nextLayout}
-                  onPress={() => setLayout(nextLayout)}
+                  onPress={() => { setLayout(nextLayout); saveEpisodeLayout(nextLayout); }}
                   style={({ pressed }) => [
                     styles.iconButton,
                     isActive && styles.activeLayoutButton,
@@ -161,7 +161,7 @@ export function EpisodeSection({
           : `点击${isTrack ? '曲目' : '章节'}进入详情`}
       </Text>
 
-      {layout === 'grid' ? (
+      {!isTrack && layout === 'grid' ? (
         <View style={styles.episodeGrid}>
           {visibleEpisodeNumbers.map((episodeNumber) => {
             const isWatched =
@@ -277,27 +277,27 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 18,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
   },
-  panelTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
+  panelTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '700' },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionHint: { color: colors.subtle, fontSize: 12, marginTop: 9 },
-  ranges: { gap: 7, paddingTop: 14 },
+  sectionHint: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  ranges: { gap: SPACING.sm, paddingTop: SPACING.lg },
   range: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   selectedRange: { backgroundColor: colors.accentSoft },
   rangeText: {
     color: colors.muted,
-    fontSize: 11,
+    fontSize: TYPE.micro.fontSize,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
@@ -306,8 +306,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     flexDirection: 'row',
-    gap: 2,
-    padding: 3,
+    gap: SPACING.xs,
+    padding: SPACING.xs,
   },
   iconButton: {
     alignItems: 'center',
@@ -317,7 +317,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 36,
   },
   activeLayoutButton: { backgroundColor: colors.surface },
-  episodeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 18 },
+  episodeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.lg },
   episodeCell: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
@@ -335,15 +335,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
   },
   pressedEpisodeCell: { opacity: 0.72, transform: [{ scale: 0.9 }] },
-  episodeNumber: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  episodeNumber: { color: colors.muted, fontSize: TYPE.body.fontSize, fontWeight: '700' },
   watchedEpisodeNumber: { color: colors.surface },
   airedEpisodeNumber: { color: colors.accentRich },
-  episodeList: { marginTop: 10 },
+  episodeList: { marginTop: SPACING.md },
   episodeRow: {
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 64,
-    paddingVertical: 13,
+    paddingVertical: SPACING.md,
   },
   episodeRowBorder: {
     borderTopColor: colors.divider,
@@ -359,9 +359,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  episodeRowMain: { flex: 1, marginLeft: 12 },
-  episodeRowTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
-  episodeAirDate: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  episodeRowMain: { flex: 1, marginLeft: SPACING.md },
+  episodeRowTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '700' },
+  episodeAirDate: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.xs },
   replyCount: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
@@ -369,8 +369,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
-  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  replyCountText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

@@ -14,7 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
+import { readHomeTrackingType, saveHomeTrackingType } from '@/features/preferences/view-preferences';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   getCollectionStatusLabel,
@@ -72,7 +73,7 @@ function HomeContent() {
   const colors = useTheme();
   const styles = createStyles(colors);
   const queryClient = useQueryClient();
-  const [selectedTrackingType, setSelectedTrackingType] = useState(2);
+  const [selectedTrackingType, setSelectedTrackingType] = useState(readHomeTrackingType);
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
 
@@ -114,14 +115,6 @@ function HomeContent() {
     selectedTrackingType,
     'doing',
   )}的${getSubjectTypeLabel(selectedTrackingType)}`;
-  // 只挂载当前 tab 的查询；区块是否显示由已加载的数据决定，
-  // 未选中的 tab 在按下时预取，不会因为未加载而闪烁。
-  const showsTrackingSection =
-    selectedQuery.isPending ||
-    selectedQuery.isError ||
-    Object.values(trackingQueries).some(
-      (query) => (query.data?.pages[0]?.total ?? 0) > 0,
-    );
 
   useEffect(() => {
     router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
@@ -163,22 +156,23 @@ function HomeContent() {
           <HomeState message="正在读取账户信息" />
         ) : session ? (
           <>
-            {showsTrackingSection ? (
-              <HomeMediaSection
-                error={selectedQuery.isError}
-                items={selectedQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
-                loading={selectedQuery.isPending}
-                onRetry={() => void selectedQuery.refetch()}
-                onSubjectTypeChange={setSelectedTrackingType}
-                onSubjectTypePressIn={(type) =>
-                  prefetchPublicUserCollections(queryClient, username, type, 'doing')
-                }
-                subjectType={selectedTrackingType}
-                title={trackingTitle}
-                total={selectedQuery.data?.pages[0]?.total ?? 0}
-                username={username}
-              />
-            ) : null}
+            <HomeMediaSection
+              error={selectedQuery.isError}
+              items={selectedQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
+              loading={selectedQuery.isPending}
+              onRetry={() => void selectedQuery.refetch()}
+              onSubjectTypeChange={(type) => {
+                setSelectedTrackingType(type);
+                saveHomeTrackingType(type);
+              }}
+              onSubjectTypePressIn={(type) =>
+                prefetchPublicUserCollections(queryClient, username, type, 'doing')
+              }
+              subjectType={selectedTrackingType}
+              title={trackingTitle}
+              total={selectedQuery.data?.pages[0]?.total ?? 0}
+              username={username}
+            />
             <TimelineBoundary timelineQuery={timelineQuery} />
             <QuickActions />
           </>
@@ -455,21 +449,21 @@ function HomeState({ message }: { message: string }) {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  skeletonSlot: { marginTop: 24 },
-  timelineSection: { marginTop: 34 },
+  content: { paddingBottom: SPACING.xl * 2, paddingHorizontal: SPACING.xl },
+  skeletonSlot: { marginTop: SPACING.xl },
+  timelineSection: { marginTop: SPACING.xxl },
   timelineHeading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: SPACING.xs,
   },
   timelineCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginTop: 14,
+    marginTop: SPACING.lg,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
   timelinePublishButton: {
     alignItems: 'center',
@@ -477,10 +471,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 12,
     flexDirection: 'row',
-    gap: 5,
+    gap: SPACING.xs,
     height: 34,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
   },
   timelinePublishButtonPressed: { backgroundColor: colors.track },
   timelinePublishIcon: {
@@ -491,10 +485,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   timelinePublishText: {
     color: colors.ink,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: TYPE.body.lineHeight,
     textAlignVertical: 'center',
   },
   timelineAllButton: {
@@ -504,24 +498,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 50,
-    paddingHorizontal: 2,
+    paddingHorizontal: SPACING.xs,
   },
-  timelineAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  timelineAllText: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   timelineInlineState: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 9,
+    gap: SPACING.sm,
     justifyContent: 'center',
     minHeight: 88,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
-  timelineEmptyText: { color: colors.muted, fontSize: 13 },
-  timelineErrorText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  timelineEmptyText: { color: colors.muted, fontSize: TYPE.caption.fontSize },
+  timelineErrorText: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '600' },
   signedOutCard: {
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: 28,
-    padding: 24,
+    padding: SPACING.xl,
   },
   signedOutMark: {
     alignItems: 'center',
@@ -533,16 +527,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   signedOutTitle: {
     color: colors.ink,
-    fontSize: 27,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
-    letterSpacing: -0.6,
-    marginTop: 24,
+    letterSpacing: TYPE.display.letterSpacing,
+    marginTop: SPACING.xl,
   },
   signedOutText: {
     color: colors.muted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 10,
+    fontSize: TYPE.body.fontSize,
+    lineHeight: TYPE.body.lineHeight,
+    marginTop: SPACING.md,
   },
   loginButton: {
     alignItems: 'center',
@@ -551,22 +545,22 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 16,
     height: 52,
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: SPACING.xl,
   },
-  loginButtonText: { color: colors.surface, fontSize: 15, fontWeight: '800' },
-  quickSection: { marginTop: 34 },
+  loginButtonText: { color: colors.surface, fontSize: TYPE.body.fontSize, fontWeight: '800' },
+  quickSection: { marginTop: SPACING.xxl },
   quickTitle: {
     color: colors.ink,
-    fontSize: 20,
+    fontSize: TYPE.title.fontSize,
     fontWeight: '800',
-    letterSpacing: -0.35,
+    letterSpacing: TYPE.title.letterSpacing,
   },
   quickCard: {
     backgroundColor: colors.surface,
     borderRadius: 24,
-    marginTop: 14,
+    marginTop: SPACING.lg,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
   quickActionRow: {
     alignItems: 'center',
@@ -586,18 +580,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  quickCopy: { flex: 1, marginLeft: 13, minWidth: 0 },
-  quickLabel: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-  quickMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
+  quickCopy: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
+  quickLabel: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '800' },
+  quickMeta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.xs },
   state: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 24,
-    gap: 10,
+    gap: SPACING.md,
     justifyContent: 'center',
     minHeight: 180,
-    padding: 24,
+    padding: SPACING.xl,
   },
-  stateText: { color: colors.muted, fontSize: 14, textAlign: 'center' },
+  stateText: { color: colors.muted, fontSize: TYPE.body.fontSize, textAlign: 'center' },
   pressed: { opacity: 0.62 },
 });
