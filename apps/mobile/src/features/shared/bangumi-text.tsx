@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { useMemo } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, TextStyle } from 'react-native';
@@ -147,9 +148,9 @@ function createStyles(colors: ThemeColors) {
     quote: {
       borderLeftColor: colors.divider,
       borderLeftWidth: 3,
-      marginVertical: 4,
-      paddingLeft: 10,
+      marginVertical: SPACING.xs,
+      paddingLeft: SPACING.md,
     },
-    quoteText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+    quoteText: { color: colors.muted, fontSize: TYPE.body.fontSize, lineHeight: TYPE.body.lineHeight },
   });
 }

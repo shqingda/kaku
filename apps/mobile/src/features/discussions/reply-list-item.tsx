@@ -1,3 +1,4 @@
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { memo } from 'react';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
@@ -64,7 +65,7 @@ export const ReplyListItem = memo(function ReplyListItem({
             <Pressable
               accessibilityLabel={`打开 ${reply.author} 的公开主页`}
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={HIT_SLOP}
               style={({ pressed }) => pressed && styles.pressed}
             >
               <View style={styles.avatar}>
@@ -100,7 +101,7 @@ export const ReplyListItem = memo(function ReplyListItem({
               <Pressable
                 accessibilityLabel={`打开 ${reply.author} 的公开主页`}
                 accessibilityRole="button"
-                hitSlop={8}
+                hitSlop={HIT_SLOP}
                 style={({ pressed }) => pressed && styles.pressed}
               >
                 <Text style={styles.author}>{reply.author}</Text>
@@ -115,7 +116,7 @@ export const ReplyListItem = memo(function ReplyListItem({
           <Pressable
             accessibilityLabel={`回复 ${reply.author}`}
             accessibilityRole="button"
-            hitSlop={8}
+            hitSlop={HIT_SLOP}
             onPress={() => onReply(reply)}
             style={({ pressed }) => [
               styles.replyIcon,
@@ -166,7 +167,7 @@ export const ReplyListItem = memo(function ReplyListItem({
             <Pressable
               accessibilityLabel="编辑自己的回复"
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={HIT_SLOP}
               onPress={() => editReply(reply)}
               style={({ pressed }) => [
                 styles.actionButton,
@@ -180,7 +181,7 @@ export const ReplyListItem = memo(function ReplyListItem({
             <Pressable
               accessibilityLabel={`删除自己的回复`}
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={HIT_SLOP}
               onPress={() => deleteReply(reply)}
               style={({ pressed }) => [
                 styles.actionButton,
@@ -194,7 +195,7 @@ export const ReplyListItem = memo(function ReplyListItem({
             <Pressable
               accessibilityLabel={`举报 ${reply.author} 的回复`}
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={HIT_SLOP}
               onPress={() => onReport(reply)}
               style={({ pressed }) => [
                 styles.actionButton,
@@ -216,14 +217,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: 'transparent',
     borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 10,
-    padding: 17,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
   },
   highlightedCard: {
     backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
   },
-  embeddedRow: { paddingVertical: 15 },
+  embeddedRow: { paddingVertical: SPACING.lg },
   embeddedDivider: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -237,61 +238,62 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
-  avatarText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
-  identity: { flex: 1, marginLeft: 10 },
-  author: { color: colors.ink, fontSize: 14, fontWeight: '700' },
-  time: { color: colors.subtle, fontSize: 11, marginTop: 3 },
-  floor: { color: colors.subtle, fontSize: 12 },
+  avatarText: { color: colors.muted, fontSize: TYPE.body.fontSize, fontWeight: '700' },
+  identity: { flex: 1, marginLeft: SPACING.md },
+  author: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '700' },
+  time: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.xs },
+  floor: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
   replyReference: {
     backgroundColor: colors.surfaceSoft,
     borderLeftColor: colors.accent,
     borderLeftWidth: 3,
     borderRadius: 8,
-    marginTop: 13,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   pressedReference: { opacity: 0.62 },
   replyReferenceAuthor: {
     color: colors.accent,
-    fontSize: 12,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
   },
   replyReferenceBody: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 3,
+    fontSize: TYPE.caption.fontSize,
+    lineHeight: TYPE.caption.lineHeight,
+    marginTop: SPACING.xs,
   },
-  body: { color: colors.ink, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  body: { color: colors.ink, fontSize: TYPE.body.fontSize, lineHeight: TYPE.body.lineHeight, marginTop: SPACING.md },
   replyIcon: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
-    minHeight: 28,
-    minWidth: 28,
+    marginLeft: SPACING.md,
+    minHeight: MIN_TOUCH_SIZE,
+    minWidth: MIN_TOUCH_SIZE,
   },
   actions: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: 12,
-    minHeight: 32,
+    flexWrap: 'wrap',
+    marginTop: SPACING.md,
+    minHeight: MIN_TOUCH_SIZE,
   },
   editAction: {
     color: colors.muted,
-    fontSize: 12,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
   },
   deleteAction: {
     color: colors.accent,
-    fontSize: 12,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
   },
   actionButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 32,
-    paddingHorizontal: 12,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.md,
   },
   pressed: { opacity: 0.62 },
 });

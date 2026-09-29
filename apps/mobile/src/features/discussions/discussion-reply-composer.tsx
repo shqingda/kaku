@@ -1,9 +1,12 @@
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Keyboard,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -64,8 +67,8 @@ function ReplyComposerContent({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
   const draft = useReplyDraft(draftKey, editing?.content, visible);
+  const { inputRef, onShow: focusInput } = useSheetInputFocus(visible, draft.loaded && draft.phase !== 'sent');
   const { content, change: setContent } = draft;
   const sent = draft.phase === 'sent';
   const mounted = useRef(true);
@@ -88,11 +91,6 @@ function ReplyComposerContent({
   function finishClose() {
     Keyboard.dismiss();
     onClose();
-  }
-
-  // iOS 上 Modal 内的 autoFocus 不可靠，弹层显示完成后再聚焦输入框弹出键盘。
-  function focusInput() {
-    requestIdleCallback(() => inputRef.current?.focus(), { timeout: 200 });
   }
 
   function close() {
@@ -158,7 +156,7 @@ function ReplyComposerContent({
             accessibilityLabel="关闭"
             accessibilityRole="button"
             disabled={pending}
-            hitSlop={8}
+            hitSlop={HIT_SLOP}
             onPress={close}
             style={({ pressed }) => [
               styles.closeButton,
@@ -207,10 +205,13 @@ function ReplyComposerContent({
       swipeToDismissEnabled={!pending && !draft.error && (!isEditing || !hasUnsavedChanges)}
       visible={visible}
     >
-      <View
-        style={[
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        style={{ flexShrink: 1 }}
+        contentContainerStyle={[
           styles.content,
-          { paddingBottom: Math.max(insets.bottom, 16) },
+          { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
         ]}
       >
           {replyingTo && !isEditing ? (
@@ -225,7 +226,6 @@ function ReplyComposerContent({
           <TextInput
             accessibilityLabel="回复内容"
             accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
-            autoFocus
             editable={draft.loaded && !pending && !sent}
             maxLength={MAX_CONTENT_LENGTH}
             multiline
@@ -250,15 +250,15 @@ function ReplyComposerContent({
             <Text style={styles.count}>{content.length}/{MAX_CONTENT_LENGTH}</Text>
           </View>
           {!isEditing && draft.loaded && content && !sent && !pending ? (
-            <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })}
-              style={({ pressed }) => [{ minHeight: 44, justifyContent: 'center' }, pressed && styles.pressed]}>
+            <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}
+              style={({ pressed }) => [{ minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' }, pressed && styles.pressed]}>
               <Text style={styles.hint}>丢弃草稿</Text>
             </Pressable>
           ) : null}
           {!isEditing && draft.loaded && content && !draft.error && !sent ? <Text style={styles.hint}>草稿已保存在本机</Text> : null}
           {draft.error ? (
             <Pressable accessibilityRole="button" onPress={() => { if (draft.retry() && sent) finishClose(); }}
-              style={({ pressed }) => [{ minHeight: 44, justifyContent: 'center' }, pressed && styles.pressed]}>
+              style={({ pressed }) => [{ minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' }, pressed && styles.pressed]}>
               <Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text>
             </Pressable>
           ) : null}
@@ -267,7 +267,7 @@ function ReplyComposerContent({
               {displayError.message}
             </Text>
           ) : null}
-      </View>
+      </ScrollView>
     </AppSheet>
   );
 }
@@ -283,50 +283,50 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
-    width: 34,
+    minWidth: MIN_TOUCH_SIZE,
   },
   title: {
     color: colors.ink,
     flex: 1,
-    fontSize: 17,
+    fontSize: TYPE.heading.fontSize,
     fontWeight: '800',
-    marginHorizontal: 12,
+    marginHorizontal: SPACING.md,
     textAlign: 'center',
   },
   sendButton: {
     alignItems: 'center',
     backgroundColor: colors.accent,
     borderRadius: 17,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
     minWidth: 62,
-    paddingHorizontal: 14,
+    paddingHorizontal: SPACING.lg,
   },
   sendButtonDisabled: { opacity: 0.35 },
-  sendText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  sendText: { color: colors.surface, fontSize: TYPE.body.fontSize, fontWeight: '800' },
   reference: {
     backgroundColor: colors.background,
     borderRadius: 14,
-    marginTop: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  referenceAuthor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+  referenceAuthor: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   referenceBody: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 4,
+    fontSize: TYPE.caption.fontSize,
+    lineHeight: TYPE.caption.lineHeight,
+    marginTop: SPACING.xs,
   },
   input: {
     color: colors.ink,
-    fontSize: 17,
-    lineHeight: 25,
+    fontSize: TYPE.heading.fontSize,
+    lineHeight: TYPE.heading.lineHeight,
     minHeight: 130,
-    paddingHorizontal: 2,
-    paddingTop: 20,
+    paddingHorizontal: SPACING.xs / 2,
+    paddingTop: SPACING.xl,
   },
   footer: {
     alignItems: 'center',
@@ -334,15 +334,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
   },
-  hint: { color: colors.muted, fontSize: 11 },
-  count: { color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
+  hint: { flexShrink: 1, color: colors.muted, fontSize: TYPE.micro.fontSize },
+  count: { flexShrink: 0, color: colors.muted, fontSize: TYPE.micro.fontSize, fontVariant: ['tabular-nums'] },
   errorText: {
     color: colors.accent,
-    fontSize: 12,
-    lineHeight: 18,
-    paddingBottom: 8,
+    fontSize: TYPE.caption.fontSize,
+    lineHeight: TYPE.caption.lineHeight,
+    paddingBottom: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
 });

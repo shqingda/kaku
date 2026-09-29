@@ -99,6 +99,7 @@ const TITLED_SCREENS = [
   ['settings', '外观与同步'],
   ['about', '关于 Kaku'],
   ['diagnostics', '诊断信息'],
+  ['offline-content', '离线内容'],
   ['changelog', '更新日志'],
   ['network-status', '网络诊断'],
   ['privacy', '隐私政策'],

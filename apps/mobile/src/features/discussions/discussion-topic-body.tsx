@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { StyleSheet, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -21,12 +22,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.xl,
   },
   body: {
     color: colors.ink,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: TYPE.body.fontSize,
+    lineHeight: TYPE.body.lineHeight,
   },
 });
