@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
@@ -190,13 +191,12 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
           </Link.AppleZoom>
           <Text
             ellipsizeMode="tail"
-            maxFontSizeMultiplier={1.2}
             numberOfLines={2}
             style={styles.cardTitle}
           >
             {item.title}
           </Text>
-          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.cardMeta}>
+          <Text style={styles.cardMeta}>
             {progress}
           </Text>
         </PressableScale>
@@ -206,35 +206,36 @@ function MediaCard({ item }: { item: PublicUserCollection }) {
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { marginTop: 12 },
+  section: { marginTop: SPACING.md },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 44,
-    paddingHorizontal: 4,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.xs,
   },
-  headingCopy: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
+  headingCopy: { flex: 1, flexWrap: 'wrap', alignItems: 'baseline', flexDirection: 'row', gap: SPACING.sm },
   title: {
+    flexShrink: 1,
     color: colors.ink,
-    fontSize: 20,
+    fontSize: TYPE.title.fontSize,
     fontWeight: '800',
-    letterSpacing: -0.35,
+    letterSpacing: TYPE.title.letterSpacing,
   },
-  count: { color: colors.subtle, fontSize: 12, fontWeight: '700' },
-  typeTabs: { paddingBottom: 2, paddingTop: 4 },
-  cachedNotice: { marginTop: 10 },
-  list: { gap: 13, paddingRight: 4, paddingTop: 10 },
+  count: { color: colors.subtle, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  typeTabs: { paddingBottom: SPACING.xs, paddingTop: SPACING.xs },
+  cachedNotice: { marginTop: SPACING.md },
+  list: { gap: SPACING.md, paddingRight: SPACING.xs, paddingTop: SPACING.md },
   skeletonRow: {
     flexDirection: 'row',
-    gap: 13,
-    marginTop: 10,
-    paddingRight: 4,
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+    paddingRight: SPACING.xs,
   },
   skeletonCard: {
     alignItems: 'flex-start',
     flex: 1,
-    gap: 9,
+    gap: SPACING.sm,
   },
   card: { width: 104 },
   cardButton: { width: '100%' },
@@ -247,28 +248,28 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 104,
   },
-  coverFallback: { color: colors.subtle, fontSize: 16, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, fontSize: TYPE.heading.fontSize, fontWeight: '700' },
   cardTitle: {
     color: colors.ink,
-    fontSize: 13,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
-    height: 36,
-    lineHeight: 18,
-    marginTop: 9,
+    minHeight: TYPE.caption.lineHeight * 2,
+    lineHeight: TYPE.caption.lineHeight,
+    marginTop: SPACING.sm,
   },
-  cardMeta: { color: colors.muted, fontSize: 11, marginTop: 5 },
+  cardMeta: { color: colors.muted, fontSize: TYPE.micro.fontSize, marginTop: SPACING.xs },
   state: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
-    gap: 9,
+    gap: SPACING.sm,
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: SPACING.md,
     minHeight: 76,
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  stateText: { color: colors.muted, fontSize: 13 },
-  errorText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  stateText: { color: colors.muted, fontSize: TYPE.caption.fontSize },
+  errorText: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '600' },
   pressed: { opacity: 0.62 },
 });

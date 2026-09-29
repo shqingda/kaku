@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Keyboard,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -95,19 +96,7 @@ function TimelineComposerContent({
 
   return (
     <AppSheet
-      onClose={close}
-      onShow={focusInput}
-      swipeToDismissEnabled={
-        !draft.error && !createTimeline.isPending
-      }
-      visible={visible}
-    >
-      <View
-        style={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
-        ]}
-      >
+      header={
         <View style={styles.heading}>
           <Pressable
             accessibilityLabel="关闭"
@@ -148,7 +137,23 @@ function TimelineComposerContent({
             )}
           </Pressable>
         </View>
-
+      }
+      onClose={close}
+      onShow={focusInput}
+      swipeToDismissEnabled={
+        !draft.error && !createTimeline.isPending
+      }
+      visible={visible}
+    >
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        style={styles.body}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
+        ]}
+      >
         <TextInput
           accessibilityLabel="动态内容"
           accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
@@ -204,12 +209,13 @@ function TimelineComposerContent({
             {userErrorMessage(createTimeline.error)}
           </Text>
         ) : null}
-      </View>
+      </ScrollView>
     </AppSheet>
   );
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  body: { flexShrink: 1 },
   content: {},
   draftAction: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' },
   heading: {

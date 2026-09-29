@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -34,15 +35,16 @@ export function AppActionMenu({
 
   return (
     <AppSheet onClose={onClose} visible={visible}>
-      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+      <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, SPACING.lg) }]}>
         {title ? (
-          <Text numberOfLines={1} style={styles.title}>
+          <Text style={styles.title}>
             {title}
           </Text>
         ) : null}
         {actions.map((action, index) => (
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel={action.label}
             key={action.id}
             onPress={() => {
               onClose();
@@ -73,24 +75,26 @@ const createStyles = (colors: ThemeColors) =>
     container: { flexShrink: 1 },
     title: {
       color: colors.subtle,
-      fontSize: 13,
+      fontSize: TYPE.caption.fontSize,
       fontWeight: '700',
-      marginBottom: 6,
+      marginBottom: SPACING.sm,
       textAlign: 'center',
     },
     row: {
       alignItems: 'center',
       flexDirection: 'row',
-      gap: 12,
-      minHeight: 48,
+      gap: SPACING.md,
+      minHeight: MIN_TOUCH_SIZE,
+      paddingVertical: SPACING.sm,
     },
     rowDivider: {
       borderTopColor: colors.divider,
       borderTopWidth: StyleSheet.hairlineWidth,
     },
     rowLabel: {
+      flex: 1,
       color: colors.ink,
-      fontSize: 15,
+      fontSize: TYPE.body.fontSize,
       fontWeight: '600',
     },
     pressed: { opacity: 0.62 },

@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -207,8 +208,11 @@ function IndexComposerContent({
       swipeToDismissEnabled={!mutation.isPending && !draft.error}
       visible={visible}
     >
-      <View
-        style={[
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        style={styles.body}
+        contentContainerStyle={[
           styles.content,
           { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
         ]}
@@ -293,12 +297,13 @@ function IndexComposerContent({
             {userErrorMessage(mutation.error)}
           </Text>
         ) : null}
-      </View>
+      </ScrollView>
     </AppSheet>
   );
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  body: { flexShrink: 1 },
   content: {},
   draftAction: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' },
   heading: {

@@ -1,6 +1,7 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
@@ -53,7 +54,6 @@ export function SubjectTypeTabs({
             ]}
           >
             <Text
-              maxFontSizeMultiplier={1.3}
               style={[styles.tabText, isSelected && styles.selectedTabText]}
             >
               {type.label}
@@ -66,21 +66,21 @@ export function SubjectTypeTabs({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  tabs: { gap: 8 },
+  tabs: { gap: SPACING.sm },
   tab: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: 14,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg,
   },
   selectedTab: { backgroundColor: colors.ink },
   pressed: { opacity: 0.6 },
   tabText: {
     color: colors.muted,
-    fontSize: 13,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
   },
   selectedTabText: { color: colors.surface },

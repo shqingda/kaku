@@ -100,6 +100,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 68,
+    paddingVertical: SPACING.md,
   },
   menuRowDivider: {
     borderTopColor: colors.track,

@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { readHomeTrackingType, saveHomeTrackingType } from '@/features/preferences/view-preferences';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -472,7 +472,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     gap: SPACING.xs,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
     paddingHorizontal: SPACING.md,
   },
@@ -521,7 +521,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accentSoft,
     borderRadius: 16,
-    height: 52,
+    minHeight: 52,
+    paddingVertical: SPACING.sm,
     justifyContent: 'center',
     width: 52,
   },
@@ -543,7 +544,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: colors.accent,
     borderRadius: 16,
-    height: 52,
+    minHeight: 52,
+    paddingVertical: SPACING.sm,
     justifyContent: 'center',
     marginTop: SPACING.xl,
   },
