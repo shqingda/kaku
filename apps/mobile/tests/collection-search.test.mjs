@@ -86,7 +86,7 @@ test('collection load copy stays in one place', () => {
   assert.equal(describeMyCollectionLoad({ ...load, isError: true }).empty?.kind, 'error');
   assert.equal(
     describeMyCollectionLoad({ ...load, searching: true, loaded: 1, total: 4, matched: 0, complete: false, hasNextPage: true }).subtitle,
-    '已读取 1/4 项，搜索结果尚不完整',
+    '已读取 1/4 项，结果尚不完整',
   );
   assert.equal(
     describeMyCollectionLoad({ ...load, searching: true, loaded: 2, total: 2, matched: 0, complete: false }).showStaleRefresh,

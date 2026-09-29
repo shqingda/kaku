@@ -14,8 +14,9 @@ import {
 export function useMyCollections(preferences: CollectionSearchPreferences) {
   const { session, request } = useAuth();
   const searching = Boolean(preferences.keyword.trim());
+  const scanning = searching || preferences.sort === 'updated';
   const query = useInfiniteQuery({
-    queryKey: searching
+    queryKey: scanning
       ? queryKeys.myCollectionSearch(session?.user.id)
       : queryKeys.myCollectionBrowse(
           session?.user.id,
@@ -29,9 +30,9 @@ export function useMyCollections(preferences: CollectionSearchPreferences) {
       getMyCollectionPage(request, {
         offset: pageParam,
         signal,
-        status: searching ? undefined : preferences.status,
+        status: scanning ? undefined : preferences.status,
         subjectType:
-          searching || preferences.subjectType === 0
+          scanning || preferences.subjectType === 0
             ? undefined
             : preferences.subjectType,
       }),
@@ -50,13 +51,13 @@ export function useMyCollections(preferences: CollectionSearchPreferences) {
     isPending,
   } = query;
   const collected = collectSearchPages(query.data?.pages ?? []);
-  const items = searching
+  const items = scanning
     ? searchCollections(collected.items, preferences)
     : collected.items;
 
   useEffect(() => {
     if (
-      searching &&
+      scanning &&
       session &&
       hasNextPage &&
       !isFetching &&
@@ -74,14 +75,14 @@ export function useMyCollections(preferences: CollectionSearchPreferences) {
     isError,
     isFetchNextPageError,
     isFetching,
-    searching,
+    scanning,
     session,
   ]);
 
   return {
     items,
     notice: describeMyCollectionLoad({
-      complete: searching ? collected.complete : true,
+      complete: scanning ? collected.complete : true,
       hasNextPage: Boolean(hasNextPage),
       isError,
       isFetching,
@@ -89,11 +90,12 @@ export function useMyCollections(preferences: CollectionSearchPreferences) {
       loaded: collected.items.length,
       matched: items.length,
       paused: fetchStatus === 'paused',
-      searching,
+      searching: scanning,
       total: collected.total,
     }),
     query,
     searching,
+    scanning,
     total: collected.total,
   };
 }

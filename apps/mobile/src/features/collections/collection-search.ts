@@ -9,6 +9,7 @@ const SUBJECT_TYPE_IDS = new Set([0, 1, 2, 3, 4, 6]);
 
 export type CollectionSearchPreferences = {
   keyword: string;
+  sort?: 'updated';
   subjectType: number;
   status?: CollectionStatus;
 };
@@ -28,6 +29,7 @@ export function parseCollectionSearch(
   const value = JSON.parse(raw);
   if (!value || typeof value !== 'object') throw new Error('invalid preferences');
   return {
+    ...(value.sort === 'updated' ? { sort: 'updated' as const } : {}),
     keyword: typeof value.keyword === 'string' ? value.keyword : '',
     subjectType: SUBJECT_TYPE_IDS.has(value.subjectType) ? value.subjectType : 0,
     status: isCollectionStatus(value.status) ? value.status : undefined,
@@ -144,7 +146,7 @@ export function describeMyCollectionLoad(input: {
         empty: {
           kind: 'loading',
           text: input.searching
-            ? '正在读取完整收藏，搜索会覆盖全部条目。'
+            ? '正在读取完整收藏，结果会覆盖全部条目。'
             : '正在读取收藏。',
           title: '收藏加载中',
         },
@@ -194,7 +196,7 @@ export function describeMyCollectionLoad(input: {
   if (input.searching && !input.complete) {
     return {
       empty: null,
-      subtitle: `已读取 ${input.loaded}/${input.total || '…'} 项，搜索结果尚不完整`,
+      subtitle: `已读取 ${input.loaded}/${input.total || '…'} 项，结果尚不完整`,
       ...idle,
     };
   }

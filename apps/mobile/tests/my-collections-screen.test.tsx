@@ -55,11 +55,13 @@ beforeEach(() => {
   jest.mocked(Storage.getItemSync).mockReset().mockReturnValue(null);
   jest.mocked(Storage.setItemSync).mockReset();
 });
-test('keeps the collection search without exposing sort controls', async () => {
+test('keeps search and remembers an explicit recent-update sort choice', async () => {
   await render(<MyCollectionsScreen userId={1} />);
   expect(screen.getByLabelText('搜索我的完整收藏')).toBeTruthy();
   expect(screen.queryByText('名称排序')).toBeNull();
-  expect(screen.queryByText('最近更新')).toBeNull();
+  await fireEvent.press(screen.getByLabelText('收藏排序：默认顺序，点击切换'));
+  expect(screen.getByText('排序：最近更新')).toBeTruthy();
+  expect(Storage.setItemSync).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('\"sort\":\"updated\"'));
 });
 test('an incomplete terminal page exposes refresh rather than an empty result', async () => {
   mockState.searching = true;

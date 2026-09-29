@@ -1,3 +1,4 @@
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
 import { router, Stack } from 'expo-router';
@@ -71,9 +72,9 @@ export function MyCollectionsScreen({
       };
     },
   );
-  const { items, notice, query, searching } = useMyCollections(preferences);
+  const { items, notice, query, scanning } = useMyCollections(preferences);
   const list = usePagedList(query);
-  const results = searching ? items : list.items;
+  const results = scanning ? items : list.items;
   const subjectTypeLabel = getSubjectTypeLabel(preferences.subjectType);
   const collectionStatusLabel = preferences.status
     ? getCollectionStatusLabel(preferences.subjectType, preferences.status)
@@ -155,7 +156,7 @@ export function MyCollectionsScreen({
           ) : null
         }
         ListFooterComponent={
-          !searching && results.length > 0 ? (
+          !scanning && results.length > 0 ? (
             <PagedListFooter {...list.footerProps} />
           ) : null
         }
@@ -180,6 +181,15 @@ export function MyCollectionsScreen({
               style={styles.searchField}
               value={preferences.keyword}
             />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`收藏排序：${preferences.sort === 'updated' ? '最近更新' : '默认顺序'}，点击切换`}
+              onPress={() => change({ sort: preferences.sort === 'updated' ? undefined : 'updated' })}
+              style={({ pressed }) => ({ minHeight: MIN_TOUCH_SIZE, justifyContent: 'center', paddingVertical: SPACING.sm, opacity: pressed ? 0.6 : 1 })}
+            >
+              <Text style={{ ...TYPE.body, color: colors.accent }}>排序：{preferences.sort === 'updated' ? '最近更新' : '默认顺序'}</Text>
+            </Pressable>
+            {preferences.sort === 'updated' ? <Text style={{ ...TYPE.caption, color: colors.muted, marginBottom: SPACING.md }}>将读取全部收藏后按收藏修改时间排序；未读完时仅展示当前结果。</Text> : null}
             <SubjectTypeTabs
               contentContainerStyle={styles.subjectTypeTabs}
               onChange={(subjectType) => change({ subjectType })}
@@ -201,7 +211,7 @@ export function MyCollectionsScreen({
                 onPress={retry}
                 style={({ pressed }) => ({
                   justifyContent: 'center',
-                  minHeight: 44,
+                  minHeight: MIN_TOUCH_SIZE,
                   opacity: pressed ? 0.6 : 1,
                 })}
               >

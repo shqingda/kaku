@@ -1,3 +1,4 @@
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { memo, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -113,47 +114,47 @@ export const createCollectionListStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
     content: {
-      paddingBottom: 44,
-      paddingHorizontal: 20,
+      paddingBottom: SPACING.xl * 2,
+      paddingHorizontal: SPACING.xl,
     },
     header: {
-      paddingBottom: 18,
-      paddingHorizontal: 4,
-      paddingTop: 24,
+      paddingBottom: SPACING.lg,
+      paddingHorizontal: SPACING.xs,
+      paddingTop: SPACING.xl,
     },
     title: {
       color: colors.ink,
-      fontSize: 30,
+      fontSize: TYPE.display.fontSize,
       fontWeight: '800',
-      letterSpacing: -0.8,
+      letterSpacing: TYPE.display.letterSpacing,
     },
     subtitle: {
       color: colors.muted,
-      fontSize: 13,
-      marginTop: 7,
+      fontSize: TYPE.caption.fontSize,
+      marginTop: SPACING.sm,
     },
     searchField: {
-      marginBottom: 16,
+      marginBottom: SPACING.lg,
     },
-    subjectTypeTabs: { paddingBottom: 14 },
-    statusTabs: { gap: 8, paddingBottom: 18, paddingRight: 20 },
+    subjectTypeTabs: { paddingBottom: SPACING.lg },
+    statusTabs: { gap: SPACING.sm, paddingBottom: SPACING.lg, paddingRight: SPACING.xl },
     statusTab: {
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 12,
       justifyContent: 'center',
-      minHeight: 36,
+      minHeight: MIN_TOUCH_SIZE,
       minWidth: 58,
-      paddingHorizontal: 14,
+      paddingHorizontal: SPACING.lg,
     },
     statusTabSelected: { backgroundColor: colors.ink },
-    statusTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+    statusTabText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
     statusTabTextSelected: { color: colors.surface },
     item: {
       backgroundColor: colors.surface,
       overflow: 'hidden',
-      paddingHorizontal: 14,
+      paddingHorizontal: SPACING.lg,
     },
     firstItem: {
       borderTopLeftRadius: 22,

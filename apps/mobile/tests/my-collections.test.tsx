@@ -60,3 +60,15 @@ test('late response for previous account cannot replace new account results', as
   await act(() => { finish({ items: [first], total: 1 }); });
   expect(hook.result.current.items.map(item => item.id)).toEqual([2]);
 });
+
+
+test('recent-update order reads later pages and keeps stable ordering for equal timestamps', async () => {
+  jest.mocked(getMyCollectionPage)
+    .mockResolvedValueOnce({ items: [first], total: 3, nextOffset: 1 })
+    .mockResolvedValueOnce({ items: [{ ...second, updatedAt: '2026-09-29' }, { ...first, id: 3 }], total: 3 });
+  const { result } = await renderHook(() => useMyCollections({ ...browsing, sort: 'updated' }), { wrapper });
+  await waitFor(() => expect(result.current.items).toHaveLength(3));
+  expect(result.current.items.map(item => item.id)).toEqual([2, 1, 3]);
+  expect(result.current.notice.subtitle).toBe('3 个条目');
+  expect(result.current.scanning).toBe(true);
+});
