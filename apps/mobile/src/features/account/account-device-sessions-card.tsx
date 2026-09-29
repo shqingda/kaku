@@ -1,6 +1,9 @@
-// 登录设备卡片：设备会话列表、退出单台设备与退出其他登录。
+// 登录设备卡片：设备会话列表、退出单台设备与退出其他设备。
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useEffect, useRef } from 'react';
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
 import type { ThemeColors } from '@/constants/theme';
 import {
   useDeviceSessions,
@@ -28,28 +31,36 @@ export function AccountDeviceSessionsCard() {
     sessionsQuery.data?.filter((deviceSession) => !deviceSession.current)
       .length ?? 0;
 
-  function confirmRevokeOtherSessions() {
-    Alert.alert(
-      '退出其他登录？',
-      '其他设备需要重新用 Bangumi 登录。当前这台设备不受影响。',
-      [
-        { style: 'cancel', text: '取消' },
-        {
-          onPress: () => {
-            void revokeOtherSessions.mutateAsync().catch((caughtError: unknown) => {
-              Alert.alert(
-                '未能退出其他登录',
-                caughtError instanceof Error
-                  ? caughtError.message
-                  : '请稍后重试。',
-              );
-            });
-          },
-          style: 'destructive',
-          text: '退出其他登录',
-        },
-      ],
-    );
+  const { session } = useAuth();
+  const account = session?.user.id;
+  const currentAccount = useRef(account);
+  currentAccount.current = account;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const busy = useRef(false);
+  const pending = revokeSession.isPending || revokeOtherSessions.isPending;
+
+  function confirmExit(device?: { sessionId: string; deviceName: string }) {
+    const title = device ? `退出“${device.deviceName}”？` : '退出其他设备？';
+    Alert.alert(title, device
+      ? '该设备需要重新登录才能使用账户功能。当前设备不受影响。'
+      : `其他 ${otherSessionCount} 台设备需要重新登录。当前设备不受影响。`, [
+      { style: 'cancel', text: '取消' },
+      { style: 'destructive', text: device ? '退出设备' : '退出其他设备', onPress: async () => {
+        if (!mounted.current || busy.current) return;
+        if (currentAccount.current !== account) {
+          Alert.alert('账号已变化', '请重新选择要退出的设备。');
+          return;
+        }
+        busy.current = true;
+        try {
+          if (device) await revokeSession.mutateAsync(device.sessionId);
+          else await revokeOtherSessions.mutateAsync();
+        } catch (error) {
+          if (mounted.current && currentAccount.current === account) Alert.alert('未能退出设备', error instanceof Error ? error.message : '请稍后重试。');
+        } finally { busy.current = false; }
+      } },
+    ]);
   }
 
   return (
@@ -62,17 +73,14 @@ export function AccountDeviceSessionsCard() {
           ) : null}
           {otherSessionCount > 0 ? (
             <Pressable
-              accessibilityLabel="退出其他登录"
+              accessibilityLabel="退出其他设备"
               accessibilityRole="button"
-              disabled={revokeOtherSessions.isPending}
-              hitSlop={8}
-              onPress={confirmRevokeOtherSessions}
-              style={({ pressed }) =>
-                (pressed || revokeOtherSessions.isPending) &&
-                styles.pressed
-              }
+              disabled={pending}
+              hitSlop={HIT_SLOP}
+              onPress={() => confirmExit()}
+              style={({ pressed }) => [styles.action, (pressed || pending) && styles.pressed]}
             >
-              <Text style={styles.revokeOtherText}>退出其他登录</Text>
+              <Text style={styles.revokeOtherText}>退出其他设备</Text>
             </Pressable>
           ) : null}
         </View>
@@ -111,12 +119,10 @@ export function AccountDeviceSessionsCard() {
               <Pressable
                 accessibilityLabel={`退出${deviceSession.deviceName}`}
                 accessibilityRole="button"
-                disabled={revokeSession.isPending}
-                hitSlop={8}
-                onPress={() =>
-                  void revokeSession.mutateAsync(deviceSession.sessionId)
-                }
-                style={({ pressed }) => pressed && styles.pressed}
+                disabled={pending}
+                hitSlop={HIT_SLOP}
+                onPress={() => confirmExit(deviceSession)}
+                style={({ pressed }) => [styles.action, (pressed || pending) && styles.pressed]}
               >
                 <Text style={styles.revokeSessionText}>退出</Text>
               </Pressable>
@@ -132,43 +138,46 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   sessionsCard: {
     backgroundColor: colors.surface,
     borderRadius: 20,
-    marginTop: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
   },
   sessionsHeading: {
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sessionsTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  action: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' },
+  sessionsTitle: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
   sessionsHeadingActions: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: SPACING.md,
   },
-  revokeOtherText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
-  sessionMessage: { paddingTop: 14 },
-  sessionError: { color: colors.accent, fontSize: 13 },
+  revokeOtherText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
+  sessionMessage: { paddingTop: SPACING.lg },
+  sessionError: { color: colors.accent, ...TYPE.caption },
   sessionRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: SPACING.lg,
   },
   sessionRowBorder: {
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   sessionCopy: { flex: 1 },
-  sessionNameRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  sessionName: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  sessionNameRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  sessionName: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
   currentSession: {
     color: colors.accent,
-    fontSize: 10,
+    ...TYPE.micro,
     fontWeight: '700',
   },
-  sessionMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
-  revokeSessionText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  sessionMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
+  revokeSessionText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

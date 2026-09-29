@@ -2,6 +2,7 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AccountContentMenu } from '@/features/account/account-content-menu';
@@ -32,7 +33,6 @@ export default function AccountScreen() {
           <>
             <AccountProfileCard />
             <AccountContentMenu username={session.user.username} />
-            <AccountDeviceSessionsCard />
             <AccountSignOutActions />
           </>
         ) : (
@@ -41,6 +41,7 @@ export default function AccountScreen() {
         {!isLoading ? (
           <AccountSettingsMenu />
         ) : null}
+        {!isLoading && session ? <AccountDeviceSessionsCard /> : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -48,7 +49,7 @@ export default function AccountScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  centerState: { alignItems: 'center', gap: 12 },
-  stateText: { color: colors.muted, fontSize: 14 },
+  content: { flexGrow: 1, justifyContent: 'center', padding: SPACING.xl },
+  centerState: { alignItems: 'center', gap: SPACING.md },
+  stateText: { color: colors.muted, ...TYPE.body },
 });
