@@ -35,16 +35,28 @@ export function IndexComposer(props: Omit<ComponentProps<typeof IndexComposerCon
   }
   if (!session) return null;
   const key = `kaku:index-draft:v1:${session.user.id}:${props.editing?.indexId ?? 'new'}`;
-  return <IndexComposerContent {...props} key={`${key}:${opening.generation}`} draftKey={props.editing ? null : key} />;
+  return <IndexComposerContent {...props} key={`${key}:${opening.generation}`} draftKey={key} />;
 }
 
 type IndexFields = { title: string; desc: string; isPrivate: boolean };
 const EMPTY_INDEX: IndexFields = { title: '', desc: '', isPrivate: false };
-function readIndexDraft(raw: string): IndexFields | null {
+type IndexDraft = IndexFields & { base?: IndexFields };
+function fieldsOf(value: IndexFields): IndexFields {
+  return { title: value.title, desc: value.desc, isPrivate: value.isPrivate };
+}
+function sameFields(left: IndexFields | undefined, right: IndexFields) {
+  return left?.title === right.title && left.desc === right.desc && left.isPrivate === right.isPrivate;
+}
+function validFields(value: unknown): value is IndexFields {
+  if (!value || typeof value !== 'object') return false;
+  const fields = value as IndexFields;
+  return typeof fields.title === 'string' && typeof fields.desc === 'string' && typeof fields.isPrivate === 'boolean';
+}
+function readIndexDraft(raw: string): IndexDraft | null {
   if (!raw) return EMPTY_INDEX;
   try {
     const value = JSON.parse(raw);
-    return typeof value?.title === 'string' && typeof value?.desc === 'string' && typeof value?.isPrivate === 'boolean' ? value : null;
+    return validFields(value) && (!('base' in value) || validFields(value.base)) ? value : null;
   } catch { return null; }
 }
 
@@ -56,7 +68,7 @@ function IndexComposerContent({
   onEdited,
   visible,
 }: {
-  draftKey: string | null;
+  draftKey: string;
   editing?: { desc: string; indexId: number; isPrivate: boolean; title: string } | null;
   onClose: () => void;
   onCreated?: (indexId: number) => void;
@@ -66,8 +78,11 @@ function IndexComposerContent({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const draft = useReplyDraft(draftKey, editing ? JSON.stringify(editing) : '', visible, '目录已保存');
-  const fields = readIndexDraft(draft.content);
+  const draft = useReplyDraft(draftKey, '', visible, '目录已保存');
+  const snapshot = editing ? fieldsOf(editing) : EMPTY_INDEX;
+  const saved = readIndexDraft(draft.content);
+  const fields = draft.content ? saved : snapshot;
+  const conflict = Boolean(editing && draft.content && saved && !sameFields(saved, snapshot) && !sameFields(saved.base, snapshot));
   const { title, desc, isPrivate } = fields ?? EMPTY_INDEX;
   const sent = draft.phase === 'sent';
   const inputRef = useRef<TextInput>(null);
@@ -77,9 +92,12 @@ function IndexComposerContent({
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   function change(update: Partial<IndexFields>) {
     draft.change(raw => {
-      const previous = readIndexDraft(raw);
+      const previous = raw ? readIndexDraft(raw) : snapshot;
       if (!previous) return raw;
       const next = { ...previous, ...update };
+      if (editing) {
+        return sameFields(next, snapshot) ? '' : JSON.stringify({ ...next, base: ('base' in previous ? previous.base : undefined) ?? snapshot });
+      }
       return next.title || next.desc || next.isPrivate ? JSON.stringify(next) : '';
     });
   }
@@ -92,8 +110,8 @@ function IndexComposerContent({
       desc !== editing.desc ||
       isPrivate !== editing.isPrivate
     : Boolean(title.trim() || desc.trim() || isPrivate);
-  const canPublish = title.trim().length > 0 && !mutation.isPending && draft.loaded && fields !== null && !sent;
-  const editable = draft.loaded && fields !== null && !mutation.isPending && !sent;
+  const canPublish = title.trim().length > 0 && !mutation.isPending && draft.loaded && fields !== null && !sent && !conflict && (!isEditing || hasUnsavedChanges);
+  const editable = draft.loaded && fields !== null && !mutation.isPending && !sent && !conflict;
 
   function finishClose() {
     onClose();
@@ -104,19 +122,15 @@ function IndexComposerContent({
       return;
     }
 
-    if (!isEditing) {
-      if (draft.dismiss()) {
-        if (createdId.current !== null) onCreated?.(createdId.current);
-        finishClose();
-      }
+    if (isEditing && draft.loaded && !draft.error && !hasUnsavedChanges && fields && !sent) {
+      if (draft.clear()) finishClose();
       return;
     }
-    if (hasUnsavedChanges) {
-      confirmDiscard(finishClose);
-      return;
+    if (draft.dismiss()) {
+      if (sent && isEditing) onEdited?.();
+      if (createdId.current !== null) onCreated?.(createdId.current);
+      finishClose();
     }
-
-    finishClose();
   }
 
   function submit() {
@@ -190,7 +204,7 @@ function IndexComposerContent({
         </View>
       }
       onClose={close}
-      swipeToDismissEnabled={!mutation.isPending && !draft.error && (!isEditing || !hasUnsavedChanges)}
+      swipeToDismissEnabled={!mutation.isPending && !draft.error}
       visible={visible}
     >
       <View
@@ -199,6 +213,17 @@ function IndexComposerContent({
           { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
         ]}
       >
+        {conflict ? (
+          <View>
+            <Text accessibilityRole="alert" style={styles.errorText}>目录内容已更新，请选择恢复本机草稿或使用当前读取的内容。</Text>
+            <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => {
+              if (fields) draft.change(JSON.stringify({ ...fields, base: snapshot }));
+            }}><Text style={styles.privacyTitle}>恢复本机草稿</Text></Pressable>
+            <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => { draft.clear(); }}>
+              <Text style={styles.privacyTitle}>使用最新内容</Text>
+            </Pressable>
+          </View>
+        ) : null}
         <TextInput
           accessibilityLabel="目录标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}
@@ -247,16 +272,17 @@ function IndexComposerContent({
           />
         </View>
 
-        {!isEditing && draft.content && !sent && !mutation.isPending ? (
+        {draft.content && !sent && !mutation.isPending ? (
           <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })}>
             <Text style={styles.privacyDescription}>丢弃草稿</Text>
           </Pressable>
         ) : null}
-        {!isEditing && draft.content && fields && !draft.error && !sent ? <Text style={styles.privacyDescription}>草稿已保存在本机</Text> : null}
+        {draft.content && hasUnsavedChanges && fields && !draft.error && !sent ? <Text style={styles.privacyDescription}>草稿已保存在本机</Text> : null}
         {fields === null ? <Text accessibilityRole="alert" style={styles.errorText}>草稿格式无法读取，原内容已保留；可丢弃后重新编辑。</Text> : null}
         {draft.error ? (
           <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => {
             if (draft.retry() && sent) {
+              if (isEditing) onEdited?.();
               if (createdId.current !== null) onCreated?.(createdId.current);
               finishClose();
             }

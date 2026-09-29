@@ -9,8 +9,9 @@ const indexDraftKey = (id: number) => `kaku:index-draft:v1:${id}:new`;
 const mockStorage = new Map<string, string>();
 const mockRequest = jest.fn();
 let mockUserId = 1;
+let mockReadFails = false;
 jest.mock('expo-sqlite/kv-store', () => ({ __esModule: true, default: {
-  getItemSync: (key: string) => mockStorage.get(key) ?? null,
+  getItemSync: (key: string) => { if (mockReadFails) throw new Error('disk'); return mockStorage.get(key) ?? null; },
   setItemSync: (key: string, value: string) => mockStorage.set(key, value),
   removeItemSync: (key: string) => mockStorage.delete(key),
 } }));
@@ -28,14 +29,17 @@ jest.mock('@/features/shared/app-sheet', () => {
 const mockCreated = jest.fn();
 const key = indexDraftKey(1);
 let client: QueryClient;
+let mockEditing: { title: string; desc: string; isPrivate: boolean; indexId: number } | null = null;
 function Page() {
   const [visible, setVisible] = useState(true);
   return <QueryClientProvider client={client}><ThemeProvider>
     <Button title="重新打开" onPress={() => setVisible(true)} />
-    <IndexComposer onCreated={(id) => { mockCreated(id); setVisible(false); }} visible={visible} onClose={() => setVisible(false)} />
+    <IndexComposer editing={mockEditing} onCreated={(id) => { mockCreated(id); setVisible(false); }} visible={visible} onClose={() => setVisible(false)} />
   </ThemeProvider></QueryClientProvider>;
 }
 beforeEach(() => {
+  mockReadFails = false;
+  mockEditing = null;
   mockUserId = 1; mockStorage.clear(); mockRequest.mockReset(); mockCreated.mockClear();
   client = new QueryClient({ defaultOptions: { mutations: { retry: false, gcTime: Infinity }, queries: { gcTime: Infinity, retry: false } } });
 });
@@ -126,4 +130,52 @@ test('private visibility is restored with the new directory draft', async () => 
   await view.unmount();
   await render(<Page />);
   expect(screen.getByLabelText('仅自己可见').props.value).toBe(true);
+});
+
+
+test('edited directory draft detects a changed remote snapshot before enabling save', async () => {
+  mockEditing = { indexId: 42, title: '原目录', desc: '原说明', isPrivate: false };
+  const view = await render(<Page />);
+  expect(screen.getByLabelText('目录标题').props.value).toBe('原目录');
+  expect(screen.getByLabelText('保存目录').props.accessibilityState.disabled).toBe(true);
+  await fireEvent.changeText(screen.getByLabelText('目录标题'), '本机修改');
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  mockEditing = { ...mockEditing, desc: '另一设备的新说明' };
+  await view.rerender(<Page />);
+  await fireEvent.press(screen.getByText('重新打开'));
+  expect(screen.getByText(/目录内容已更新/)).toBeTruthy();
+  expect(screen.getByLabelText('保存目录').props.accessibilityState.disabled).toBe(true);
+  await fireEvent.press(screen.getByText('恢复本机草稿'));
+  expect(screen.queryByText(/目录内容已更新/)).toBeNull();
+  expect(screen.getByLabelText('目录标题').props.value).toBe('本机修改');
+  mockRequest.mockResolvedValueOnce(new Response(null, { status: 204 }));
+  await fireEvent.press(screen.getByLabelText('保存目录'));
+  await waitFor(() => expect(screen.queryByLabelText('目录标题')).toBeNull());
+  expect(mockStorage.has('kaku:index-draft:v1:1:42')).toBe(false);
+  expect(mockRequest).toHaveBeenLastCalledWith('/me/indexes/42', expect.objectContaining({ method: 'PATCH' }));
+});
+
+test('using latest directory content discards only its draft and leaves no unsaved change', async () => {
+  mockEditing = { indexId: 42, title: '旧目录', desc: '', isPrivate: false };
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '本机说明');
+  mockEditing = { ...mockEditing, title: '新目录' };
+  await view.rerender(<Page />);
+  await fireEvent.press(screen.getByText('使用最新内容'));
+  expect(screen.getByLabelText('目录标题').props.value).toBe('新目录');
+  expect(screen.getByLabelText('目录说明').props.value).toBe('');
+  expect(screen.getByLabelText('保存目录').props.accessibilityState.disabled).toBe(true);
+  expect(mockStorage.has('kaku:index-draft:v1:1:42')).toBe(false);
+  expect(mockRequest).not.toHaveBeenCalled();
+});
+
+
+test('closing an editor after a storage read failure does not erase its unread draft', async () => {
+  mockEditing = { indexId: 42, title: '原目录', desc: '', isPrivate: false };
+  mockStorage.set('kaku:index-draft:v1:1:42', 'unread draft');
+  mockReadFails = true;
+  await render(<Page />);
+  expect(screen.getByLabelText('目录标题').props.editable).toBe(false);
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  expect(mockStorage.get('kaku:index-draft:v1:1:42')).toBe('unread draft');
 });
