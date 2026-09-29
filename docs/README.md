@@ -15,7 +15,7 @@
 | 写简历、准备面试 | [项目经历与面试详解](/Users/shqingda/Projects/kaku/docs/learning/kaku-project-experience.md) | 开场介绍、名词解释、实现与追问 |
 | 学习独立开发者运营 | [运营案例](/Users/shqingda/Projects/kaku/docs/learning/indie-ops-case.md) | 教学材料，不是功能规格 |
 | 看下一步做什么 | [当前待办](/Users/shqingda/Projects/kaku/TODO.md) | 仍有效的待办与明确不做的事 |
-| 规划用户体验改进 | [2026-09-29 体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | 本轮及四项候选最小版本已实现，剩余设备验收见执行记录 |
+| 规划用户体验改进 | [2026-09-29 体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | 本轮及三项保留候选已实现；章节状态和话题续接已撤回，设备验收见记录 |
 | 回看阶段改进过程 | [2026-09-11 改进计划](/Users/shqingda/Projects/kaku/docs/plans/2026-09-11-improvement-plan.md) | 当时的计划、决策与执行记录 |
 | 查看已记录的验收结果 | [测试记录](/Users/shqingda/Projects/kaku/docs/test-records/README.md) | 带日期的回归与性能基线 |
 | 修改 Bangumi 接入层 | [适配层说明](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/README.md) | 与源码放在一起的模块约定 |

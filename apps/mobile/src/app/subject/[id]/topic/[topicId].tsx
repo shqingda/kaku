@@ -1,5 +1,3 @@
-import { useTopicReadingPosition } from '@/features/discussions/use-topic-reading-position';
-import { TopicReadingNotice } from '@/features/discussions/topic-reading-notice';
 import { SPACING, TYPE } from '@/constants/design';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef } from 'react';
@@ -58,7 +56,6 @@ export default function TopicScreen() {
   const topic = topicQuery.data;
   const replies = topic?.replies ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const reading = useTopicReadingPosition(session?.user.id, `subject:${numericTopicId}`, Boolean(numericReplyId));
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
 
@@ -120,9 +117,6 @@ export default function TopicScreen() {
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '讨论' }} />
       <FlatList
-          onScrollBeginDrag={reading.beginReading}
-          onViewableItemsChanged={reading.onViewableItemsChanged}
-          viewabilityConfig={reading.viewabilityConfig}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: DISCUSSION_REPLY_BAR_RESERVE },
@@ -134,13 +128,6 @@ export default function TopicScreen() {
           ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
           ListHeaderComponent={
             <>
-              {topic ? <TopicReadingNotice
-                saved={Boolean(reading.savedReply)}
-                available={replies.some(reply => reply.id === reading.savedReply)}
-                error={reading.error}
-                onContinue={() => { if (reading.savedReply) replyNavigation.openReply(reading.savedReply); }}
-                onStart={() => { reading.fromStart(); replyNavigation.listRef.current?.scrollToOffset({ animated: false, offset: 0 }); }}
-              /> : null}
               {topic && topicQuery.isError ? (
                 <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
               ) : (
