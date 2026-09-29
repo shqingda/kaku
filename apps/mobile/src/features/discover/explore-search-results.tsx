@@ -84,7 +84,7 @@ export function ExploreSearchResults({
       keyExtractor={(item) => String(item.id)}
       ListEmptyComponent={
         isPending ? (
-          <AppState title="正在搜索" text="正在查询 Bangumi 条目。" />
+          <AppState title="正在搜索" text={`正在查询${kindLabel}。`} />
         ) : isError ? (
           <AppState
             action={onRetry}
@@ -109,6 +109,9 @@ export function ExploreSearchResults({
       }
       ListHeaderComponent={
         <>
+          {isError && !isFetchNextPageError && items.length > 0 ? (
+            <AppState title="刷新失败" text="已保留上次搜索结果，可以重试获取最新内容。" action={onRetry} />
+          ) : null}
           <SubjectSearchField
             onChangeText={onChangeDraft}
             onSubmit={onSubmitSearch}
@@ -126,7 +129,7 @@ export function ExploreSearchResults({
               <Text style={styles.sectionTitle}>搜索结果</Text>
               <Text style={styles.sectionMeta}>
                 {kindLabel} · “{keyword}” ·{' '}
-                {total ? `${total} 个${unit}` : '查询中'}
+                {isPending ? '查询中' : isError && items.length === 0 ? '查询失败' : `${total} 个${unit}`}
               </Text>
             </View>
           </View>
@@ -204,15 +207,15 @@ function PersonSearchResultRow({ item }: { item: PublicPersonSummary }) {
           ) : null}
         </View>
         <View style={styles.resultMain}>
-          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultTitle}>
+          <Text style={styles.resultTitle}>
             {item.name}
           </Text>
-          <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.resultMeta}>
+          <Text style={styles.resultMeta}>
             {item.categories.join(' · ') ||
               (item.kind === 'character' ? '角色' : '人物')}
           </Text>
           {item.metadata ? (
-            <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultMeta}>
+            <Text style={styles.resultMeta}>
               {item.metadata}
             </Text>
           ) : null}
@@ -274,7 +277,7 @@ function SubjectSearchResultRow({
           ) : null}
         </View>
         <View style={styles.resultMain}>
-          <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.resultTitle}>
+          <Text style={styles.resultTitle}>
             {item.title}
           </Text>
           <Text style={styles.resultMeta}>
