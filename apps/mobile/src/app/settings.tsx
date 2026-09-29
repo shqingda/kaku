@@ -96,8 +96,8 @@ function getSyncStatus({
   signedIn: boolean;
   syncing: boolean;
 }): SyncStatus {
-  if (syncing) return 'syncing';
   if (!signedIn || !enabled || !available) return 'idle';
+  if (syncing) return 'syncing';
   if (error) return 'failed';
   return 'success';
 }
@@ -247,6 +247,7 @@ export default function SettingsScreen() {
                 />
               </View>
               <View style={styles.statusList}>
+                {!cloudSyncAvailable ? <Text style={styles.rowDescription}>云同步暂不可用，本机设置和记录仍可使用。</Text> : null}
                 {channels.map((channel) => (
                   <SyncStatusRow
                     colors={colors}
@@ -428,7 +429,7 @@ function SyncStatusRow({
         />
       )}
       <Text style={styles.statusLabel}>
-        {label}
+        {label} · {STATUS_LABELS[status]}{status === 'failed' ? ' · 重试' : ''}
       </Text>
     </>
   );
@@ -450,6 +451,7 @@ function SyncStatusRow({
 
   return (
     <View
+      accessible
       accessibilityLabel={`${label}，${STATUS_LABELS[status]}`}
       style={styles.statusRow}
     >
@@ -516,20 +518,18 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'space-between',
     },
     statusList: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+      alignItems: 'stretch',
       gap: SPACING.md,
       marginTop: SPACING.md,
     },
     statusRow: {
       alignItems: 'center',
       flexDirection: 'row',
-      flexShrink: 0,
-      gap: SPACING.xs,
-      minHeight: 22,
+      gap: SPACING.sm,
+      minHeight: MIN_TOUCH_SIZE,
     },
     statusLabel: {
+      flex: 1,
       color: colors.subtle,
       fontSize: TYPE.caption.fontSize,
       letterSpacing: TYPE.caption.letterSpacing,

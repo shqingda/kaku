@@ -25,3 +25,26 @@ test('denied permission opens system settings and an open failure can be retried
   expect(open).toHaveBeenCalledTimes(2);
   expect(screen.queryByText(/无法打开系统设置/)).toBeNull();
 });
+
+
+test('sync failure is visible in text and the affected channel can be retried', async () => {
+  mockError = 'offline';
+  const view = await render(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByText('外观 · 同步失败 · 重试')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('外观，同步失败'));
+  expect(mockRetry).toHaveBeenCalledTimes(1);
+  mockSyncing = true;
+  await view.rerender(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByText('外观 · 正在同步')).toBeTruthy();
+});
+
+test('disabled or unavailable sync never reports success or an obsolete in-flight state', async () => {
+  mockSyncEnabled = false; mockSyncing = true;
+  const view = await render(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByText('外观 · 未同步')).toBeTruthy();
+  expect(screen.queryByText(/已同步/)).toBeNull();
+  mockSyncEnabled = true; mockAvailable = false;
+  await view.rerender(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByText('外观 · 未同步')).toBeTruthy();
+  expect(screen.getByText(/云同步暂不可用/)).toBeTruthy();
+});
