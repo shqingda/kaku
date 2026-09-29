@@ -277,7 +277,7 @@ function IndexComposerContent({
         </View>
 
         {draft.content && !sent && !mutation.isPending ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })}>
+          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}>
             <Text style={styles.privacyDescription}>丢弃草稿</Text>
           </Pressable>
         ) : null}

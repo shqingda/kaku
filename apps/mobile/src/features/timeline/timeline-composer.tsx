@@ -175,7 +175,7 @@ function TimelineComposerContent({
 
         {draft.loaded && !sent && !createTimeline.isPending ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
         {content && !sent && !createTimeline.isPending ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })}>
+          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}>
             <Text style={styles.hintText}>丢弃草稿</Text>
           </Pressable>
         ) : null}

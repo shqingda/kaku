@@ -242,7 +242,7 @@ function TopicComposerContent({
 
         {editable ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
         {draft.content && !sent && !mutation.isPending ? (
-          <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })} style={styles.draftAction}>
+          <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')} style={styles.draftAction}>
             <Text style={styles.hint}>丢弃草稿</Text>
           </Pressable>
         ) : null}

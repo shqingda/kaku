@@ -1,12 +1,12 @@
 import { Alert } from 'react-native';
 
-export function confirmDiscard(onDiscard: () => void) {
+export function confirmDiscard(onDiscard: () => void, kind: 'unsaved' | 'draft' = 'unsaved') {
   Alert.alert(
-    '放弃未保存的内容？',
-    '关闭后，本次编辑的内容不会保存。',
+    kind === 'draft' ? '丢弃本机草稿？' : '放弃未保存的内容？',
+    kind === 'draft' ? '这份草稿将从本机删除，无法恢复。' : '关闭后，本次编辑的内容不会保存。',
     [
       { style: 'cancel', text: '继续编辑' },
-      { onPress: onDiscard, style: 'destructive', text: '放弃' },
+      { onPress: onDiscard, style: 'destructive', text: kind === 'draft' ? '丢弃' : '放弃' },
     ],
   );
 }
