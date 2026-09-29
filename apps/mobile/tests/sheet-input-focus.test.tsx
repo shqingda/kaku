@@ -7,7 +7,7 @@ afterEach(async () => { await cleanup(); jest.useRealTimers(); });
 
 test('waits for presentation and draft readiness, focuses once, cancels on close', async () => {
   const focus = jest.fn();
-  const hook = await renderHook(({ visible, editable }) => useSheetInputFocus(visible, editable), {
+  const hook = await renderHook<ReturnType<typeof useSheetInputFocus>, { visible: boolean; editable: boolean }>(({ visible, editable }) => useSheetInputFocus(visible, editable), {
     initialProps: { visible: true, editable: false },
   });
   hook.result.current.inputRef.current = { focus } as unknown as TextInput;
