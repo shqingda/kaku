@@ -6,7 +6,7 @@ type DraftPhase = 'editing' | 'sent';
 
 // One mounted composer owns one key. Synchronous writes avoid late saves restoring
 // deleted drafts and persist each edit before a background/unmount can interrupt it.
-export function useReplyDraft(key: string | null, initialContent = '', active = true) {
+export function useReplyDraft(key: string | null, initialContent = '', active = true, completedMessage = '回复已发送') {
   const [state, setState] = useState(() => {
     try {
       return {
@@ -40,7 +40,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
       setState((previous) => ({
         ...previous,
         error: sent.current
-          ? '回复已发送，但草稿清理失败，请重试清理，勿重复发送'
+          ? `${completedMessage}，但草稿清理失败，请重试清理，勿重复发送`
           : '草稿保存失败，内容仍在当前窗口，请重试',
       }));
       return false;
@@ -85,7 +85,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     } catch {
       setState((previous) => ({
         ...previous,
-        error: '回复已发送，但草稿清理失败，请重试清理，勿重复发送',
+        error: `${completedMessage}，但草稿清理失败，请重试清理，勿重复发送`,
         phase: 'sent',
       }));
       return false;

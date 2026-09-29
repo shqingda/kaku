@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type SetStateAction } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE, HIT_SLOP, MIN_TOUCH_SIZE } from '@/constants/design';
+import { useAuth } from '@/features/auth/auth-provider';
+import { useReplyDraft } from './use-reply-draft';
 import type { ThemeColors } from '@/constants/theme';
 import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
@@ -31,12 +34,34 @@ export type TopicComposerTarget =
 
 // 新建话题：标题 + 内容，与回复框共用 AppSheet（同一运动与键盘行为）。
 // 发布需要一次 Bangumi Turnstile 验证，成功后才关闭并跳转新话题。
-export function TopicComposer({
+export function TopicComposer(props: Omit<ComponentProps<typeof TopicComposerContent>, 'draftKey'>) {
+  const { session } = useAuth();
+  const [opening, setOpening] = useState({ visible: props.visible, generation: 0 });
+  if (opening.visible !== props.visible) {
+    setOpening({ visible: props.visible, generation: opening.generation + (props.visible ? 1 : 0) });
+  }
+  if (!session) return null;
+  const targetId = props.target.kind === 'group' ? props.target.groupName : props.target.subjectId;
+  const draftKey = `kaku:topic-draft:v1:${JSON.stringify([session.user.id, props.target.kind, targetId])}`;
+  return <TopicComposerContent {...props} key={`${draftKey}:${opening.generation}`} draftKey={draftKey} />;
+}
+
+function readTopicDraft(raw: string): { title: string; content: string } | null {
+  if (!raw) return { title: '', content: '' };
+  try {
+    const value = JSON.parse(raw);
+    return typeof value?.title === 'string' && typeof value?.content === 'string' ? value : null;
+  } catch { return null; }
+}
+
+function TopicComposerContent({
+  draftKey,
   onClose,
   onCreated,
   target,
   visible,
 }: {
+  draftKey: string;
   onClose: () => void;
   onCreated: (topicId: number) => void;
   target: TopicComposerTarget;
@@ -47,8 +72,24 @@ export function TopicComposer({
   const insets = useSafeAreaInsets();
   const titleInputRef = useRef<TextInput>(null);
   const contentInputRef = useRef<TextInput>(null);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const draft = useReplyDraft(draftKey, '', visible, '话题已发布');
+  const parsed = readTopicDraft(draft.content);
+  const { title, content } = parsed ?? { title: '', content: '' };
+  const sent = draft.phase === 'sent';
+  const mounted = useRef(true);
+  const createdId = useRef<number | null>(null);
+  const submitting = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  function changeField(field: 'title' | 'content', value: SetStateAction<string>) {
+    draft.change((raw) => {
+      const previous = readTopicDraft(raw);
+      if (!previous) return raw;
+      const next = { ...previous, [field]: typeof value === 'function' ? value(previous[field]) : value };
+      return next.title || next.content ? JSON.stringify(next) : '';
+    });
+  }
+  function setTitle(value: string) { changeField('title', value); }
+  function setContent(value: SetStateAction<string>) { changeField('content', value); }
   const { insertText, onSelectionChange } = useBangumiEmojiInsertion(
     contentInputRef,
     content,
@@ -64,19 +105,11 @@ export function TopicComposer({
   );
   const mutation =
     target.kind === 'subject' ? createSubjectTopic : createGroupTopic;
-  const hasUnsavedChanges = Boolean(title.trim() || content.trim());
   const canPublish =
     title.trim().length > 0 &&
     content.trim().length > 0 &&
-    !mutation.isPending;
-
-  useEffect(() => {
-    if (!visible) {
-      mutation.reset();
-      setTitle('');
-      setContent('');
-    }
-  }, [visible]);
+    !mutation.isPending && draft.loaded && parsed !== null && !sent;
+  const editable = draft.loaded && parsed !== null && !mutation.isPending && !sent;
 
   // iOS 上 Modal 内的 autoFocus 不可靠，弹层显示完成后再聚焦标题框弹出键盘。
   function focusTitle() {
@@ -93,34 +126,24 @@ export function TopicComposer({
       return;
     }
 
-    if (hasUnsavedChanges) {
-      confirmDiscard(finishClose);
-      return;
+    if (draft.dismiss()) {
+      if (createdId.current !== null) onCreated(createdId.current);
+      else finishClose();
     }
-
-    finishClose();
   }
 
   function submit() {
-    const nextTitle = title.trim();
-    const nextContent = content.trim();
-
-    if (!nextTitle || !nextContent || mutation.isPending) {
-      return;
-    }
-
-    mutation.mutate(
-      { content: nextContent, title: nextTitle },
-      {
-        onSuccess: (topic) => {
-          playSuccessHaptic();
-          Keyboard.dismiss();
-          setTitle('');
-          setContent('');
-          onCreated(topic.id);
-        },
-      },
-    );
+    if (!canPublish || submitting.current) return;
+    submitting.current = true;
+    void mutation.mutateAsync({ content: content.trim(), title: title.trim() }).then((topic) => {
+      createdId.current = topic.id;
+      const cleared = draft.complete();
+      if (!mounted.current) return;
+      playSuccessHaptic();
+      if (cleared) { Keyboard.dismiss(); onCreated(topic.id); }
+    }).catch(() => {
+      // Mutation error is shown below; keep the local draft for retry.
+    }).finally(() => { submitting.current = false; });
   }
 
   return (
@@ -131,7 +154,7 @@ export function TopicComposer({
             accessibilityLabel="关闭"
             accessibilityRole="button"
             disabled={mutation.isPending}
-            hitSlop={8}
+            hitSlop={HIT_SLOP}
             onPress={close}
             style={({ pressed }) => [
               styles.closeButton,
@@ -153,7 +176,7 @@ export function TopicComposer({
             accessibilityRole="button"
             accessibilityState={{ disabled: !canPublish }}
             disabled={!canPublish}
-            hitSlop={5}
+            hitSlop={HIT_SLOP}
             onPress={submit}
             style={({ pressed }) => [
               styles.publishButton,
@@ -171,19 +194,22 @@ export function TopicComposer({
       }
       onClose={close}
       onShow={focusTitle}
-      swipeToDismissEnabled={!hasUnsavedChanges && !mutation.isPending}
+      swipeToDismissEnabled={!mutation.isPending && !draft.error}
       visible={visible}
     >
       <View
         style={[
           styles.content,
-          { paddingBottom: Math.max(insets.bottom, 16) },
+          { paddingBottom: Math.max(insets.bottom, SPACING.lg) },
         ]}
       >
         <TextInput
           accessibilityLabel="话题标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}
           autoFocus
+          editable={editable}
+          onSubmitEditing={() => contentInputRef.current?.focus()}
+          submitBehavior="submit"
           maxLength={MAX_TITLE_LENGTH}
           onChangeText={setTitle}
           placeholder="写一个清楚的话题标题"
@@ -196,6 +222,7 @@ export function TopicComposer({
         <TextInput
           accessibilityLabel="话题内容"
           accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
+          editable={editable}
           maxLength={MAX_CONTENT_LENGTH}
           multiline
           onChangeText={setContent}
@@ -209,7 +236,19 @@ export function TopicComposer({
           value={content}
         />
 
-        <BangumiRichTextToolbar onInsert={insertText} />
+        {editable ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
+        {draft.content && !sent && !mutation.isPending ? (
+          <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); })} style={styles.draftAction}>
+            <Text style={styles.hint}>丢弃草稿</Text>
+          </Pressable>
+        ) : null}
+        {draft.content && !draft.error && parsed && !sent ? <Text style={styles.hint}>草稿已保存在本机</Text> : null}
+        {parsed === null ? <Text accessibilityRole="alert" style={styles.errorText}>草稿格式无法读取，原内容已保留；可丢弃后重新编辑。</Text> : null}
+        {draft.error ? (
+          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => {
+            if (draft.retry() && sent && createdId.current !== null) onCreated(createdId.current);
+          }}><Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text></Pressable>
+        ) : null}
 
         <View style={styles.footer}>
           <Text style={styles.hint}>发布时完成一次 Bangumi 安全验证</Text>
@@ -229,6 +268,7 @@ export function TopicComposer({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {},
+  draftAction: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -238,60 +278,62 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surfaceSoft,
     borderRadius: 17,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
-    width: 34,
+    width: MIN_TOUCH_SIZE,
   },
   title: {
     color: colors.ink,
     flex: 1,
-    fontSize: 17,
+    ...TYPE.heading,
     fontWeight: '800',
-    marginHorizontal: 12,
+    marginHorizontal: SPACING.md,
     textAlign: 'center',
   },
   publishButton: {
     alignItems: 'center',
     backgroundColor: colors.accent,
     borderRadius: 17,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
     minWidth: 62,
-    paddingHorizontal: 14,
+    paddingHorizontal: SPACING.lg,
   },
   publishButtonDisabled: { opacity: 0.35 },
-  publishText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  publishText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   titleInput: {
     color: colors.ink,
-    fontSize: 17,
+    ...TYPE.heading,
     fontWeight: '700',
-    marginTop: 18,
-    paddingHorizontal: 2,
-    paddingVertical: 4,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
   },
   bodyInput: {
     color: colors.ink,
-    fontSize: 15,
-    lineHeight: 23,
+    ...TYPE.body,
+    lineHeight: TYPE.body.lineHeight,
     minHeight: 140,
-    paddingHorizontal: 2,
-    paddingTop: 14,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.lg,
   },
   footer: {
     alignItems: 'center',
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
   },
-  hint: { color: colors.muted, fontSize: 11 },
-  count: { color: colors.muted, fontSize: 11, fontVariant: ['tabular-nums'] },
+  hint: { flexShrink: 1, color: colors.muted, ...TYPE.micro },
+  count: { color: colors.muted, ...TYPE.micro, fontVariant: ['tabular-nums'] },
   errorText: {
     color: colors.accent,
-    fontSize: 12,
-    lineHeight: 18,
-    paddingBottom: 8,
+    ...TYPE.caption,
+    lineHeight: TYPE.caption.lineHeight,
+    paddingBottom: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
 });
