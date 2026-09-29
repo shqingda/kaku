@@ -121,6 +121,14 @@ export function AccountSettingsMenu() {
         />
         <AccountMenuRow
           colors={colors}
+          description="查看自动保存的条目及保存时间"
+          hasDivider
+          icon={{ android: 'download', ios: 'arrow.down.circle', web: 'download' }}
+          label="离线内容"
+          onPress={() => router.push('/offline-content')}
+        />
+        <AccountMenuRow
+          colors={colors}
           description="内容、图片与自动离线包，保留历史和草稿"
           hasDivider
           icon={{
