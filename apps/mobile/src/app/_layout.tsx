@@ -102,7 +102,6 @@ const TITLED_SCREENS = [
   ['diagnostics', '诊断信息'],
   ['offline-content', '离线内容'],
   ['changelog', '更新日志'],
-  ['app-update', '检查更新'],
   ['network-status', '网络诊断'],
   ['privacy', '隐私政策'],
   ['notifications', '通知'],

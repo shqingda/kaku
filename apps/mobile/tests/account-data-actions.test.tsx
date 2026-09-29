@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AccountSettingsMenu } from '@/features/account/account-settings-menu';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
+const mockCheckUpdate = jest.fn();
+let mockCheckingUpdate = false;
+jest.mock('@/features/app-update/update-provider', () => ({ useAppUpdate: () => ({ state: { status: mockCheckingUpdate ? 'checking' : 'idle' }, check: mockCheckUpdate }) }));
 const mockSearch = jest.fn();
 const mockBrowse = jest.fn();
 const mockRemoveCache = jest.fn();
@@ -29,7 +32,7 @@ let alerts: jest.SpyInstance;
 function Page() { return <QueryClientProvider client={client}><ThemeProvider><AccountSettingsMenu /></ThemeProvider></QueryClientProvider>; }
 function confirm() { return alerts.mock.calls.at(-1)![2].at(-1).onPress(); }
 beforeEach(() => {
-  mockUserId = 1; mockSync = true;
+  mockUserId = 1; mockSync = true; mockCheckUpdate.mockReset(); mockCheckingUpdate = false;
   for (const mock of [mockSearch, mockBrowse, mockRemoveCache, mockOffline, mockImageMemory, mockImageDisk]) mock.mockReset().mockResolvedValue(undefined);
   mockImageDisk.mockResolvedValue(true); mockImageMemory.mockResolvedValue(true);
   client = new QueryClient(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -77,4 +80,15 @@ test('history actions are separate, cancellation is inert, and changed account i
   expect(alerts.mock.calls.at(-1)![1]).toContain('当前只清除本机');
   await act(async () => { await confirm(); });
   expect(mockSearch).toHaveBeenCalledTimes(1); expect(mockBrowse).not.toHaveBeenCalled();
+});
+
+test('update row checks directly and shows busy state without navigating', async () => {
+  const view = await render(<Page />);
+  expect(mockCheckUpdate).toHaveBeenCalledWith(false);
+  await fireEvent.press(screen.getByLabelText('检查更新'));
+  expect(mockCheckUpdate).toHaveBeenLastCalledWith();
+  mockCheckingUpdate = true;
+  await view.rerender(<Page />);
+  expect(screen.getByLabelText('检查更新').props.accessibilityState.busy).toBe(true);
+  expect(screen.getByLabelText('检查更新').props.accessibilityState.disabled).toBe(true);
 });

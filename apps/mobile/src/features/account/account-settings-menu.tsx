@@ -1,5 +1,5 @@
 // 「设置与本地」菜单组：外观与同步、清理缓存、诊断与网络诊断。
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Alert, Text, View } from 'react-native';
@@ -15,7 +15,12 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { usePreferences } from '@/features/preferences/preferences-provider';
 import { AppActionMenu } from '@/features/shared/app-action-menu';
 
+import { useAppUpdate } from '@/features/app-update/update-provider';
+
 export function AccountSettingsMenu() {
+  const update = useAppUpdate();
+  const checkOnOpen = useRef(update.check);
+  useEffect(() => { void checkOnOpen.current(false); }, []);
   const colors = useTheme();
   const styles = useMemo(() => createMenuGroupStyles(colors), [colors]);
   const [isClearingLocalData, setIsClearingLocalData] = useState(false);
@@ -110,10 +115,12 @@ export function AccountSettingsMenu() {
       <View style={styles.menuGroup}>
         <AccountMenuRow
           colors={colors}
-          description="查看新版本与下载更新"
+          description="检测是否有新版本"
           icon={{ android: 'system_update', ios: 'arrow.down.circle', web: 'system_update' }}
           label="检查更新"
-          onPress={() => router.push('/app-update')}
+          loading={update.state.status === 'checking'}
+          showChevron={false}
+          onPress={() => void update.check()}
         />
         <AccountMenuRow
           colors={colors}

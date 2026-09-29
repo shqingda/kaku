@@ -6,9 +6,11 @@ const mockFetch = jest.fn();
 const mockStore = new Map<string, string>();
 jest.mock('expo-sqlite/kv-store', () => ({ getItemSync: (key: string) => mockStore.get(key) ?? null, setItemSync: (key: string, value: string) => mockStore.set(key, value) }));
 jest.mock('@/features/app-update/update-client', () => ({ fetchLatestRelease: () => mockFetch(), installedVersion: '1.0.0', updateSupport: 'apk' }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+const mockDownload = jest.fn();
+jest.mock('@/features/app-update/use-apk-download', () => ({ useApkDownload: () => ({ status: 'idle', download: mockDownload, progress: 0, error: '' }) }));
+jest.mock('@/features/app-update/update-download-sheet', () => ({ UpdateDownloadSheet: () => null }));
 let alerts: jest.SpyInstance;
-beforeEach(() => { mockStore.clear(); mockFetch.mockReset(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+beforeEach(() => { mockStore.clear(); mockFetch.mockReset(); mockDownload.mockReset(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
 afterEach(async () => { await cleanup(); alerts.mockRestore(); Object.defineProperty(globalThis, '__DEV__', { configurable: true, value: true }); });
 test('manual retry bypasses throttle, failures never become latest, requests deduplicate', async () => {
   const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
@@ -23,7 +25,7 @@ test('manual retry bypasses throttle, failures never become latest, requests ded
   mockFetch.mockResolvedValueOnce({ version: '1.2.0', notes: '说明', pageUrl: 'https://example.test' });
   await act(() => result.current.check());
   expect(result.current.state.status).toBe('available');
-  expect(alerts).not.toHaveBeenCalled();
+  expect(alerts).toHaveBeenLastCalledWith('发现新版本 1.2.0', expect.any(String), expect.any(Array));
 });
 test('automatic foreground check persists cooldown and does not remind same release within seven days', async () => {
   Object.defineProperty(globalThis, '__DEV__', { configurable: true, value: false });
@@ -44,4 +46,32 @@ test('automatic foreground check persists cooldown and does not remind same rele
   expect(mockFetch).toHaveBeenCalledTimes(2);
   expect(alerts).toHaveBeenCalledTimes(1);
   AppState.currentState = previousState;
+});
+
+test('manual latest check alerts; automatic latest check stays silent', async () => {
+  mockFetch.mockResolvedValue({ version: '1.0.0' });
+  const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+  await act(() => result.current.check());
+  expect(alerts).toHaveBeenCalledWith('已是最新版', '当前版本 1.0.0');
+  alerts.mockClear();
+  await cleanup(); mockStore.clear();
+  Object.defineProperty(globalThis, '__DEV__', { configurable: true, value: false });
+  const previousState = AppState.currentState;
+  AppState.currentState = 'active';
+  await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+  expect(mockFetch).toHaveBeenCalledTimes(2);
+  expect(alerts).not.toHaveBeenCalled();
+  AppState.currentState = previousState;
+});
+test('new version is offered directly and never downloads before consent', async () => {
+  const release = { version: '1.2.0', apk: { size: 1024, url: 'https://example.test/a.apk' } };
+  mockFetch.mockResolvedValue(release);
+  const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+  await act(() => result.current.check());
+  expect(mockDownload).not.toHaveBeenCalled();
+  const buttons = alerts.mock.calls.at(-1)![2];
+  expect(buttons[0].style).toBe('cancel');
+  expect(buttons[1].text).toBe('下载更新');
+  await act(() => buttons[1].onPress());
+  expect(mockDownload).toHaveBeenCalledWith(release);
 });

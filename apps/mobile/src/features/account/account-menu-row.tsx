@@ -15,6 +15,7 @@ export function AccountMenuRow({
   icon,
   label,
   loading = false,
+  showChevron = true,
   onPress,
 }: {
   badge?: number;
@@ -24,6 +25,7 @@ export function AccountMenuRow({
   icon: ComponentProps<typeof SymbolView>['name'];
   label: string;
   loading?: boolean;
+  showChevron?: boolean;
   onPress: () => void;
 }) {
   const styles = createStyles(colors);
@@ -60,7 +62,7 @@ export function AccountMenuRow({
       ) : null}
       {loading ? (
         <ActivityIndicator color={colors.accent} size="small" />
-      ) : (
+      ) : showChevron ? (
         <SymbolView
           name={{
             android: 'chevron_right',
@@ -70,7 +72,7 @@ export function AccountMenuRow({
           size={14}
           tintColor={colors.subtle}
         />
-      )}
+      ) : null}
     </Pressable>
   );
 }
