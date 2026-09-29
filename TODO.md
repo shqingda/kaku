@@ -2,7 +2,7 @@
 
 > 最后更新：2026-09-29。只留还有效的事项。
 >
-> GitHub 日常包 [v1.1.8](https://github.com/shqingda/kaku/releases/tag/v1.1.8) 已发布。iOS Maestro 全量和性能基线在 `docs/test-records/`。
+> GitHub 日常包 [v1.1.12](https://github.com/shqingda/kaku/releases/tag/v1.1.12) 已发布，见 [发布验收](docs/test-records/2026-09-29-release-readiness.md)。iOS Maestro 全量和性能基线在 `docs/test-records/`。
 
 ## 2026-09-29 体验改进待验收
 
@@ -18,7 +18,7 @@
 
 - [x] 登录设备移至账户页底部；单台/其他设备退出均先确认，统一“退出其他设备”文案。
 - [x] 手动检查、每 24 小时前台自动检查、同版本 7 天提醒间隔；GitHub APK 下载进度与系统安装器、失败网页回退。见 [记录](docs/test-records/2026-09-29-devices-and-updates.md)。
-- [ ] 重新构建 Android 客户端后验证下载/取消、安装权限、签名覆盖与失败返回；当前未连接 Android 设备，沿用实机暂缓约定。
+- [ ] v1.1.12 已重新构建并通过安装权限、版本和同签名静态校验；下载/取消、授权、实际覆盖安装与失败返回仍需 Android 实机验证，沿用实机暂缓约定。
 - [ ] iOS 正式上架后配置 App Store ID 与地区并实测；Google Play 专用更新接入随商店渠道实施。当前未配置渠道不报告“已是最新版”。
 
 ## 本轮发布与待验收
