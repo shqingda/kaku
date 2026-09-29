@@ -1,5 +1,6 @@
-import { useEffect, type ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import {
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -20,7 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { HIT_SLOP, TYPE } from '@/constants/design';
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
@@ -117,6 +118,12 @@ export default function SettingsScreen() {
   const recentSubjects = useRecentSubjects();
   const searchHistory = useSearchHistory();
   const push = usePushRegistration();
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  async function openNotificationSettings() {
+    setSettingsError(null);
+    try { await Linking.openSettings(); }
+    catch { setSettingsError('无法打开系统设置，请重试，或从系统设置中打开 Kaku 的通知权限。'); }
+  }
   const signedIn = Boolean(session);
   const channels = [
     {
@@ -261,7 +268,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>设备间同步</Text>
-                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowDescription}>
+                <Text style={styles.rowDescription}>
                   登录后即可在设备间同步。
                 </Text>
               </View>
@@ -294,7 +301,9 @@ export default function SettingsScreen() {
                 />
               </View>
               <Text style={styles.rowDescription}>
-                {push.status === 'on'
+                {push.status === 'registering'
+                  ? '正在登记这台设备…'
+                  : push.status === 'on'
                   ? '有新的 Bangumi 通知时，会发到这台设备。'
                   : push.status === 'denied'
                     ? '系统通知权限未打开，可在系统设置里允许后再开。'
@@ -306,6 +315,12 @@ export default function SettingsScreen() {
                           ? (push.error ?? '当前安装还没有推送模块，需要重新编译后再打开。')
                           : '打开后，未读回复会推送到这台设备。'}
               </Text>
+              {push.status === 'denied' || settingsError ? (
+                <Pressable accessibilityRole="button" onPress={() => void openNotificationSettings()} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                  <Text style={styles.rowAction}>打开系统设置</Text>
+                </Pressable>
+              ) : null}
+              {settingsError ? <Text accessibilityRole="alert" style={styles.rowDescription}>{settingsError}</Text> : null}
               {push.status === 'failed' ? (
                 <Pressable
                   accessibilityRole="button"
@@ -329,7 +344,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>推送通知</Text>
-                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.rowDescription}>
+                <Text style={styles.rowDescription}>
                   登录后即可在这台设备接收未读通知。
                 </Text>
               </View>
@@ -412,7 +427,7 @@ function SyncStatusRow({
           weight="medium"
         />
       )}
-      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.statusLabel}>
+      <Text style={styles.statusLabel}>
         {label}
       </Text>
     </>
@@ -446,34 +461,34 @@ function SyncStatusRow({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
-    content: { paddingBottom: 40, paddingHorizontal: 20, paddingTop: 8 },
+    content: { paddingBottom: SPACING.xxl, paddingHorizontal: SPACING.xl, paddingTop: SPACING.sm },
     sectionTitle: {
       color: colors.muted,
       fontSize: TYPE.caption.fontSize,
       fontWeight: '600',
       letterSpacing: TYPE.caption.letterSpacing,
-      marginBottom: 8,
-      marginTop: 28,
-      paddingHorizontal: 16,
+      marginBottom: SPACING.sm,
+      marginTop: SPACING.xxl,
+      paddingHorizontal: SPACING.lg,
     },
-    firstSectionTitle: { marginTop: 12 },
+    firstSectionTitle: { marginTop: SPACING.md },
     group: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 20,
-      paddingHorizontal: 16,
+      paddingHorizontal: SPACING.lg,
     },
     row: {
       alignItems: 'center',
       flexDirection: 'row',
-      gap: 16,
-      paddingVertical: 14,
+      gap: SPACING.lg,
+      paddingVertical: SPACING.lg,
     },
     rowDivider: {
       borderTopColor: colors.track,
       borderTopWidth: StyleSheet.hairlineWidth,
     },
-    rowCopy: { flex: 1, minWidth: 0, paddingRight: 4 },
+    rowCopy: { flex: 1, minWidth: 0, paddingRight: SPACING.xs },
     rowTitle: {
       color: colors.ink,
       fontSize: TYPE.heading.fontSize,
@@ -487,14 +502,14 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: TYPE.caption.fontSize,
       letterSpacing: TYPE.caption.letterSpacing,
       lineHeight: TYPE.caption.lineHeight,
-      marginTop: 3,
+      marginTop: SPACING.xs,
     },
     rowAction: {
       color: colors.accent,
       fontSize: TYPE.body.fontSize,
       fontWeight: '600',
     },
-    syncBlock: { paddingBottom: 14, paddingTop: 14 },
+    syncBlock: { paddingBottom: SPACING.lg, paddingTop: SPACING.lg },
     syncHeader: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -504,14 +519,14 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 12,
-      marginTop: 12,
+      gap: SPACING.md,
+      marginTop: SPACING.md,
     },
     statusRow: {
       alignItems: 'center',
       flexDirection: 'row',
       flexShrink: 0,
-      gap: 5,
+      gap: SPACING.xs,
       minHeight: 22,
     },
     statusLabel: {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 
 import { useAuth } from '@/features/auth/auth-provider';
@@ -34,6 +34,7 @@ export type PushStatus =
   | 'failed'
   | 'off'
   | 'on'
+  | 'registering'
   | 'simulator'
   | 'unavailable';
 
@@ -48,6 +49,12 @@ export function usePushRegistration() {
   const { request, session } = useAuth();
   const [ready, setReady] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
+  const [preferenceError, setPreferenceError] = useState<string | null>(null);
+  const preferenceRevision = useRef(0);
+  const preferenceWrites = useRef(Promise.resolve());
+  const askPermission = useRef(false);
+  const currentIdentity = useRef(session?.user.id);
+  currentIdentity.current = session?.user.id;
   const registrationQueue = useRef<Promise<void>>(Promise.resolve());
   const [enabled, setEnabled] = useState(false);
   const [status, setStatus] = useState<PushStatus>(
@@ -57,10 +64,13 @@ export function usePushRegistration() {
 
   const restoreEnabled = useCallback(() => {
     if (Platform.OS === 'web') return;
+    const revision = preferenceRevision.current;
     return Storage.getItem(ENABLED_KEY).then((value) => {
+      if (revision !== preferenceRevision.current) return;
       setEnabled(value === 'true');
       setReady(true);
     }).catch(() => {
+      if (revision !== preferenceRevision.current) return;
       setStatus('failed');
       setError('无法读取本机推送设置，请重试。');
     });
@@ -69,7 +79,7 @@ export function usePushRegistration() {
   useEffect(() => { void restoreEnabled(); }, [restoreEnabled]);
 
   const syncRegistration = useCallback(
-    async (shouldEnable: boolean, isCurrent: () => boolean) => {
+    async (shouldEnable: boolean, isCurrent: () => boolean, mayAskPermission: boolean) => {
       if (Platform.OS === 'web') {
         setStatus('unavailable');
         return;
@@ -98,7 +108,9 @@ export function usePushRegistration() {
       if (!shouldEnable) {
         try {
           await unregisterPushDevice(request);
+          if (!isCurrent()) return;
         } catch (caughtError) {
+          if (!isCurrent()) return;
           setStatus('failed');
           setError(describePushRegistrationError(caughtError));
           return;
@@ -109,6 +121,8 @@ export function usePushRegistration() {
       }
 
       try {
+        setStatus('registering');
+        setError(null);
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('kaku-default', {
             importance: Notifications.AndroidImportance.DEFAULT,
@@ -116,7 +130,13 @@ export function usePushRegistration() {
           });
         }
 
-        const permission = await Notifications.requestPermissionsAsync();
+        if (!isCurrent()) return;
+        let permission = await Notifications.getPermissionsAsync();
+        if (!isCurrent()) return;
+        if (permission.status !== 'granted' && mayAskPermission && permission.canAskAgain) {
+          permission = await Notifications.requestPermissionsAsync();
+          if (!isCurrent()) return;
+        }
         if (permission.status !== 'granted') {
           setStatus('denied');
           setError('系统通知权限未打开，可在设置里重新允许。');
@@ -138,9 +158,11 @@ export function usePushRegistration() {
           platform: Platform.OS === 'android' ? 'android' : 'ios',
           token: token.data,
         });
+        if (!isCurrent()) return;
         setStatus('on');
         setError(null);
       } catch (caughtError) {
+        if (!isCurrent()) return;
         setStatus('failed');
         setError(describePushRegistrationError(caughtError));
       }
@@ -151,26 +173,50 @@ export function usePushRegistration() {
   useEffect(() => {
     if (!ready) return;
     let active = true;
+    const owner = session?.user.id;
+    const mayAskPermission = askPermission.current;
+    askPermission.current = false;
+    const isCurrent = () => active && currentIdentity.current === owner;
     registrationQueue.current = registrationQueue.current.catch(() => undefined).then(async () => {
-      if (active) await syncRegistration(enabled, () => active);
+      if (isCurrent()) await syncRegistration(enabled, isCurrent, mayAskPermission);
     });
     return () => { active = false; };
-  }, [enabled, ready, retryVersion, syncRegistration]);
+  }, [enabled, ready, retryVersion, syncRegistration, session?.user.id]);
+
+  useEffect(() => {
+    let previous = AppState.currentState;
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (previous !== 'active' && next === 'active' && ready && enabled) {
+        setRetryVersion((version) => version + 1);
+      }
+      previous = next;
+    });
+    return () => subscription.remove();
+  }, [ready, enabled]);
 
   const setPushEnabled = useCallback((next: boolean) => {
+    const revision = ++preferenceRevision.current;
+    setPreferenceError(null);
+    askPermission.current = next;
     setReady(true);
     setEnabled(next);
-    void Storage.setItem(ENABLED_KEY, next ? 'true' : 'false');
+    setRetryVersion((version) => version + 1);
+    preferenceWrites.current = preferenceWrites.current.catch(() => undefined)
+      .then(() => Storage.setItem(ENABLED_KEY, next ? 'true' : 'false'))
+      .catch(() => {
+        if (revision === preferenceRevision.current) setPreferenceError('本机推送偏好未能保存，请重试。');
+      });
   }, []);
 
   return {
     enabled,
-    error,
+    error: preferenceError ?? error,
     retry: () => {
-      if (!ready) void restoreEnabled();
+      if (preferenceError) setPushEnabled(enabled);
+      else if (!ready) void restoreEnabled();
       else setRetryVersion((version) => version + 1);
     },
     setEnabled: setPushEnabled,
-    status,
+    status: preferenceError ? 'failed' as const : status,
   };
 }
