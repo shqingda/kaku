@@ -1,5 +1,7 @@
+import { useSpoilerPreference } from '@/features/preferences/spoiler-preference';
+import { shouldHideEpisodeDiscussion } from '@/features/discussions/spoiler-policy';
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -84,12 +86,22 @@ export default function EpisodeScreen() {
   const catalogEpisode = catalogSubject?.episodes.find(
     (episode) => episode.number === episodeNumber,
   );
-  const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id);
+  const spoiler = useSpoilerPreference();
+  const discussionScope = `${session?.user.id ?? 'guest'}:${subjectId}:${episodeNumber}`;
+  const [reveal, setReveal] = useState({ scope: discussionScope, visible: false });
+  if (reveal.scope !== discussionScope) setReveal({ scope: discussionScope, visible: false });
+  const hiddenDiscussion = shouldHideEpisodeDiscussion({
+    enabled: spoiler.enabled,
+    supportsProgress: tracksWatchProgress,
+    watched: Boolean(session && collectionQuery.isSuccess && personalCollection?.watchedEpisodeNumbers.includes(episodeNumber)),
+    revealed: reveal.scope === discussionScope && reveal.visible,
+  });
+  const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id, !hiddenDiscussion);
   const { remove: deleteReply } = useDiscussionReply({
     id: catalogEpisode?.id ?? 0,
     kind: 'episode',
   });
-  const replies = commentsQuery.data ?? [];
+  const replies = hiddenDiscussion ? [] : commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
   const scrollPosition = useEpisodeCommentScrollPosition(
     catalogEpisode?.id,
@@ -436,7 +448,7 @@ export default function EpisodeScreen() {
               onRefresh={() =>
                 void Promise.all([
                   catalogQuery.refetch(),
-                  commentsQuery.refetch(),
+                  ...(!hiddenDiscussion ? [commentsQuery.refetch()] : []),
                   ...(session ? [collectionQuery.refetch()] : []),
                 ])
               }
@@ -464,7 +476,7 @@ export default function EpisodeScreen() {
             maxScrollOffsetRef.current = Math.max(
               0, contentHeightRef.current - viewportHeightRef.current,
             );
-            if (commentsQuery.data && contentHeightRef.current > 0) {
+            if (!hiddenDiscussion && commentsQuery.data && contentHeightRef.current > 0) {
               scrollPosition.restore(maxScrollOffsetRef.current);
             }
           }}
@@ -473,13 +485,13 @@ export default function EpisodeScreen() {
             maxScrollOffsetRef.current = Math.max(
               0, height - viewportHeightRef.current,
             );
-            if (commentsQuery.data && viewportHeightRef.current > 0) {
+            if (!hiddenDiscussion && commentsQuery.data && viewportHeightRef.current > 0) {
               scrollPosition.restore(maxScrollOffsetRef.current);
             }
           }}
           scrollEventThrottle={16}
           ListEmptyComponent={
-            commentsQuery.isPending ||
+            hiddenDiscussion || commentsQuery.isPending ||
             (commentsQuery.isError && !commentsQuery.data) ? null : (
               <View style={styles.emptyDiscussion}>
                 <Text style={styles.emptyTitle}>
@@ -619,7 +631,15 @@ export default function EpisodeScreen() {
                   Bangumi {catalogEpisode?.discussionCount ?? replies.length}
                 </Text>
               </View>
-              {commentsQuery.data && commentsQuery.isError ? (
+              {hiddenDiscussion ? (
+                <View style={styles.emptyDiscussion}>
+                  <Text style={styles.emptyTitle}>讨论已折叠</Text>
+                  <Text style={styles.emptyText}>防剧透已开启。当前章节尚未标记已看，或观看进度未知；从通知进入也需手动展开。</Text>
+                  <Pressable accessibilityRole="button" onPress={() => setReveal({ scope: discussionScope, visible: true })} style={styles.spoilerButton}>
+                    <Text style={styles.spoilerAction}>仅本次展开讨论</Text>
+                  </Pressable>
+                </View>
+              ) : commentsQuery.data && commentsQuery.isError ? (
                 <CachedDataNotice
                   onRetry={() => void commentsQuery.refetch()}
                 />
@@ -652,7 +672,7 @@ export default function EpisodeScreen() {
           )}
           showsVerticalScrollIndicator={false}
         />
-        {catalogEpisode ? (
+        {catalogEpisode && !hiddenDiscussion ? (
           <DiscussionReplyBar
             accessibilityLabel={session ? '参与讨论' : '登录后参与讨论'}
             disabled={isSigningIn}
@@ -709,6 +729,8 @@ export default function EpisodeScreen() {
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  spoilerButton: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center', marginTop: SPACING.md },
+  spoilerAction: { ...TYPE.body, color: colors.accent },
   screen: { flex: 1, backgroundColor: colors.background },
   list: { flex: 1 },
   content: { padding: SPACING.lg + SPACING.xs },

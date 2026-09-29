@@ -1,3 +1,4 @@
+import { SpoilerSetting } from '@/features/preferences/spoiler-setting';
 import { useEffect, useState, type ComponentProps } from 'react';
 import {
   Linking,
@@ -278,6 +279,7 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        <SpoilerSetting />
         <Text style={styles.sectionTitle}>通知</Text>
         <View style={styles.group}>
           {session ? (

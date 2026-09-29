@@ -78,7 +78,7 @@ export function useBangumiSubjectTopic(topicId: number) {
   });
 }
 
-export function useBangumiEpisodeComments(episodeId?: number) {
+export function useBangumiEpisodeComments(episodeId?: number, enabled = true) {
   const { queryFn, meta, suffix } = useSessionAwareQuery({
     public: (signal) =>
       getEpisodeComments(episodeId!, signal),
@@ -93,7 +93,7 @@ export function useBangumiEpisodeComments(episodeId?: number) {
   });
 
   return useQuery({
-    enabled: Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
+    enabled: enabled && Number.isInteger(episodeId) && (episodeId ?? 0) > 0,
     queryFn,
     queryKey: [...queryKeys.episodeComments(episodeId), suffix],
     meta,
