@@ -1,3 +1,4 @@
+import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef, useState, type ComponentProps, type SetStateAction } from 'react';
 import { SymbolView } from 'expo-symbols';
@@ -71,7 +72,6 @@ function TopicComposerContent({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const titleInputRef = useRef<TextInput>(null);
   const contentInputRef = useRef<TextInput>(null);
   const draft = useReplyDraft(draftKey, '', visible, '话题已发布');
   const parsed = readTopicDraft(draft.content);
@@ -112,10 +112,7 @@ function TopicComposerContent({
     !mutation.isPending && draft.loaded && parsed !== null && !sent;
   const editable = draft.loaded && parsed !== null && !mutation.isPending && !sent;
 
-  // iOS 上 Modal 内的 autoFocus 不可靠，弹层显示完成后再聚焦标题框弹出键盘。
-  function focusTitle() {
-    requestIdleCallback(() => titleInputRef.current?.focus(), { timeout: 200 });
-  }
+  const { inputRef: titleInputRef, onShow: focusTitle } = useSheetInputFocus(visible, editable);
 
   function finishClose() {
     Keyboard.dismiss();
@@ -210,7 +207,6 @@ function TopicComposerContent({
         <TextInput
           accessibilityLabel="话题标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}
-          autoFocus
           editable={editable}
           onSubmitEditing={() => contentInputRef.current?.focus()}
           submitBehavior="submit"

@@ -1,3 +1,4 @@
+import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { SymbolView } from 'expo-symbols';
@@ -114,6 +115,8 @@ function IndexComposerContent({
   const canPublish = title.trim().length > 0 && !mutation.isPending && draft.loaded && fields !== null && !sent && !conflict && (!isEditing || hasUnsavedChanges);
   const editable = draft.loaded && fields !== null && !mutation.isPending && !sent && !conflict;
 
+  const { inputRef: titleInputRef, onShow } = useSheetInputFocus(visible, editable);
+
   function finishClose() {
     onClose();
   }
@@ -158,6 +161,7 @@ function IndexComposerContent({
 
   return (
     <AppSheet
+      onShow={onShow}
       header={
         <View style={styles.heading}>
           <Pressable
@@ -229,9 +233,9 @@ function IndexComposerContent({
           </View>
         ) : null}
         <TextInput
+          ref={titleInputRef}
           accessibilityLabel="目录标题"
           accessibilityHint={`最多输入 ${MAX_TITLE_LENGTH} 个字符`}
-          autoFocus
           maxLength={MAX_TITLE_LENGTH}
           editable={editable}
           onChangeText={(title) => change({ title })}

@@ -1,3 +1,4 @@
+import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { SymbolView } from 'expo-symbols';
@@ -49,8 +50,8 @@ function TimelineComposerContent({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
   const draft = useReplyDraft(draftKey, '', visible, '动态已发布');
+  const { inputRef, onShow: focusInput } = useSheetInputFocus(visible, draft.loaded && draft.phase !== 'sent');
   const { content, change: setContent } = draft;
   const sent = draft.phase === 'sent';
   const mounted = useRef(true);
@@ -64,10 +65,6 @@ function TimelineComposerContent({
   );
   const createTimeline = useCreateTimelineSay();
   const canSend = content.trim().length > 0 && !createTimeline.isPending && draft.loaded && !sent;
-
-  function focusInput() {
-    requestIdleCallback(() => inputRef.current?.focus(), { timeout: 200 });
-  }
 
   function finishClose() {
     Keyboard.dismiss();
@@ -157,7 +154,6 @@ function TimelineComposerContent({
         <TextInput
           accessibilityLabel="动态内容"
           accessibilityHint={`最多输入 ${MAX_CONTENT_LENGTH} 个字符`}
-          autoFocus
           editable={draft.loaded && !sent && !createTimeline.isPending}
           maxLength={MAX_CONTENT_LENGTH}
           multiline
