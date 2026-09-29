@@ -20,9 +20,11 @@ function write(account: number | undefined, topic: string, reply: string | null)
 export function useTopicReadingPosition(account: number | undefined, topic: string, fromNotification: boolean) {
   const [savedReply, setSavedReply] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const visibleReply = useRef<string | null>(null);
   const current = useRef({ account, topic, ready: false, tracking: false, last: '' });
   useEffect(() => {
     current.current = { account, topic, ready: false, tracking: false, last: '' };
+    visibleReply.current = null;
     setSavedReply(null);
     setError('');
     try {
@@ -31,18 +33,25 @@ export function useTopicReadingPosition(account: number | undefined, topic: stri
       if (!fromNotification) setSavedReply(saved);
     } catch { setError('阅读位置读取失败，本次仍可正常阅读。'); }
   }, [account, topic, fromNotification]);
-  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const recordReply = useCallback((id: string | null) => {
     const state = current.current;
-    if (!state.ready || !state.tracking) return;
-    const id = viewableItems.find(item => item.isViewable)?.item?.id;
-    if (typeof id !== 'string' || id === state.last) return;
+    if (!state.ready || !state.tracking || !id || id === state.last) return;
     try {
       write(state.account, state.topic, id);
       state.last = id;
       setError('');
     } catch { setError('阅读位置未能保存，下次可能无法续接。'); }
   }, []);
-  const beginReading = useCallback(() => { current.current.tracking = true; }, []);
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const id = viewableItems.find(item => item.isViewable)?.item?.id;
+    visibleReply.current = typeof id === 'string' ? id : null;
+    recordReply(visibleReply.current);
+  }, [recordReply]);
+  const beginReading = useCallback(() => {
+    current.current.tracking = true;
+    // A long reply may stay visible for the entire drag; it still deserves a bookmark.
+    recordReply(visibleReply.current);
+  }, [recordReply]);
   function fromStart() {
     try {
       write(account, topic, null);

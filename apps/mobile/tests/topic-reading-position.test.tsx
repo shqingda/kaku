@@ -14,6 +14,7 @@ test('initial layout does not erase progress; explicit reading restores a stable
   await act(() => first.result.current.onViewableItemsChanged(visible('first')));
   expect(mockStore.size).toBe(0);
   await act(() => first.result.current.beginReading());
+  expect(mockStore.get('kaku:topic-reading:v1:1')).toContain('first');
   await act(() => first.result.current.onViewableItemsChanged(visible('reply-42')));
   await first.unmount();
   const reopened = await renderHook(() => useTopicReadingPosition(1, 'subject:10', false));
