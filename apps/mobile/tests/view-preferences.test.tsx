@@ -29,3 +29,14 @@ test('home type restores a valid choice and falls back for obsolete stored value
   mockStorage.set('kaku:view:home-type:v1', '999');
   expect(readHomeTrackingType()).toBe(2);
 });
+
+
+test('grid and list expose watched, aired and unknown states without relying on color', async () => {
+  await render(<ThemeProvider><EpisodeSection {...props} totalEpisodes={3} tracksWatchProgress watchedEpisodeNumbers={[1]} fallbackAirDates={['2000-01-01', '2000-01-02', '']} /></ThemeProvider>);
+  expect(screen.getByLabelText('第 1 集，已看，点击进入详情')).toBeTruthy();
+  expect(screen.getByLabelText('第 2 集，已放送 · 未看，点击进入详情')).toBeTruthy();
+  expect(screen.getByLabelText('第 3 集，时间待定 · 未看，点击进入详情')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('列表布局'));
+  expect(screen.getByLabelText('第 1 集，已看，点击进入详情')).toBeTruthy();
+  expect(screen.getByLabelText('第 3 集，时间待定 · 未看，点击进入详情')).toBeTruthy();
+});
