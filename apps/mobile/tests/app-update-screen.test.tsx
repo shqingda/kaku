@@ -1,0 +1,21 @@
+import { Alert } from 'react-native';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import AppUpdateScreen from '@/app/app-update';
+const mockCheck = jest.fn(), mockDownload = jest.fn();
+jest.mock('@/features/theme/theme-provider', () => ({ useTheme: () => ({}) }));
+jest.mock('@/features/app-update/update-client', () => ({ installedVersion: '1.0.0', updateSupport: 'apk' }));
+jest.mock('@/features/app-update/update-provider', () => ({ useAppUpdate: () => ({ check: mockCheck, state: { status: 'available', release: { version: '1.2.0', notes: '修复', apk: { size: 1234567, url: 'https://example.test/a.apk' } } } }) }));
+jest.mock('@/features/app-update/use-apk-download', () => ({ useApkDownload: () => ({ status: 'idle', download: mockDownload }) }));
+afterEach(cleanup);
+test('opening checks once, downloading still needs a separate affirmative choice', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  await render(<AppUpdateScreen />);
+  expect(mockCheck).toHaveBeenCalledTimes(1);
+  await fireEvent.press(screen.getByText('下载更新'));
+  expect(mockDownload).not.toHaveBeenCalled();
+  const actions = alert.mock.calls[0][2]!;
+  expect(actions[0].style).toBe('cancel');
+  await act(() => actions[1].onPress!());
+  expect(mockDownload).toHaveBeenCalledWith(expect.objectContaining({ version: '1.2.0' }));
+  alert.mockRestore();
+});

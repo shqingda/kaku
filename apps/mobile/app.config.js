@@ -58,6 +58,7 @@ module.exports = {
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
       permissions: [
+        ...(process.env.KAKU_UPDATE_CHANNEL === 'github' ? ['android.permission.REQUEST_INSTALL_PACKAGES'] : []),
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
         'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
@@ -135,6 +136,11 @@ module.exports = {
       reactCompiler: true,
     },
     extra: {
+      appUpdate: {
+        channel: process.env.KAKU_UPDATE_CHANNEL || 'store',
+        iosAppStoreId: process.env.KAKU_IOS_APP_STORE_ID || '',
+        iosCountry: process.env.KAKU_IOS_STORE_COUNTRY || 'cn',
+      },
       router: {},
       eas: {
         projectId: '65b88c02-a4de-4cfa-abbb-b4a2cbbd0861',

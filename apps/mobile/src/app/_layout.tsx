@@ -7,6 +7,7 @@ import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/lib/sentry';
+import { AppUpdateProvider } from '@/features/app-update/update-provider';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';
 import { PreferencesProvider } from '@/features/preferences/preferences-provider';
@@ -101,6 +102,7 @@ const TITLED_SCREENS = [
   ['diagnostics', '诊断信息'],
   ['offline-content', '离线内容'],
   ['changelog', '更新日志'],
+  ['app-update', '检查更新'],
   ['network-status', '网络诊断'],
   ['privacy', '隐私政策'],
   ['notifications', '通知'],
@@ -147,7 +149,7 @@ function RootNavigator() {
   useNotificationNavigation();
 
   return (
-    <>
+    <AppUpdateProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -204,6 +206,6 @@ function RootNavigator() {
         ))}
       </Stack>
       <OfflineBanner />
-    </>
+    </AppUpdateProvider>
   );
 }

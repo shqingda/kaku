@@ -53,6 +53,8 @@ esac
 
 if [[ "$TAG" != "v$VERSION" ]]; then echo "tag 必须是 v$VERSION" >&2; exit 2; fi
 APK_NAME="kaku-${CHANNEL}.apk"
+# Direct APK distribution may download updates; store builds must not request this permission.
+export KAKU_UPDATE_CHANNEL=github
 
 if [[ ! -s "${NOTES_FILE}" ]]; then
   echo "缺少发版说明 ${NOTES_FILE}，请先按 ReSource 格式写好再构建。" >&2

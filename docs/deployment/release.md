@@ -110,3 +110,16 @@ bash scripts/build-split-apks.sh v1.0.9 release --build-only
 - Play 上架必须用 **EAS 云端 `production` 构建 AAB**（`eas build -p android --profile production`），Google 会按设备架构自动分发
 - 不要用本地 APK 上架（debug 签名 + 手动分发不符合要求）
 - 商店素材、隐私政策、数据安全表单见对话记录
+
+## 应用内检查更新
+
+账户 → 设置与本地 → 检查更新。进入页面立即手动检查；正式客户端启动或回到前台时自动检查，最多每 24 小时一次。同一版本自动提醒后 7 天内不再提示；新版本可再次提示。检查失败也遵守自动冷却，手动重试不受限制。开发模式不自动弹更新提醒。
+
+- `scripts/build-split-apks.sh` 为本地 GitHub APK 构建设置 `KAKU_UPDATE_CHANNEL=github`，并仅在此渠道申请 `REQUEST_INSTALL_PACKAGES`。从固定仓库的 latest release 读取正式版本，正式包只匹配 `kaku-release.apk`，debug 包只匹配 `kaku-debug.apk`。缺少匹配资源时显示失败，不拿其他渠道包顶替。
+- 用户确认后才开始下载，显示字节进度比例，可取消；离开更新页取消未完成下载。下载后检查 HTTP 状态和文件大小，再让用户打开系统安装器。系统负责安装权限、包签名和覆盖安装判断；返回应用不代表安装成功。网络失败、无法调用安装器可重试或改用网页。首版不承诺杀进程续传。
+- 增加了 `expo-intent-launcher` 原生依赖，新功能需重新构建客户端。旧开发客户端没有模块时显示网页下载入口，不崩溃。APK 放在缓存目录中的单一专用文件，下一次下载覆盖，不无限积累。
+- 默认 `KAKU_UPDATE_CHANNEL=store`，不申请 APK 安装权限。Google Play 版本的专用更新接入尚未配置，不能把 GitHub 版本当作 Play 上架版本。
+- iOS 正式上架后设置 `KAKU_IOS_APP_STORE_ID`，可用 `KAKU_IOS_STORE_COUNTRY` 指定检查地区（默认 `cn`）。客户端查询 Apple 商店版本，验证 bundle ID 后才显示更新，并打开 App Store 安装；不下载 Android APK。未配置 ID 或当前地区未上架时明确说明，不声称已是最新版。TestFlight 测试包仍通过 TestFlight 更新，没有假造公开 beta 版本查询接口。
+- 原生安装版本取 `expo-application`，不会把 Metro 当前源码版本当成已经安装的整包版本。
+
+24 小时检查 / 7 天提醒是本项目降低打扰的选择，并非行业规定。平台参考：[Android 应用内更新](https://developer.android.com/guide/playcore/in-app-updates)、[Apple 应用更新](https://support.apple.com/en-gb/102629)、[Expo 下载进度](https://docs.expo.dev/versions/latest/sdk/filesystem-legacy/)、[Expo 系统 Intent](https://docs.expo.dev/versions/latest/sdk/intent-launcher/)、[GitHub Releases API](https://docs.github.com/en/rest/releases/releases)。

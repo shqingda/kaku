@@ -110,7 +110,15 @@ export function AccountSettingsMenu() {
       <View style={styles.menuGroup}>
         <AccountMenuRow
           colors={colors}
+          description="查看新版本与下载更新"
+          icon={{ android: 'system_update', ios: 'arrow.down.circle', web: 'system_update' }}
+          label="检查更新"
+          onPress={() => router.push('/app-update')}
+        />
+        <AccountMenuRow
+          colors={colors}
           description="深色、浅色与云端同步"
+          hasDivider
           icon={{
             android: 'cloud',
             ios: 'icloud',
