@@ -3,6 +3,7 @@ import { type ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -31,6 +32,7 @@ export function AccountMenuRow({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={{ busy: loading, disabled: loading }}
       disabled={loading}
       onPress={onPress}
       style={({ pressed }) => [
@@ -78,17 +80,17 @@ export function createMenuGroupStyles(colors: ThemeColors) {
   return StyleSheet.create({
     menuSectionTitle: {
       color: colors.muted,
-      fontSize: 12,
+      ...TYPE.caption,
       fontWeight: '700',
-      marginBottom: 8,
-      marginTop: 22,
-      paddingHorizontal: 4,
+      marginBottom: SPACING.sm,
+      marginTop: SPACING.xl,
+      paddingHorizontal: SPACING.xs,
     },
     menuGroup: {
       backgroundColor: colors.surface,
       borderRadius: 20,
       overflow: 'hidden',
-      paddingHorizontal: 18,
+      paddingHorizontal: SPACING.lg,
     },
   });
 }
@@ -111,22 +113,22 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  menuCopy: { flex: 1, marginLeft: 13 },
-  menuTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-  menuDescription: { color: colors.subtle, fontSize: 11, marginTop: 3 },
+  menuCopy: { flex: 1, marginLeft: SPACING.md },
+  menuTitle: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
+  menuDescription: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
   menuBadge: {
     alignItems: 'center',
     backgroundColor: colors.accent,
     borderRadius: 10,
     justifyContent: 'center',
-    marginRight: 9,
+    marginRight: SPACING.sm,
     minHeight: 20,
     minWidth: 20,
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm,
   },
   menuBadgeText: {
     color: colors.surface,
-    fontSize: 10,
+    ...TYPE.micro,
     fontWeight: '800',
   },
   pressed: { opacity: 0.62 },
