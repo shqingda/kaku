@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CatalogEpisode } from '@/features/catalog/model';
 
@@ -19,7 +19,6 @@ import {
 } from './episode-ranges';
 import {
   isEpisodeAired,
-  episodeAiringLabel,
   todayDateString,
 } from './episode-airing';
 
@@ -163,9 +162,6 @@ export function EpisodeSection({
       </Text>
 
       {!isTrack && layout === 'grid' ? (
-        <Text style={styles.sectionHint}>{tracksWatchProgress ? '✓ 已看　' : ''}• 已放送或今日放送　○ 未放送　? 时间待定</Text>
-      ) : null}
-      {!isTrack && layout === 'grid' ? (
         <View style={styles.episodeGrid}>
           {visibleEpisodeNumbers.map((episodeNumber) => {
             const isWatched =
@@ -175,13 +171,16 @@ export function EpisodeSection({
               episodesByNumber.get(episodeNumber)?.airDate ??
               fallbackAirDates[episodeNumber - 1];
             const isAired = !isWatched && isEpisodeAired(airDate, todayDate);
-            const airing = episodeAiringLabel(airDate, todayDate);
-            const status = isWatched ? '已看' : `${airing}${tracksWatchProgress ? ' · 未看' : ''}`;
-            const marker = isWatched ? '✓' : isAired ? '•' : airing === '未放送' ? '○' : '?';
 
             return (
               <Pressable
-                accessibilityLabel={`第 ${episodeNumber} 集，${status}，点击进入详情`}
+                accessibilityLabel={`第 ${episodeNumber} ${
+                  isTrack ? '曲' : '集'
+                }${
+                  tracksWatchProgress
+                    ? `，${isWatched ? '已看' : '未看'}`
+                    : ''
+                }，点击进入详情`}
                 accessibilityRole="button"
                 key={episodeNumber}
                 onPress={() => onOpenEpisode(episodeNumber)}
@@ -199,7 +198,7 @@ export function EpisodeSection({
                     isAired && styles.airedEpisodeNumber,
                   ]}
                 >
-                  {episodeNumber} {marker}
+                  {episodeNumber}
                 </Text>
               </Pressable>
             );
@@ -215,13 +214,12 @@ export function EpisodeSection({
             const airDate =
               episode?.airDate ?? fallbackAirDates[episodeNumber - 1];
             const isAired = !isWatched && isEpisodeAired(airDate, todayDate);
-            const status = isWatched ? '已看' : `${episodeAiringLabel(airDate, todayDate)}${tracksWatchProgress ? ' · 未看' : ''}`;
 
             return (
               <Pressable
                 accessibilityLabel={`第 ${episodeNumber} ${
                   isTrack ? '曲' : '集'
-                }${isTrack ? '' : `，${status}`}，点击进入详情`}
+                }，点击进入详情`}
                 accessibilityRole="button"
                 key={episodeNumber}
                 onPress={() => onOpenEpisode(episodeNumber)}
@@ -249,14 +247,16 @@ export function EpisodeSection({
                   </Text>
                 </View>
                 <View style={styles.episodeRowMain}>
-                  <Text style={styles.episodeRowTitle}>
+                  <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.episodeRowTitle}>
                     第 {episodeNumber} {isTrack ? '曲' : '集'}
                     {episode?.title ? ` · ${episode.title}` : ''}
                   </Text>
                   <Text style={styles.episodeAirDate}>
                     {isTrack
                       ? episode?.duration || '时长待定'
-                      : `${status}${episodeAiringLabel(airDate, todayDate) === '时间待定' ? '' : ` · ${formatAirDate(airDate)} 放送`}${episode?.duration ? ` · ${episode.duration}` : ''}`}
+                      : `${formatAirDate(
+                          airDate,
+                        )} 放送${episode?.duration ? ` · ${episode.duration}` : ''}`}
                   </Text>
                 </View>
                 <View style={styles.replyCount}>
@@ -293,8 +293,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    minHeight: MIN_TOUCH_SIZE,
-    justifyContent: 'center',
   },
   selectedRange: { backgroundColor: colors.accentSoft },
   rangeText: {
@@ -314,9 +312,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   iconButton: {
     alignItems: 'center',
     borderRadius: 9,
-    minHeight: MIN_TOUCH_SIZE,
+    height: 32,
     justifyContent: 'center',
-    minWidth: MIN_TOUCH_SIZE,
+    width: 36,
   },
   activeLayoutButton: { backgroundColor: colors.surface },
   episodeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.lg },
@@ -326,11 +324,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: 'transparent',
     borderRadius: 12,
     borderWidth: 2,
-    minHeight: MIN_TOUCH_SIZE,
+    height: 44,
     justifyContent: 'center',
-    minWidth: MIN_TOUCH_SIZE,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    width: 44,
   },
   watchedEpisodeCell: { backgroundColor: colors.accent },
   airedEpisodeCell: {
@@ -359,10 +355,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: 'transparent',
     borderRadius: 11,
     borderWidth: 2,
-    minHeight: MIN_TOUCH_SIZE,
+    height: 38,
     justifyContent: 'center',
-    minWidth: MIN_TOUCH_SIZE,
-    paddingHorizontal: SPACING.xs,
+    width: 38,
   },
   episodeRowMain: { flex: 1, marginLeft: SPACING.md },
   episodeRowTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '700' },
