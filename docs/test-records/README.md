@@ -20,3 +20,5 @@
 - [2026-09-29 设备管理与更新检查](./2026-09-29-devices-and-updates.md)
 
 - [2026-09-29 v1.1.12 发布验收](./2026-09-29-release-readiness.md)
+
+- [2026-10-01 iOS 开发客户端闪退修复](./2026-10-01-ios-client-recovery.md)

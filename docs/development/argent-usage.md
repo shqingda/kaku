@@ -54,9 +54,9 @@ debug 包跑会找不到 App。Android 全量入口还没有实跑。
    `adb reverse tcp:8081 tcp:8081`。
 2. **Xcode 27 无独立 Simulator.app**（改为 DeviceHub）。任何工具的
    `openSimulator: true` 都会报「Unable to find application named 'Simulator'」，
-   设备启动与操作本身不受影响。Expo 57 尚未内置 iOS 27 要求的 UIScene
-   生命周期，`apps/mobile/plugins/with-ios-scene-lifecycle.js` 会在 prebuild 时
-   生成单场景入口；上游 Expo 自带支持后插件会自动跳过。
+   设备启动与操作本身不受影响。SDK 57 使用 `expo-build-properties` 的
+   `ios.enableSceneSupport: true` 开启 iOS 27 要求的 UIScene 生命周期，
+   prebuild 会生成官方场景入口。原生依赖更新后必须重建开发客户端。
 3. **Maestro 选择器**（详见 `.maestro/kaku-smoke-steps.yaml` 注释）：
    RN 容器设了 `accessibilityLabel` 后 iOS 无障碍树只暴露容器；展开卡片的
    `text` 是 `'expanded'`；`assertVisible` 不支持 `timeout`，长等待用

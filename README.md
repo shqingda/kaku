@@ -107,10 +107,12 @@ pnpm --filter @kaku/mobile android
 ```
 
 iOS 开发客户端已安装时，日常启动先打开模拟器、运行 `pnpm dev:mobile`，
-再执行 `pnpm --filter @kaku/mobile open:ios`。该命令只打开一次开发链接；
-`expo run:ios` 构建完成后的自动双重启动，在当前 Expo SDK 57 / iOS 27
-模拟器上可能触发原生 `AppContextLost` 崩溃。重新构建后若自动启动闪退，
-不必再次构建，直接运行 `open:ios` 即可。
+再执行 `pnpm --filter @kaku/mobile open:ios`，通过本机 8081 端口连接 Metro。
+SDK 57 已通过 `expo-build-properties` 开启官方 UIScene 生命周期；更新
+原生依赖或该配置后必须重建客户端，否则旧客户端可能出现
+`AppContextLost` 闪退，并使 `simctl openurl` 超时。修改 Expo 插件配置后，
+先执行 `pnpm --filter @kaku/mobile exec expo prebuild --clean --platform ios`
+重新生成 iOS 工程，再构建客户端，并重启正在运行的 Metro。
 
 ### 启动 API
 

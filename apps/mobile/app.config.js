@@ -70,7 +70,7 @@ module.exports = {
       favicon: './assets/images/kaku-icon.png',
     },
     plugins: [
-      './plugins/with-ios-scene-lifecycle',
+      ['expo-build-properties', { ios: { enableSceneSupport: true } }],
       'expo-router',
       'expo-image',
       'expo-font',
