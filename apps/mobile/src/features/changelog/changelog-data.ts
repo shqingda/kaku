@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.13',
+    date: '2026-10-02',
+    notes: [
+      '精简 Android 安装包，移除未使用的相机与扫码依赖。',
+      '整理收藏编辑、条目详情和章节讨论的内部实现，保留现有操作与数据格式。',
+      '完成 iOS 基础、全量及最大字号编辑器回归。',
+    ],
+  },
+  {
     version: '1.1.12',
     date: '2026-09-29',
     notes: [
