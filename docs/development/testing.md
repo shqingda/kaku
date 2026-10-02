@@ -5,7 +5,7 @@ Maestro 管模拟器上的关键路径，argent 会话做人工级别的 UI 验�
 
 CI（`.github/workflows/ci.yml`）在 `main` 和 PR 上跑：Expo 依赖检查、
 expo-doctor、全 workspace 类型检查、`pnpm test`、API 75% / 移动端 92%
-行覆盖、jest 组件测试、iOS/Android JS bundle、官网构建。另有独立 job
+行覆盖、构建/测量脚本检查、jest 组件测试、iOS/Android JS bundle、官网构建。另有独立 job
 跑 HTML 解析回归（`pnpm --filter @kaku/api test:html-parsers`）。
 Maestro 和 argent **不进 CI**。
 
@@ -33,7 +33,7 @@ Maestro 和 argent **不进 CI**。
 流程都在仓库根 `.maestro/`。平台入口持有真实包名，子流程用占位
 `appId`，避免 Maestro 嵌套 `openLink` 丢 `${APP_ID}`。
 
-iOS 全量入口 2026-09-04 已实跑通过。Android 入口文件在，**还没有实跑**
+iOS 全量入口 2026-10-02 已在登录态实跑；本轮专项和环境限制见 [优化验收记录](../test-records/2026-10-02-project-optimization.md)。Android 入口文件在，**还没有实跑**
 （见 `TODO.md`）。同一台设备必须串行，不要并发跑两条 flow。
 
 ### 入口
@@ -45,10 +45,10 @@ iOS 全量入口 2026-09-04 已实跑通过。Android 入口文件在，**还没
 | `pnpm test:smoke:android` | `kaku-smoke-android.yaml` | `com.shqingda.kaku`（release 包） |
 | `pnpm test:smoke:android:all` | `kaku-regression-android.yaml` | 同上 |
 
-iOS 入口会先 `openLink` 重载 dev client，再跑共用步骤。全量入口把冒烟步骤
+iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧首页先满足等待条件；通过启动参数 `EXDevMenuShowFloatingActionButton=NO` 仅在本次进程隐藏 Expo 悬浮工具按钮，防止遮挡表单，不修改持久偏好。验收期间停止源码编辑、依赖安装和 prebuild；热更新会让搜索输入及导航失效。全量入口把冒烟步骤
 和下面各业务 flow 串起来；每条业务 flow 开头用 `reset-home.yaml` 回首页，
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
-都能跑通且不写远端。
+分别保留门控，不写远端。本轮全量使用已有登录态，未执行登出或真实 OAuth；分支存在不代表未登录路径已实跑。
 
 回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
 需 iOS 开发客户端、Metro 和已登录账号；独立冷启动后连续关闭/重开三次，
@@ -59,7 +59,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
 是哪一种包，必要时改 yaml 或装 release APK。
 
-前置：对应平台的 App 已安装；iOS 还要 Metro 在 8081。
+前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。首次安装可运行 `xcrun simctl openurl booted "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`；多个模拟器启动时将 `booted` 换成目标 UDID。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。
 
 ### 覆盖范围（16 项，对应全量入口）
 
@@ -84,7 +84,9 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 | `timeline-smoke.yaml` | 好友动态（登录门控） |
 | `collection-box-signin.yaml` | 收藏盒未登录门控 |
 
-选择器规则写在 `kaku-smoke-steps.yaml` 顶部注释里。
+首页刷新控件结束时会让搜索框移动 60pt，Maestro 偶尔使用旧坐标。`enter-subject-search.yaml` 只对点击/输入准备有限重试，确认清除按钮出现后才提交；`focus-subject-search.yaml` 用同一信号确认已有搜索词进入编辑态。搜索结果与清空断言仍在重试之外。本机 iOS 无障碍树在输入框有光标时仍报告 focused:false，因此不依赖该属性。中文粘贴不能替代输入法组合输入验收。
+
+编辑器专项：已登录时运行 `maestro test .maestro/collection-editor-discard-ios.yaml`，覆盖连续开关、继续编辑、放弃修改与重开复位；`reply-sheet-accessibility-ios.yaml` 覆盖回复弹层重开后的无障碍树。两者均不发送或保存远端内容。`collection-return-ios.yaml` 从验收者已打开、至少有两项条目的收藏列表开始，打开条目前后分别截图，人工比较列表位置；流程断言本身只证明成功返回。
 
 ### 性能复测
 

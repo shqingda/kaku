@@ -115,6 +115,18 @@ app 中的页面入口
 
 代码入口：[作品查询](../apps/mobile/src/features/catalog/use-catalog-subject.ts)、[作品适配器](../apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[请求封装](../apps/mobile/src/infrastructure/bangumi/transport/http-client.ts)。
 
+### 3.3 页面内的职责边界
+
+本轮沿用现有业务目录，不新增通用 Provider 框架：
+
+| 入口 | 负责的内容 | 状态与展示模块 |
+| --- | --- | --- |
+| `collection-box-sheet` | 弹层、区块组合和底部操作 | `use-collection-box-form` 管表单初始化、保存和放弃确认；`collection-box-records` 管进度与评分字段 |
+| `app/subject/[id]` | 路由、加载/错误状态、组合与个人操作 | `subject-detail-links` 管详情入口与按下预取；`subject-discussion-previews` 管延迟挂载后的预览查询；`subject-floating-actions` 管返回/主页/分享 |
+| 章节页面 | 路由、评论列表、回复编辑器和进度操作 | `use-episode-discussion` 管资料/收藏/评论与账号、章节范围内的剧透开关；`episode-details-card` 管章节展示；`use-episode-discussion-scroll` 管测量、恢复与可取消的滚动落点 |
+
+回复定位仍由 `use-reply-navigation` 管，草稿仍走原有 `use-reply-composer` / `use-reply-draft`。章节切换、拖动和卸载会取消排队的滚动落点，原有存储 key、请求取消和失败反馈保留。拆分让职责就近维护，不以总文件数或总行数下降作为收益。
+
 ## 4. 沿着三条用户操作看数据流
 
 ### 4.1 打开一个作品
@@ -248,6 +260,8 @@ bangumi-client.ts  与上游接口或网页交互（有上游依赖的模块）
 store.ts           读写 Kaku 自有数据（需要持久化的模块）
 ```
 
+讨论模块的 `routes.ts` 只登记三组路由：`read-routes.ts` 读取、`create-routes.ts` 新建话题/回复、`reply-mutation-routes.ts` 编辑/删除回复；公共 ID 校验在 `route-params.ts`。原有鉴权、校验、验证码与过期授权的错误映射分别保留，上游访问仍在 `bangumi-client.ts`。
+
 不是每个模块都需要全部文件。收藏主要访问上游，偏好主要访问自己的数据库，职责不同就不强求同一种模板。
 
 部分功能不能只靠上游公开 JSON API 完成，因此后端还有网页解析。JSON 是结构化数据；网页解析则需要从 HTML 标签中提取数据，更容易受上游页面改版影响，所以项目保留了 HTML 解析监测与回归检查。
@@ -276,7 +290,7 @@ store.ts           读写 Kaku 自有数据（需要持久化的模块）
 
 手机端通过 Expo Router 组织作品、单集、收藏、讨论和个人设置等页面。共用字号与间距来自 [design.ts](../apps/mobile/src/constants/design.ts)，交互动画由 Reanimated 和 Gesture Handler 等实现。
 
-单集评论页使用 FlashList，主要作用是复用列表项、减少长列表的渲染负担。当前“滚动到底部”入口隐藏，FlashList 保留。列表性能能力与是否显示某个操作入口是两件独立的事，也不能仅凭使用 FlashList 就推断所有场景没有卡顿。
+单集评论页使用 FlashList，主要作用是复用列表项、减少长列表的渲染负担。滚动方向稳定后提供回到顶部/最新回复入口；远距离跳转仅动画最后两屏，减少动态行高带来的长距离跳动。减少动态效果时直接定位。使用 FlashList 本身不能证明没有卡顿，需在同设备同模式下采样。
 
 官网使用自己的 React 入口与路径分发，提供首页、隐私政策、服务条款和多语言内容，作为静态资源独立部署。手机端的登录 Provider 和业务 Query 缓存不在官网复用。
 

@@ -2,14 +2,14 @@
 
 > 核对日期：2026-09-10
 > 适用：已配置 argent MCP 的 agent 会话 + 本仓库的模拟器开发与测试
-> 本机 Argent：0.24.0（`argent` 在 PATH 上，当前为 pnpm 全局）
+> 历史 Argent：0.24.0（当时由 pnpm 全局安装）；2026-10-02 本会话没有 Argent MCP / CLI。
 
-技能在 `~/.agents/skills/argent-*`。agent 应先读对应技能，再调 MCP 工具。
+历史环境的技能位于 `~/.agents/skills/argent-*`。使用前先确认当前会话实际提供了技能与 MCP；可用时先读对应技能，再调工具。
 不要把某一台模拟器的 UDID 写死进流程：每次先 `list-devices`。
 
-## 已经就绪的部分（不用再做）
+## 历史环境记录（会话开始时复核）
 
-- argent MCP 已挂在本机 agent 环境（`argent mcp`）
+- 先前会话已挂载 argent MCP（`argent mcp`），2026-10-02 当前会话没有暴露 Argent / React profiler 工具，改用 Maestro 和 simctl；安装过不等于本会话可调用。
 - iOS dev client 装在 iPhone 18 Pro（iOS 27.0）模拟器上，bundle id `com.shqingda.kaku.debug`
 - iOS Maestro 全量入口 `.maestro/kaku-regression-ios.yaml` 已在 2026-09-04 实跑通过
 - 视觉验收与性能基线见 `docs/test-records/2026-09-04-ios-ui-profiler.md`
@@ -41,7 +41,7 @@ OAuth 的场景再开 argent 会话，记录追加到 `docs/test-records/`。
 | 构建 | 包名 |
 | --- | --- |
 | 本地 / debug / 无 `EAS_BUILD_PROFILE`（含 iOS、Android dev client） | `com.shqingda.kaku.debug` |
-| GitHub 日常 release APK、EAS `production` | `com.shqingda.kaku` |
+| GitHub 日常 release APK、EAS `production` / `github` | `com.shqingda.kaku` |
 
 `.maestro/kaku-*-ios.yaml` 用 debug 包名。`.maestro/kaku-*-android.yaml`
 目前写的是 `com.shqingda.kaku`（release 包）；用 `expo run:android` 的
@@ -68,4 +68,4 @@ debug 包跑会找不到 App。Android 全量入口还没有实跑。
 5. 某工具报原生模块错误时：若 npm 跳过了 `node-pty` / `tree-sitter` 编译，
    按安装警告补 `allow-scripts` 后重装。
 6. 升级：`npm update -g @swmansion/argent`（无 Homebrew formula）。
-   本机当前是 pnpm 全局的 0.24.0，升级后核对 `argent --version`。
+   历史记录使用 pnpm 全局的 0.24.0，实际版本用 `argent --version` 核对。

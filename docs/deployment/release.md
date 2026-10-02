@@ -1,127 +1,95 @@
-# 发版指南（Release）
+# 构建与发版指南
 
-Kaku Android 有两种发版方式：**本地构建**（推荐，不消耗 EAS 云端额度）和 **EAS 云端构建**（正式上架 Play 用）。
+先选构建入口，再决定是否发布。当前版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准；本轮本地优化包没有发版。构建与体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。
 
-## 快速选择
+## 纯本地构建
 
-| 场景 | 方式 |
-|---|---|
-| 日常迭代发 GitHub 安装包（当前 EAS 额度受限期间） | 本地构建 |
-| 正式上架 Play（AAB，Google 自动按架构分发） | EAS 云端 `production` |
-| 想在 GitHub Actions 里自动构建 + 发布 | EAS 云端 workflow |
-
----
-
-## 方式一：本地构建（推荐日常使用）
-
-**特点**：不消耗 EAS 免费额度（每月有限，约 9/1 重置）。只打 **arm64-v8a**（2021 年后绝大多数手机），debug 签名。产物按渠道命名：
-
-| 渠道 | 命令参数 | 包名 | 安装包 |
-|---|---|---|---|
-| release（默认） | `release` | `com.shqingda.kaku` | `kaku-release.apk` |
-| debug | `debug` | `com.shqingda.kaku.debug` | `kaku-debug.apk` |
-
-### 前置
-
-- 本机已配置 Android 开发环境（`ANDROID_HOME`、JDK 17），之前成功跑过 `expo run:android`
-- `gh` 已登录（`gh auth status`）
-- `apps/mobile/.env` 里有 `EXPO_PUBLIC_SENTRY_DSN`（本地包才能上报崩溃）
-- 先改 `apps/mobile/app.config.js` 的 `version`，再按 [ReSource](https://github.com/kenischu/ReSource/releases) 的条目格式写好 `scripts/release-notes.md`（中文短句、一条一行、写清新增和修复）。安装/覆盖提示可以写在同一文件末尾，App 内更新日志不会收录这些行。
-- 构建脚本会跑 `scripts/sync-changelog.mjs`：若 App 内日志还没有当前版本，就从 `release-notes.md` 自动补上；已经有当前版本则不覆盖手改内容。测试会检查最新一条版本号与 `app.config.js` 一致。
-
-### 命令
+前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 GitHub 登录或发版说明。
 
 ```bash
-# 先改版本和说明并 push。默认 tag 是 v<app 版本>（例如 v1.0.9），打 release 包：
-bash scripts/build-split-apks.sh
-# 等价于
-bash scripts/build-split-apks.sh v1.0.9 release
-
-# 其他渠道（tag 仍用 v 版本号，用第二参数区分渠道）
-bash scripts/build-split-apks.sh v1.0.9 debug
-
-# 纯构建：不改更新日志、不提交、不推送、不创建 Release
-bash scripts/build-android.sh release
-# 旧入口仍兼容
-bash scripts/build-split-apks.sh v1.0.9 release --build-only
-```
-
-第一个参数是 GitHub Release **tag，必须是 `v<app 版本>`**，不要用 `android-1.0.0-n`。留空则用 `v<app.config.js 的 version>`。脚本在上传 APK 前会 `git push origin HEAD:main`。
-
-### 发布入口做了什么
-
-1. 按渠道设置 `EAS_BUILD_PROFILE`（决定 Android 包名和渠道图标）
-2. 从 `.env` 注入 `EXPO_PUBLIC_*`（DSN 内联进 JS bundle，Sentry 本地包可用）
-3. 把 `release-notes.md` 同步进 App 内更新日志（当前版本缺失时写入，必要时自动提交）
-4. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
-5. 通过 SENTRY_DISABLE_AUTO_UPLOAD 禁用本地 source map 上传（保留运行时崩溃上报）
-6. 本地 `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`，复制为 `kaku-<channel>.apk`
-7. `gh release create` 上传该 APK，说明来自 `scripts/release-notes.md`
-
-产物在 `apps/mobile/dist-split/`（已 gitignore）。纯构建入口只执行原生生成和打包，不需要发版说明、不触碰 Git，也不会清空其他候选产物。Python 3 用于输出体积报告。
-
-体积对比先保存同一源码、同一渠道的基线 APK，再构建候选：
-
-```bash
+# 默认 GitHub 渠道、正式包名，单一 arm64-v8a APK
+pnpm build:android
+# 使用 debug 包名和图标；仍是可独立运行的 Release 构建，不依赖 Metro
+bash scripts/build-android.sh debug
+# 独立原生裁剪候选：R8 + 资源裁剪，默认不启用
 bash scripts/build-android.sh release --optimized
-python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized.apk --baseline /path/to/baseline.apk
-# 加 --json 输出带 SHA-256、分类字节数和变化比例的报告
+# 兼容旧入口：tag 要与当前 app 版本相同
+bash scripts/build-split-apks.sh v1.1.12 release --build-only
 ```
 
-`--optimized` 显式设置 `KAKU_OPTIMIZE_NATIVE=1`；候选名带 `-optimized`，不覆盖默认包。候选完成 Android 运行验收前不作为默认发布配置，发布入口拒绝携带该优化环境开关。APK 分类按 ZIP 压缩后大小统计，额外单列 ZIP/签名/对齐开销，不是安装后占用；比较时记录相同 ABI、签名、工具版本和源码范围。
+| 渠道 | 包名 | `apps/mobile/dist-split/` 产物 |
+| --- | --- | --- |
+| release | `com.shqingda.kaku` | `kaku-release.apk` |
+| debug | `com.shqingda.kaku.debug` | `kaku-debug.apk` |
+| release + `--optimized` | `com.shqingda.kaku` | `kaku-release-optimized.apk` |
 
-### 注意事项
+纯构建只生成原生工程、打包和报告体积，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
 
-- **签名**：本地产物用 debug 签名，与 EAS 签名的旧包不同——**签名不一致时不能直接覆盖；同包名、同签名可覆盖安装**（Release 说明已注明）
-- **架构**：只发 arm64-v8a。32 位机和 x86 模拟器不再提供安装包
-- ABI 控制用的是 RN 的 `-PreactNativeArchitectures=<abi>` 参数（Expo SDK 57 已移除 `android.abiFilters` / `expo-build-properties` 的 ABI 支持，不要再用那些配置）
-- 本地产物不上传 Sentry source map（堆栈是混淆/压缩的），崩溃会上报但定位不如 EAS 包精确
-- Clash 代理会卡死 `git push` / `gh release`：执行前 `unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
+### 测量与裁剪
 
----
+先保存相同工具版本、ABI、签名、渠道的默认包，再构建候选。比较源码范围也要记录，不能把依赖升级或不同 ABI 当作优化收益。
 
-## 方式二：EAS 云端构建（正式 / 上架）
+```bash
+cp apps/mobile/dist-split/kaku-release.apk /tmp/kaku-baseline.apk
+bash scripts/build-android.sh release --optimized
+python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized.apk --baseline /tmp/kaku-baseline.apk
+# 添加 --json 得到 SHA-256、分类字节数和变化比例
+```
 
-**特点**：GitHub Actions 全自动、EAS 签名（与正式版一致）、Sentry source map 自动上传。依赖 EAS 免费额度（每月有限，用完后需等重置或升级）。
+报告按 ZIP 压缩后大小分类为原生库、DEX、JS、资源和其他，单列 ZIP/签名/对齐开销；它不是安装后的磁盘占用。仓库资产清理另记，不合并到 APK 收益。
 
-### 前置
+`--optimized` 通过 Expo 配置源显式打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。Android 运行验收完成前，不作为默认发布配置；本地发布入口拒绝 `KAKU_OPTIMIZE_NATIVE=1`。候选生成后，直接使用忽略的 `android/` 工程会沿用其配置；下一次应从纯构建入口重新生成所需配置。
 
-- GitHub repo Secret：`EXPO_TOKEN`（在 https://expo.dev/settings/access-tokens 创建）
-- 网络通畅（**本地 git push / EAS 上传前需 `unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`**，Clash 代理会卡死连接）
+## 本地构建并发布 GitHub Release
 
-### 命令（GitHub Actions）
+这是会提交日志、推送并发布的显式入口。执行前需要用户明确授权推送/发版、`gh` 登录和正确的发布分支。
 
-1. 打开 https://github.com/shqingda/kaku/actions → **Release Android APK**
-2. **Run workflow**：
-   - `channel`：固定 `production`（`kaku-release.apk`，签名用于上架）
-   - `tag`：必须是 `v<app 版本>`，如 `v1.0.9`（留空自动生成 `android-<channel>-<run_number>`，日常本地发版不要用这种）
-3. 等待 10–20 分钟（有缓存更快），完成后 GitHub Releases 出现 APK
+1. 修改 Expo 配置的版本，编写 `scripts/release-notes.md`，检查完整差异并通过回归。
+2. 卸载代理环境变量，运行发布入口：
 
-### 流程
+```bash
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+bash scripts/build-split-apks.sh                 # tag 自动取 v<app 版本>
+# 或显式指定匹配当前版本的 tag 与包名渠道
+bash scripts/build-split-apks.sh v1.1.12 release
+```
 
-1. `eas build --profile <channel> --platform android`（EAS 云端构建）
-2. 轮询构建状态 → 下载 APK 并按渠道重命名
-3. 创建 GitHub Release
+脚本先同步 App 内更新日志（已有版本不覆盖手改内容，缺失时写入并提交），再调用纯构建，执行 `git push origin HEAD:main`，最后创建 GitHub Release 并上传 APK。发版说明中的安装提示不会收入 App 内更新日志。
 
-### 注意事项
+- 本地包使用 debug 签名，保持现有方式；同包名、同签名可以覆盖，不同签名不能直接覆盖。不要把 EAS keystore 与本地 debug 证书当成同一签名。
+- 只构建 arm64-v8a，不支持 32 位机和 x86 模拟器；ABI 参数是 `-PreactNativeArchitectures=arm64-v8a`。
+- 本地不上传 source map，压缩堆栈定位能力受限。
+- 构建完成只证明可编译，发布前仍要核对签名、版本、权限并完成设备安装/运行验收。
 
-- **额度**：EAS 免费计划每月 Android 构建次数有限，用完后 workflow 会报错（"has used its Android builds from the Free plan"）。重置后可用，或升级付费
-- **签名**：EAS 构建用 EAS keystore（云端保存），与本地 debug 签名不同——两者不能互相覆盖安装
-- Sentry：`SENTRY_ORG` 已设置，source map 自动上传；`EXPO_PUBLIC_SENTRY_DSN`、`SENTRY_AUTH_TOKEN` 已配在 EAS env
+## EAS 云端构建
 
----
+[eas.json](../../apps/mobile/eas.json) 分开维护三种用途。云端额度和凭据状态需要在实际使用时查询，本轮没有触发云端构建或发布。
 
-## 版本号
+| Profile | 用途 | Android 产物 |
+| --- | --- | --- |
+| `development` | 开发客户端、Metro | 内部分发开发包，debug 包名 |
+| `production` | Play / App Store 正式构建 | AAB，正式包名 |
+| `github` | GitHub 安装包 | APK，正式包名，继承 production 签名配置；启用 GitHub 更新权限，关闭原生裁剪 |
 
-- 当前 app 版本写在 `apps/mobile/app.config.js`，发版时先改这里
-- EAS `production` profile 开了 `autoIncrement`（构建号自动 +1）
-- 本地脚本默认 tag/标题：`v<app 版本>`（与 `app.config.js` 一致，例如 `v1.0.9`）。不要用 `android-1.0.0-<n>`
+EAS 默认 Android 产物为 AAB；直接安装需显式 `android.buildType: apk`，见 [Expo APK 指南](https://docs.expo.dev/build-reference/apk/)。不能只把 AAB 改名为 `.apk`。
 
-## 上架（Play）
+```bash
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+pnpm --filter @kaku/mobile build:dev
+pnpm --filter @kaku/mobile build:production
+pnpm --filter @kaku/mobile build:list
+# 仅构建 GitHub APK，不发布：
+cd apps/mobile
+pnpm dlx eas-cli@22.2.0 build --platform android --profile github
+```
 
-- Play 上架必须用 **EAS 云端 `production` 构建 AAB**（`eas build -p android --profile production`），Google 会按设备架构自动分发
-- 不要用本地 APK 上架（debug 签名 + 手动分发不符合要求）
-- 商店素材、隐私政策、数据安全表单见对话记录
+旧 `build:preview` 指向不存在的 profile，已移除；查询构建记录统一用 `build:list`。
+
+云端发布从 [Release Android APK workflow](../../.github/workflows/release-apk.yml) 手动触发，需要仓库 Secret `EXPO_TOKEN`。选择 `github`，tag 留空使用当前 `v<app 版本>`，显式 tag 必须匹配版本。流程构建、轮询、下载后检查 APK 结构，才创建 Release；标题也从当前版本生成。此流程同样需要明确的发布授权。
+
+EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号遵循本地生成配置。本轮没有更换包名、证书或提升版本。
+
+Play 上架使用 `production` AAB 和正式签名，不能上传本地 debug 签名 APK。商店账号、提交凭据与设备验收仍是独立后续工作；素材见 [商店清单](../store/listing.md)。Sentry source map 上传还依赖 EAS 环境中的 DSN、组织和认证配置，不能仅凭构建 profile 宣称已经可用。
 
 ## 应用内检查更新
 

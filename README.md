@@ -14,7 +14,7 @@ Native 与 TypeScript 构建。
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
 还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases
-（本地 debug 签名；同包名、同签名可覆盖安装，与旧 EAS 签名不同则不能直接覆盖）。发版见 `docs/deployment/release.md`。
+（本地 debug 签名；同包名、同签名可覆盖安装，与旧 EAS 签名不同则不能直接覆盖）。构建与发版见 [发版指南](docs/deployment/release.md)。
 
 ## 主要功能
 
@@ -147,6 +147,7 @@ pnpm --filter @kaku/api test:coverage      # API 行覆盖门禁（75%）
 pnpm --filter @kaku/mobile test:ui         # 组件与 hook 测试（jest-expo + RNTL）
 pnpm test:smoke                            # Maestro iOS 冒烟（需模拟器，本地跑）
 pnpm test:smoke:all                        # Maestro iOS 全量入口
+pnpm test:tooling                          # 构建隔离、APK 体积和性能预算工具
 pnpm build:web
 ```
 

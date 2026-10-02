@@ -18,6 +18,7 @@
 | 渐进优化与架构整理 | [2026-10-02 优化计划](plans/2026-10-02-project-optimization-plan.md) | 验收、文档、包体积、代码整理与性能证据 |
 | 规划用户体验改进 | [2026-09-29 体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | 本轮及三项保留候选已实现；章节状态和话题续接已撤回，设备验收见记录 |
 | 回看阶段改进过程 | [2026-09-11 改进计划](plans/2026-09-11-improvement-plan.md) | 当时的计划、决策与执行记录 |
+| 本轮优化结果与包体对比 | [2026-10-02 优化验收](test-records/2026-10-02-project-optimization.md) | 同配置包体、模块职责、回归和设备边界 |
 | 查看已记录的验收结果 | [测试记录](test-records/README.md) | 带日期的回归与性能基线 |
 | 修改 Bangumi 接入层 | [适配层说明](../apps/mobile/src/infrastructure/bangumi/README.md) | 与源码放在一起的模块约定 |
 | 查看协作规则 | [AGENTS](../AGENTS.md) | 修改、验证、提交与推送约定 |

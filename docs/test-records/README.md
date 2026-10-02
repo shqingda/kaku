@@ -1,6 +1,6 @@
 # 测试记录
 
-只保留仍被引用的基线。怎么跑测试看 `docs/development/testing.md`。发版结果看 GitHub Releases。
+只保留仍被引用的基线。怎么跑测试看 [测试指南](../development/testing.md)。发版结果看 GitHub Releases。
 
 - [2026-09-04 Maestro 全量回归：16 条 iOS 流程](./2026-09-04-maestro-regression.md)
 - [2026-09-04 iOS UI 验收与性能基线](./2026-09-04-ios-ui-profiler.md)
@@ -22,3 +22,5 @@
 - [2026-09-29 v1.1.12 发布验收](./2026-09-29-release-readiness.md)
 
 - [2026-10-01 iOS 开发客户端闪退修复](./2026-10-01-ios-client-recovery.md)
+
+- [2026-10-02 项目优化、APK 体积与验收](./2026-10-02-project-optimization.md)
