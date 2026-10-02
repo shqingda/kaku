@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Generate brightened Kaku icons and Chrome-style channel badges.
 
-Requires Pillow. The committed PNG files are the build inputs; this script is
-kept so the color correction and channel treatment stay reproducible.
+Requires Pillow. Original artwork and generated PNGs are tracked in Git;
+no duplicate archive is needed. Only the configured production/debug channels
+are generated, keeping the color correction and channel treatment reproducible.
 """
 
 from __future__ import annotations
 
-import hashlib
-import shutil
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFont
@@ -17,7 +16,6 @@ from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "assets" / "images"
 OUTPUT = IMAGES / "app-icons"
-LEGACY = OUTPUT / "legacy"
 SIZE = 1024
 SCALE = 4
 
@@ -30,8 +28,6 @@ ANDROID_BADGE_LEFT_PADDING = 44
 CHANNELS = {
     "production": None,
     "debug": "DEBUG",
-    "dev": "DEV",
-    "preview": "PREVIEW",
 }
 
 
@@ -52,16 +48,6 @@ def font(size: int) -> ImageFont.FreeTypeFont:
                 selected.set_variation_by_name("Medium")
             return selected
     raise FileNotFoundError("No supported display font was found")
-
-
-def preserve_legacy_assets() -> None:
-    LEGACY.mkdir(parents=True, exist_ok=True)
-    for filename in ("kaku-icon.png", "kaku-mark.png", "kaku-mark-safe.png"):
-        source = IMAGES / filename
-        digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
-        target = LEGACY / f"{source.stem}-{digest}{source.suffix}"
-        if not target.exists():
-            shutil.copyfile(source, target)
 
 
 def brighten_pink(image: Image.Image) -> Image.Image:
@@ -194,7 +180,6 @@ def make_android_monochrome(channel: str) -> None:
 
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    preserve_legacy_assets()
     for channel in CHANNELS:
         make_ios_icons(channel)
         make_android_foreground(channel)
