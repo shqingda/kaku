@@ -1,5 +1,6 @@
 // 间距阶梯：一致的呼吸感。页面级区块间距优先取 xl/xxl，卡片内取 md/lg。
 export const SPACING = {
+  none: 0,
   xs: 4,
   sm: 8,
   md: 12,

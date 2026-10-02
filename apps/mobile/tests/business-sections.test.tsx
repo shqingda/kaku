@@ -52,3 +52,23 @@ test('collection edits reach save and a dirty close requires discard', async () 
     expect(alert).toHaveBeenCalledWith('放弃未保存的修改？', expect.any(String), expect.any(Array));
   } finally { alert.mockRestore(); }
 });
+
+test('collection saving preserves input until a confirmed item update or reopening', async () => {
+  const props = { item, visible: true, isSaving: false, supportsProgress: true, onSave: jest.fn(), onClose: jest.fn(), onRemove: jest.fn() };
+  const view = await render(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
+  await fireEvent.changeText(screen.getByLabelText('吐槽'), '等待保存');
+  await fireEvent.changeText(screen.getByLabelText('已看集数'), '3');
+  await fireEvent.press(screen.getByLabelText('保存收藏'));
+  expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({ comment: '等待保存', watchedCount: 3 }));
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} isSaving /></ThemeProvider>);
+  await fireEvent.press(screen.getByLabelText('保存收藏'));
+  expect(props.onSave).toHaveBeenCalledTimes(1);
+  // Parent reports a failed request: original item remains, local input survives.
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
+  expect(screen.getByLabelText('吐槽').props.value).toBe('等待保存');
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} visible={false} /></ThemeProvider>);
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
+  expect(screen.getByLabelText('吐槽').props.value).toBe('');
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} item={{ ...item, comment: '已保存' }} /></ThemeProvider>);
+  expect(screen.getByLabelText('吐槽').props.value).toBe('已保存');
+});

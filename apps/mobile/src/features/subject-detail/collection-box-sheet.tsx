@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,23 +14,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { getCollectionStatusLabel } from '@/features/catalog/subject-types';
-import { RatingStars } from '@/features/reviews/rating-stars';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { useTheme } from '@/features/theme/theme-provider';
 import type {
   CollectionStatus,
   WatchingItem,
 } from '@/features/watching/model';
-import { canRateCollectionStatus } from '@/features/watching/progress';
 
-import {
-  collectionBoxDraftFromForm,
-  collectionBoxSessionFromItem,
-  collectionInactiveNotice,
-  isCollectionBoxFormDirty,
-  type CollectionBoxDraft,
-  type CollectionBoxForm,
-} from './collection-box-draft';
+import type { CollectionBoxDraft } from './collection-box-draft';
+import { SPACING, TYPE, HIT_SLOP } from '@/constants/design';
+import { CollectionBoxRecords } from './collection-box-records';
+import { useCollectionBoxForm } from './use-collection-box-form';
 import { playSelectionHaptic } from '@/lib/haptics';
 
 const STATUS_OPTIONS: CollectionStatus[] = [
@@ -41,8 +34,6 @@ const STATUS_OPTIONS: CollectionStatus[] = [
   'onHold',
   'dropped',
 ];
-
-const RATING_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 
 export function CollectionBoxSheet({
   isSaving,
@@ -65,87 +56,9 @@ export function CollectionBoxSheet({
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const contentScrollRef = useRef<ScrollView>(null);
-  const [session, setSession] = useState(() =>
-    collectionBoxSessionFromItem(item),
-  );
-  const { baseline, form } = session;
-  const {
-    comment,
-    isPrivate,
-    rating,
-    readChapterCount,
-    readVolumeCount,
-    status,
-    tagDraft,
-    tags,
-    watchedCount,
-  } = form;
-  const subjectType = item.type ?? 2;
-  const canEditPersonalData = canRateCollectionStatus(status);
-  const supportsReadingProgress =
-    item.readChapterCount !== undefined &&
-    item.readVolumeCount !== undefined;
-  const showsProgress =
-    canEditPersonalData && supportsProgress && item.totalEpisodes > 0;
-  const showsReadingProgress = canEditPersonalData && supportsReadingProgress;
-  const progressDigits = String(item.totalEpisodes).length;
-  const progressTotalWidth = 22 + progressDigits * 10;
-  const isDirty = isCollectionBoxFormDirty(form, baseline);
-
-  function patchForm(patch: Partial<CollectionBoxForm>) {
-    setSession((current) => ({
-      ...current,
-      form: { ...current.form, ...patch },
-    }));
-  }
-
-  function requestClose() {
-    if (isDirty) {
-      Alert.alert(
-        '放弃未保存的修改？',
-        '收藏盒里的改动还没有保存，关闭后不会保留。',
-        [
-          { style: 'cancel', text: '继续编辑' },
-          { style: 'destructive', text: '放弃修改', onPress: onClose },
-        ],
-      );
-      return;
-    }
-    onClose();
-  }
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    setSession(collectionBoxSessionFromItem(item));
-  }, [
-    visible,
-    item.collectionStatus,
-    item.rating,
-    item.comment,
-    item.isPrivate,
-    item.readChapterCount,
-    item.readVolumeCount,
-    item.tags,
-    item.watchedEpisodeNumbers.length,
-  ]);
-
-  function save() {
-    onSave(collectionBoxDraftFromForm(form, item, showsProgress));
-  }
-
-  function addTag() {
-    const nextTag = tagDraft.trim();
-
-    if (!nextTag || tags.includes(nextTag)) {
-      patchForm({ tagDraft: '' });
-      return;
-    }
-
-    patchForm({ tagDraft: '', tags: [...tags, nextTag] });
-  }
+  const editor = useCollectionBoxForm({ item, visible, supportsProgress, onClose, onSave });
+  const { form, patchForm, requestClose, save, addTag, subjectType } = editor;
+  const { comment, isPrivate, status, tagDraft, tags } = form;
 
   return (
     <AppSheet
@@ -157,7 +70,7 @@ export function CollectionBoxSheet({
           <Pressable
             accessibilityLabel="关闭收藏盒"
             accessibilityRole="button"
-            hitSlop={8}
+            hitSlop={HIT_SLOP}
             onPress={requestClose}
             style={({ pressed }) => [
               styles.closeButton,
@@ -183,7 +96,7 @@ export function CollectionBoxSheet({
       <View
         style={{
           flexShrink: 1,
-          paddingBottom: Math.max(insets.bottom, 18),
+          paddingBottom: Math.max(insets.bottom, SPACING.lg),
         }}
       >
         <ScrollView
@@ -254,159 +167,7 @@ export function CollectionBoxSheet({
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>个人记录</Text>
-            <View style={styles.records}>
-              {showsProgress ? (
-                <>
-                  <View style={styles.recordRow}>
-                    <Text style={styles.recordTitle}>观看进度</Text>
-                    <View style={styles.progressField}>
-                      <View style={styles.progressControl}>
-                        <TextInput
-                          accessibilityLabel="已看集数"
-                          keyboardType="number-pad"
-                          onChangeText={(value) =>
-                            patchForm({
-                              watchedCount: value.replace(/\D/g, ''),
-                            })
-                          }
-                          selectTextOnFocus
-                          style={styles.progressInput}
-                          value={watchedCount}
-                        />
-                      </View>
-                      <TextInput
-                        accessibilityElementsHidden
-                        editable={false}
-                        importantForAccessibility="no"
-                        style={[
-                          styles.progressTotal,
-                          { width: progressTotalWidth },
-                        ]}
-                        value={`/ ${item.totalEpisodes}`}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.recordDivider} />
-                </>
-              ) : null}
-
-              {showsReadingProgress ? (
-                <>
-                  <View style={styles.recordRow}>
-                    <Text style={styles.recordTitle}>阅读进度</Text>
-                    <View style={styles.readingFields}>
-                      <View style={styles.readingField}>
-                        <TextInput
-                          accessibilityLabel="已读章节"
-                          keyboardType="number-pad"
-                          onChangeText={(value) =>
-                            patchForm({
-                              readChapterCount: value.replace(/\D/g, ''),
-                            })
-                          }
-                          selectTextOnFocus
-                          style={styles.readingInput}
-                          value={readChapterCount}
-                        />
-                        <Text style={styles.readingUnit}>章</Text>
-                      </View>
-                      <View style={styles.readingField}>
-                        <TextInput
-                          accessibilityLabel="已读卷数"
-                          keyboardType="number-pad"
-                          onChangeText={(value) =>
-                            patchForm({
-                              readVolumeCount: value.replace(/\D/g, ''),
-                            })
-                          }
-                          selectTextOnFocus
-                          style={styles.readingInput}
-                          value={readVolumeCount}
-                        />
-                        <Text style={styles.readingUnit}>卷</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <View style={styles.recordDivider} />
-                </>
-              ) : null}
-
-              {canEditPersonalData ? (
-                <View style={styles.ratingRecord}>
-                  <View style={styles.ratingHeading}>
-                    <Text style={styles.recordTitle}>我的评分</Text>
-                    {rating ? (
-                      <View style={styles.currentRating}>
-                        <RatingStars rating={rating} size={12} />
-                        <Text style={styles.currentRatingText}>
-                          {rating} 分
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.unsetText}>未评分</Text>
-                    )}
-                  </View>
-                  <View style={styles.ratingOptions}>
-                    {RATING_OPTIONS.map((option) => {
-                      const isSelected = rating === option;
-
-                      return (
-                        <Pressable
-                          accessibilityLabel={`${option} 分`}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: isSelected }}
-                          key={option}
-                          onPress={() => {
-                            playSelectionHaptic();
-                            patchForm({
-                              rating: isSelected ? undefined : option,
-                            });
-                          }}
-                          style={({ pressed }) => [
-                            styles.ratingOption,
-                            isSelected && styles.selectedRatingOption,
-                            pressed && styles.pressed,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.ratingOptionText,
-                              isSelected &&
-                                styles.selectedRatingOptionText,
-                            ]}
-                          >
-                            {option}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.inactiveNotice}>
-                  <SymbolView
-                    name={{
-                      android: 'info',
-                      ios: 'info.circle',
-                      web: 'info',
-                    }}
-                    size={15}
-                    tintColor={colors.subtle}
-                  />
-                  <Text style={styles.inactiveNoticeText}>
-                    {collectionInactiveNotice(
-                      status,
-                      subjectType,
-                      supportsProgress,
-                      supportsReadingProgress,
-                    )}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
+          <CollectionBoxRecords editor={editor} totalEpisodes={item.totalEpisodes} supportsProgress={supportsProgress} />
 
           {item.comment !== undefined ? (
             <View style={styles.section}>
@@ -442,7 +203,7 @@ export function CollectionBoxSheet({
                     <Pressable
                       accessibilityLabel={`删除标签 ${tag}`}
                       accessibilityRole="button"
-                      hitSlop={6}
+                      hitSlop={HIT_SLOP}
                       onPress={() =>
                         patchForm({
                           tags: tags.filter(
@@ -557,7 +318,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  title: { color: colors.ink, fontSize: 20, fontWeight: '800' },
+  title: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
   closeButton: {
     alignItems: 'center',
     backgroundColor: colors.surfaceSoft,
@@ -566,19 +327,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 32,
   },
-  content: { paddingBottom: 12, paddingTop: 8 },
-  section: { marginTop: 16 },
+  content: { paddingBottom: SPACING.md, paddingTop: SPACING.sm },
+  section: { marginTop: SPACING.lg },
   sectionLabel: {
     color: colors.muted,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginBottom: 8,
-    marginLeft: 4,
+    marginBottom: SPACING.sm,
+    marginLeft: SPACING.xs,
   },
   statusOptions: {
     backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
-    padding: 4,
+    padding: SPACING.xs,
   },
   statusOption: {
     alignItems: 'center',
@@ -586,10 +347,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
   },
   selectedStatusOption: { backgroundColor: colors.surface },
-  statusText: { color: colors.ink, fontSize: 14, fontWeight: '600' },
+  statusText: { color: colors.ink, ...TYPE.body, fontWeight: '600' },
   selectedStatusText: { color: colors.accent, fontWeight: '800' },
   selectionIndicator: {
     alignItems: 'center',
@@ -604,159 +365,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
-  records: {
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: 16,
-    padding: 14,
-  },
-  recordRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  recordTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
-  recordDivider: {
-    backgroundColor: colors.divider,
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 14,
-  },
-  progressField: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  progressControl: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    height: 32,
-    justifyContent: 'center',
-    width: 46,
-  },
-  progressInput: {
-    color: colors.accent,
-    fontSize: 15,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-    height: 32,
-    includeFontPadding: false,
-    lineHeight: 20,
-    padding: 0,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    width: 46,
-  },
-  progressTotal: {
-    color: colors.muted,
-    fontSize: 15,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-    height: 32,
-    includeFontPadding: false,
-    lineHeight: 20,
-    padding: 0,
-    textAlign: 'left',
-    textAlignVertical: 'center',
-  },
-  readingFields: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  readingField: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 5,
-  },
-  readingInput: {
-    backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
-    borderRadius: 8,
-    borderWidth: 1,
-    color: colors.accent,
-    fontSize: 15,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-    height: 32,
-    includeFontPadding: false,
-    lineHeight: 20,
-    padding: 0,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    width: 48,
-  },
-  readingUnit: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-  ratingRecord: { gap: 12 },
-  ratingHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  currentRating: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  currentRatingText: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  unsetText: {
-    color: colors.subtle,
-    fontSize: 11,
-  },
-  ratingOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  ratingOption: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: 'transparent',
-    borderRadius: 10,
-    borderWidth: 1,
-    flexBasis: '17%',
-    flexGrow: 1,
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  selectedRatingOption: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  ratingOptionText: {
-    color: colors.muted,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-  },
-  selectedRatingOptionText: { color: colors.accent, fontWeight: '800' },
-  inactiveNotice: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    minHeight: 46,
-    paddingHorizontal: 2,
-  },
-  inactiveNoticeText: {
-    color: colors.subtle,
-    fontSize: 12,
-    lineHeight: 18,
-  },
   commentInput: {
     backgroundColor: colors.surfaceSoft,
     borderRadius: 16,
     color: colors.ink,
-    fontSize: 14,
-    lineHeight: 20,
+    ...TYPE.body,
     minHeight: 92,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   tagsEditor: {
     alignItems: 'center',
@@ -764,34 +380,34 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 16,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.sm,
     minHeight: 52,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   tagChip: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 12,
     flexDirection: 'row',
-    gap: 5,
+    gap: SPACING.xs,
     height: 30,
     maxWidth: '100%',
-    paddingHorizontal: 9,
+    paddingHorizontal: SPACING.sm,
   },
   tagText: {
     color: colors.ink,
     flexShrink: 1,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
   },
   tagInput: {
     color: colors.ink,
     flexGrow: 1,
-    fontSize: 13,
+    ...TYPE.caption,
     height: 30,
     minWidth: 120,
-    padding: 0,
+    padding: SPACING.none,
   },
   privacyRow: {
     alignItems: 'center',
@@ -800,21 +416,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 64,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  privacyCopy: { flex: 1, gap: 4, paddingRight: 16 },
-  privacyTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  privacyCopy: { flex: 1, gap: SPACING.xs, paddingRight: SPACING.lg },
+  privacyTitle: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
   privacyDescription: {
     color: colors.subtle,
-    fontSize: 11,
-    lineHeight: 16,
+    ...TYPE.micro,
   },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
-    paddingTop: 10,
+    gap: SPACING.md,
+    paddingTop: SPACING.md,
   },
   footerButton: {
     alignItems: 'center',
@@ -824,9 +439,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     minHeight: 48,
   },
   removeButton: { backgroundColor: colors.accentSoft },
-  removeText: { color: colors.accent, fontSize: 14, fontWeight: '800' },
+  removeText: { color: colors.accent, ...TYPE.body, fontWeight: '800' },
   saveButton: { backgroundColor: colors.accent },
-  saveText: { color: colors.surface, fontSize: 15, fontWeight: '800' },
+  saveText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   disabledButton: { opacity: 0.46 },
   pressed: { opacity: 0.58 },
 });
