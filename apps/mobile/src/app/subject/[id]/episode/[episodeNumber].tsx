@@ -1,10 +1,9 @@
-import { useSpoilerPreference } from '@/features/preferences/spoiler-preference';
-import { shouldHideEpisodeDiscussion } from '@/features/discussions/spoiler-policy';
+import { EpisodeDetailsCard } from '@/features/discussions/episode-details-card';
+import { useEpisodeDiscussion } from '@/features/discussions/use-episode-discussion';
+import { useEpisodeDiscussionScroll } from '@/features/discussions/use-episode-discussion-scroll';
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   Platform,
@@ -13,7 +12,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
@@ -21,40 +19,22 @@ import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
-import { supportsWatchProgress } from '@/features/catalog/subject-types';
-import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
-import {
-  usePersonalCollection,
-  useSavePersonalCollection,
-} from '@/features/collections/use-personal-collection';
 import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { EpisodeScrollActionButton } from '@/features/discussions/episode-scroll-action-button';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
-import { useBangumiEpisodeComments } from '@/features/discussions/use-bangumi-discussions';
 import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
-import { useEpisodeCommentScrollPosition } from '@/features/discussions/use-episode-comment-scroll-position';
 import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic, playSelectionHaptic, playWarningHaptic } from '@/lib/haptics';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
-import { useScrollDirectionAction } from '@/features/shared/use-scroll-direction-action';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
-
-function formatAirDate(date?: string) {
-  return date ? date.replaceAll('-', '.') : '放送时间待定';
-}
-
-const ANDROID_SCROLL_DIRECTION_OPTIONS = {
-  distanceThreshold: SPACING.xxl + SPACING.md,
-  settleMs: 320,
-};
 
 export default function EpisodeScreen() {
   const colors = useTheme();
@@ -70,190 +50,27 @@ export default function EpisodeScreen() {
   const parsedEpisodeNumber = parsePositiveIntegerRouteParam(episodeParam);
   const subjectId = parsedSubjectId ?? 0;
   const episodeNumber = parsedEpisodeNumber ?? 0;
-  const catalogQuery = useCatalogSubject(subjectId);
-  const collectionQuery = usePersonalCollection(subjectId);
-  const saveCollection = useSavePersonalCollection(subjectId);
-  const catalogSubject = catalogQuery.data;
-  const personalCollection = collectionQuery.data;
-  const subjectType = catalogSubject?.type ?? 2;
-  const isTrack = subjectType === 3;
-  const tracksWatchProgress = supportsWatchProgress(subjectType);
-  const totalEpisodes = catalogSubject?.totalEpisodes ?? 0;
-  const isValidEpisode =
-    Number.isInteger(episodeNumber) &&
-    episodeNumber >= 1 &&
-    episodeNumber <= totalEpisodes;
-  const catalogEpisode = catalogSubject?.episodes.find(
-    (episode) => episode.number === episodeNumber,
-  );
-  const spoiler = useSpoilerPreference();
-  const discussionScope = `${session?.user.id ?? 'guest'}:${subjectId}:${episodeNumber}`;
-  const [reveal, setReveal] = useState({ scope: discussionScope, visible: false });
-  if (reveal.scope !== discussionScope) setReveal({ scope: discussionScope, visible: false });
-  const hiddenDiscussion = shouldHideEpisodeDiscussion({
-    enabled: spoiler.enabled,
-    supportsProgress: tracksWatchProgress,
-    watched: Boolean(session && collectionQuery.isSuccess && personalCollection?.watchedEpisodeNumbers.includes(episodeNumber)),
-    revealed: reveal.scope === discussionScope && reveal.visible,
-  });
-  const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id, !hiddenDiscussion);
+  const {
+    catalogQuery, collectionQuery, saveCollection, commentsQuery,
+    catalogSubject, catalogEpisode, personalCollection,
+    isTrack, tracksWatchProgress, isValidEpisode, episodeUnit,
+    previousEpisode, nextEpisode, hiddenDiscussion, replies, revealDiscussion,
+  } = useEpisodeDiscussion(subjectId, episodeNumber, session?.user.id);
   const { remove: deleteReply } = useDiscussionReply({
     id: catalogEpisode?.id ?? 0,
     kind: 'episode',
   });
-  const replies = hiddenDiscussion ? [] : commentsQuery.data ?? [];
   const replyNavigation = useReplyNavigation(replies);
-  const scrollPosition = useEpisodeCommentScrollPosition(
-    catalogEpisode?.id,
-    replyNavigation.listRef,
-  );
-  const {
-    action: scrollAction,
-    begin: beginScrollAction,
-    dismiss: dismissScrollAction,
-    end: endScrollAction,
-    handleScroll: handleScrollAction,
-  } = useScrollDirectionAction(
-    Platform.OS === 'android' ? ANDROID_SCROLL_DIRECTION_OPTIONS : undefined,
-  );
-
-  const maxScrollOffsetRef = useRef(0);
-  const scrollOffsetRef = useRef(0);
-  const viewportHeightRef = useRef(0);
-  const contentHeightRef = useRef(0);
-  const landingFrameRef = useRef<number | null>(null);
-  const reduceMotion = useReducedMotion();
-  const cancelScrollLanding = useCallback(() => {
-    if (landingFrameRef.current !== null) {
-      cancelAnimationFrame(landingFrameRef.current);
-      landingFrameRef.current = null;
-    }
-  }, []);
-
-  // 换集、离开页面时，不能让上一页排队的滚动落到新列表上。
-  useEffect(
-    () => cancelScrollLanding,
-    [subjectId, episodeNumber, cancelScrollLanding],
-  );
-  useEffect(() => {
-    scrollOffsetRef.current = 0;
-    maxScrollOffsetRef.current = 0;
-    contentHeightRef.current = 0;
-    dismissScrollAction();
-  }, [catalogEpisode?.id, dismissScrollAction]);
-  const handleListScroll = useCallback(
-    (event: {
-      nativeEvent: {
-        contentOffset: { y: number };
-        contentSize: { height: number };
-        layoutMeasurement: { height: number };
-      };
-    }) => {
-      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      scrollOffsetRef.current = contentOffset.y;
-      scrollPosition.track(contentOffset.y);
-      viewportHeightRef.current = layoutMeasurement.height;
-      contentHeightRef.current = contentSize.height;
-      maxScrollOffsetRef.current = Math.max(
-        0,
-        contentSize.height - layoutMeasurement.height,
-      );
-      handleScrollAction(contentOffset.y, maxScrollOffsetRef.current);
-    },
-    [handleScrollAction, scrollPosition.track],
-  );
-
-  // 远距离只动画最后两屏，避免几百楼挤进一次短促的原生动画。
-  // 仍用 offset：这里的评论行高不固定，不依赖末楼的索引测量。
-  const jumpToLatest = useCallback(() => {
-    cancelScrollLanding();
-    dismissScrollAction();
-    const list = replyNavigation.listRef.current;
-    if (!list) return;
-
-    const bottom = maxScrollOffsetRef.current;
-    const landingDistance = viewportHeightRef.current * 2;
-    if (
-      reduceMotion ||
-      landingDistance <= 0 ||
-      bottom - scrollOffsetRef.current <= landingDistance
-    ) {
-      list.scrollToOffset({ animated: !reduceMotion, offset: bottom + 200 });
-      return;
-    }
-
-    list.scrollToOffset({ animated: false, offset: bottom - landingDistance });
-    // 先提交定位并让目标附近的单元格布局，再从新位置发起原生滚动。
-    // 读取最新底部，吸收这期间可变行高的测量更新。
-    landingFrameRef.current = requestAnimationFrame(() => {
-      landingFrameRef.current = requestAnimationFrame(() => {
-        landingFrameRef.current = null;
-        replyNavigation.listRef.current?.scrollToOffset({
-          animated: true,
-          offset: maxScrollOffsetRef.current + 200,
-        });
-      });
-    });
-  }, [
-    cancelScrollLanding,
-    dismissScrollAction,
-    reduceMotion,
-    replyNavigation.listRef,
-  ]);
-
-  const scrollToTop = useCallback(() => {
-    cancelScrollLanding();
-    dismissScrollAction();
-    const list = replyNavigation.listRef.current;
-    if (!list) return;
-
-    const landingDistance = viewportHeightRef.current * 2;
-    if (
-      reduceMotion ||
-      landingDistance <= 0 ||
-      scrollOffsetRef.current <= landingDistance
-    ) {
-      list.scrollToOffset({ animated: !reduceMotion, offset: 0 });
-      return;
-    }
-
-    list.scrollToOffset({ animated: false, offset: landingDistance });
-    landingFrameRef.current = requestAnimationFrame(() => {
-      landingFrameRef.current = requestAnimationFrame(() => {
-        landingFrameRef.current = null;
-        replyNavigation.listRef.current?.scrollToOffset({
-          animated: true,
-          offset: 0,
-        });
-      });
-    });
-  }, [
-    cancelScrollLanding,
-    dismissScrollAction,
-    reduceMotion,
-    replyNavigation.listRef,
-  ]);
-  const episodeUnit = isTrack ? '曲' : '集';
-  const episodeList = useMemo(
-    () =>
-      [...(catalogSubject?.episodes ?? [])].sort(
-        (left, right) => left.number - right.number,
-      ),
-    [catalogSubject?.episodes],
-  );
-  const currentEpisodeIndex = episodeList.findIndex(
-    (episode) => episode.number === episodeNumber,
-  );
-  const previousEpisode =
-    currentEpisodeIndex > 0 ? episodeList[currentEpisodeIndex - 1] : undefined;
-  const nextEpisode =
-    currentEpisodeIndex >= 0 && currentEpisodeIndex < episodeList.length - 1
-      ? episodeList[currentEpisodeIndex + 1]
-      : undefined;
+  const scroll = useEpisodeDiscussionScroll({
+    canRestore: !hiddenDiscussion && Boolean(commentsQuery.data),
+    episodeId: catalogEpisode?.id,
+    listRef: replyNavigation.listRef,
+    scope: `${subjectId}:${episodeNumber}`,
+  });
 
   function openEpisode(nextNumber: number) {
-    cancelScrollLanding();
-    scrollPosition.save();
+    scroll.cancelScrollLanding();
+    scroll.save();
     router.replace({
       pathname: '/subject/[id]/episode/[episodeNumber]',
       params: { id: String(subjectId), episodeNumber: String(nextNumber) },
@@ -355,7 +172,6 @@ export default function EpisodeScreen() {
     (personalCollection?.watchedEpisodeNumbers.includes(episodeNumber) ??
       false);
   const subjectTitle = catalogSubject?.title ?? '未知条目';
-  const airDate = catalogEpisode?.airDate;
   const headerTitle = `第 ${episodeNumber} ${episodeUnit}`;
 
   async function toggleRemoteProgress() {
@@ -419,7 +235,7 @@ export default function EpisodeScreen() {
               hitSlop={HIT_SLOP}
               onPress={() => {
                 playSelectionHaptic();
-                scrollToTop();
+                scroll.scrollToTop();
               }}
               style={({ pressed }) => [
                 styles.headerTitleButton,
@@ -461,34 +277,7 @@ export default function EpisodeScreen() {
               }
             />
           }
-          onScroll={handleListScroll}
-          onMomentumScrollEnd={scrollPosition.save}
-          onScrollBeginDrag={(event) => {
-            cancelScrollLanding();
-            beginScrollAction(event.nativeEvent.contentOffset.y);
-          }}
-          onScrollEndDrag={() => {
-            endScrollAction();
-            scrollPosition.save();
-          }}
-          onLayout={(event) => {
-            viewportHeightRef.current = event.nativeEvent.layout.height;
-            maxScrollOffsetRef.current = Math.max(
-              0, contentHeightRef.current - viewportHeightRef.current,
-            );
-            if (!hiddenDiscussion && commentsQuery.data && contentHeightRef.current > 0) {
-              scrollPosition.restore(maxScrollOffsetRef.current);
-            }
-          }}
-          onContentSizeChange={(_width, height) => {
-            contentHeightRef.current = height;
-            maxScrollOffsetRef.current = Math.max(
-              0, height - viewportHeightRef.current,
-            );
-            if (!hiddenDiscussion && commentsQuery.data && viewportHeightRef.current > 0) {
-              scrollPosition.restore(maxScrollOffsetRef.current);
-            }
-          }}
+          {...scroll.listProps}
           scrollEventThrottle={16}
           ListEmptyComponent={
             hiddenDiscussion || commentsQuery.isPending ||
@@ -505,117 +294,19 @@ export default function EpisodeScreen() {
           }
           ListHeaderComponent={
             <>
-              <View style={styles.episodeCard}>
-                <Text style={styles.subjectTitle}>{subjectTitle}</Text>
-                <Text style={styles.episodeTitle}>
-                  第 {episodeNumber} {isTrack ? '曲' : '集'}
-                </Text>
-                {catalogEpisode?.title ? (
-                  <Text style={styles.catalogEpisodeTitle}>
-                    {catalogEpisode.title}
-                  </Text>
-                ) : null}
-                <View style={styles.metaLine}>
-                  {tracksWatchProgress ? (
-                    <Pressable
-                      accessibilityLabel={
-                        isWatched ? '将本集设为未看' : '将本集标记已看'
-                      }
-                      accessibilityRole="button"
-                      hitSlop={HIT_SLOP}
-                      disabled={saveCollection.isPending}
-                      onPress={() => void toggleRemoteProgress()}
-                      style={({ pressed }) => [
-                        styles.statusBadge,
-                        isWatched && styles.watchedStatusBadge,
-                        pressed && styles.pressedStatusBadge,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.statusText,
-                          isWatched && styles.watchedStatusText,
-                        ]}
-                      >
-                        {isWatched ? '已看' : '未看'}
-                      </Text>
-                    </Pressable>
-                  ) : null}
-                  <Text style={styles.airDate}>
-                    {isTrack
-                      ? catalogEpisode?.duration || '时长待定'
-                      : `${formatAirDate(airDate)} 放送`}
-                  </Text>
-                </View>
-                <Text style={styles.description}>
-                  {catalogEpisode?.description ||
-                    `本${isTrack ? '曲' : '集'}简介暂时缺失，稍后可以重试 Bangumi 数据。`}
-                </Text>
-                {previousEpisode || nextEpisode ? (
-                  <View style={styles.episodeNavRow}>
-                    {previousEpisode ? (
-                      <Pressable
-                        accessibilityLabel={`跳转到上一${episodeUnit}：第 ${previousEpisode.number} ${episodeUnit}`}
-                        accessibilityRole="button"
-                        hitSlop={SPACING.xs}
-                        onPress={() => openEpisode(previousEpisode.number)}
-                        style={({ pressed }) => [
-                          styles.episodeNavButton,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <SymbolView
-                          name={{
-                            android: 'chevron_left',
-                            ios: 'chevron.left',
-                            web: 'chevron_left',
-                          }}
-                          size={15}
-                          tintColor={colors.accent}
-                          weight="semibold"
-                        />
-                        <Text
-                          maxFontSizeMultiplier={1.3}
-                          numberOfLines={1}
-                          style={styles.episodeNavText}
-                        >{`上一${episodeUnit}`}</Text>
-                      </Pressable>
-                    ) : (
-                      <View style={styles.episodeNavSpacer} />
-                    )}
-                    {nextEpisode ? (
-                      <Pressable
-                        accessibilityLabel={`跳转到下一${episodeUnit}：第 ${nextEpisode.number} ${episodeUnit}`}
-                        accessibilityRole="button"
-                        hitSlop={SPACING.xs}
-                        onPress={() => openEpisode(nextEpisode.number)}
-                        style={({ pressed }) => [
-                          styles.episodeNavButton,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text
-                          maxFontSizeMultiplier={1.3}
-                          numberOfLines={1}
-                          style={styles.episodeNavText}
-                        >{`下一${episodeUnit}`}</Text>
-                        <SymbolView
-                          name={{
-                            android: 'chevron_right',
-                            ios: 'chevron.right',
-                            web: 'chevron_right',
-                          }}
-                          size={15}
-                          tintColor={colors.accent}
-                          weight="semibold"
-                        />
-                      </Pressable>
-                    ) : (
-                      <View style={styles.episodeNavSpacer} />
-                    )}
-                  </View>
-                ) : null}
-              </View>
+              <EpisodeDetailsCard
+                episode={catalogEpisode}
+                episodeNumber={episodeNumber}
+                subjectTitle={subjectTitle}
+                isTrack={isTrack}
+                tracksWatchProgress={tracksWatchProgress}
+                isWatched={isWatched}
+                isSaving={saveCollection.isPending}
+                previousEpisode={previousEpisode}
+                nextEpisode={nextEpisode}
+                openEpisode={openEpisode}
+                onToggleProgress={() => void toggleRemoteProgress()}
+              />
               <CatalogStatusBanner
                 fromOfflinePack={catalogQuery.data?.offlineSource === 'pack'}
                 isError={catalogQuery.isError}
@@ -635,7 +326,7 @@ export default function EpisodeScreen() {
                 <View style={styles.emptyDiscussion}>
                   <Text style={styles.emptyTitle}>讨论已折叠</Text>
                   <Text style={styles.emptyText}>防剧透已开启。当前章节尚未标记已看，或观看进度未知；从通知进入也需手动展开。</Text>
-                  <Pressable accessibilityRole="button" onPress={() => setReveal({ scope: discussionScope, visible: true })} style={styles.spoilerButton}>
+                  <Pressable accessibilityRole="button" onPress={revealDiscussion} style={styles.spoilerButton}>
                     <Text style={styles.spoilerAction}>仅本次展开讨论</Text>
                   </Pressable>
                 </View>
@@ -662,7 +353,7 @@ export default function EpisodeScreen() {
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
               onOpenReference={(replyId) => {
-                cancelScrollLanding();
+                scroll.cancelScrollLanding();
                 replyNavigation.openReply(replyId);
               }}
               onReply={composer.open}
@@ -696,10 +387,10 @@ export default function EpisodeScreen() {
       ) : null}
       {Platform.OS === 'android' ? (
         <EpisodeScrollActionButton
-          action={scrollAction}
+          action={scroll.scrollAction}
           bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-          onBottom={jumpToLatest}
-          onTop={scrollToTop}
+          onBottom={scroll.jumpToLatest}
+          onTop={scroll.scrollToTop}
         />
       ) : (
         <>
@@ -707,8 +398,8 @@ export default function EpisodeScreen() {
             accessibilityHint="滚动到本集评论顶部"
             accessibilityLabel="回到顶部"
             bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-            onPress={scrollToTop}
-            visible={scrollAction === 'top'}
+            onPress={scroll.scrollToTop}
+            visible={scroll.scrollAction === 'top'}
           />
           <ScrollToTopButton
             accessibilityHint="滚动到本集最新一条回复"
@@ -719,8 +410,8 @@ export default function EpisodeScreen() {
               ios: 'arrow.down',
               web: 'arrow_downward',
             }}
-            onPress={jumpToLatest}
-            visible={scrollAction === 'bottom'}
+            onPress={scroll.jumpToLatest}
+            visible={scroll.scrollAction === 'bottom'}
           />
         </>
       )}
@@ -740,62 +431,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   headerTitleText: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
-  episodeCard: {
-    alignItems: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: SPACING.xl,
-  },
-  subjectTitle: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
-  episodeTitle: {
-    color: colors.ink,
-    ...TYPE.display,
-    fontWeight: '800',
-    marginTop: SPACING.sm,
-  },
-  catalogEpisodeTitle: {
-    color: colors.ink,
-    ...TYPE.heading,
-    fontWeight: '700',
-    marginTop: SPACING.sm,
-  },
-  metaLine: { alignItems: 'center', flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.lg },
-  statusBadge: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 12,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
-  watchedStatusBadge: { backgroundColor: colors.accent },
-  pressedStatusBadge: { opacity: 0.65 },
-  statusText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
-  watchedStatusText: { color: colors.surface },
-  airDate: { color: colors.subtle, ...TYPE.caption },
-  description: { color: colors.muted, ...TYPE.body, marginTop: SPACING.lg },
-  episodeNavRow: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginTop: SPACING.lg + SPACING.xs,
-  },
-  episodeNavButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 14,
-    flexDirection: 'row',
-    flex: 1,
-    gap: SPACING.xs,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_SIZE,
-    paddingHorizontal: SPACING.lg,
-  },
-  episodeNavText: {
-    color: colors.accent,
-    flexShrink: 1,
-    ...TYPE.body,
-    fontWeight: '700',
-  },
-  episodeNavSpacer: { flex: 1 },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
