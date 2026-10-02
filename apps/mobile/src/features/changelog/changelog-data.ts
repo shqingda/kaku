@@ -10,6 +10,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.14',
+    date: '2026-10-02',
+    notes: [
+      'Android 安装包启用 R8 代码压缩与资源裁剪，进一步减小下载体积。',
+    ],
+  },
+  {
     version: '1.1.13',
     date: '2026-10-02',
     notes: [
