@@ -4,11 +4,6 @@ import { usePagedList } from '@/features/shared/use-paged-list';
 
 type TestItem = { id: number };
 
-type TestPage = {
-  items: TestItem[];
-  total?: number;
-};
-
 // usePagedList 只消费查询对象上的状态字段，测试用最小替身即可。
 function fakeQuery(overrides: Record<string, unknown> = {}) {
   return {

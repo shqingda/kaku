@@ -7,7 +7,7 @@ import {
 } from '@/infrastructure/kaku/notifications-client';
 import { queryKeys } from '@/lib/query-keys';
 import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
-import { bangumiRetryDelay, shouldRetryBangumiQuery } from '@/lib/query-retry';
+import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 import type { NotificationList } from './model';
 
 export function useNotifications() {

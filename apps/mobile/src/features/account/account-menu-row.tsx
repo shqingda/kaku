@@ -5,7 +5,6 @@ import { SymbolView } from 'expo-symbols';
 
 import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
-import { useTheme } from '@/features/theme/theme-provider';
 
 export function AccountMenuRow({
   colors,

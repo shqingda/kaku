@@ -22,7 +22,6 @@ export function withCacheStatus(response: Response, status: 'HIT' | 'MISS') {
 export async function servePublicCached(
   context: Context,
   cache: PublicCache | undefined,
-  ttlSeconds: number,
   produce: () => Promise<Response>,
 ): Promise<Response> {
   const cacheKey = new Request(new URL(context.req.url), { method: 'GET' });

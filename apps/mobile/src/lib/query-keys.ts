@@ -81,18 +81,6 @@ export const queryKeys = {
     ['people', 'bangumi', 'person', personId] as const,
   entityComments: (kind: string, entityId: number) =>
     ['people', 'bangumi', kind, entityId, 'comments'] as const,
-  entityCollection: (
-    userId: number | undefined,
-    kind: string,
-    entityId: number,
-  ) =>
-    [
-      'entity-collections',
-      'kaku',
-      userId ?? 'signed-out',
-      kind,
-      entityId,
-    ] as const,
   publicUser: (username: string) =>
     ['users', 'bangumi', normalizeUsername(username)] as const,
   userFriendship: (userId: number | undefined, username: string) =>

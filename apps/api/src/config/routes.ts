@@ -57,7 +57,6 @@ export function registerConfigRoutes(
     servePublicCached(
       context,
       getPublicCache(dependencies.cache),
-      CONFIG_CACHE_TTL_SECONDS,
       async () => {
         const store =
           dependencies.createConfigStore?.(context.env) ??

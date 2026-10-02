@@ -390,16 +390,12 @@ export type BangumiSubjectReviews = z.infer<
   typeof bangumiSubjectReviewsSchema
 >;
 export type BangumiBlog = z.infer<typeof bangumiBlogSchema>;
-export type BangumiBlogComments = z.infer<typeof bangumiBlogCommentsSchema>;
 export type BangumiUserBlogs = z.infer<typeof bangumiUserBlogsSchema>;
 export type BangumiIndexPage = z.infer<typeof bangumiIndexPageSchema>;
-export type BangumiIndex = z.infer<typeof bangumiIndexSchema>;
 export type BangumiIndexRelated = z.infer<typeof bangumiIndexRelatedSchema>;
 export type BangumiGroupPage = z.infer<typeof bangumiGroupPageSchema>;
-export type BangumiGroupDetail = z.infer<typeof bangumiGroupDetailSchema>;
 export type BangumiGroupTopicPage = z.infer<
   typeof bangumiGroupTopicPageSchema
 >;
-export type BangumiGroupTopic = z.infer<typeof bangumiGroupTopicSchema>;
 export type BangumiUserFriends = z.infer<typeof bangumiUserFriendsSchema>;
 export type BangumiUserTimeline = z.infer<typeof bangumiUserTimelineSchema>;

@@ -1,9 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import type { FlatList, ScrollView } from 'react-native';
 
 const SHOW_THRESHOLD = 720;
-
-type Scrollable = ScrollView | FlatList<unknown>;
 
 export function useScrollToTopButton(externalRef?: { current: unknown }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

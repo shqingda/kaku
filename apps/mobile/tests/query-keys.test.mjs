@@ -127,13 +127,6 @@ test('signed-in user ids are embedded and signed-out falls back to a placeholder
     'signed-out',
     'soul',
   ]);
-  assert.deepEqual(queryKeys.entityCollection(undefined, 'person', 5), [
-    'entity-collections',
-    'kaku',
-    'signed-out',
-    'person',
-    5,
-  ]);
   assert.deepEqual(queryKeys.indexCollection(12, 88), [
     'indexes',
     'kaku',

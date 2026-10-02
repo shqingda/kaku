@@ -1,5 +1,3 @@
-import type { DiscussionReply } from '@/features/discussions/model';
-
 export type EntityMetadata = {
   label: string;
   value: string;

@@ -29,7 +29,7 @@ export function registerTagRoutes(
       );
     }
 
-    return servePublicCached(context, getPublicCache(), 300, async () => {
+    return servePublicCached(context, getPublicCache(), async () => {
       try {
         const result = await getBangumiTags({ fetcher, page, subjectType });
         context.header(

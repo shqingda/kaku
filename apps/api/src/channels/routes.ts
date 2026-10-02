@@ -24,7 +24,7 @@ export function registerChannelRoutes(
       );
     }
 
-    return servePublicCached(context, getPublicCache(), 300, async () => {
+    return servePublicCached(context, getPublicCache(), async () => {
       try {
         const channel = await getBangumiChannelSubjects({
           fetcher,

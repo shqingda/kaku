@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import type { PublicGroupTopicSummary } from '@/features/community/model';
@@ -35,8 +35,6 @@ export default function GroupScreen() {
   const topicsQuery = usePublicGroupTopics(name);
   const topics = usePagedList(topicsQuery);
   const group = groupQuery.data;
-  const topicTotal =
-    topics.total ?? group?.topicCount ?? 0;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const canCollapseDescription = (group?.description.length ?? 0) > 180;
 
@@ -279,11 +277,11 @@ const GroupTopicListRow = memo(function GroupTopicListRow({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { padding: 20, paddingBottom: 44 },
+  content: { padding: SPACING.lg + SPACING.xs, paddingBottom: SPACING.xxl + SPACING.md },
   groupHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingBottom: 8,
+    paddingBottom: SPACING.sm,
   },
   icon: {
     alignItems: 'center',
@@ -294,52 +292,50 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 76,
   },
-  iconFallback: { color: colors.subtle, fontSize: 22, fontWeight: '800' },
-  groupMain: { flex: 1, marginLeft: 17 },
+  iconFallback: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '800' },
+  groupMain: { flex: 1, marginLeft: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 25,
+    ...TYPE.titleLarge,
     fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 32,
   },
-  meta: { color: colors.muted, fontSize: 12, marginTop: 7 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   descriptionCard: {
     backgroundColor: colors.surface,
     borderRadius: 21,
-    padding: 18,
+    padding: SPACING.lg,
   },
-  description: { color: colors.muted, fontSize: 14, lineHeight: 22 },
+  description: { color: colors.muted, ...TYPE.body },
   descriptionToggle: {
     alignSelf: 'flex-start',
-    marginTop: 12,
+    marginTop: SPACING.md,
     justifyContent: 'center',
     minHeight: 44,
   },
   descriptionToggleText: {
     color: colors.accent,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '700',
   },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 4,
-    paddingTop: 18,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.lg,
   },
-  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
+  sectionTitle: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
   newTopicButton: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
     borderCurve: 'continuous',
     borderRadius: 12,
     flexDirection: 'row',
-    gap: 5,
+    gap: SPACING.xs,
     height: 34,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
   },
   newTopicButtonPressed: { backgroundColor: colors.track },
   newTopicIcon: {
@@ -350,16 +346,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   newTopicText: {
     color: colors.ink,
-    fontSize: 14,
+    ...TYPE.body,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: TYPE.caption.lineHeight,
     textAlignVertical: 'center',
   },
   topicList: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   firstTopicList: {
     borderTopLeftRadius: 22,
@@ -370,6 +366,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomRightRadius: 22,
   },
   pressed: { opacity: 0.62 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14 },
+  empty: { alignItems: 'center', padding: SPACING.xl + SPACING.xs },
+  emptyText: { color: colors.muted, ...TYPE.body },
 });

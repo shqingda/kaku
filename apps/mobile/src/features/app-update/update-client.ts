@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 import { parseGithubRelease, type UpdateRelease } from './update-policy';
 
 export const installedVersion = Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '0.0.0';
-export const releasePage = 'https://github.com/shqingda/kaku/releases/latest';
 const config = Constants.expoConfig?.extra?.appUpdate;
 export const updateSupport = Platform.OS === 'android' && config?.channel === 'github'
   ? 'apk' : Platform.OS === 'ios' && /^\d+$/.test(config?.iosAppStoreId ?? '') ? 'app-store' : 'unconfigured';

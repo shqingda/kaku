@@ -344,9 +344,6 @@ export type BangumiEntitySubjectsResponse = z.infer<
 export type BangumiEntityRelationsResponse = z.infer<
   typeof bangumiEntityRelationsSchema
 >;
-export type BangumiPublicUserResponse = z.infer<
-  typeof bangumiPublicUserSchema
->;
 export type BangumiUserCollectionsResponse = z.infer<
   typeof bangumiUserCollectionsSchema
 >;

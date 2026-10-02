@@ -40,7 +40,7 @@ export function registerBlogRoutes(
       );
     }
 
-    return servePublicCached(context, getPublicCache(), 300, async () => {
+    return servePublicCached(context, getPublicCache(), async () => {
       try {
         const result = await getBangumiBlogs({
           fetcher,

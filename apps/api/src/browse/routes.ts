@@ -34,7 +34,7 @@ export function registerBrowseRoutes(
       return context.json({ error: 'invalid_browse_query', message: '分类筛选条件无效。' }, 400);
     }
 
-    return servePublicCached(context, getPublicCache(), 300, async () => {
+    return servePublicCached(context, getPublicCache(), async () => {
       try {
         const result = await browseBangumiSubjects({
           fetcher,

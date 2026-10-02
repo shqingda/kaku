@@ -89,7 +89,6 @@ test('servePublicCached serves a cached copy with HIT without calling produce', 
   const response = await servePublicCached(
     createContext(CONTEXT_URL),
     cache,
-    300,
     async () => {
       produceCalls += 1;
       return Response.json({ fresh: true });
@@ -109,7 +108,6 @@ test('servePublicCached fills the cache with a GET request key on MISS', async (
   const response = await servePublicCached(
     createContext(CONTEXT_URL),
     cache,
-    300,
     async () => Response.json({ fresh: true }),
   );
 
@@ -127,7 +125,6 @@ test('servePublicCached does not cache error responses', async () => {
   const response = await servePublicCached(
     createContext(CONTEXT_URL),
     cache,
-    300,
     async () => new Response('upstream exploded', { status: 503 }),
   );
 
@@ -141,7 +138,6 @@ test('servePublicCached passes through when no cache is available', async () => 
   const response = await servePublicCached(
     createContext(CONTEXT_URL),
     undefined,
-    300,
     async () => Response.json({ fresh: true }),
   );
 

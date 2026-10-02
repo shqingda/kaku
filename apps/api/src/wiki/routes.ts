@@ -12,7 +12,7 @@ export function registerWikiRoutes(
   const fetcher = dependencies.fetcher ?? fetch;
 
   app.get('/public/wiki/revisions', async (context) => {
-    return servePublicCached(context, getPublicCache(), 120, async () => {
+    return servePublicCached(context, getPublicCache(), async () => {
       try {
         const result = await getBangumiWikiFeed({ fetcher });
         context.header(

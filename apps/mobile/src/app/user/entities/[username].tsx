@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -16,10 +17,7 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
-import type {
-  PublicUserEntityCollection,
-  PublicUserEntityKind,
-} from '@/features/users/model';
+import type { PublicUserEntityKind } from '@/features/users/model';
 import { PublicUserEntityCard } from '@/features/users/public-user-entity-card';
 import { usePublicUserEntities } from '@/features/users/use-public-user';
 
@@ -140,26 +138,25 @@ export default function PublicUserEntitiesScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    paddingBottom: 48,
-    paddingHorizontal: 20,
+    paddingBottom: SPACING.xxl + SPACING.lg,
+    paddingHorizontal: SPACING.lg + SPACING.xs,
   },
-  row: { gap: 12, marginBottom: 12 },
-  header: { paddingBottom: 20, paddingHorizontal: 4, paddingTop: 18 },
+  row: { gap: SPACING.md, marginBottom: SPACING.md },
+  header: { paddingBottom: SPACING.lg + SPACING.xs, paddingHorizontal: SPACING.xs, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   tabs: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: 16,
     flexDirection: 'row',
-    gap: 4,
-    marginTop: 18,
-    padding: 4,
+    gap: SPACING.xs,
+    marginTop: SPACING.lg,
+    padding: SPACING.xs,
   },
   tab: {
     alignItems: 'center',
@@ -167,10 +164,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 38,
     minWidth: 78,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   selectedTab: { backgroundColor: colors.ink },
-  tabText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  tabText: { color: colors.muted, ...TYPE.body, fontWeight: '700' },
   selectedTabText: { color: colors.surface },
   pressed: { opacity: 0.62 },
 });

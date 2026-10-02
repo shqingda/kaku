@@ -46,7 +46,7 @@ function useThemedStyles() {
   const colors = useTheme();
   const styles = createStyles(colors);
 
-  return { colors, styles };
+  return styles;
 }
 
 // 吐槽/评论预览位于长页底部，查询也随之延迟到接近底部才发起；
@@ -57,7 +57,7 @@ const PREVIEW_FALLBACK_DELAY_MS = 2_500;
 const TITLE_BAR_SCROLL_OFFSET = 320;
 
 export default function SubjectScreen() {
-  const { colors, styles } = useThemedStyles();
+  const styles = useThemedStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
