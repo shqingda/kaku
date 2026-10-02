@@ -1,11 +1,12 @@
+import { SPACING, TYPE } from '@/constants/design';
+import { SubjectDetailLinks } from '@/features/subject-detail/subject-detail-links';
+import { CommentsPreview, ReviewsPreview } from '@/features/subject-detail/subject-discussion-previews';
+import { FloatingBackButton, FloatingHomeButton, FloatingShareButton } from '@/features/subject-detail/subject-floating-actions';
 import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   Animated,
   Easing,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,13 +19,11 @@ import type { ThemeColors } from '@/constants/theme';
 import { useIsOffline } from '@/lib/use-connectivity';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 import { userErrorMessage } from '@/lib/user-error-message';
-import { shareBangumiEntity } from '@/lib/share';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { ExpandableText } from '@/features/shared/expandable-text';
 import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import {
-  getSubjectDetailLabels,
   supportsWatchProgress,
   usesEpisodeData,
 } from '@/features/catalog/subject-types';
@@ -33,28 +32,14 @@ import {
   usePersonalCollection,
   useSavePersonalCollection,
 } from '@/features/collections/use-personal-collection';
-import {
-  useSubjectComments,
-  useSubjectReviews,
-} from '@/features/reviews/use-subject-reviews';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
-import { HeaderIconButton } from '@/features/shared/header-icon-button';
 import { SkeletonBox } from '@/features/shared/skeleton';
-import { CommentPreviewSection } from '@/features/subject-detail/comment-preview-section';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { EpisodeSection } from '@/features/subject-detail/episode-section';
-import { ReviewPreviewSection } from '@/features/subject-detail/review-preview-section';
 import { SubjectHero } from '@/features/subject-detail/subject-hero';
 import { SubjectOverview } from '@/features/subject-detail/subject-overview';
 import { useTheme } from '@/features/theme/theme-provider';
-import { prefetchSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
-import { prefetchSubjectIndexes } from '@/features/indexes/use-indexes';
-import { prefetchSubjectStaff } from '@/features/staff/use-subject-staff';
-import {
-  prefetchSubjectCharacters,
-  prefetchSubjectRelations,
-} from '@/features/subject-extras/use-subject-extras';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 function useThemedStyles() {
@@ -64,46 +49,6 @@ function useThemedStyles() {
   return { colors, styles };
 }
 
-function DetailEntry({
-  hint,
-  label,
-  onPress,
-  onPressIn,
-  withBorder = false,
-}: {
-  hint: string;
-  label: string;
-  onPress: () => void;
-  onPressIn?: () => void;
-  withBorder?: boolean;
-}) {
-  const { colors, styles } = useThemedStyles();
-  return (
-    <Pressable
-      accessibilityLabel={`查看${label}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      onPressIn={onPressIn}
-      style={({ pressed }) => [
-        styles.detailEntry,
-        withBorder && styles.detailEntryBorder,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.detailEntryCopy}>
-        <Text style={styles.detailEntryTitle}>{label}</Text>
-        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.detailEntryHint}>{hint}</Text>
-      </View>
-      <SymbolView
-        name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
-        size={13}
-        tintColor={colors.subtle}
-        weight="semibold"
-      />
-    </Pressable>
-  );
-}
-
 // 吐槽/评论预览位于长页底部，查询也随之延迟到接近底部才发起；
 // 短页面滚动事件可能不触发，2.5s 后兜底挂载。
 const PREVIEW_SCROLL_THRESHOLD = 600;
@@ -111,155 +56,16 @@ const PREVIEW_FALLBACK_DELAY_MS = 2_500;
 // 滚过封面区（顶部内边距 + 238pt 封面 + 间距）后浮现标题条。
 const TITLE_BAR_SCROLL_OFFSET = 320;
 
-function CommentsPreview({
-  onOpenMore,
-  refreshToken,
-  subjectId,
-}: {
-  onOpenMore: () => void;
-  refreshToken: number;
-  subjectId: number;
-}) {
-  const { data, isError, isPending, refetch } = useSubjectComments(subjectId);
-  const appliedRefreshToken = useRef(refreshToken);
-
-  useEffect(() => {
-    if (refreshToken === appliedRefreshToken.current) return;
-    appliedRefreshToken.current = refreshToken;
-    void refetch();
-  }, [refetch, refreshToken]);
-
-  const page = data?.pages[0];
-
-  return (
-    <CommentPreviewSection
-      comments={page?.items.slice(0, 5) ?? []}
-      isError={isError}
-      isPending={isPending}
-      onOpenMore={onOpenMore}
-      onRetry={() => void refetch()}
-      total={page?.total}
-    />
-  );
-}
-
-function ReviewsPreview({
-  onOpenMore,
-  onOpenReview,
-  refreshToken,
-  subjectId,
-}: {
-  onOpenMore: () => void;
-  onOpenReview: (review: { id: string }) => void;
-  refreshToken: number;
-  subjectId: number;
-}) {
-  const { data, isError, isPending, refetch } = useSubjectReviews(subjectId);
-  const appliedRefreshToken = useRef(refreshToken);
-
-  useEffect(() => {
-    if (refreshToken === appliedRefreshToken.current) return;
-    appliedRefreshToken.current = refreshToken;
-    void refetch();
-  }, [refetch, refreshToken]);
-
-  const page = data?.pages[0];
-
-  return (
-    <ReviewPreviewSection
-      isError={isError}
-      isPending={isPending}
-      onOpenMore={onOpenMore}
-      onOpenReview={onOpenReview}
-      onRetry={() => void refetch()}
-      reviews={page?.items.slice(0, 3) ?? []}
-      total={page?.total}
-    />
-  );
-}
-
-function FloatingBackButton({
-  onPress,
-  top,
-}: {
-  onPress: () => void;
-  top: number;
-}) {
-  const { styles } = useThemedStyles();
-  return (
-    <View style={[styles.backButton, { top }]}>
-      <HeaderIconButton
-        accessibilityHint="返回上一个页面"
-        accessibilityLabel="返回"
-        icon={{
-          android: 'arrow_back',
-          ios: 'chevron.left',
-          web: 'arrow_back',
-        }}
-        onPress={onPress}
-        variant="floating"
-      />
-    </View>
-  );
-}
-
-function FloatingHomeButton({
-  onPress,
-  top,
-}: {
-  onPress: () => void;
-  top: number;
-}) {
-  const { styles } = useThemedStyles();
-  return (
-    <View style={[styles.homeButton, { top }]}>
-      <HeaderIconButton
-        accessibilityHint="返回 Kaku 首页"
-        accessibilityLabel="回到首页"
-        icon={{ android: 'home_filled', ios: 'house', web: 'home' }}
-        // Same iOS-only optical nudge as HeaderHomeButton.
-        iconOffset={Platform.OS === 'ios' ? { y: 0.5 } : undefined}
-        onPress={onPress}
-        variant="floating"
-      />
-    </View>
-  );
-}
-
-function FloatingShareButton({
-  path,
-  title,
-  top,
-}: {
-  path: string;
-  title: string;
-  top: number;
-}) {
-  const { styles } = useThemedStyles();
-  return (
-    <View style={[styles.shareButton, { top }]}>
-      <HeaderIconButton
-        accessibilityHint="通过系统分享面板分享这个条目"
-        accessibilityLabel="分享条目"
-        icon={{ android: 'share', ios: 'square.and.arrow.up', web: 'share' }}
-        onPress={() => void shareBangumiEntity({ path, title })}
-        variant="floating"
-      />
-    </View>
-  );
-}
-
 export default function SubjectScreen() {
   const { colors, styles } = useThemedStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isOffline = useIsOffline();
-  const bannerOffset = isOffline ? 48 : 8;
+  const bannerOffset = isOffline ? SPACING.xxl + SPACING.lg : SPACING.sm;
   const { session } = useAuth();
   const { rememberSubject: rememberRecentSubject } = useRecentSubjects();
   const subjectId = parsePositiveIntegerRouteParam(id);
-  const queryClient = useQueryClient();
   const catalogQuery = useCatalogSubject(subjectId ?? 0);
   const collectionQuery = usePersonalCollection(subjectId ?? 0);
   const saveCollection = useSavePersonalCollection(subjectId ?? 0);
@@ -274,7 +80,6 @@ export default function SubjectScreen() {
   const subjectType = catalogSubject?.type ?? 2;
   const tracksWatchProgress = supportsWatchProgress(subjectType);
   const hasEpisodeData = usesEpisodeData(subjectType);
-  const detailLabels = getSubjectDetailLabels(subjectType);
   const reduceMotion = useReduceMotion();
 
   // 深滚后条目标题随半透明标题条淡入（滚过封面高度即出现），
@@ -351,7 +156,7 @@ export default function SubjectScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: insets.top + bannerOffset + 4 },
+            { paddingTop: insets.top + bannerOffset + SPACING.xs },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -466,7 +271,7 @@ export default function SubjectScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + bannerOffset + 4 },
+          { paddingTop: insets.top + bannerOffset + SPACING.xs },
         ]}
         onScroll={handleScroll}
         refreshControl={
@@ -537,84 +342,7 @@ export default function SubjectScreen() {
           showsEpisodes={tracksWatchProgress && totalEpisodes > 0}
         />
 
-          <View style={styles.detailEntries}>
-            {detailLabels.characters ? (
-              <DetailEntry
-                hint={detailLabels.characters.hint}
-                label={detailLabels.characters.label}
-                onPress={() =>
-                  router.push({
-                    pathname: '/subject/[id]/characters',
-                    params: { id: String(subjectId) },
-                  })
-                }
-                onPressIn={() =>
-                  prefetchSubjectCharacters(queryClient, subjectId)
-                }
-              />
-            ) : null}
-            <DetailEntry
-              hint={detailLabels.credits.hint}
-              label={detailLabels.credits.label}
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/staff',
-                  params: { id: String(subjectId) },
-                })
-              }
-              onPressIn={() => prefetchSubjectStaff(queryClient, subjectId)}
-              withBorder={Boolean(detailLabels.characters)}
-            />
-            <DetailEntry
-              hint="系列作品与相关条目"
-              label="关联条目"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/relations',
-                  params: { id: String(subjectId) },
-                })
-              }
-              onPressIn={() =>
-                prefetchSubjectRelations(queryClient, subjectId)
-              }
-              withBorder
-            />
-            <DetailEntry
-              hint="条目相关话题与回复"
-              label="讨论版"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/discussions',
-                  params: { id: String(subjectId) },
-                })
-              }
-              onPressIn={() => prefetchSubjectTopics(queryClient, subjectId)}
-              withBorder
-            />
-            <DetailEntry
-              hint="收录该条目的公开主题目录"
-              label="目录"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/indexes',
-                  params: { id: String(subjectId) },
-                })
-              }
-              onPressIn={() => prefetchSubjectIndexes(queryClient, subjectId)}
-              withBorder
-            />
-            <DetailEntry
-              hint="评分分布、收藏与基础信息"
-              label="条目资料"
-              onPress={() =>
-                router.push({
-                  pathname: '/subject/[id]/info',
-                  params: { id: String(subjectId) },
-                })
-              }
-              withBorder
-            />
-          </View>
+        <SubjectDetailLinks subjectId={subjectId} subjectType={subjectType} />
 
           <View style={styles.panel}>
             <Text style={styles.panelTitle}>简介</Text>
@@ -689,7 +417,7 @@ export default function SubjectScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.lg + SPACING.xs },
   titleBar: {
     backgroundColor: colors.surface,
     borderBottomColor: colors.divider,
@@ -703,102 +431,67 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   titleBarText: {
     color: colors.ink,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '800',
     height: 56,
-    lineHeight: 56,
-    marginLeft: 64,
-    marginRight: 124,
+    lineHeight: SPACING.xxl + SPACING.xl,
+    marginLeft: SPACING.xxl * 2,
+    marginRight: SPACING.xxl * 4 - SPACING.xs,
     textAlign: 'center',
   },
-  backButton: {
-    left: 16,
-    position: 'absolute',
-    zIndex: 10,
-  },
-  homeButton: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 10,
-  },
-  shareButton: {
-    position: 'absolute',
-    right: 68,
-    zIndex: 10,
-  },
-  heroSpacing: { height: 20 },
+  heroSpacing: { height: SPACING.lg + SPACING.xs },
   personalState: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg + SPACING.xs,
   },
-  personalStateTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  personalStateTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   personalStateText: {
     color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 6,
+    ...TYPE.caption,
+    lineHeight: TYPE.body.lineHeight,
+    marginTop: SPACING.sm,
   },
   personalRetry: {
     alignSelf: 'flex-start',
-    marginTop: 12,
-    paddingVertical: 4,
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.xs,
   },
-  personalRetryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  personalRetryText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
   panel: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg + SPACING.xs,
   },
-  detailEntries: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    marginBottom: 14,
-    overflow: 'hidden',
-    paddingHorizontal: 20,
-  },
-  detailEntry: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-  },
-  detailEntryCopy: { flex: 1, minWidth: 0, paddingRight: 12 },
-  detailEntryBorder: {
-    borderTopColor: colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  detailEntryTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-  detailEntryHint: { color: colors.subtle, fontSize: 11, marginTop: 4 },
-  panelTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
-  summary: { color: colors.muted, fontSize: 15, lineHeight: 24, marginTop: 10 },
+  panelTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
+  summary: { color: colors.muted, ...TYPE.body, lineHeight: TYPE.heading.lineHeight, marginTop: SPACING.md },
   summaryToggle: {
     alignSelf: 'flex-start',
     color: colors.accent,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginTop: 9,
+    marginTop: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
-  errorState: { flex: 1, justifyContent: 'center', padding: 32 },
+  errorState: { flex: 1, justifyContent: 'center', padding: SPACING.xxl },
   skeleton: {
     alignItems: 'center',
-    gap: 14,
-    paddingTop: 8,
+    gap: SPACING.lg,
+    paddingTop: SPACING.sm,
   },
-  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  errorTitle: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '700' },
+  errorText: { color: colors.muted, ...TYPE.body, lineHeight: TYPE.body.lineHeight, marginTop: SPACING.sm },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: SPACING.lg,
     minHeight: 44,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.lg + SPACING.xs,
   },
-  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
 });
