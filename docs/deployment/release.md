@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。当前版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准；本轮本地优化包没有发版。构建与体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-02 已发布 v1.1.13 默认包与 v1.1.14 裁剪包；Android 实机兼容性仍待验，通用构建默认关闭裁剪。构建与体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。
 
 ## 纯本地构建
 
@@ -13,8 +13,8 @@ pnpm build:android
 bash scripts/build-android.sh debug
 # 独立原生裁剪候选：R8 + 资源裁剪，默认不启用
 bash scripts/build-android.sh release --optimized
-# 兼容旧入口：tag 要与当前 app 版本相同
-bash scripts/build-split-apks.sh v1.1.12 release --build-only
+# 兼容旧入口：省略 tag 时自动使用当前 app 版本
+bash scripts/build-split-apks.sh --build-only
 ```
 
 | 渠道 | 包名 | `apps/mobile/dist-split/` 产物 |
@@ -38,7 +38,7 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized
 
 报告按 ZIP 压缩后大小分类为原生库、DEX、JS、资源和其他，单列 ZIP/签名/对齐开销；它不是安装后的磁盘占用。仓库资产清理另记，不合并到 APK 收益。
 
-`--optimized` 通过 Expo 配置源显式打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。Android 运行验收完成前，不作为默认发布配置；本地发布入口拒绝 `KAKU_OPTIMIZE_NATIVE=1`。候选生成后，直接使用忽略的 `android/` 工程会沿用其配置；下一次应从纯构建入口重新生成所需配置。
+`--optimized` 通过 Expo 配置源显式打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。Android 运行验收完成前，不作为默认发布配置；本地发布入口拒绝 `KAKU_OPTIMIZE_NATIVE=1`。v1.1.14 是用户明确授权提前发布的裁剪包，不代表该入口或默认配置已经改为允许裁剪发布。候选生成后，直接使用忽略的 `android/` 工程会沿用其配置；下一次应从纯构建入口重新生成所需配置。
 
 ## 本地构建并发布 GitHub Release
 
@@ -50,8 +50,8 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized
 ```bash
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
 bash scripts/build-split-apks.sh                 # tag 自动取 v<app 版本>
-# 或显式指定匹配当前版本的 tag 与包名渠道
-bash scripts/build-split-apks.sh v1.1.12 release
+# 或省略 tag 并显式指定包名渠道
+bash scripts/build-split-apks.sh "" release
 ```
 
 脚本先同步 App 内更新日志（已有版本不覆盖手改内容，缺失时写入并提交），再调用纯构建，执行 `git push origin HEAD:main`，最后创建 GitHub Release 并上传 APK。发版说明中的安装提示不会收入 App 内更新日志。
@@ -63,7 +63,7 @@ bash scripts/build-split-apks.sh v1.1.12 release
 
 ## EAS 云端构建
 
-[eas.json](../../apps/mobile/eas.json) 分开维护三种用途。云端额度和凭据状态需要在实际使用时查询，本轮没有触发云端构建或发布。
+[eas.json](../../apps/mobile/eas.json) 分开维护三种用途。云端额度和凭据状态需要在实际使用时查询，尚未实跑这套云端构建与发布流程；已发布的 v1.1.13 / v1.1.14 来自本地构建。
 
 | Profile | 用途 | Android 产物 |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ pnpm dlx eas-cli@22.2.0 build --platform android --profile github
 
 云端发布从 [Release Android APK workflow](../../.github/workflows/release-apk.yml) 手动触发，需要仓库 Secret `EXPO_TOKEN`。选择 `github`，tag 留空使用当前 `v<app 版本>`，显式 tag 必须匹配版本。流程构建、轮询、下载后检查 APK 结构，才创建 Release；标题也从当前版本生成。此流程同样需要明确的发布授权。
 
-EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号遵循本地生成配置。本轮没有更换包名、证书或提升版本。
+EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号遵循本地生成配置。v1.1.13 / v1.1.14 的本地发布沿用包名和签名；构建与签名核对见验收记录。
 
 Play 上架使用 `production` AAB 和正式签名，不能上传本地 debug 签名 APK。商店账号、提交凭据与设备验收仍是独立后续工作；素材见 [商店清单](../store/listing.md)。Sentry source map 上传还依赖 EAS 环境中的 DSN、组织和认证配置，不能仅凭构建 profile 宣称已经可用。
 

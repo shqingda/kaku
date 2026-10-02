@@ -15,15 +15,23 @@
 | 写简历、准备面试 | [项目经历与面试详解](learning/kaku-project-experience.md) | 开场介绍、名词解释、实现与追问 |
 | 学习独立开发者运营 | [运营案例](learning/indie-ops-case.md) | 教学材料，不是功能规格 |
 | 看下一步做什么 | [当前待办](../TODO.md) | 仍有效的待办与明确不做的事 |
-| 渐进优化与架构整理 | [2026-10-02 优化计划](plans/2026-10-02-project-optimization-plan.md) | 验收、文档、包体积、代码整理与性能证据 |
-| 规划用户体验改进 | [2026-09-29 体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | 本轮及三项保留候选已实现；章节状态和话题续接已撤回，设备验收见记录 |
-| 回看阶段改进过程 | [2026-09-11 改进计划](plans/2026-09-11-improvement-plan.md) | 当时的计划、决策与执行记录 |
-| 本轮优化结果与包体对比 | [2026-10-02 优化验收](test-records/2026-10-02-project-optimization.md) | 同配置包体、模块职责、回归和设备边界 |
 | 查看已记录的验收结果 | [测试记录](test-records/README.md) | 带日期的回归与性能基线 |
 | 修改 Bangumi 接入层 | [适配层说明](../apps/mobile/src/infrastructure/bangumi/README.md) | 与源码放在一起的模块约定 |
 | 查看协作规则 | [AGENTS](../AGENTS.md) | 修改、验证、提交与推送约定 |
 
 商店素材：[中英文文案与截图清单](store/listing.md)。
+
+## 阶段计划与执行记录
+
+这些文档保存当时的计划、决策与证据。当前未完成事项统一看 [TODO](../TODO.md)，发布结果看 [GitHub Releases](https://github.com/shqingda/kaku/releases)。
+
+| 阶段 | 计划 | 执行证据 |
+| --- | --- | --- |
+| 2026-10-02 项目优化 | [渐进优化计划](plans/2026-10-02-project-optimization-plan.md) | [模块整理、APK 体积、验收与后续发布](test-records/2026-10-02-project-optimization.md) |
+| 2026-09-29 用户体验改进 | [体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | [首轮验证](test-records/2026-09-29-ux-improvements.md)、[功能补完](test-records/2026-09-29-ux-followup.md)、[设备与更新](test-records/2026-09-29-devices-and-updates.md) |
+| 2026-09-11 阶段改进 | [改进计划与执行记录](plans/2026-09-11-improvement-plan.md) | 结果随计划保留；后续验收见 [测试记录索引](test-records/README.md) |
+
+体验改进中的章节状态和话题阅读续接已撤回，不能以历史计划推断当前功能。
 
 ## 目录约定
 
@@ -40,4 +48,4 @@ docs/
 
 根目录只保留项目首页、当前待办与协作规则。应用或源码目录里的 README 保留就近说明；`scripts/release-notes.md` 是发布脚本使用的发版文案，保留原位。
 
-新增文档放入对应分类，并在上表登记。操作步骤只维护一份，其他文档链接过去；阶段记录保留日期，不能代替当前待办或当前实现。发版结果以 GitHub Releases 为准。
+新增文档放入对应分类；当前指南在用途表登记，阶段计划在阶段表登记，验收记录在测试记录索引登记。操作步骤只维护一份，其他文档链接过去；阶段记录保留日期，不能代替当前待办或当前实现。发版结果以 GitHub Releases 为准。

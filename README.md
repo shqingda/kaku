@@ -9,7 +9,7 @@ Native 与 TypeScript 构建。
 
 | 应用 | 说明 | 状态 |
 | --- | --- | --- |
-| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 已记录发布 `v1.1.14` |
+| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 已发布 [v1.1.14](https://github.com/shqingda/kaku/releases/tag/v1.1.14) |
 | `apps/api` | OAuth、会话、登录后写入代理、偏好/推送/公开缓存 | Cloudflare Workers 运行中 |
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
@@ -129,7 +129,7 @@ ID、应用密钥和回调地址；`TOKEN_ENCRYPTION_KEY` 可使用以下命令�
 openssl rand -base64 32
 ```
 
-生产环境另外需要 `EXPO_ACCESS_TOKEN`（推送代发），见 `docs/deployment/deploy-api.md`。
+生产环境另外需要 `EXPO_ACCESS_TOKEN`（推送代发），见 [API 部署指南](docs/deployment/deploy-api.md)。
 
 ### 启动官网
 
@@ -152,9 +152,9 @@ pnpm build:web
 ```
 
 测试分三层：纯逻辑、组件与 hook、Maestro。CI 跑前两层、覆盖率门禁、
-JS bundle 和官网构建；Maestro 不进 CI。清单见 `docs/development/testing.md`。
+JS bundle 和官网构建；Maestro 不进 CI。清单见 [测试指南](docs/development/testing.md)。
 
-文档索引：[文档导航](docs/README.md)。未完成事项：`TODO.md`。协作约定：`AGENTS.md`。
+文档索引：[文档导航](docs/README.md)。未完成事项：[TODO](TODO.md)。协作约定：[AGENTS](AGENTS.md)。
 
 ## 目录结构
 
@@ -193,4 +193,4 @@ pnpm --filter @kaku/api deploy:worker
 pnpm --filter @kaku/web deploy
 ```
 
-API 细节见 `docs/deployment/deploy-api.md`。Android 安装包见 `docs/deployment/release.md`。
+API 细节见 [API 部署指南](docs/deployment/deploy-api.md)。Android 安装包见 [发版指南](docs/deployment/release.md)。
