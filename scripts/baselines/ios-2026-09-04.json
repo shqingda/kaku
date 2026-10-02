@@ -1,0 +1,12 @@
+{
+  "device": "iPhone 17 Pro",
+  "os": "iOS 26.5",
+  "mode": "development",
+  "flow": ".maestro/kaku-profile-ios.yaml",
+  "budgetRatio": 1.25,
+  "metrics": {
+    "subjectMountMs": 93.06,
+    "charactersMountMs": 75.86,
+    "charactersUpdateMs": 60.29
+  }
+}

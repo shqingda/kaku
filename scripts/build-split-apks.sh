@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 本地构建单一 arm64-v8a APK 并发布到 GitHub Release。
-# 不消耗 EAS 云端构建额度。产物用 debug 签名（与 EAS / 旧包签名不同，需卸载重装）。
+# 不消耗 EAS 云端构建额度。产物用 debug 签名；不同签名不能覆盖安装。
 #
 # 用法：
 #   bash scripts/build-split-apks.sh [tag] [channel] [--build-only]
@@ -24,14 +24,13 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MOBILE_DIR="$REPO_DIR/apps/mobile"
 OUT_DIR="$MOBILE_DIR/dist-split"
 NOTES_FILE="$REPO_DIR/scripts/release-notes.md"
-ABI="arm64-v8a"
 
 cd "$MOBILE_DIR"
 
 echo "==> 导出 EXPO_PUBLIC_* 环境变量（让 JS bundle 内联 DSN 等）"
 set -a
 # shellcheck disable=SC1091
-. ./.env 2>/dev/null || true
+if [[ -f .env ]]; then source .env; fi
 set +a
 
 VERSION="$(node -e "process.stdout.write(require('./app.config.js').expo.version)")"
@@ -52,6 +51,13 @@ case "${CHANNEL}" in
 esac
 
 if [[ "$TAG" != "v$VERSION" ]]; then echo "tag 必须是 v$VERSION" >&2; exit 2; fi
+if [[ "$BUILD_ONLY" == true ]]; then
+  exec bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"
+fi
+if [[ "${KAKU_OPTIMIZE_NATIVE:-0}" == 1 ]]; then
+  echo "原生优化候选尚待设备验收，不能通过发布入口发布。" >&2
+  exit 2
+fi
 APK_NAME="kaku-${CHANNEL}.apk"
 # Direct APK distribution may download updates; store builds must not request this permission.
 export KAKU_UPDATE_CHANNEL=github
@@ -68,24 +74,7 @@ if ! git -C "${REPO_DIR}" diff --quiet -- apps/mobile/src/features/changelog/cha
   git -C "${REPO_DIR}" commit -m "chore(release): sync in-app changelog for ${TAG}"
 fi
 
-echo "==> 同步原生工程 (expo prebuild, channel=${CHANNEL})"
-pnpm exec expo prebuild --platform android --no-install >/dev/null
-
-echo "==> 禁用本地 Sentry sourcemap 上传（保留给 EAS 云端构建）"
-sed -i '' 's#^apply from: new File(\["node".*#// sentry disabled for local build#' android/app/build.gradle
-
-rm -rf "${OUT_DIR}"
-mkdir -p "${OUT_DIR}"
-
-echo "==> 构建 ${ABI} -> ${APK_NAME}"
-(cd android && ./gradlew :app:assembleRelease "-PreactNativeArchitectures=${ABI}" -q)
-cp android/app/build/outputs/apk/release/app-release.apk "${OUT_DIR}/${APK_NAME}"
-du -h "${OUT_DIR}/${APK_NAME}" | sed 's/^/    /'
-
-if [[ "$BUILD_ONLY" == true ]]; then
-  echo "==> 仅构建完成，未推送、未创建 Release"
-  exit 0
-fi
+bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"
 
 echo "==> 推送 origin/main（Release tag 必须落在已上传的提交上）"
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY

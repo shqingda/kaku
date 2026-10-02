@@ -11,3 +11,17 @@ test('rejects mismatched environments and incomplete or invalid samples', () => 
     assert.throws(() => checkPerformance({ ...base, ...change }));
   }
 });
+
+test('accepts an explicit same-environment baseline with home measurements', () => {
+  const baseline = { device: 'iPhone 18 Pro', os: 'iOS 27.0', mode: 'development', flow: 'home', budgetRatio: 1.25, metrics: { homeMountMs: 40 } };
+  const report = { ...baseline, homeMountMs: [45, 49, 60] };
+  assert.deepEqual(checkPerformance(report, baseline), [{ metric: 'homeMountMs', median: 49, limit: 50, passed: true }]);
+  assert.throws(() => checkPerformance(report));
+  for (const change of [{ budgetRatio: 0 }, { budgetRatio: Infinity }, { metrics: {} }, { metrics: { homeMountMs: -1 } }, { metrics: [] }]) {
+    assert.throws(() => checkPerformance(report, { ...baseline, ...change }));
+  }
+});
+
+test('keeps the historical limits when the baseline argument is omitted', () => {
+  assert.deepEqual(checkPerformance(base).map(item => item.limit), [116.33, 94.83, 75.37]);
+});

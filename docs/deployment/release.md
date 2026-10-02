@@ -40,23 +40,35 @@ bash scripts/build-split-apks.sh v1.0.9 release
 # 其他渠道（tag 仍用 v 版本号，用第二参数区分渠道）
 bash scripts/build-split-apks.sh v1.0.9 debug
 
-# 只构建、不推送、不创建 Release
+# 纯构建：不改更新日志、不提交、不推送、不创建 Release
+bash scripts/build-android.sh release
+# 旧入口仍兼容
 bash scripts/build-split-apks.sh v1.0.9 release --build-only
 ```
 
 第一个参数是 GitHub Release **tag，必须是 `v<app 版本>`**，不要用 `android-1.0.0-n`。留空则用 `v<app.config.js 的 version>`。脚本在上传 APK 前会 `git push origin HEAD:main`。
 
-### 做了什么
+### 发布入口做了什么
 
 1. 按渠道设置 `EAS_BUILD_PROFILE`（决定 Android 包名和渠道图标）
 2. 从 `.env` 注入 `EXPO_PUBLIC_*`（DSN 内联进 JS bundle，Sentry 本地包可用）
 3. 把 `release-notes.md` 同步进 App 内更新日志（当前版本缺失时写入，必要时自动提交）
 4. `expo prebuild --platform android` 同步原生工程（CNG 管理，android/ 不入库）
-5. 禁用本地 Sentry source map 上传（保留给 EAS 云端构建）
+5. 通过 SENTRY_DISABLE_AUTO_UPLOAD 禁用本地 source map 上传（保留运行时崩溃上报）
 6. 本地 `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`，复制为 `kaku-<channel>.apk`
 7. `gh release create` 上传该 APK，说明来自 `scripts/release-notes.md`
 
-产物在 `apps/mobile/dist-split/`（已 gitignore）。
+产物在 `apps/mobile/dist-split/`（已 gitignore）。纯构建入口只执行原生生成和打包，不需要发版说明、不触碰 Git，也不会清空其他候选产物。Python 3 用于输出体积报告。
+
+体积对比先保存同一源码、同一渠道的基线 APK，再构建候选：
+
+```bash
+bash scripts/build-android.sh release --optimized
+python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized.apk --baseline /path/to/baseline.apk
+# 加 --json 输出带 SHA-256、分类字节数和变化比例的报告
+```
+
+`--optimized` 显式设置 `KAKU_OPTIMIZE_NATIVE=1`；候选名带 `-optimized`，不覆盖默认包。候选完成 Android 运行验收前不作为默认发布配置，发布入口拒绝携带该优化环境开关。APK 分类按 ZIP 压缩后大小统计，额外单列 ZIP/签名/对齐开销，不是安装后占用；比较时记录相同 ABI、签名、工具版本和源码范围。
 
 ### 注意事项
 

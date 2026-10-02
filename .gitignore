@@ -7,6 +7,7 @@ dist/
 coverage/
 *.tsbuildinfo
 *.log
+__pycache__/
 .env
 apps/mobile/.env
 apps/api/data/

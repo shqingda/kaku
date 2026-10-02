@@ -4,6 +4,8 @@
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
 const isProduction = EAS_BUILD_PROFILE === 'production';
+// 候选包需完成 Android 运行验收后才能成为默认发布配置。
+const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE === '1';
 const suffix = isProduction ? '' : '.debug';
 const channel = isProduction ? 'production' : 'debug';
 const iconDirectory = './assets/images/app-icons';
@@ -70,7 +72,13 @@ module.exports = {
       favicon: './assets/images/kaku-icon.png',
     },
     plugins: [
-      ['expo-build-properties', { ios: { enableSceneSupport: true } }],
+      ['expo-build-properties', {
+        ios: { enableSceneSupport: true },
+        android: {
+          enableMinifyInReleaseBuilds: optimizeNative,
+          enableShrinkResourcesInReleaseBuilds: optimizeNative,
+        },
+      }],
       'expo-router',
       'expo-image',
       'expo-font',
