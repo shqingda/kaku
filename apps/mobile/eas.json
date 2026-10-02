@@ -10,6 +10,17 @@
     },
     "production": {
       "autoIncrement": true
+    },
+    "github": {
+      "extends": "production",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "KAKU_UPDATE_CHANNEL": "github",
+        "KAKU_OPTIMIZE_NATIVE": "0"
+      }
     }
   }
 }

@@ -1,9 +1,9 @@
 // 按 EAS 构建环境动态设置包名：
-// - production：正式包名 com.shqingda.kaku（Play 上架用）
+// - production / github：正式包名 com.shqingda.kaku（商店 / GitHub APK）
 // - 本地与 debug 构建（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
-const isProduction = EAS_BUILD_PROFILE === 'production';
+const isProduction = EAS_BUILD_PROFILE === 'production' || EAS_BUILD_PROFILE === 'github';
 // 候选包需完成 Android 运行验收后才能成为默认发布配置。
 const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE === '1';
 const suffix = isProduction ? '' : '.debug';

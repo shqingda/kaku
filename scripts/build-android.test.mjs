@@ -51,3 +51,23 @@ test('native shrinking is opt-in and restricted to the production package', () =
     assert.equal(properties.ios.enableSceneSupport, true);
   }
 });
+
+test('cloud GitHub APK keeps the release package and install permission separate from the store', () => {
+  const eas = JSON.parse(readFileSync(new URL('../apps/mobile/eas.json', import.meta.url), 'utf8'));
+  assert.equal(eas.build.github.extends, 'production');
+  assert.equal(eas.build.github.android.buildType, 'apk');
+  assert.equal(eas.build.production.android?.buildType, undefined);
+  for (const profile of ['production', 'github', 'development']) {
+    const result = spawnSync(process.execPath, ['-e', 'process.stdout.write(JSON.stringify(require("./apps/mobile/app.config.js").expo))'], {
+      cwd: new URL('..', import.meta.url),
+      env: { ...process.env, KAKU_UPDATE_CHANNEL: '', KAKU_OPTIMIZE_NATIVE: '0', ...eas.build[profile].env, EAS_BUILD_PROFILE: profile },
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const config = JSON.parse(result.stdout);
+    assert.equal(config.android.package, profile === 'development' ? 'com.shqingda.kaku.debug' : 'com.shqingda.kaku');
+    assert.equal(config.android.permissions.includes('android.permission.REQUEST_INSTALL_PACKAGES'), profile === 'github');
+    const properties = config.plugins.find(p => Array.isArray(p) && p[0] === 'expo-build-properties')[1];
+    assert.equal(properties.android.enableMinifyInReleaseBuilds, false);
+  }
+});

@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       channel:
-        description: 'EAS build profile (production = 正式上架)'
+        description: 'GitHub APK profile (Play 使用独立的 production AAB)'
         required: true
-        default: 'production'
+        default: 'github'
         type: choice
         options:
-          - production
+          - github
       tag:
-        description: 'Release tag（留空自动生成 android-<run_number>）'
+        description: 'Release tag（留空使用 v<app version>）'
         required: false
         default: ''
 
@@ -45,6 +45,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          VERSION=$(node -p "require('./apps/mobile/app.config.js').expo.version")
+          TAG=${RELEASE_TAG:-v$VERSION}
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Release tag must match v$VERSION"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Start EAS build
         working-directory: apps/mobile
         env:
@@ -54,6 +68,7 @@ jobs:
             --profile "${{ github.event.inputs.channel }}" \
             --platform android \
             --non-interactive \
+            --no-wait \
             --json > /tmp/eas-build.json
           cat /tmp/eas-build.json
 
@@ -91,15 +106,22 @@ jobs:
         id: artifact
         run: |
           NAME=kaku-release.apk
-          curl -sL -o "$NAME" "${{ steps.build.outputs.apk-url }}"
-          ls -la "$NAME"
+          curl --fail --show-error --location -o "$NAME" "${{ steps.build.outputs.apk-url }}"
+          python3 - "$NAME" <<'PYAPK'
+          import sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as archive:
+              names = set(archive.namelist())
+              if not {'AndroidManifest.xml', 'classes.dex'} <= names or 'BundleConfig.pb' in names:
+                  raise SystemExit('Expected an installable APK, not an AAB or download error')
+          PYAPK
+          python3 scripts/report-apk-size.py "$NAME"
           echo "apk=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('android-{0}-{1}', github.event.inputs.channel, github.run_number) }}
-          name: Kaku Android ${{ github.event.inputs.channel }} (1.0.0+${{ github.run_number }})
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Kaku Android v${{ steps.version.outputs.version }}
           body_path: scripts/release-notes.md
           files: ${{ steps.artifact.outputs.apk }}
           draft: false
