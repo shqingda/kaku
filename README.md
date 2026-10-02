@@ -3,18 +3,18 @@
 Kaku 是面向 iOS 与 Android 的第三方 Bangumi 客户端，使用 Expo、React
 Native 与 TypeScript 构建。
 
-文档从 [文档导航](/Users/shqingda/Projects/kaku/docs/README.md) 进入：查架构、开发测试、部署发布、面试材料和历史记录。
+文档从 [文档导航](docs/README.md) 进入：查架构、开发测试、部署发布、面试材料和历史记录。
 
 ## 项目状态
 
 | 应用 | 说明 | 状态 |
 | --- | --- | --- |
-| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 最新包 `v1.1.7` |
+| `apps/mobile` | Expo / React Native 移动客户端 | iOS、Android 开发测试中；GitHub 已记录发布 `v1.1.12` |
 | `apps/api` | OAuth、会话、登录后写入代理、偏好/推送/公开缓存 | Cloudflare Workers 运行中 |
 | `apps/web` | 产品介绍、隐私政策、服务条款与 FAQ | Cloudflare Workers 运行中 |
 
 还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases
-（debug 签名，覆盖安装须先卸载）。发版见 `docs/deployment/release.md`。
+（本地 debug 签名；同包名、同签名可覆盖安装，与旧 EAS 签名不同则不能直接覆盖）。发版见 `docs/deployment/release.md`。
 
 ## 主要功能
 
@@ -68,7 +68,7 @@ Kaku 不维护一份与远端相冲突的本地收藏。
 - 后端：Hono / Cloudflare Workers，D1 保存自有用户数据，代理 Bangumi 授权和个人操作。
 - 官网：React / Vite，通过 Cloudflare Workers Static Assets 独立部署。
 
-分层、数据流、缓存与登录设计统一看 [技术架构](/Users/shqingda/Projects/kaku/docs/architecture.md)。
+分层、数据流、缓存与登录设计统一看 [技术架构](docs/architecture.md)。
 
 ## 安全边界
 
@@ -153,7 +153,7 @@ pnpm build:web
 测试分三层：纯逻辑、组件与 hook、Maestro。CI 跑前两层、覆盖率门禁、
 JS bundle 和官网构建；Maestro 不进 CI。清单见 `docs/development/testing.md`。
 
-文档索引：[文档导航](/Users/shqingda/Projects/kaku/docs/README.md)。未完成事项：`TODO.md`。协作约定：`AGENTS.md`。
+文档索引：[文档导航](docs/README.md)。未完成事项：`TODO.md`。协作约定：`AGENTS.md`。
 
 ## 目录结构
 

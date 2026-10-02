@@ -1,6 +1,6 @@
 # Kaku 改进计划（2026-09-11）
 
-> 这是 2026-09-11 开始的阶段计划与执行记录，保留当时的判断和过程；不作为当前功能状态或待办清单。当前待办以 [TODO](/Users/shqingda/Projects/kaku/TODO.md) 为准，现有实现看 [技术架构](/Users/shqingda/Projects/kaku/docs/architecture.md)。
+> 这是 2026-09-11 开始的阶段计划与执行记录，保留当时的判断和过程；不作为当前功能状态或待办清单。当前待办以 [TODO](../../TODO.md) 为准，现有实现看 [技术架构](../architecture.md)。
 
 五个梯队 × 六个可发布批次。每批一个可独立发布的切片：实现 → `pnpm test`（node:test + RNTL）+ 类型检查 → iOS 模拟器过受影响屏 → 完整 diff 审查后 commit（不 push）。
 

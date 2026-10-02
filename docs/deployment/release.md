@@ -60,7 +60,7 @@ bash scripts/build-split-apks.sh v1.0.9 release --build-only
 
 ### 注意事项
 
-- **签名**：本地产物用 debug 签名，与 EAS 签名的旧包不同——**安装前必须先卸载旧版**（Release 说明已注明）
+- **签名**：本地产物用 debug 签名，与 EAS 签名的旧包不同——**签名不一致时不能直接覆盖；同包名、同签名可覆盖安装**（Release 说明已注明）
 - **架构**：只发 arm64-v8a。32 位机和 x86 模拟器不再提供安装包
 - ABI 控制用的是 RN 的 `-PreactNativeArchitectures=<abi>` 参数（Expo SDK 57 已移除 `android.abiFilters` / `expo-build-properties` 的 ABI 支持，不要再用那些配置）
 - 本地产物不上传 Sentry source map（堆栈是混淆/压缩的），崩溃会上报但定位不如 EAS 包精确

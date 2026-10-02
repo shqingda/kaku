@@ -224,7 +224,7 @@ TanStack Query 负责前一类数据。否则每个页面都要自己处理“�
 
 实际代码中的 `onMutate` 表示“请求执行前做什么”，`onError` 表示“失败后做什么”，`onSuccess` 表示“成功后做什么”。先理解上面五步，再看这些名字会容易很多。
 
-源码入口：[收藏读取和保存](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/use-personal-collection.ts)。
+源码入口：[收藏读取和保存](../../apps/mobile/src/features/collections/use-personal-collection.ts)。
 
 ### 5.4 什么是 query key 和缓存失效
 
@@ -337,7 +337,7 @@ App 也做了配合：如果已经有一个刷新请求在进行，其他请求�
 
 “退出其他设备”会保留当前会话；“断开连接”会删除全部 Kaku 会话及服务端保存的 Bangumi 凭据。这不等于已经调用 Bangumi 官方接口撤销所有授权，也不能撤回已经发出去的请求。
 
-源码入口：[登录流程](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[会话数据库操作](/Users/shqingda/Projects/kaku/apps/api/src/auth/store.ts)、[凭据加密](/Users/shqingda/Projects/kaku/apps/api/src/auth/crypto.ts)、[App 会话管理](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-provider.tsx)。
+源码入口：[登录流程](../../apps/api/src/auth/routes.ts)、[会话数据库操作](../../apps/api/src/auth/store.ts)、[凭据加密](../../apps/api/src/auth/crypto.ts)、[App 会话管理](../../apps/mobile/src/features/auth/auth-provider.tsx)。
 
 ## 七、“缓存和离线是怎么做的？”
 
@@ -394,7 +394,7 @@ App 也做了配合：如果已经有一个刷新请求在进行，其他请求�
 
 > 目前主要是离线读取，不是离线写入。如果要支持离线改进度，还要处理待提交队列、重试、重复提交以及不同设备的冲突，这部分没有包含在当前实现里。
 
-源码入口：[查询持久化规则](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persistence.ts)、[本地存储](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persister.ts)、[作品查询与失败兜底](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/use-catalog-subject.ts)、[离线包数量和有效期](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/offline-subject-pack-model.ts)。
+源码入口：[查询持久化规则](../../apps/mobile/src/lib/query-persistence.ts)、[本地存储](../../apps/mobile/src/lib/query-persister.ts)、[作品查询与失败兜底](../../apps/mobile/src/features/catalog/use-catalog-subject.ts)、[离线包数量和有效期](../../apps/mobile/src/features/catalog/offline-subject-pack-model.ts)。
 
 ## 八、“Zod、Adapter、错误处理分别解决什么？”
 
@@ -445,7 +445,7 @@ discussionCount: episode.comment,
 
 列表翻页失败后，保留前面已经加载的内容，页脚给重试按钮。这里的**分页**就是分批取数据，避免一次取完整列表；但单集评论当前拿的是完整回复数组，不能把所有列表都说成同样的分页方式。
 
-源码入口：[上游数据检查](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/api-v0/client.ts)、[作品和章节转换](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[重试规则](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-retry.ts)。
+源码入口：[上游数据检查](../../apps/mobile/src/infrastructure/bangumi/api-v0/client.ts)、[作品和章节转换](../../apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[重试规则](../../apps/mobile/src/lib/query-retry.ts)。
 
 ## 九、“你做过什么体验优化？FlashList 是怎么回事？”
 
@@ -499,7 +499,7 @@ FlatList 和 FlashList 都是长列表方案；FlashList 更强调复用。项�
 
 **FPS**是一秒更新多少帧的指标。能滚到某个位置，不等于帧率一定稳定；截图看着正常，也不能证明动画流畅。
 
-源码入口：[弹层手势](/Users/shqingda/Projects/kaku/apps/mobile/src/features/shared/app-sheet.tsx)、[单集评论列表](/Users/shqingda/Projects/kaku/apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx)、[引用跳楼](/Users/shqingda/Projects/kaku/apps/mobile/src/features/discussions/use-reply-navigation.ts)。
+源码入口：[弹层手势](../../apps/mobile/src/features/shared/app-sheet.tsx)、[单集评论列表](../../apps/mobile/src/app/subject/[id]/episode/[episodeNumber].tsx)、[引用跳楼](../../apps/mobile/src/features/discussions/use-reply-navigation.ts)。
 
 ## 十、“你怎么测试？怎么发布？”
 
@@ -545,7 +545,7 @@ Maestro 当前在本地运行，没有放进这条 CI。项目记录了 iOS 流�
 
 当前 Android 日常包还存在架构和签名范围限制。**签名**是系统用来识别安装包发布身份的一部分，签名不匹配会影响覆盖安装，不能把开发分发包直接当成商店正式包。
 
-源码入口：[CI 配置](/Users/shqingda/Projects/kaku/.github/workflows/ci.yml)、[测试说明](/Users/shqingda/Projects/kaku/docs/development/testing.md)、[发布说明](/Users/shqingda/Projects/kaku/docs/deployment/release.md)。
+源码入口：[CI 配置](../../.github/workflows/ci.yml)、[测试说明](../development/testing.md)、[发布说明](../deployment/release.md)。
 
 ## 十一、“挑一个难点详细讲讲”
 

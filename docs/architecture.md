@@ -75,7 +75,7 @@ kaku/
 
 ### 3.1 启动时先把公共能力接起来
 
-入口是 [根布局](/Users/shqingda/Projects/kaku/apps/mobile/src/app/_layout.tsx)。它创建全局 QueryClient，并将登录、偏好、搜索历史、最近浏览和主题等 Provider 包在导航外面。
+入口是 [根布局](../apps/mobile/src/app/_layout.tsx)。它创建全局 QueryClient，并将登录、偏好、搜索历史、最近浏览和主题等 Provider 包在导航外面。
 
 **Provider 可以理解为公共服务入口**：页面不需要各自恢复一遍登录信息，而是从同一个 AuthProvider 获取当前用户和请求方法。
 
@@ -113,7 +113,7 @@ app 中的页面入口
 
 但这仍是分层方向：部分 Hook 直接引用 Bangumi 实现，命名和数据能力也有耦合。目前不能说“换一个数据源完全不用动业务代码”。
 
-代码入口：[作品查询](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/use-catalog-subject.ts)、[作品适配器](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[请求封装](/Users/shqingda/Projects/kaku/apps/mobile/src/infrastructure/bangumi/transport/http-client.ts)。
+代码入口：[作品查询](../apps/mobile/src/features/catalog/use-catalog-subject.ts)、[作品适配器](../apps/mobile/src/infrastructure/bangumi/catalog/provider.ts)、[请求封装](../apps/mobile/src/infrastructure/bangumi/transport/http-client.ts)。
 
 ## 4. 沿着三条用户操作看数据流
 
@@ -182,7 +182,7 @@ Kaku 会话使用随机字符串，不是 JWT。后端需要查存储确认它�
 
 退出当前设备、撤销其他设备和断开连接是不同操作。断开连接会清除 Kaku 保存的凭据及会话，不等于调用 Bangumi 撤销其上游授权。
 
-代码入口：[手机登录状态](/Users/shqingda/Projects/kaku/apps/mobile/src/features/auth/auth-provider.tsx)、[授权路由](/Users/shqingda/Projects/kaku/apps/api/src/auth/routes.ts)、[会话服务](/Users/shqingda/Projects/kaku/apps/api/src/auth/session-service.ts)、[凭据加密](/Users/shqingda/Projects/kaku/apps/api/src/auth/crypto.ts)。
+代码入口：[手机登录状态](../apps/mobile/src/features/auth/auth-provider.tsx)、[授权路由](../apps/api/src/auth/routes.ts)、[会话服务](../apps/api/src/auth/session-service.ts)、[凭据加密](../apps/api/src/auth/crypto.ts)。
 
 ### 4.3 修改收藏或进度
 
@@ -200,7 +200,7 @@ Kaku 会话使用随机字符串，不是 JWT。后端需要查存储确认它�
 
 **最终状态仍以 Bangumi 为准。** 当前没有可在离线时排队、联网后自动补交的写入队列。
 
-代码入口：[个人收藏查询与修改](/Users/shqingda/Projects/kaku/apps/mobile/src/features/collections/use-personal-collection.ts)、[后端收藏路由](/Users/shqingda/Projects/kaku/apps/api/src/collections/routes.ts)。
+代码入口：[个人收藏查询与修改](../apps/mobile/src/features/collections/use-personal-collection.ts)、[后端收藏路由](../apps/api/src/collections/routes.ts)。
 
 ## 5. 数据究竟存在哪里
 
@@ -215,7 +215,7 @@ Kaku 会话使用随机字符串，不是 JWT。后端需要查存储确认它�
 | 最近作品离线包 | 手机本地存储 | 请求失败时仍能打开已保存的作品数据 |
 | 手机登录凭据 | SecureStore | 使用系统提供的安全存储能力 |
 
-数据库结构见 [schema.ts](/Users/shqingda/Projects/kaku/apps/api/src/db/schema.ts)。D1 不是作品库的完整副本，也不替代 Bangumi 保存用户收藏。
+数据库结构见 [schema.ts](../apps/api/src/db/schema.ts)。D1 不是作品库的完整副本，也不替代 Bangumi 保存用户收藏。
 
 ### 5.1 查询缓存与离线包不是一回事
 
@@ -227,7 +227,7 @@ Kaku 会话使用随机字符串，不是 JWT。后端需要查存储确认它�
 
 私人查询可以持久化到普通 SQLite。代码使用用户相关 key、私人标记和退出后的清理减少混用，但它不是加密存储，也不能宣称完全消除了恢复缓存到清理完成之间的短暂窗口。登录凭据与普通查询缓存需要分别看待。
 
-代码入口：[持久化规则](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persistence.ts)、[磁盘存储接入](/Users/shqingda/Projects/kaku/apps/mobile/src/lib/query-persister.ts)、[离线作品包](/Users/shqingda/Projects/kaku/apps/mobile/src/features/catalog/offline-subject-pack.ts)。
+代码入口：[持久化规则](../apps/mobile/src/lib/query-persistence.ts)、[磁盘存储接入](../apps/mobile/src/lib/query-persister.ts)、[离线作品包](../apps/mobile/src/features/catalog/offline-subject-pack.ts)。
 
 ### 5.2 偏好同步
 
@@ -237,7 +237,7 @@ Kaku 会话使用随机字符串，不是 JWT。后端需要查存储确认它�
 
 ## 6. 后端：路由、存储与上游接入
 
-[app.ts](/Users/shqingda/Projects/kaku/apps/api/src/app.ts) 创建 Hono 应用，注册全局限流、业务路由、404 和异常处理；[index.ts](/Users/shqingda/Projects/kaku/apps/api/src/index.ts) 是 Worker 的 HTTP 与定时任务入口。
+[app.ts](../apps/api/src/app.ts) 创建 Hono 应用，注册全局限流、业务路由、404 和异常处理；[index.ts](../apps/api/src/index.ts) 是 Worker 的 HTTP 与定时任务入口。
 
 业务模块通常按职责拆开：
 
@@ -270,11 +270,11 @@ store.ts           读写 Kaku 自有数据（需要持久化的模块）
 
 这带来几个实际边界：通知可能有轮询延迟；投递还依赖上游、Expo 和系统服务；不是每条消息严格只到达一次的保证。缺少推送服务凭据时会记录失败，不推进游标来假装已发送。
 
-另一个每日定时任务负责清理过期授权数据。调度定义见 [wrangler.jsonc](/Users/shqingda/Projects/kaku/apps/api/wrangler.jsonc)，流程见 [push/poll.ts](/Users/shqingda/Projects/kaku/apps/api/src/push/poll.ts) 和 [push/deliver.ts](/Users/shqingda/Projects/kaku/apps/api/src/push/deliver.ts)。
+另一个每日定时任务负责清理过期授权数据。调度定义见 [wrangler.jsonc](../apps/api/wrangler.jsonc)，流程见 [push/poll.ts](../apps/api/src/push/poll.ts) 和 [push/deliver.ts](../apps/api/src/push/deliver.ts)。
 
 ## 8. 界面与官网各自的边界
 
-手机端通过 Expo Router 组织作品、单集、收藏、讨论和个人设置等页面。共用字号与间距来自 [design.ts](/Users/shqingda/Projects/kaku/apps/mobile/src/constants/design.ts)，交互动画由 Reanimated 和 Gesture Handler 等实现。
+手机端通过 Expo Router 组织作品、单集、收藏、讨论和个人设置等页面。共用字号与间距来自 [design.ts](../apps/mobile/src/constants/design.ts)，交互动画由 Reanimated 和 Gesture Handler 等实现。
 
 单集评论页使用 FlashList，主要作用是复用列表项、减少长列表的渲染负担。当前“滚动到底部”入口隐藏，FlashList 保留。列表性能能力与是否显示某个操作入口是两件独立的事，也不能仅凭使用 FlashList 就推断所有场景没有卡顿。
 
@@ -297,7 +297,7 @@ CI 负责自动检查与打包验证；`expo export` 成功不等于 APK 或 iOS
 
 手机 Android 发布走仓库构建脚本与 GitHub Release 流程；API 单独执行数据库迁移和 Worker 部署；官网独立构建部署。修改一个应用，不意味着三个应用都要重新发版。
 
-运行命令看 [README](/Users/shqingda/Projects/kaku/README.md)，检查方法看 [测试说明](/Users/shqingda/Projects/kaku/docs/development/testing.md)，Android 发版看 [RELEASE](/Users/shqingda/Projects/kaku/docs/deployment/release.md)，后端部署看 [deploy-api](/Users/shqingda/Projects/kaku/docs/deployment/deploy-api.md)。这些文档负责具体操作，本文负责解释它们之间的关系。
+运行命令看 [README](../README.md)，检查方法看 [测试说明](development/testing.md)，Android 发版看 [RELEASE](deployment/release.md)，后端部署看 [deploy-api](deployment/deploy-api.md)。这些文档负责具体操作，本文负责解释它们之间的关系。
 
 ## 10. 改一个功能，从哪里下手
 
