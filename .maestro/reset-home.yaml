@@ -1,4 +1,4 @@
-# 前置复位：开发客户端重载 JS bundle 后会回到首页顶部。
+# 前置：开发客户端已连接本地 Metro。冷启动回到首页顶部。
 # 独立流程共用此步骤，避免上一个流程遗留的路由影响下一个流程。
 appId: placeholder
 ---
@@ -6,13 +6,17 @@ appId: placeholder
     when:
       platform: iOS
     commands:
-      - openLink: "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+      # launchApp 默认停止旧进程；参数只对本次进程隐藏 Expo 悬浮工具按钮。
+      - launchApp:
+          appId: com.shqingda.kaku.debug
+          arguments:
+            EXDevMenuShowFloatingActionButton: "NO"
 - runFlow:
     when:
       platform: Android
     commands:
       - openLink: "kaku://"
 - extendedWaitUntil:
-    visible: "打开账户菜单"
+    visible: "打开账户菜单|登录 Bangumi"
     timeout: 180000
 - waitForAnimationToEnd

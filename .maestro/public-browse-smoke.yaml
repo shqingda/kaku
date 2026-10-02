@@ -6,10 +6,8 @@ tags:
 - runFlow:
     file: reset-home.yaml
 - assertVisible: Kaku
-- tapOn: 搜索条目
-- setClipboard: 葬送的芙莉莲
-- pasteText
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"
     timeout: 15000

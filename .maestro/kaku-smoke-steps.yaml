@@ -1,17 +1,17 @@
-# 共用冒烟步骤（仅被 kaku-smoke-ios / kaku-smoke-android 以 runFlow file 引入；
-# launchApp 由入口 flow 负责，子 flow 只做界面操作）。
-# 复位策略：openLink 触发 dev client 重载 bundle，路由必然回到首页顶部，
+# 共用冒烟步骤，由平台入口与全量入口以 runFlow 引入。
+# 启动与平台复位差异统一由 reset-home 处理。
+# 复位策略：iOS 冷启动已连接 Metro 的 dev client，Android 使用首页深链，
 # 无论上次运行停在哪个页面（含滚动过的首页）都能恢复。
 appId: placeholder
 ---
 - runFlow:
     file: reset-home.yaml
-# 热重载一般 5–15 秒；冷启动 bundle 编译最长给 3 分钟
+# 冷启动 bundle 编译最长给 3 分钟
 - extendedWaitUntil:
     visible: "打开账户菜单"
     timeout: 180000
 - takeScreenshot: home
-# reload 后布局分阶段挂载，等稳定再点，避免用过期坐标点到搜索框
+# 启动后布局分阶段挂载，等稳定再点，避免用过期坐标点到搜索框
 - waitForAnimationToEnd
 - tapOn: "打开账户菜单"
 - runFlow:

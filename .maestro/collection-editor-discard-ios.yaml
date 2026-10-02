@@ -1,0 +1,35 @@
+appId: com.shqingda.kaku.debug
+name: Collection editor close and discard
+---
+# 前置：已登录；只修改本地表单后放弃，不保存到远端。
+- runFlow:
+    file: collection-box-signin.yaml
+- assertVisible: "收藏状态"
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "关闭收藏盒"
+      - assertNotVisible: "收藏状态"
+      - tapOn: "打开收藏盒"
+      - assertVisible: "收藏状态"
+# reset-home 在本次进程隐藏 Expo Tools button，避免开发悬浮控件遮挡开关。
+- scrollUntilVisible:
+    element: "仅自己可见"
+    direction: DOWN
+- waitForAnimationToEnd
+- tapOn:
+    text: "仅自己可见"
+    index: 1
+- tapOn: "关闭收藏盒"
+- assertVisible: "放弃未保存的修改？"
+- tapOn: "继续编辑"
+- assertVisible: "关闭收藏盒"
+- tapOn: "关闭收藏盒"
+- tapOn: "放弃修改"
+- assertNotVisible: "收藏状态"
+- tapOn: "打开收藏盒"
+- assertVisible: "收藏状态"
+- takeScreenshot: collection-editor-checked
+- tapOn: "关闭收藏盒"
+- assertNotVisible: "放弃未保存的修改？"
+- assertVisible: "打开收藏盒"

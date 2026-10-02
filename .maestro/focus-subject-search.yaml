@@ -1,0 +1,8 @@
+# 搜索词已有内容时，清除按钮可证明输入框已进入编辑态。
+appId: placeholder
+---
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "搜索条目"
+      - assertVisible: "Clear text|清空搜索内容"

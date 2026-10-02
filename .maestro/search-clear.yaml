@@ -6,15 +6,15 @@ tags:
 # 覆盖：综合页搜索 → 结果可见 → 清空 → 回到概览（不再叠屏/闪屏）
 - runFlow:
     file: reset-home.yaml
-- tapOn: "搜索条目"
-- inputText: "葬送的芙莉莲"
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "搜索结果"
     timeout: 15000
 - assertVisible: "葬送的芙莉莲.*"
 # iOS 原生清除按钮仅在编辑态出现；先重新聚焦输入框。
-- tapOn: "搜索条目"
+- runFlow:
+    file: focus-subject-search.yaml
 - runFlow:
     when:
       visible: "Clear text"

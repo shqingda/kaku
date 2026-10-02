@@ -1,0 +1,13 @@
+# 仅重试输入准备：首页刷新结束时可能移动搜索框，导致 Maestro 点击旧位置。
+# 确认文本已写入（清除按钮出现）后才提交；搜索结果断言仍由业务流程负责。
+appId: placeholder
+---
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "搜索条目"
+      - eraseText: 100
+      - setClipboard: 葬送的芙莉莲
+      - pasteText
+      - assertVisible: "Clear text|清空搜索内容"
+- pressKey: Enter

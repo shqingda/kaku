@@ -6,9 +6,8 @@ tags:
 # 覆盖：搜索 → 打开条目 → 进入吐槽箱 → 评论可见
 - runFlow:
     file: reset-home.yaml
-- tapOn: "搜索条目"
-- inputText: "葬送的芙莉莲"
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"
     timeout: 15000

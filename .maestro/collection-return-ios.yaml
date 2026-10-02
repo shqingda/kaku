@@ -1,0 +1,24 @@
+appId: com.shqingda.kaku.debug
+name: Collection return position
+---
+# 前置：已在至少两项条目的收藏列表中。打开列表由验收者准备，不改筛选或远端收藏。
+# 前后截图用于核对同一行的纵向位置；断言只证明返回列表，不冒充像素比较。
+- extendedWaitUntil:
+    visible: "打开收藏条目：.*"
+    timeout: 15000
+- swipe:
+    start: "50%,85%"
+    end: "50%,35%"
+    duration: 500
+- waitForAnimationToEnd
+- takeScreenshot: collection-return-before
+- tapOn:
+    text: "打开收藏条目：.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- tapOn: "返回"
+- assertVisible: "打开收藏条目：.*"
+- waitForAnimationToEnd
+- takeScreenshot: collection-return-after

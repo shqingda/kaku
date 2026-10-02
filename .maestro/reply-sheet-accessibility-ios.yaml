@@ -4,7 +4,9 @@ name: Reply sheet accessibility after reopening
 # 前置：iOS 开发客户端、Metro 已运行且已登录。保持已有草稿，不输入或发送内容。
 # 冷启动 + 深链入口避免 dev-client 重载与搜索输入互相抢时序。
 - stopApp
-- launchApp
+- launchApp:
+    arguments:
+      EXDevMenuShowFloatingActionButton: "NO"
 - extendedWaitUntil:
     visible: "打开账户菜单"
     timeout: 60000
@@ -36,7 +38,10 @@ name: Reply sheet accessibility after reopening
 - repeat:
     times: 3
     commands:
-      - tapOn: "关闭"
+      # 第一个“关闭”是全屏遮罩；大字体弹层会覆盖其中心，需点击标题栏按钮。
+      - tapOn:
+          text: "关闭"
+          index: 1
       - extendedWaitUntil:
           notVisible: "回复内容.*"
           timeout: 10000
@@ -47,7 +52,9 @@ name: Reply sheet accessibility after reopening
       - assertVisible: "发送回复"
       - assertNotVisible: "第 1 集"
 - takeScreenshot: reply-sheet-accessibility-reopened
-- tapOn: "关闭"
+- tapOn:
+    text: "关闭"
+    index: 1
 - extendedWaitUntil:
     notVisible: "回复内容.*"
     timeout: 10000

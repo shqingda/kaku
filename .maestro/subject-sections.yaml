@@ -7,9 +7,8 @@ tags:
 # （分区入口带 press-in 预取，这里同时覆盖预取路径的可用性）
 - runFlow:
     file: reset-home.yaml
-- tapOn: "搜索条目"
-- inputText: "葬送的芙莉莲"
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"
     timeout: 15000
@@ -39,4 +38,8 @@ tags:
 - tapOn: "返回"
 - assertVisible: "角色与声优"
 - tapOn: "返回"
+# 返回时保留条目滚动位置；大字体下收藏入口可能在屏幕上方。
+- scrollUntilVisible:
+    element: "打开收藏盒"
+    direction: UP
 - assertVisible: "打开收藏盒"

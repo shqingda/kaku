@@ -8,9 +8,8 @@ tags:
 # 未登录：断言「登录后标记进度」门控可见。两种状态都不写远端。
 - runFlow:
     file: reset-home.yaml
-- tapOn: "搜索条目"
-- inputText: "葬送的芙莉莲"
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"
     timeout: 15000
@@ -30,18 +29,4 @@ tags:
 - extendedWaitUntil:
     visible: "第 1 集"
     timeout: 15000
-- runFlow:
-    when:
-      visible: "将本集标记已看"
-    commands:
-      - assertVisible: "将本集标记已看"
-- runFlow:
-    when:
-      visible: "将本集设为未看"
-    commands:
-      - assertVisible: "将本集设为未看"
-- runFlow:
-    when:
-      visible: "登录后标记进度"
-    commands:
-      - assertVisible: "登录后标记进度"
+- assertVisible: "将本集标记已看|将本集设为未看|登录后标记进度"

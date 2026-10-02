@@ -6,10 +6,8 @@ tags:
 # 覆盖：搜索 → 条目详情 → 打开收藏盒 → 未登录提示（不写远端）
 - runFlow:
     file: reset-home.yaml
-- tapOn: "搜索条目"
-- setClipboard: 葬送的芙莉莲
-- pasteText
-- pressKey: Enter
+- runFlow:
+    file: enter-subject-search.yaml
 - extendedWaitUntil:
     visible: "葬送的芙莉莲.*"
     timeout: 15000
@@ -25,6 +23,7 @@ tags:
 - extendedWaitUntil:
     visible: "收藏盒"
     timeout: 8000
+- assertVisible: "收藏状态|登录后使用收藏盒"
 - runFlow:
     when:
       visible: "登录后使用收藏盒"

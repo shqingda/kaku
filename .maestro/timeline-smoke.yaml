@@ -9,8 +9,13 @@ tags:
     file: reset-home.yaml
 - runFlow:
     when:
-      visible: "查看全部好友动态"
+      visible: "打开账户菜单"
     commands:
+      - scrollUntilVisible:
+          element: "查看全部好友动态"
+          direction: DOWN
+          centerElement: true
+          timeout: 30000
       - tapOn: "查看全部好友动态"
       - extendedWaitUntil:
           visible: "好友动态"
