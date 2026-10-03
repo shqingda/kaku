@@ -37,3 +37,5 @@
 | 权限 / 对齐 | 权限与 v1.1.16 相同；签名验证及 16 KiB 对齐检查通过 |
 
 本轮是交互修复，不宣称新增包体或运行性能收益。未运行 Android 真机安装、覆盖升级或实际读屏，也未提交商店。
+
+已发布 [v1.1.17](https://github.com/shqingda/kaku/releases/tag/v1.1.17)，源码/tag 对应 `fb55b2d3ba5b1956052aa5b3a66cece77830974f`，已推送到 `origin/main`。[远端 CI](https://github.com/shqingda/kaku/actions/runs/37130455844) 全部通过，包含双端 JS 打包和官网构建。GitHub 资源 `kaku-release.apk` 的大小及 SHA-256 与上表本地产物一致，发布状态为正式发布。

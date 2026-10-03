@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.16](https://github.com/shqingda/kaku/releases/tag/v1.1.16) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。启动、缓存、包体及发布证据见 [本轮验收](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
+> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.17](https://github.com/shqingda/kaku/releases/tag/v1.1.17) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。弹层交互及发布证据见 [本轮验收](docs/test-records/2026-10-03-sheet-interaction.md)，此前启动与包体优化见 [启动优化记录](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
 
 ## 当前工作入口
 
