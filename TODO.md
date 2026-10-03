@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。已发布 Android GitHub 包 [v1.1.14](https://github.com/shqingda/kaku/releases/tag/v1.1.14)（启用 R8 与资源裁剪），未上架 App Store / Google Play。
+> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。已发布 Android GitHub 包 [v1.1.15](https://github.com/shqingda/kaku/releases/tag/v1.1.15)（默认关闭 R8 与资源裁剪），未上架 App Store / Google Play。
 
 ## 当前工作入口
 
@@ -24,7 +24,7 @@
 
 - [ ] Maestro 全量入口首次实跑及平台差异修复。
 - [ ] Release APK 冷启动、登录/深链、通知权限、Sentry、同签名覆盖安装及不同签名安装路径。
-- [ ] 应用内更新下载/取消、安装授权、实际覆盖安装及失败返回。v1.1.13 / v1.1.14 已完成版本/ABI/签名及构建核对，静态检查不替代安装验收。
+- [ ] 应用内更新下载/取消、安装授权、实际覆盖安装及失败返回。v1.1.13 / v1.1.14 / v1.1.15 已完成版本/ABI/签名及构建核对，见 [最新发布记录](docs/test-records/2026-10-03-release-1.1.15.md)；静态检查不替代安装验收。
 - [ ] v1.1.14 原生裁剪包的运行兼容性；已按用户要求提前发布，实机验收仍未完成。
 
 ## 待验证：云端构建

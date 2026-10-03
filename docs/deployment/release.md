@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-02 已发布 v1.1.13 默认包与 v1.1.14 裁剪包；Android 实机兼容性仍待验，通用构建默认关闭裁剪。构建与体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 已发布 v1.1.15 默认包，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验，通用构建默认关闭裁剪。
 
 ## 纯本地构建
 
@@ -63,7 +63,7 @@ bash scripts/build-split-apks.sh "" release
 
 ## EAS 云端构建
 
-[eas.json](../../apps/mobile/eas.json) 分开维护三种用途。云端额度和凭据状态需要在实际使用时查询，尚未实跑这套云端构建与发布流程；已发布的 v1.1.13 / v1.1.14 来自本地构建。
+[eas.json](../../apps/mobile/eas.json) 分开维护三种用途。云端额度和凭据状态需要在实际使用时查询，尚未实跑这套云端构建与发布流程；已发布的 v1.1.13 / v1.1.14 / v1.1.15 来自本地构建。
 
 | Profile | 用途 | Android 产物 |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ pnpm dlx eas-cli@22.2.0 build --platform android --profile github
 
 云端发布从 [Release Android APK workflow](../../.github/workflows/release-apk.yml) 手动触发，需要仓库 Secret `EXPO_TOKEN`。选择 `github`，tag 留空使用当前 `v<app 版本>`，显式 tag 必须匹配版本。流程构建、轮询、下载后检查 APK 结构，才创建 Release；标题也从当前版本生成。此流程同样需要明确的发布授权。
 
-EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号遵循本地生成配置。v1.1.13 / v1.1.14 的本地发布沿用包名和签名；构建与签名核对见验收记录。
+EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号遵循本地生成配置。v1.1.13 / v1.1.14 / v1.1.15 的本地发布沿用包名和签名；构建与签名核对见验收记录。
 
 Play 上架使用 `production` AAB 和正式签名，不能上传本地 debug 签名 APK。商店账号、提交凭据与设备验收仍是独立后续工作；素材见 [商店清单](../store/listing.md)。Sentry source map 上传还依赖 EAS 环境中的 DSN、组织和认证配置，不能仅凭构建 profile 宣称已经可用。
 
