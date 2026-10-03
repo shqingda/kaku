@@ -1,4 +1,5 @@
 import Storage from 'expo-sqlite/kv-store';
+import { parseStoredHistory } from './history-storage';
 
 import {
   RECENT_SUBJECT_LIMIT,
@@ -10,15 +11,8 @@ import {
 const RECENT_SUBJECTS_KEY = 'kaku-recent-subjects';
 
 export async function loadRecentSubjects(userId?: number): Promise<RecentSubjectsRecord> {
-  try {
-    const value = await Storage.getItem(`${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`);
-    if (!value) return { items: [], updatedAt: null };
-
-    const parsed: unknown = JSON.parse(value);
-    return parseRecentSubjectsRecord(parsed);
-  } catch {
-    return { items: [], updatedAt: null };
-  }
+  const value = await Storage.getItem(`${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`);
+  return parseStoredHistory(value, parseRecentSubjectsRecord);
 }
 
 export async function saveRecentSubjects(record: RecentSubjectsRecord, userId?: number) {

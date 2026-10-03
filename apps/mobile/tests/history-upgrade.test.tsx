@@ -9,10 +9,14 @@ import { recordDiagnosticError } from '@/lib/diagnostic-log';
 const mockData = new Map<string, string>();
 const mockRequest = jest.fn();
 let mockFailWrite = false;
+let mockFailRead = false;
 let mockUserId = 1;
 let mockSync = true;
 jest.mock('expo-sqlite/kv-store', () => ({
-  getItem: async (key: string) => mockData.get(key) ?? null,
+  getItem: async (key: string) => {
+    if (mockFailRead) throw new Error('storage unavailable');
+    return mockData.get(key) ?? null;
+  },
   setItem: async (key: string, value: string) => {
     if (mockFailWrite) throw new Error('disk full');
     mockData.set(key, value);
@@ -35,7 +39,37 @@ beforeEach(() => {
   mockUserId = 1;
   mockSync = true;
   mockFailWrite = false;
+  mockFailRead = false;
   jest.mocked(recordDiagnosticError).mockReset().mockResolvedValue(undefined);
+});
+
+test('both providers recover stored records with bounded temporary additions after a failed read', async () => {
+  mockSync = false;
+  const searchKey = 'kaku-recent-searches:v2:1';
+  const recentKey = 'kaku-recent-subjects:v2:1';
+  const originalSearch = JSON.stringify({ items: ['old search'], updatedAt: 100 });
+  const originalRecent = JSON.stringify({ items: [{ id: 1, title: 'old subject', type: 2, viewedAt: 100 }], updatedAt: 100 });
+  mockData.set(searchKey, originalSearch);
+  mockData.set(recentKey, originalRecent);
+  mockFailRead = true;
+  const hook = await renderHook(useHistories, { wrapper: Providers });
+  expect(hook.result.current.search.localStatus).toBe('read-error');
+  expect(hook.result.current.recent.localStatus).toBe('read-error');
+  await act(async () => {
+    hook.result.current.search.addSearch('new search');
+    for (let id = 2; id <= 14; id++) hook.result.current.recent.rememberSubject({ id, title: String(id), type: 2, viewedAt: id * 100 });
+  });
+  expect(hook.result.current.recent.items).toHaveLength(10);
+  expect(mockData.get(searchKey)).toBe(originalSearch);
+  expect(mockData.get(recentKey)).toBe(originalRecent);
+  expect(mockRequest).not.toHaveBeenCalled();
+  mockFailRead = false;
+  await act(async () => {
+    await hook.result.current.search.retryLocalHistory();
+    await hook.result.current.recent.retryLocalHistory();
+  });
+  expect((await loadSearchHistory(1)).items).toEqual(['new search', 'old search']);
+  expect((await loadRecentSubjects(1)).items.map(item => item.id)).toEqual([14, 13, 12, 11, 10, 9, 8, 7, 6, 5]);
 });
 
 test('automatic history write failures keep current content usable, even if diagnostics cannot save', async () => {

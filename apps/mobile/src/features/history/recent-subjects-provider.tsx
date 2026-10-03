@@ -12,6 +12,8 @@ const options = {
   save: saveRecentSubjects,
   parse: parseRecentSubjectsResponse,
   merge: mergeRecentSubjects,
+  applyPending: (stored: RecentSubject[], pending: RecentSubject[]) =>
+    pending.reduceRight((items, subject) => addRecentSubject(items, subject), stored),
 };
 
 type ContextValue = Omit<ReturnType<typeof useSyncedHistory<RecentSubject>>, 'updateItems'> & {

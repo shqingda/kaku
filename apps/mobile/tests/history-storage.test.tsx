@@ -43,3 +43,20 @@ test.each([
   jest.mocked(Storage.setItem).mockRejectedValueOnce(error);
   await expect(save({ items: [], updatedAt: 100 }, 1)).rejects.toBe(error);
 });
+
+test.each([
+  ['search', 'kaku-recent-searches:v2:1', loadSearchHistory],
+  ['browse', 'kaku-recent-subjects:v2:1', loadRecentSubjects],
+] as const)('%s storage distinguishes missing data, legacy arrays and unreadable records', async (_kind, key, load) => {
+  expect(await load(1)).toEqual({ items: [], updatedAt: null });
+  for (const raw of ['', '{broken', 'null', '42', '{}', '{"items":{}}', '{"items":[],"updatedAt":-1}']) {
+    mockData.set(key, raw);
+    await expect(load(1)).rejects.toThrow();
+    expect(mockData.get(key)).toBe(raw);
+  }
+  mockData.set(key, '[]');
+  expect(await load(1)).toEqual({ items: [], updatedAt: null });
+  jest.mocked(Storage.getItem).mockRejectedValueOnce(new Error('storage unavailable'));
+  await expect(load(1)).rejects.toThrow('storage unavailable');
+  expect(mockData.get(key)).toBe('[]');
+});

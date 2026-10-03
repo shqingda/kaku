@@ -12,6 +12,8 @@ const options = {
   save: saveSearchHistory,
   parse: parseSearchHistoryResponse,
   merge: mergeSearchHistory,
+  applyPending: (stored: string[], pending: string[]) =>
+    pending.reduceRight((items, keyword) => addRecentSearch(items, keyword), stored),
 };
 
 type ContextValue = Omit<ReturnType<typeof useSyncedHistory<string>>, 'updateItems'> & {
