@@ -42,3 +42,14 @@ it('preserves the existing iOS image transition', async () => {
   const screen = await render(<BangumiPostImage uri="image.jpg" />);
   expect(screen.getByTestId('image.jpg').props.transition).toBe(120);
 });
+
+it('holds the first ratio through resized decode events and resets it for a different image', async () => {
+  const screen = await render(<BangumiPostImage uri="first.jpg" />);
+  await fireEvent(screen.getByTestId('first.jpg'), 'load', { source: { width: 640, height: 360 } });
+  await fireEvent(screen.getByTestId('first.jpg'), 'load', { source: { width: 639, height: 360 } });
+  expect(StyleSheet.flatten(screen.getByTestId('first.jpg').props.style).aspectRatio).toBe(640 / 360);
+  await screen.rerender(<BangumiPostImage uri="next.jpg" />);
+  expect(StyleSheet.flatten(screen.getByTestId('next.jpg').props.style).aspectRatio).toBe(1.35);
+  await fireEvent(screen.getByTestId('next.jpg'), 'load', { source: { width: 300, height: 600 } });
+  expect(StyleSheet.flatten(screen.getByTestId('next.jpg').props.style).aspectRatio).toBe(0.5);
+});
