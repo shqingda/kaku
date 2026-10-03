@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, type ComponentProps } from 'react';
+import { useLayoutEffect, useState, type ComponentProps } from 'react';
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -29,6 +29,7 @@ import {
 } from '@/features/discover/use-discover';
 import { HomeHeader } from '@/features/home/home-header';
 import { HomeMediaSection } from '@/features/home/home-media-section';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PressableScale } from '@/features/shared/pressable-scale';
 import { SkeletonList } from '@/features/shared/skeleton-list';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -46,9 +47,7 @@ export default function HomeScreen() {
   const styles = createStyles(colors);
   const isRestoring = useIsRestoring();
 
-  // 持久化缓存恢复完成前不挂载业务查询：否则冷启动时 SQLite 里的缓存还没
-  // hydrate，6 个查询就会按 staleTime 过期立刻发出网络请求，缓存白做。
-  // 骨架与最终首页同构（页头 + 媒体卡），恢复完成时不跳版。
+  // 缓存恢复期间展示与首页同构的骨架，恢复后由查询决定是否需要刷新。
   if (isRestoring) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -81,54 +80,20 @@ function HomeContent() {
   useLayoutEffect(() => {
     markFirstContent();
   }, []);
-  const animeQuery = usePublicUserCollections(username, 2, 'doing', {
-    enabled: selectedTrackingType === 2,
-  });
-  const bookQuery = usePublicUserCollections(username, 1, 'doing', {
-    enabled: selectedTrackingType === 1,
-  });
-  const musicQuery = usePublicUserCollections(username, 3, 'doing', {
-    enabled: selectedTrackingType === 3,
-  });
-  const gameQuery = usePublicUserCollections(username, 4, 'doing', {
-    enabled: selectedTrackingType === 4,
-  });
-  const realQuery = usePublicUserCollections(username, 6, 'doing', {
-    enabled: selectedTrackingType === 6,
-  });
+  const selectedQuery = usePublicUserCollections(username, selectedTrackingType, 'doing');
   const timelineQuery = useFriendTimeline();
-  const trackingQueries = {
-    1: bookQuery,
-    2: animeQuery,
-    3: musicQuery,
-    4: gameQuery,
-    6: realQuery,
-  } as const;
-  type TrackingType = keyof typeof trackingQueries;
   const isRefreshing =
     Boolean(session) &&
-    [...Object.values(trackingQueries), timelineQuery].some(
+    [selectedQuery, timelineQuery].some(
       (query) => query.isRefetching && !query.isPending,
     );
-  const selectedQuery = trackingQueries[selectedTrackingType as TrackingType];
   const trackingTitle = `${getCollectionStatusLabel(
     selectedTrackingType,
     'doing',
   )}的${getSubjectTypeLabel(selectedTrackingType)}`;
 
-  useEffect(() => {
-    router.prefetch({ pathname: '/channel/[type]', params: { type: 'anime' } });
-    router.prefetch('/rankings');
-    router.prefetch('/community');
-    router.prefetch('/explore');
-  }, []);
-
   function refreshHome() {
-    const loadedOtherTabs = Object.values(trackingQueries).filter(
-      (query) => query !== selectedQuery && query.data,
-    );
     void Promise.all([
-      ...loadedOtherTabs.map((query) => query.refetch()),
       selectedQuery.refetch(),
       timelineQuery.refetch(),
     ]);
@@ -229,7 +194,7 @@ function TimelineBoundary({
             <ActivityIndicator color={colors.accent} size="small" />
             <Text style={styles.timelineEmptyText}>正在读取好友动态</Text>
           </View>
-        ) : timelineQuery.isError ? (
+        ) : timelineQuery.isError && items.length === 0 ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => void timelineQuery.refetch()}
@@ -246,6 +211,11 @@ function TimelineBoundary({
           </View>
         ) : (
           <>
+            {timelineQuery.isError ? (
+              <View style={styles.timelineCachedNotice}>
+                <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+              </View>
+            ) : null}
             {items.map((item, index) => (
               <FriendTimelineRow
                 hasDivider={index > 0}
@@ -465,6 +435,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: SPACING.lg,
   },
+  timelineCachedNotice: { marginTop: SPACING.lg },
   timelinePublishButton: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,

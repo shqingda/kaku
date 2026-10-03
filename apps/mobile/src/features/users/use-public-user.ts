@@ -1,6 +1,7 @@
 import {
   type InfiniteData,
   type QueryClient,
+  infiniteQueryOptions,
   useInfiniteQuery,
   useQuery,
 } from '@tanstack/react-query';
@@ -37,21 +38,14 @@ export function usePublicUser(username: string) {
   });
 }
 
-export function usePublicUserCollections(
+export function publicUserCollectionsQueryOptions(
   username: string,
   subjectType = 2,
   collectionStatus?: CollectionStatus,
-  options?: { enabled?: boolean },
 ) {
-  return useInfiniteQuery<
-    PublicUserCollectionPage,
-    Error,
-    InfiniteData<PublicUserCollectionPage>,
-    ReturnType<typeof queryKeys.publicUserCollections>,
-    number
-  >({
-    enabled: (options?.enabled ?? true) && username.trim().length > 0,
-    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  return infiniteQueryOptions({
+    enabled: username.trim().length > 0,
+    getNextPageParam: (lastPage: PublicUserCollectionPage) => lastPage.nextOffset,
     initialPageParam: 0,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
@@ -72,6 +66,14 @@ export function usePublicUserCollections(
   });
 }
 
+export function usePublicUserCollections(
+  username: string,
+  subjectType = 2,
+  collectionStatus?: CollectionStatus,
+) {
+  return useInfiniteQuery(publicUserCollectionsQueryOptions(username, subjectType, collectionStatus));
+}
+
 export function prefetchPublicUserCollections(
   queryClient: QueryClient,
   username: string,
@@ -79,26 +81,10 @@ export function prefetchPublicUserCollections(
   collectionStatus?: CollectionStatus,
 ) {
   if (!username.trim()) return;
-  // 首页切换收藏类型时在按下瞬间预取第一页，选中后立即可见。
-  void queryClient.fetchInfiniteQuery({
-    getNextPageParam: (lastPage: PublicUserCollectionPage) =>
-      lastPage.nextOffset,
-    initialPageParam: 0,
-    queryFn: ({ pageParam, signal }) =>
-      getPublicUserCollections(
-        username.trim(),
-        subjectType,
-        pageParam,
-        collectionStatus,
-        signal,
-      ),
-    queryKey: queryKeys.publicUserCollections(
-      username,
-      subjectType,
-      collectionStatus,
-    ),
-    staleTime: 10 * 60 * 1000,
-  });
+  // 预取沿用页面的缓存和重试策略；失败交给实际打开后的查询状态展示。
+  return queryClient.prefetchInfiniteQuery(
+    publicUserCollectionsQueryOptions(username, subjectType, collectionStatus),
+  );
 }
 
 export function usePublicUserBlogs(username: string) {
