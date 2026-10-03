@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 
+import { SPACING } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -39,7 +40,9 @@ export function BangumiPostImage({ uri }: { uri: string }) {
           recyclingKey={uri}
           source={uri}
           style={[styles.image, { aspectRatio }]}
-          transition={120}
+          // Android 会在原图比例更新、视图重新布局时重新加载 drawable。
+          // 多图/GIF 不叠加交叉淡入，避免滚动时旧帧与新帧重影、闪白。
+          transition={Platform.OS === 'android' ? 0 : 120}
         />
       </Pressable>
       <FullscreenImageViewer
@@ -57,7 +60,7 @@ const createStyles = (colors: ThemeColors) =>
     image: {
       backgroundColor: colors.surfaceAlt,
       borderRadius: 12,
-      marginVertical: 6,
+      marginVertical: SPACING.xs + SPACING.xs / 2,
       width: IMAGE_WIDTH,
     },
     pressed: { opacity: 0.8 },
