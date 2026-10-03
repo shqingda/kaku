@@ -1,3 +1,4 @@
+import { HistoryLocalNotice } from '@/features/history/history-local-notice';
 import { SpoilerSetting } from '@/features/preferences/spoiler-setting';
 import { useEffect, useState, type ComponentProps } from 'react';
 import {
@@ -145,7 +146,7 @@ export default function SettingsScreen() {
       onRetry: () => void searchHistory.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
-        enabled: preferences.syncEnabled,
+        enabled: preferences.syncEnabled && searchHistory.localStatus === 'ready',
         error: searchHistory.cloudError,
         signedIn,
         syncing: searchHistory.syncing,
@@ -157,7 +158,7 @@ export default function SettingsScreen() {
       onRetry: () => void recentSubjects.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
-        enabled: preferences.syncEnabled,
+        enabled: preferences.syncEnabled && recentSubjects.localStatus === 'ready',
         error: recentSubjects.cloudError,
         signedIn,
         syncing: recentSubjects.syncing,
@@ -279,6 +280,8 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        <HistoryLocalNotice label="搜索历史" history={searchHistory} />
+        <HistoryLocalNotice label="浏览历史" history={recentSubjects} />
         <SpoilerSetting />
         <Text style={styles.sectionTitle}>通知</Text>
         <View style={styles.group}>

@@ -11,8 +11,7 @@ import { AccountMenuRow, createMenuGroupStyles } from './account-menu-row';
 import { useTheme } from '@/features/theme/theme-provider';
 import { clearOfflineSubjectPack } from '@/features/catalog/offline-subject-pack';
 import { queryPersister } from '@/lib/query-persister';
-import { useAuth } from '@/features/auth/auth-provider';
-import { usePreferences } from '@/features/preferences/preferences-provider';
+import { useClearHistoryAction } from '@/features/history/use-clear-history-action';
 import { AppActionMenu } from '@/features/shared/app-action-menu';
 
 import { useAppUpdate } from '@/features/app-update/update-provider';
@@ -25,18 +24,12 @@ export function AccountSettingsMenu() {
   const styles = useMemo(() => createMenuGroupStyles(colors), [colors]);
   const [isClearingLocalData, setIsClearingLocalData] = useState(false);
   const queryClient = useQueryClient();
-  const { clearHistory: clearRecentSubjects } = useRecentSubjects();
-  const { clearHistory: clearSearchHistory } = useSearchHistory();
-
+  const recentSubjects = useRecentSubjects();
+  const searchHistory = useSearchHistory();
+  const confirmClearHistory = useClearHistoryAction();
   const [historyMenuOpen, setHistoryMenuOpen] = useState(false);
-  const [clearingHistory, setClearingHistory] = useState(false);
+  const clearingHistory = recentSubjects.isClearing || searchHistory.isClearing;
   const cacheBusy = useRef(false);
-  const historyBusy = useRef(false);
-  const { session } = useAuth();
-  const { preferences, cloudSyncAvailable } = usePreferences();
-  const scope = `${session?.user.id ?? 'guest'}:${preferences.syncEnabled}:${cloudSyncAvailable}`;
-  const currentScope = useRef(scope);
-  currentScope.current = scope;
 
   async function clearLocalData() {
     if (cacheBusy.current) return;
@@ -72,41 +65,6 @@ export function AccountSettingsMenu() {
         { style: 'cancel', text: '取消' },
         { onPress: () => void clearLocalData(), text: '清理' },
       ]);
-  }
-
-  function confirmClearHistory(kind: 'search' | 'browse') {
-    const label = kind === 'search' ? '搜索历史' : '浏览历史';
-    const clear = kind === 'search' ? clearSearchHistory : clearRecentSubjects;
-    const effect = !session
-      ? '只清除本机访客的记录。'
-      : preferences.syncEnabled && cloudSyncAvailable
-        ? '删除会同步到此账号的其他 Kaku 设备。'
-        : '当前只清除本机此账号的记录；以后恢复云同步时，删除可能同步到其他设备。';
-    Alert.alert(`清除${label}？`, `${effect}不会影响另一类历史、草稿或 Bangumi 收藏。`, [
-      { style: 'cancel', text: '取消' },
-      { style: 'destructive', text: '清除', onPress: async () => {
-        if (historyBusy.current) return;
-        if (currentScope.current !== scope) {
-          Alert.alert('账号或同步设置已变化', '请重新选择要清除的历史。');
-          return;
-        }
-        historyBusy.current = true;
-        setClearingHistory(true);
-        try {
-          await clear();
-          if (currentScope.current === scope) {
-            Alert.alert(`${label}已在本机清除`, session && preferences.syncEnabled && cloudSyncAvailable
-              ? '云端处理状态可在“外观与同步”中查看，失败时可重试同步。'
-              : effect);
-          }
-        } catch {
-          if (currentScope.current === scope) Alert.alert('历史未能保存清除结果', '请重新选择此项重试。');
-        } finally {
-          historyBusy.current = false;
-          setClearingHistory(false);
-        }
-      } },
-    ]);
   }
 
   return (
@@ -194,8 +152,8 @@ export function AccountSettingsMenu() {
         visible={historyMenuOpen}
         onClose={() => setHistoryMenuOpen(false)}
         actions={[
-          { id: 'search', label: '清除搜索历史', symbol: { ios: 'magnifyingglass', android: 'search', web: 'search' }, onPress: () => confirmClearHistory('search') },
-          { id: 'browse', label: '清除浏览历史', symbol: { ios: 'clock', android: 'history', web: 'history' }, onPress: () => confirmClearHistory('browse') },
+          { id: 'search', label: '清除搜索历史', symbol: { ios: 'magnifyingglass', android: 'search', web: 'search' }, onPress: () => confirmClearHistory('search', searchHistory) },
+          { id: 'browse', label: '清除浏览历史', symbol: { ios: 'clock', android: 'history', web: 'history' }, onPress: () => confirmClearHistory('browse', recentSubjects) },
         ]}
       />
     </>

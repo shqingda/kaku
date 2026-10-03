@@ -21,6 +21,7 @@ import {
   useBangumiCalendar,
   useBangumiRankedSubjects,
 } from '@/features/discover/use-discover';
+import { useClearHistoryAction } from '@/features/history/use-clear-history-action';
 import { RecentSubjectsSection } from '@/features/history/recent-subjects-section';
 import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { RecentSearches } from '@/features/search/recent-searches';
@@ -47,19 +48,20 @@ export default function ExploreScreen() {
   const [selectedDay, setSelectedDay] = useState(currentCalendarWeekdayId);
   const [selectedSearchType, setSelectedSearchType] = useState(2);
   const [searchMode, setSearchMode] = useState<ExploreSearchMode>('subject');
+  const searchHistory = useSearchHistory();
+  const recentHistory = useRecentSubjects();
+  const confirmClearHistory = useClearHistoryAction();
   const {
     addSearch,
-    clearHistory: clearSearchHistory,
     items: recentSearches,
     refreshFromCloud: refreshSearchHistory,
     syncIfStale: syncSearchHistoryIfStale,
-  } = useSearchHistory();
+  } = searchHistory;
   const {
-    clearHistory: clearRecentSubjects,
     items: recentSubjects,
     refreshFromCloud: refreshRecentSubjects,
     syncIfStale: syncRecentSubjectsIfStale,
-  } = useRecentSubjects();
+  } = recentHistory;
   const {
     handleScroll: handleOverviewScroll,
     ref: overviewScrollRef,
@@ -199,12 +201,14 @@ export default function ExploreScreen() {
               <>
                 <RecentSearches
                   items={recentSearches}
-                  onClear={clearSearchHistory}
+                  history={searchHistory}
+                  onClear={() => confirmClearHistory('search', searchHistory)}
                   onSelect={selectRecentSearch}
                 />
                 <RecentSubjectsSection
                   items={recentSubjects}
-                  onClear={() => void clearRecentSubjects()}
+                  history={recentHistory}
+                  onClear={() => confirmClearHistory('browse', recentHistory)}
                 />
               </>
             ) : null}

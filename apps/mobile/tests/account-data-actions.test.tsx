@@ -17,8 +17,8 @@ let mockUserId = 1;
 let mockSync = true;
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: { user: { id: mockUserId } } }) }));
 jest.mock('@/features/preferences/preferences-provider', () => ({ usePreferences: () => ({ preferences: { theme: 'light', syncEnabled: mockSync }, cloudSyncAvailable: true }) }));
-jest.mock('@/features/history/recent-subjects-provider', () => ({ useRecentSubjects: () => ({ clearHistory: mockBrowse }) }));
-jest.mock('@/features/search/search-history-provider', () => ({ useSearchHistory: () => ({ clearHistory: mockSearch }) }));
+jest.mock('@/features/history/recent-subjects-provider', () => ({ useRecentSubjects: () => ({ clearHistory: mockBrowse, localStatus: 'ready', isClearing: false }) }));
+jest.mock('@/features/search/search-history-provider', () => ({ useSearchHistory: () => ({ clearHistory: mockSearch, localStatus: 'ready', isClearing: false }) }));
 jest.mock('@/features/catalog/offline-subject-pack', () => ({ clearOfflineSubjectPack: () => mockOffline() }));
 jest.mock('@/lib/query-persister', () => ({ queryPersister: { removeClient: () => mockRemoveCache() } }));
 jest.mock('expo-image', () => ({ Image: { clearMemoryCache: () => mockImageMemory(), clearDiskCache: () => mockImageDisk() } }));
@@ -101,7 +101,7 @@ test.each(['search', 'browse'])('failed %s history clear never reports success a
   await fireEvent.press(screen.getByLabelText('管理历史记录'));
   await fireEvent.press(screen.getByText(`清除${label}`));
   await act(async () => { await confirm(); });
-  expect(alerts).toHaveBeenLastCalledWith('历史未能保存清除结果', expect.any(String));
+  expect(alerts).toHaveBeenLastCalledWith('历史未能清除', expect.any(String), expect.any(Array));
   expect(alerts.mock.calls.some(([title]) => title === `${label}已在本机清除`)).toBe(false);
 
   await fireEvent.press(screen.getByText(`清除${label}`));

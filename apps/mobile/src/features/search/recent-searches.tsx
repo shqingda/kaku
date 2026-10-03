@@ -1,3 +1,5 @@
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { HistoryLocalNotice, type HistoryLocalFeedback } from '@/features/history/history-local-notice';
 import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
@@ -5,17 +7,20 @@ import { useTheme } from '@/features/theme/theme-provider';
 
 export function RecentSearches({
   items,
+  history,
   onClear,
   onSelect,
 }: {
   items: string[];
+  history: HistoryLocalFeedback;
   onClear: () => void;
   onSelect: (keyword: string) => void;
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
 
-  if (!items.length) return null;
+  if (!items.length && history.localStatus === 'ready') return null;
+  const clearDisabled = history.isClearing || history.localStatus === 'loading' || history.localStatus === 'read-error';
 
   return (
     <View style={styles.section}>
@@ -24,13 +29,16 @@ export function RecentSearches({
         <Pressable
           accessibilityLabel="清除最近搜索"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={HIT_SLOP}
+          disabled={clearDisabled}
+          accessibilityState={{ disabled: clearDisabled, busy: history.isClearing }}
           onPress={onClear}
-          style={({ pressed }) => pressed && styles.pressed}
+          style={({ pressed }) => [styles.clearButton, pressed && styles.pressed, clearDisabled && styles.disabled]}
         >
-          <Text style={styles.clear}>清除</Text>
+          <Text style={styles.clear}>{history.isClearing ? '正在清除…' : '清除'}</Text>
         </Pressable>
       </View>
+      <HistoryLocalNotice label="搜索历史" history={history} />
       <ScrollView
         contentContainerStyle={styles.list}
         horizontal
@@ -47,7 +55,7 @@ export function RecentSearches({
               pressed && styles.itemPressed,
             ]}
           >
-            <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.itemText}>
+            <Text numberOfLines={1} style={styles.itemText}>
               {item}
             </Text>
           </Pressable>
@@ -58,26 +66,29 @@ export function RecentSearches({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { paddingBottom: 20, paddingTop: 18 },
+  section: { paddingBottom: SPACING.xl, paddingTop: SPACING.lg },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
-  title: { color: colors.ink, fontSize: 13, fontWeight: '700' },
-  clear: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  list: { gap: 8, paddingRight: 20, paddingTop: 10 },
+  title: { flexShrink: 1, color: colors.ink, ...TYPE.caption, fontWeight: '700' },
+  clear: { color: colors.muted, ...TYPE.caption, fontWeight: '600' },
+  list: { gap: SPACING.sm, paddingRight: SPACING.xl, paddingTop: SPACING.md },
   item: {
     backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 13,
     justifyContent: 'center',
-    minHeight: 36,
+    minHeight: MIN_TOUCH_SIZE,
     maxWidth: 180,
-    paddingHorizontal: 14,
+    paddingHorizontal: SPACING.lg,
   },
   itemPressed: { backgroundColor: colors.accentSoft },
-  itemText: { color: colors.ink, fontSize: 13, fontWeight: '600' },
+  itemText: { color: colors.ink, ...TYPE.caption, fontWeight: '600' },
+  clearButton: { minHeight: MIN_TOUCH_SIZE, minWidth: MIN_TOUCH_SIZE, justifyContent: 'center', alignItems: 'center' },
+  disabled: { opacity: 0.45 },
   pressed: { opacity: 0.6 },
 });

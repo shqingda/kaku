@@ -1,3 +1,5 @@
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { HistoryLocalNotice, type HistoryLocalFeedback } from '@/features/history/history-local-notice';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,15 +13,18 @@ import type { RecentSubject } from './recent-subjects-model';
 
 export function RecentSubjectsSection({
   items,
+  history,
   onClear,
 }: {
   items: RecentSubject[];
+  history: HistoryLocalFeedback;
   onClear: () => void;
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
 
-  if (!items.length) return null;
+  if (!items.length && history.localStatus === 'ready') return null;
+  const clearDisabled = history.isClearing || history.localStatus === 'loading' || history.localStatus === 'read-error';
 
   return (
     <View style={styles.section}>
@@ -28,13 +33,16 @@ export function RecentSubjectsSection({
         <Pressable
           accessibilityLabel="清除最近浏览"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={HIT_SLOP}
+          disabled={clearDisabled}
+          accessibilityState={{ disabled: clearDisabled, busy: history.isClearing }}
           onPress={onClear}
-          style={({ pressed }) => pressed && styles.pressed}
+          style={({ pressed }) => [styles.clearButton, pressed && styles.pressed, clearDisabled && styles.disabled]}
         >
-          <Text style={styles.clear}>清除</Text>
+          <Text style={styles.clear}>{history.isClearing ? '正在清除…' : '清除'}</Text>
         </Pressable>
       </View>
+      <HistoryLocalNotice label="浏览历史" history={history} />
       <ScrollView
         contentContainerStyle={styles.list}
         horizontal
@@ -91,7 +99,6 @@ function RecentSubjectCard({
           </Link.AppleZoom>
           <Text
             ellipsizeMode="tail"
-            maxFontSizeMultiplier={1.3}
             numberOfLines={2}
             style={styles.cardTitle}
           >
@@ -107,17 +114,18 @@ function RecentSubjectCard({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { paddingTop: 24 },
+  section: { paddingTop: SPACING.xl },
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 30,
-    paddingHorizontal: 4,
+    gap: SPACING.md,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.xs,
   },
-  title: { color: colors.ink, fontSize: 18, fontWeight: '800' },
-  clear: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  list: { gap: 13, paddingRight: 20, paddingTop: 12 },
+  title: { flexShrink: 1, color: colors.ink, ...TYPE.heading, fontWeight: '800' },
+  clear: { color: colors.muted, ...TYPE.caption, fontWeight: '600' },
+  list: { gap: SPACING.md, paddingRight: SPACING.xl, paddingTop: SPACING.md },
   card: { width: 96 },
   cover: {
     alignItems: 'center',
@@ -129,15 +137,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 96,
   },
-  coverFallback: { color: colors.subtle, fontSize: 16, fontWeight: '700' },
+  coverFallback: { color: colors.subtle, ...TYPE.body, fontWeight: '700' },
   cardTitle: {
     color: colors.ink,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
-    height: 34,
-    lineHeight: 17,
-    marginTop: 8,
+    minHeight: TYPE.caption.lineHeight * 2,
+    marginTop: SPACING.sm,
   },
-  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 3 },
+  cardMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
+  clearButton: { minHeight: MIN_TOUCH_SIZE, minWidth: MIN_TOUCH_SIZE, justifyContent: 'center', alignItems: 'center' },
+  disabled: { opacity: 0.45 },
   pressed: { opacity: 0.62 },
 });
