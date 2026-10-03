@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 的 v1.1.15 首次发布使用非裁剪配置，随后按用户要求替换为 42.3 MB 裁剪包，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。未来本地正式包、EAS production 和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前 GitHub 版本 v1.1.16 为 42.13 MB 裁剪包，构建、签名及上传核验见 [发布记录](../test-records/2026-10-03-startup-optimization.md)。本地正式包、EAS production 和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 

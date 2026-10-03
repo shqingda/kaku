@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.15](https://github.com/shqingda/kaku/releases/tag/v1.1.15) 已按用户要求替换为启用 R8 与资源裁剪的 42.3 MB 安装包，未上架 App Store / Google Play。未来正式包默认启用两项裁剪，规则见 [发版指南](docs/deployment/release.md)。
+> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.16](https://github.com/shqingda/kaku/releases/tag/v1.1.16) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。启动、缓存、包体及发布证据见 [本轮验收](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
 
 ## 当前工作入口
 
@@ -18,7 +18,7 @@
 - [ ] 目录草稿冲突提示：验证当前页面快照与草稿基准不一致时阻止直接保存，并可保留草稿重新确认。
 - [ ] 双设备目录并发保存：记录实际覆盖行为与用户反馈；当前没有服务端原子版本锁，快照比较不能保证防止所有并发覆盖，也不能约束上游网页或其他客户端的写入。
 - [ ] 双设备通知权限、登记、实际送达及升级后的 token 恢复；本机关闭推送/退出不能影响另一台。
-- [ ] 实际 VoiceOver、Reduce Motion/Transparency、小屏/大字体和核心阅读页面触控。已有模拟器大字体及回复弹层无障碍树验证，不替代实际读屏。
+- [ ] 实际 VoiceOver、Reduce Motion/Transparency、小屏/大字体和核心阅读页面触控，重点复核弹层入场/回弹过程中再次拖动的连续性。已有模拟器大字体及回复弹层无障碍树验证，不替代实际读屏。
 
 ## 待验证：Android 实机（按用户要求暂缓）
 
@@ -36,7 +36,7 @@
 ## 待验证与评估：运行性能
 
 - [ ] 用可靠 profiler 对首页、条目和角色列表各采三轮，建立当前设备基线；iPhone 18 Pro / iOS 27.0 不能直接比较旧设备数据，缺少可靠工具时保持待验。
-- [ ] 根据采样决定是否处理重复请求、无效刷新和多余挂载；已有包体优化不能证明运行性能提升。
+- [ ] 根据采样继续检查重复请求、无效刷新和多余挂载。v1.1.16 已收敛首页预挂载、查询快照、临时搜索缓存和动效订阅；包体与合成缓存结果不能证明真机运行性能提升。
 
 ## 待实现：商店渠道
 
