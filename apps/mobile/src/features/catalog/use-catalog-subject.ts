@@ -25,6 +25,13 @@ export function catalogSubjectQueryOptions(subjectId: number) {
     queryFn: async ({ signal }) => {
       try {
         const subject = await getCatalogSubject(subjectId, signal);
+        // Cancellation also owns side effects: a late response must not recreate
+        // an offline copy after the user cleared cached content.
+        if (signal.aborted) {
+          const error = new Error('条目请求已取消');
+          error.name = 'AbortError';
+          throw error;
+        }
         // 离线包在后台落盘：不阻塞条目展示，失败只记入诊断日志。
         void saveOfflineSubject(subject).catch((error) => {
           void recordDiagnosticError(
@@ -35,6 +42,7 @@ export function catalogSubjectQueryOptions(subjectId: number) {
       } catch (error) {
         if (signal?.aborted) throw error;
         const packed = await loadOfflineSubject(subjectId);
+        if (signal?.aborted) throw error;
         if (packed) return packed;
         throw error;
       }

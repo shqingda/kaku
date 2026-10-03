@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import {
   catalogSubjectQueryOptions,
@@ -82,6 +82,51 @@ describe('catalog subject query', () => {
 
     await expect(runQuery(9, controller.signal)).rejects.toBe(abortError);
     expect(mockedLoadOfflineSubject).not.toHaveBeenCalled();
+  });
+
+  it('does not recreate offline content when a cancelled query returns after cache clearing', async () => {
+    const subject = { id: 9, name: 'Frieren' } as never;
+    let resolve!: (value: typeof subject) => void;
+    const response = new Promise<typeof subject>((done) => { resolve = done; });
+    mockedGetCatalogSubject.mockReturnValueOnce(response);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const options = catalogSubjectQueryOptions(9);
+    const pending = client.prefetchQuery(options);
+
+    await client.cancelQueries({ predicate: (query) => query.meta?.persist === true });
+    client.removeQueries({ predicate: (query) => query.meta?.persist === true });
+    resolve(subject);
+    await response;
+    await pending;
+
+    expect(mockedSaveOfflineSubject).not.toHaveBeenCalled();
+    expect(mockedLoadOfflineSubject).not.toHaveBeenCalled();
+    expect(client.getQueryData(options.queryKey)).toBeUndefined();
+
+    // A fresh visit after clearing must still be able to save an offline copy.
+    mockedGetCatalogSubject.mockResolvedValueOnce(subject);
+    await client.fetchQuery(options);
+    expect(mockedSaveOfflineSubject).toHaveBeenCalledTimes(1);
+    expect(client.getQueryData(options.queryKey)).toBe(subject);
+    client.clear();
+  });
+
+  it('does not return an offline copy when cancelled during the storage read', async () => {
+    const controller = new AbortController();
+    const networkError = new Error('offline');
+    const packed = { id: 9, name: 'Cached Frieren' } as never;
+    let resolve!: (value: typeof packed) => void;
+    mockedGetCatalogSubject.mockRejectedValue(networkError);
+    mockedLoadOfflineSubject.mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    const pending = runQuery(9, controller.signal);
+    await Promise.resolve();
+    expect(mockedLoadOfflineSubject).toHaveBeenCalledTimes(1);
+
+    controller.abort();
+    resolve(packed);
+
+    await expect(pending).rejects.toBe(networkError);
+    expect(mockedSaveOfflineSubject).not.toHaveBeenCalled();
   });
 
   it('records a background offline-write failure without failing the query', async () => {

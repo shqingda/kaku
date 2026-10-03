@@ -27,6 +27,7 @@
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-10-03 剩余工作 | [可靠性、设备与渠道执行顺序](plans/2026-10-03-remaining-work-plan.md) | [缓存取消与历史失败回归](test-records/2026-10-03-remaining-work.md) |
 | 2026-10-02 项目优化 | [渐进优化计划](plans/2026-10-02-project-optimization-plan.md) | [模块整理、APK 体积、验收与后续发布](test-records/2026-10-02-project-optimization.md) |
 | 2026-09-29 用户体验改进 | [体验改进草案](plans/2026-09-29-ux-improvement-plan.md) | [首轮验证](test-records/2026-09-29-ux-improvements.md)、[功能补完](test-records/2026-09-29-ux-followup.md)、[设备与更新](test-records/2026-09-29-devices-and-updates.md) |
 | 2026-09-11 阶段改进 | [改进计划与执行记录](plans/2026-09-11-improvement-plan.md) | 结果随计划保留；后续验收见 [测试记录索引](test-records/README.md) |
