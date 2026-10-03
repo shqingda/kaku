@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.17',
+    date: '2026-10-03',
+    notes: [
+      '弹层入场或回弹时再次拖动，会从当前位置继续，避免突然跳位。',
+      '轻点弹层标题不会让动画停住；下拖后向上反拉可以取消关闭，松手时自然回弹。',
+      '拖动被系统打断时自动归位，连续关闭和重开仍可正常使用；保留减少动态效果和无障碍关闭方式。',
+    ],
+  },
+  {
     version: '1.1.16',
     date: '2026-10-03',
     notes: [

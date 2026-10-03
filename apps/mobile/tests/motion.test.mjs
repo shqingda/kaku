@@ -57,6 +57,11 @@ test('momentum projection lets a fast release dismiss from close range', () => {
   assert.equal(shouldDismissSheet(200, 100, dismissDistance), false);
 });
 
+test('an upward reversal can keep a sheet open beyond the distance threshold', () => {
+  assert.equal(shouldDismissSheet(400, -500, 350), false);
+  assert.equal(shouldDismissSheet(400, -50, 350), true);
+});
+
 test('a hard flick dismisses even when the projection alone would not', () => {
   const tallDismissDistance = 1200;
   assert.equal(

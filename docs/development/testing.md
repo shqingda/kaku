@@ -54,9 +54,12 @@ iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧
 必须使用独立、未登录的测试模拟器，流程先断言访客状态，再生成并清除本机测试历史，验证重启恢复、取消、两个清除入口、另一类历史保留及清除后再次新增。该专项不会加入通用全量入口，避免删除已有历史。可在标准字号和最大辅助字号各跑一遍并检查截图；结束后恢复字体设置。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
 
 回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
+
 需 iOS 开发客户端、Metro 和已登录账号；独立冷启动后连续关闭/重开三次，
 断言输入框及发送按钮仍在原生树中、背景章节不可访问。保留已有草稿，不输入或发送内容。
 该专项不会加入兼容未登录状态的全量入口。
+
+访客评论弹层专项：`maestro test .maestro/entity-sheet-guest-ios.yaml`，覆盖连续关闭重开后的可访问节点、正常下拖关闭及重开，不登录或发送评论。入场/回弹中再次拖动、反向释放和系统取消由 `app-sheet.test.tsx` 覆盖；模拟动画测试不代替设备手感验收。
 
 Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 Metro。本地 `expo run:android` 打出来的是
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的

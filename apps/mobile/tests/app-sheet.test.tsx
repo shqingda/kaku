@@ -1,12 +1,15 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { useRef } from 'react';
 import { Text } from 'react-native';
+import * as Reanimated from 'react-native-reanimated';
 
 import { AppSheet } from '@/features/shared/app-sheet';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
 
 const mockPanCallbacks: {
   onBegin?: () => void;
-  onEnd?: (event: { translationY: number; velocityY: number }) => void;
+  onStart?: (event: { translationY: number }) => void;
+  onEnd?: (event: { translationY: number; velocityY: number }, success: boolean) => void;
   onUpdate?: (event: { translationY: number }) => void;
 } = {};
 
@@ -24,6 +27,10 @@ jest.mock('react-native-gesture-handler', () => {
     failOffsetX: jest.fn(() => pan),
     onBegin: jest.fn((callback: () => void) => {
       mockPanCallbacks.onBegin = callback;
+      return pan;
+    }),
+    onStart: jest.fn((callback: typeof mockPanCallbacks.onStart) => {
+      mockPanCallbacks.onStart = callback;
       return pan;
     }),
     onEnd: jest.fn((callback: typeof mockPanCallbacks.onEnd) => {
@@ -47,12 +54,23 @@ jest.mock('react-native-gesture-handler', () => {
 const mockUseReduceMotion = jest.mocked(useReduceMotion);
 
 describe('AppSheet', () => {
+  const sharedValues: Array<{ value: unknown }> = [];
+
   beforeEach(() => {
     mockUseReduceMotion.mockReturnValue(false);
     delete mockPanCallbacks.onBegin;
+    delete mockPanCallbacks.onStart;
     delete mockPanCallbacks.onEnd;
     delete mockPanCallbacks.onUpdate;
+    sharedValues.length = 0;
+    jest.spyOn(Reanimated, 'useSharedValue').mockImplementation(<T,>(initial: T) => {
+      const ref = useRef({ value: initial } as Reanimated.SharedValue<T>);
+      if (!sharedValues.includes(ref.current)) sharedValues.push(ref.current);
+      return ref.current;
+    });
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   it('keeps an initially hidden sheet out of the accessibility tree', async () => {
     const screen = await render(
@@ -122,7 +140,23 @@ describe('AppSheet', () => {
     expect(onEntered).toHaveBeenCalledTimes(1);
   });
 
-  it('closes after a downward fling even when decay needs the spring fallback', async () => {
+  it('reports entrance again when the same sheet reopens', async () => {
+    const onEntered = jest.fn();
+    const content = (visible: boolean) => (
+      <AppSheet onClose={jest.fn()} onEntered={onEntered} visible={visible}>
+        <Text>筛选选项</Text>
+      </AppSheet>
+    );
+    const screen = await render(content(true));
+    await screen.rerender(content(false));
+    await screen.rerender(content(true));
+
+    expect(screen.getByText('筛选选项')).toBeTruthy();
+    expect(onEntered).toHaveBeenCalledTimes(2);
+  });
+
+  it('closes after a downward fling with the release velocity', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
     const onClose = jest.fn();
     const screen = await render(
       <AppSheet onClose={onClose} visible>
@@ -132,11 +166,14 @@ describe('AppSheet', () => {
     const sheet = screen.getByText('筛选选项').parent!;
     fireEvent(sheet, 'layout', { nativeEvent: { layout: { height: 400 } } });
 
-    mockPanCallbacks.onBegin?.();
+    mockPanCallbacks.onStart?.({ translationY: 15 });
     mockPanCallbacks.onUpdate?.({ translationY: 50 });
-    mockPanCallbacks.onEnd?.({ translationY: 200, velocityY: 2_000 });
+    mockPanCallbacks.onEnd?.({ translationY: 50, velocityY: 2_000 }, true);
 
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(spring).toHaveBeenLastCalledWith(
+      expect.any(Number), expect.objectContaining({ velocity: 2_000 }), expect.any(Function),
+    );
   });
 
   it('springs back without closing after a short slow drag', async () => {
@@ -150,9 +187,104 @@ describe('AppSheet', () => {
       nativeEvent: { layout: { height: 400 } },
     });
 
+    mockPanCallbacks.onStart?.({ translationY: 13 });
     mockPanCallbacks.onUpdate?.({ translationY: 20 });
-    mockPanCallbacks.onEnd?.({ translationY: 20, velocityY: 50 });
+    mockPanCallbacks.onEnd?.({ translationY: 20, velocityY: 50 }, true);
 
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not interrupt an animation for a touch that never becomes a drag', async () => {
+    const cancel = jest.spyOn(Reanimated, 'cancelAnimation');
+    await render(<AppSheet onClose={jest.fn()} visible><Text>筛选选项</Text></AppSheet>);
+
+    mockPanCallbacks.onBegin?.();
+
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it.each([120, -30])('continues a moving sheet from its displayed offset %s', async (offset) => {
+    await render(<AppSheet onClose={jest.fn()} visible><Text>筛选选项</Text></AppSheet>);
+    sharedValues[0].value = offset;
+
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onUpdate?.({ translationY: 15 });
+    expect(sharedValues[0].value).toBeCloseTo(offset);
+
+    mockPanCallbacks.onUpdate?.({ translationY: 25 });
+    expect(sharedValues[0].value).toBeGreaterThan(offset);
+    expect(sharedValues[0].value).toBeLessThanOrEqual(offset + 10);
+  });
+
+  it('uses the displayed distance and lets an upward reversal keep the sheet open', async () => {
+    const onClose = jest.fn();
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    await render(<AppSheet onClose={onClose} visible><Text>筛选选项</Text></AppSheet>);
+    sharedValues[0].value = 400;
+
+    mockPanCallbacks.onStart?.({ translationY: -15 });
+    mockPanCallbacks.onEnd?.({ translationY: -15, velocityY: -1_000 }, true);
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(spring).toHaveBeenLastCalledWith(
+      0, expect.objectContaining({ velocity: -1_000 }), expect.any(Function),
+    );
+
+    sharedValues[0].value = 400;
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onEnd?.({ translationY: 15, velocityY: 0 }, true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a cancelled active drag without closing or repeating entrance focus', async () => {
+    const onClose = jest.fn();
+    const onEntered = jest.fn();
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    await render(
+      <AppSheet onClose={onClose} onEntered={onEntered} visible><Text>筛选选项</Text></AppSheet>,
+    );
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onUpdate?.({ translationY: 400 });
+    mockPanCallbacks.onEnd?.({ translationY: 400, velocityY: 2_000 }, false);
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onEntered).toHaveBeenCalledTimes(1);
+    expect(spring).toHaveBeenLastCalledWith(
+      0, expect.objectContaining({ velocity: 0 }), expect.any(Function),
+    );
+  });
+
+  it('completes entrance focus after the initial animation was interrupted by a drag', async () => {
+    jest.spyOn(Reanimated, 'withSpring').mockImplementationOnce(() => 120);
+    const onEntered = jest.fn();
+    await render(
+      <AppSheet onClose={jest.fn()} onEntered={onEntered} visible><Text>筛选选项</Text></AppSheet>,
+    );
+    expect(onEntered).not.toHaveBeenCalled();
+
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onEnd?.({ translationY: 15, velocityY: -500 }, true);
+
+    expect(onEntered).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not close when a dismissal animation is interrupted', async () => {
+    const onClose = jest.fn();
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    await render(<AppSheet onClose={onClose} visible><Text>筛选选项</Text></AppSheet>);
+    spring.mockImplementationOnce(
+      (_target, _config, callback) => { callback?.(false); return 120; },
+    );
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onUpdate?.({ translationY: 400 });
+    mockPanCallbacks.onEnd?.({ translationY: 400, velocityY: 2_000 }, true);
+    expect(onClose).not.toHaveBeenCalled();
+
+    mockPanCallbacks.onStart?.({ translationY: -15 });
+    mockPanCallbacks.onEnd?.({ translationY: -15, velocityY: -1_000 }, true);
+    expect(spring).toHaveBeenLastCalledWith(
+      0, expect.objectContaining({ velocity: -1_000 }), expect.any(Function),
+    );
     expect(onClose).not.toHaveBeenCalled();
   });
 });

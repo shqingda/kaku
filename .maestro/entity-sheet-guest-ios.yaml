@@ -1,0 +1,67 @@
+appId: com.shqingda.kaku.debug
+name: Guest comment sheet drag and reopening
+---
+# 独立访客模拟器即可运行，不登录、不输入或发送评论。
+- runFlow:
+    file: reset-home.yaml
+- runFlow:
+    file: enter-subject-search.yaml
+- tapOn:
+    text: "葬送的芙莉莲.*"
+    below: "搜索结果"
+    index: 0
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "查看角色与声优"
+    direction: DOWN
+- tapOn: "查看角色与声优"
+- extendedWaitUntil:
+    visible: "打开角色：.*"
+    timeout: 15000
+- tapOn:
+    text: "打开角色：.*"
+    index: 0
+- extendedWaitUntil:
+    visible: "全屏查看.*图片"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "查看全部评论"
+    direction: DOWN
+    centerElement: true
+- tapOn: "查看全部评论"
+- extendedWaitUntil:
+    visible: "关闭评论"
+    timeout: 10000
+- repeat:
+    times: 3
+    commands:
+      - assertVisible: "回到评论顶部"
+      - tapOn: "关闭评论"
+      - extendedWaitUntil:
+          notVisible: "关闭评论"
+          timeout: 10000
+      - tapOn: "查看全部评论"
+      - extendedWaitUntil:
+          visible: "关闭评论"
+          timeout: 10000
+# 评论弹层高 92%，把手约在屏幕 10% 处；这里只覆盖正常拖动关闭。
+# 入场/回弹中断和系统取消由组件测试覆盖，真实连续手感仍需设备验收。
+- waitForAnimationToEnd
+- swipe:
+    start: "50%,10%"
+    end: "50%,70%"
+    duration: 600
+- extendedWaitUntil:
+    notVisible: "关闭评论"
+    timeout: 10000
+- assertVisible: "查看全部评论"
+- tapOn: "查看全部评论"
+- extendedWaitUntil:
+    visible: "关闭评论"
+    timeout: 10000
+- assertVisible: "回到评论顶部"
+- takeScreenshot: entity-sheet-reopened
+- tapOn: "关闭评论"
+- assertVisible: "查看全部评论"

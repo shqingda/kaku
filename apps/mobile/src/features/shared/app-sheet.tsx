@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -15,7 +15,6 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withDecay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -60,11 +59,19 @@ export function AppSheet({
   const colors = useTheme();
   const reduceMotion = useReduceMotion();
   const translateY = useSharedValue(windowHeight);
+  const dragStart = useSharedValue({ offset: 0, translation: 0 });
   const backdropOpacity = useSharedValue(0);
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(0);
   const mountedRef = useRef(mounted);
   const onEnteredRef = useRef(onEntered);
+  const hasEnteredRef = useRef(false);
+  const finishEntering = useCallback(() => {
+    if (!hasEnteredRef.current) {
+      hasEnteredRef.current = true;
+      onEnteredRef.current?.();
+    }
+  }, []);
 
   useEffect(() => {
     mountedRef.current = mounted;
@@ -77,32 +84,31 @@ export function AppSheet({
   // 打开：重置到展开位，再从屏幕下方以临界阻尼弹簧滑入。
   useEffect(() => {
     if (!visible) {
+      hasEnteredRef.current = false;
       return;
     }
 
     translateY.value = windowHeight;
     backdropOpacity.value = 0;
 
-    const finishEntering = (finished?: boolean) => {
-      if (finished && onEnteredRef.current) {
-        runOnJS(onEnteredRef.current)();
-      }
-    };
-
     if (reduceMotion) {
       translateY.value = 0;
       backdropOpacity.value = withTiming(1, {
         duration: 180,
         easing: Easing.out(Easing.cubic),
-      }, finishEntering);
+      }, (finished) => {
+        if (finished) runOnJS(finishEntering)();
+      });
     } else {
-      translateY.value = withSpring(0, SHEET_ENTER_SPRING, finishEntering);
+      translateY.value = withSpring(0, SHEET_ENTER_SPRING, (finished) => {
+        if (finished) runOnJS(finishEntering)();
+      });
       backdropOpacity.value = withTiming(1, {
         duration: 180,
         easing: Easing.out(Easing.cubic),
       });
     }
-  }, [backdropOpacity, reduceMotion, translateY, visible, windowHeight]);
+  }, [backdropOpacity, finishEntering, reduceMotion, translateY, visible, windowHeight]);
 
   // 关闭：沿进入的同一条路径滑回屏幕下方（空间一致性）。
   useEffect(() => {
@@ -148,57 +154,43 @@ export function AppSheet({
     // 标题行里的按钮保持可点，横向滑动不会误触发下拖。
     .activeOffsetY([-12, 12])
     .failOffsetX([-24, 24])
-    .onBegin(() => {
+    .onStart((event) => {
+      // 只有真正开始拖动才接管动画，轻点标题不会让入场或回弹停住。
       cancelAnimation(translateY);
+      const position = translateY.value;
+      // 反解橡皮筋，避免再次抓住向上回弹的弹层时重复压缩当前位置。
+      const offset = position < 0
+        ? (position * dismissDistance) /
+          (RUBBERBAND_CONSTANT * Math.max(1, dismissDistance + position))
+        : position;
+      dragStart.value = { offset, translation: event.translationY };
     })
     .onUpdate((event) => {
-      if (event.translationY < 0) {
+      const distance = dragStart.value.offset + event.translationY - dragStart.value.translation;
+      if (distance < 0) {
         // 向上超出展开位：橡皮筋，逐渐抵抗而不是硬停。
         translateY.value = -rubberband(
-          -event.translationY,
+          -distance,
           dismissDistance,
           RUBBERBAND_CONSTANT,
         );
       } else {
-        translateY.value = event.translationY;
+        translateY.value = distance;
       }
     })
-    .onEnd((event) => {
-      const distance = event.translationY;
-
-      if (distance <= 0) {
-        translateY.value = withSpring(0, SHEET_ENTER_SPRING);
-        return;
-      }
-
-      if (shouldDismissSheet(distance, event.velocityY, dismissDistance)) {
-        // 甩动关闭：以手指速度继续减速滑动（速度交接），到位后收起。
-        translateY.value = withDecay(
-          {
-            deceleration: 0.997,
-            velocity: Math.max(event.velocityY, 600),
-          },
-          (finished) => {
-            if (!finished) return;
-            if (translateY.value < dismissDistance) {
-              // 投影与判定一致，正常情况下不会走到这里；兜底滑完剩余距离，
-              // 滑到后同样要回调 onClose，否则弹层已离屏但 visible 仍为 true。
-              translateY.value = withSpring(
-                windowHeight,
-                SHEET_DISMISS_SPRING,
-                (done) => {
-                  if (done) runOnJS(onClose)();
-                },
-              );
-              return;
-            }
-            runOnJS(onClose)();
-          },
-        );
-      } else {
-        // 未够关闭条件：以带轻微回弹的弹簧弹回（拖动本身带有动量）。
-        translateY.value = withSpring(0, SHEET_DISMISS_SPRING);
-      }
+    .onEnd((event, success) => {
+      const dismiss = success && translateY.value > 0 &&
+        shouldDismissSheet(translateY.value, event.velocityY, dismissDistance);
+      // 正常释放交接真实速度；被系统取消的拖动平稳归位，不意外关闭。
+      translateY.value = withSpring(
+        dismiss ? windowHeight : 0,
+        { ...SHEET_DISMISS_SPRING, velocity: success ? event.velocityY : 0 },
+        (finished) => {
+          if (!finished) return;
+          if (dismiss) runOnJS(onClose)();
+          else runOnJS(finishEntering)();
+        },
+      );
     });
 
   // 拖得越远遮罩越淡；减少动态效果时遮罩只跟随淡入淡出。

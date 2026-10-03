@@ -50,7 +50,8 @@ export function shouldDismissSheet(
   if (dismissDistance <= 0) {
     return translateY > 0;
   }
-  const projected = translateY + project(Math.max(velocity, 0));
+  // 反向上甩也参与投影，用户可以在超过距离阈值后反悔。
+  const projected = translateY + project(velocity);
   return projected > dismissDistance || velocity > MIN_DISMISS_VELOCITY;
 }
 
