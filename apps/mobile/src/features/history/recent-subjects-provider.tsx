@@ -3,6 +3,7 @@ import { parseRecentSubjectsResponse } from '@/infrastructure/kaku/recent-subjec
 import { useSyncedHistory } from '@/features/history/use-synced-history';
 import { loadRecentSubjects, saveRecentSubjects } from './recent-subjects';
 import { addRecentSubject, mergeRecentSubjects, type RecentSubject } from './recent-subjects-model';
+import { recordDiagnosticError } from '@/lib/diagnostic-log';
 
 const options = {
   path: '/me/recent-subjects',
@@ -21,7 +22,10 @@ const RecentSubjectsContext = createContext<ContextValue | null>(null);
 export function RecentSubjectsProvider({ children }: { children: ReactNode }) {
   const { updateItems, ...history } = useSyncedHistory(options);
   const rememberSubject = useCallback((subject: RecentSubject) => {
-    void updateItems((items) => addRecentSubject(items, subject));
+    void updateItems((items) => addRecentSubject(items, subject)).catch(() => {
+      // A failed optional history write must not interrupt the subject page.
+      void recordDiagnosticError(new Error('浏览历史未能保存到本机')).catch(() => {});
+    });
   }, [updateItems]);
   const value = { ...history, rememberSubject };
   return (

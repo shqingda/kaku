@@ -92,3 +92,20 @@ test('update row checks directly and shows busy state without navigating', async
   expect(screen.getByLabelText('检查更新').props.accessibilityState.busy).toBe(true);
   expect(screen.getByLabelText('检查更新').props.accessibilityState.disabled).toBe(true);
 });
+
+test.each(['search', 'browse'])('failed %s history clear never reports success and can be retried', async (kind) => {
+  const clear = kind === 'search' ? mockSearch : mockBrowse;
+  const label = kind === 'search' ? '搜索历史' : '浏览历史';
+  clear.mockRejectedValueOnce(new Error('disk full'));
+  await render(<Page />);
+  await fireEvent.press(screen.getByLabelText('管理历史记录'));
+  await fireEvent.press(screen.getByText(`清除${label}`));
+  await act(async () => { await confirm(); });
+  expect(alerts).toHaveBeenLastCalledWith('历史未能保存清除结果', expect.any(String));
+  expect(alerts.mock.calls.some(([title]) => title === `${label}已在本机清除`)).toBe(false);
+
+  await fireEvent.press(screen.getByText(`清除${label}`));
+  await act(async () => { await confirm(); });
+  expect(clear).toHaveBeenCalledTimes(2);
+  expect(alerts).toHaveBeenLastCalledWith(`${label}已在本机清除`, expect.any(String));
+});

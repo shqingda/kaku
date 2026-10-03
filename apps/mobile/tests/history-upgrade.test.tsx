@@ -1,18 +1,24 @@
 import type { ReactNode } from 'react';
-import { cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
 import { SearchHistoryProvider, useSearchHistory } from '@/features/search/search-history-provider';
 import { RecentSubjectsProvider, useRecentSubjects } from '@/features/history/recent-subjects-provider';
 import { loadSearchHistory } from '@/features/search/search-history';
 import { loadRecentSubjects } from '@/features/history/recent-subjects';
+import { recordDiagnosticError } from '@/lib/diagnostic-log';
 
 const mockData = new Map<string, string>();
 const mockRequest = jest.fn();
+let mockFailWrite = false;
 let mockUserId = 1;
 let mockSync = true;
 jest.mock('expo-sqlite/kv-store', () => ({
   getItem: async (key: string) => mockData.get(key) ?? null,
-  setItem: async (key: string, value: string) => { mockData.set(key, value); },
+  setItem: async (key: string, value: string) => {
+    if (mockFailWrite) throw new Error('disk full');
+    mockData.set(key, value);
+  },
 }));
+jest.mock('@/lib/diagnostic-log', () => ({ recordDiagnosticError: jest.fn() }));
 jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ request: mockRequest, session: { user: { id: mockUserId } }, isLoading: false }),
 }));
@@ -28,6 +34,33 @@ beforeEach(() => {
   mockRequest.mockReset();
   mockUserId = 1;
   mockSync = true;
+  mockFailWrite = false;
+  jest.mocked(recordDiagnosticError).mockReset().mockResolvedValue(undefined);
+});
+
+test('automatic history write failures keep current content usable, even if diagnostics cannot save', async () => {
+  mockSync = false;
+  const hook = await renderHook(useHistories, { wrapper: Providers });
+  mockFailWrite = true;
+  jest.mocked(recordDiagnosticError).mockRejectedValue(new Error('disk full'));
+  const subject = { id: 1, title: 'subject', type: 2, viewedAt: 100 };
+  await act(async () => {
+    hook.result.current.search.addSearch('new search');
+    hook.result.current.recent.rememberSubject(subject);
+  });
+  expect(hook.result.current.search.items).toEqual(['new search']);
+  expect(hook.result.current.recent.items[0]?.id).toBe(1);
+  expect(recordDiagnosticError).toHaveBeenCalledTimes(2);
+  expect(mockData.size).toBe(0);
+  expect(mockRequest).not.toHaveBeenCalled();
+
+  mockFailWrite = false;
+  await act(async () => {
+    hook.result.current.search.addSearch('retry search');
+    hook.result.current.recent.rememberSubject({ ...subject, id: 2 });
+  });
+  expect((await loadSearchHistory(1)).items).toEqual(['retry search', 'new search']);
+  expect((await loadRecentSubjects(1)).items.map(item => item.id)).toEqual([2, 1]);
 });
 afterEach(async () => { await cleanup(); });
 

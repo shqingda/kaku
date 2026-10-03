@@ -149,6 +149,9 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
     scope.pull = enqueue(async (scope, current) => {
       const before = stateRef.current.record;
       if (dirtyRef.current) {
+        // A foreground/manual retry must also retry a failed local write before
+        // sending the in-memory edit to another device.
+        await persist(before, userId);
         await push(before, scope, current);
         return;
       }
@@ -161,7 +164,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       if (merged.pushToCloud) await push(merged.record, scope, current);
     }).finally(() => { scope.pull = null; });
     return scope.pull;
-  }, [apply, enqueue, options, push, request]);
+  }, [apply, enqueue, options, persist, push, request, userId]);
 
   useEffect(() => {
     void pullFromCloud(true);
@@ -183,9 +186,8 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       : { items: [], updatedAt: null };
     const next = { items: update(previous.items), updatedAt: Date.now() };
     dirtyRef.current = true;
-    const saved = apply(next);
+    await apply(next);
     void enqueue((scope, current) => push(next, scope, current));
-    await saved;
   }, [apply, enqueue, isLoading, push, userId]);
 
   const clearHistory = useCallback(() => updateItems(() => []), [updateItems]);

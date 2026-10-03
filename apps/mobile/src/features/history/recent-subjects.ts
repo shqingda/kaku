@@ -22,15 +22,12 @@ export async function loadRecentSubjects(userId?: number): Promise<RecentSubject
 }
 
 export async function saveRecentSubjects(record: RecentSubjectsRecord, userId?: number) {
-  try {
-    await Storage.setItem(
-      `${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`,
-      JSON.stringify({
-        items: record.items.slice(0, RECENT_SUBJECT_LIMIT),
-        updatedAt: record.updatedAt,
-      }),
-    );
-  } catch {
-    // Browsing history is optional and must never block a subject page.
-  }
+  // Explicit clearing needs the actual storage result, just like search history.
+  await Storage.setItem(
+    `${RECENT_SUBJECTS_KEY}:v2:${userId ?? 'guest'}`,
+    JSON.stringify({
+      items: record.items.slice(0, RECENT_SUBJECT_LIMIT),
+      updatedAt: record.updatedAt,
+    }),
+  );
 }

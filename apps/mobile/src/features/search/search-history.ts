@@ -21,15 +21,13 @@ export async function loadSearchHistory(userId?: number): Promise<SearchHistoryR
 }
 
 export async function saveSearchHistory(record: SearchHistoryRecord, userId?: number) {
-  try {
-    await Storage.setItem(
-      `${SEARCH_HISTORY_KEY}:v2:${userId ?? 'guest'}`,
-      JSON.stringify({
-        items: record.items.slice(0, SEARCH_HISTORY_LIMIT),
-        updatedAt: record.updatedAt,
-      }),
-    );
-  } catch {
-    // Search history is a convenience. Storage failures must not block search.
-  }
+  // The caller decides how to report failure; explicit clearing must not claim
+  // success when the stored history will return after a restart.
+  await Storage.setItem(
+    `${SEARCH_HISTORY_KEY}:v2:${userId ?? 'guest'}`,
+    JSON.stringify({
+      items: record.items.slice(0, SEARCH_HISTORY_LIMIT),
+      updatedAt: record.updatedAt,
+    }),
+  );
 }

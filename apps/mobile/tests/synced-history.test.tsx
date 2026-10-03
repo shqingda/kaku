@@ -32,7 +32,7 @@ beforeEach(() => {
   mockReady = true;
   options.load.mockResolvedValue(empty);
   options.save.mockResolvedValue(undefined);
-  mockRequest.mockReset().mockResolvedValue(Response.json(empty));
+  mockRequest.mockReset().mockImplementation(async () => Response.json(empty));
 });
 
 test('late account A pull cannot block or overwrite account B', async () => {
@@ -115,4 +115,44 @@ test('reenabling sync uploads pending local edits instead of accepting a stale c
     method: 'PUT', body: JSON.stringify({ items: ['offline-edit'] }),
   }));
   expect(hook.result.current.items).toEqual(['offline-edit']);
+});
+
+test('failed local clear is reported before any cloud deletion; retry can persist and sync', async () => {
+  const original = { items: ['keep until cleared'], updatedAt: 100 };
+  options.load.mockResolvedValueOnce(original);
+  mockRequest.mockResolvedValueOnce(Response.json(original));
+  const hook = await renderHook(() => useSyncedHistory(options));
+  mockRequest.mockClear();
+  const error = new Error('disk full');
+  options.save.mockRejectedValueOnce(error);
+
+  await act(async () => {
+    await expect(hook.result.current.clearHistory()).rejects.toBe(error);
+  });
+  expect(mockRequest).not.toHaveBeenCalled();
+
+  await act(async () => { await hook.result.current.clearHistory(); });
+  expect(options.save).toHaveBeenCalledWith(expect.objectContaining({ items: [] }), 1);
+  expect(mockRequest).toHaveBeenCalledWith('/me/search-history', expect.objectContaining({
+    method: 'PUT', body: JSON.stringify({ items: [] }),
+  }));
+});
+
+test('cloud retry cannot bypass a local save failure and resumes once storage recovers', async () => {
+  const hook = await renderHook(() => useSyncedHistory(options));
+  mockRequest.mockClear();
+  options.save.mockRejectedValue(new Error('disk full'));
+  await act(async () => {
+    await expect(hook.result.current.clearHistory()).rejects.toThrow('disk full');
+    await hook.result.current.retryCloudSync();
+  });
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(hook.result.current.cloudError).toBeTruthy();
+
+  options.save.mockResolvedValue(undefined);
+  await act(async () => { await hook.result.current.retryCloudSync(); });
+  expect(mockRequest).toHaveBeenCalledWith('/me/search-history', expect.objectContaining({
+    method: 'PUT', body: JSON.stringify({ items: [] }),
+  }));
+  expect(hook.result.current.cloudError).toBeNull();
 });

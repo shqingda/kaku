@@ -34,3 +34,12 @@ test('unowned legacy history is retained but never uploaded as another account',
   expect(await loadSearchHistory(1)).toEqual({ items: [], updatedAt: null });
   expect(await Storage.getItem('kaku-recent-searches')).toContain('legacy');
 });
+
+test.each([
+  ['search', saveSearchHistory],
+  ['browse', saveRecentSubjects],
+] as const)('%s history reports failed persistence to the caller', async (_kind, save) => {
+  const error = new Error('disk full');
+  jest.mocked(Storage.setItem).mockRejectedValueOnce(error);
+  await expect(save({ items: [], updatedAt: 100 }, 1)).rejects.toBe(error);
+});
