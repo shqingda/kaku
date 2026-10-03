@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。已发布 Android GitHub 包 [v1.1.15](https://github.com/shqingda/kaku/releases/tag/v1.1.15)（该版未启用 R8 与资源裁剪），未上架 App Store / Google Play。用户随后确认未来正式包默认启用两项裁剪，规则见 [发版指南](docs/deployment/release.md)。
+> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.15](https://github.com/shqingda/kaku/releases/tag/v1.1.15) 已按用户要求替换为启用 R8 与资源裁剪的 42.3 MB 安装包，未上架 App Store / Google Play。未来正式包默认启用两项裁剪，规则见 [发版指南](docs/deployment/release.md)。
 
 ## 当前工作入口
 

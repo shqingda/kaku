@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 已发布的 v1.1.15 使用当时默认的非裁剪配置，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。随后用户确认以后默认启用 R8 与资源裁剪，本地正式包、EAS production 和 GitHub APK 均遵循该规则；调试包保持关闭。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 的 v1.1.15 首次发布使用非裁剪配置，随后按用户要求替换为 42.3 MB 裁剪包，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。未来本地正式包、EAS production 和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 
@@ -43,7 +43,7 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 正式包通过 Expo 配置源默认打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。本地发布入口默认上传裁剪后的 `kaku-release.apk`；纯构建显式传入 `--no-optimize` 才关闭，并使用独立文件名。脚本按参数确定开关，旧 shell 或 `.env` 中的 `KAKU_OPTIMIZE_NATIVE=0` 不会悄悄关闭默认裁剪。EAS `production` 显式设为 `1`，`github` 继承；直接调用 Expo 配置时可用 `KAKU_OPTIMIZE_NATIVE=0` 生成诊断配置。
 
-v1.1.14 是早期裁剪包，v1.1.15 发布时仍未裁剪；后续默认规则按用户新要求调整，不能据此改写已发布产物的事实。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
+v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
 ## 本地构建并发布 GitHub Release
 
