@@ -255,7 +255,7 @@ function ReplyComposerContent({
           ) : null}
           {!isEditing && draft.loaded && content && !draft.error && !sent ? <Text style={styles.hint}>草稿已保存在本机</Text> : null}
           {draft.error ? (
-            <Pressable accessibilityRole="button" onPress={() => { if (draft.retry() && sent) finishClose(); }}
+            <Pressable accessibilityRole="button" accessibilityLabel={`重试回复草稿：${draft.error}`} hitSlop={HIT_SLOP} onPress={() => { if (draft.retry() && sent) finishClose(); }}
               style={({ pressed }) => [{ minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' }, pressed && styles.pressed]}>
               <Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text>
             </Pressable>

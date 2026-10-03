@@ -134,3 +134,31 @@ test('discard confirmation becomes invalid after closing and reopening the compo
   expect(screen.queryByLabelText('动态内容')).toBeNull();
   alerts.mockRestore();
 });
+
+test.each(['使用本机草稿', '保存当前内容'])('two editors resolve a save conflict through the retry action: %s', async (choice) => {
+  const alerts = jest.spyOn(Alert, 'alert');
+  const closeFirst = jest.fn();
+  const closeSecond = jest.fn();
+  await render(<QueryClientProvider client={client}><ThemeProvider>
+    <TimelineComposer visible onClose={closeFirst} />
+    <TimelineComposer visible onClose={closeSecond} />
+  </ThemeProvider></QueryClientProvider>);
+  await fireEvent.changeText(screen.getAllByLabelText('动态内容')[0], '第一页已保存');
+  await fireEvent.changeText(screen.getAllByLabelText('动态内容')[1], '第二页的输入');
+  expect(mockStorage.get(key)).toBe('第一页已保存');
+  expect(screen.getAllByLabelText('动态内容')[1].props.value).toBe('第二页的输入');
+  expect(screen.getByText(/草稿已在另一窗口更新/)).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText(/重试动态草稿：草稿已在另一窗口更新/));
+  expect(alerts.mock.calls.at(-1)![0]).toBe('选择要保留的草稿');
+  await act(() => { alerts.mock.calls.at(-1)![2]!.find(button => button.text === choice)!.onPress!(); });
+  const expected = choice === '使用本机草稿' ? '第一页已保存' : '第二页的输入';
+  expect(mockStorage.get(key)).toBe(expected);
+  expect(screen.getAllByLabelText('动态内容')[1].props.value).toBe(expected);
+  expect(screen.queryByText(/草稿已在另一窗口更新/)).toBeNull();
+  await fireEvent.press(screen.getAllByLabelText('关闭')[0]);
+  expect(closeFirst).toHaveBeenCalledTimes(1);
+  expect(closeSecond).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe(expected);
+  expect(mockRequest).not.toHaveBeenCalled();
+  alerts.mockRestore();
+});

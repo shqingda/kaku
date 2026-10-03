@@ -286,7 +286,7 @@ function IndexComposerContent({
         {draft.content && hasUnsavedChanges && fields && !draft.error && !sent ? <Text style={styles.privacyDescription}>草稿已保存在本机</Text> : null}
         {fields === null ? <Text accessibilityRole="alert" style={styles.errorText}>草稿格式无法读取，原内容已保留；可丢弃后重新编辑。</Text> : null}
         {draft.error ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => {
+          <Pressable accessibilityRole="button" accessibilityLabel={`重试目录草稿：${draft.error}`} hitSlop={HIT_SLOP} style={({ pressed }) => [styles.draftAction, pressed && styles.pressed]} onPress={() => {
             if (draft.retry() && sent) {
               if (isEditing) onEdited?.();
               if (createdId.current !== null) onCreated?.(createdId.current);

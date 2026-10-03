@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { Alert, AppState } from 'react-native';
+import { Alert, AppState, type AppStateStatus } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 import { useReplyDraft } from '@/features/discussions/use-reply-draft';
 import { replyDraftKey } from '@/features/discussions/reply-draft';
@@ -180,6 +180,201 @@ test('a rejected request retains an unmounted draft and allows a new composer to
     expect((await current.result.current.submit(async () => 'ok')).cleared).toBe(true);
   });
   expect(data.has('one')).toBe(false);
+});
+
+describe('concurrent draft saves', () => {
+  let alerts: jest.SpiedFunction<typeof Alert.alert>;
+  beforeEach(() => { alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+  afterEach(() => { alerts.mockRestore(); });
+  const choice = (text: string) => alerts.mock.calls.at(-1)![2]!.find(button => button.text === text)!.onPress!;
+  async function conflictingWindows() {
+    const old = await renderHook(() => useReplyDraft('one'));
+    await act(() => { old.result.current.change('original'); });
+    const current = await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.change('new saved'); });
+    await act(() => { old.result.current.change('local edit'); });
+    expect(data.get('one')).toBe('new saved');
+    return { old, current };
+  }
+  test('backgrounding an older window cannot restore a draft cleared by another window', async () => {
+    const callbacks: Array<(status: AppStateStatus) => void> = [];
+    jest.mocked(AppState.addEventListener).mockImplementation((_, listener) => {
+      callbacks.push(listener);
+      return { remove: jest.fn() };
+    });
+    const old = await renderHook(() => useReplyDraft('one'));
+    await act(() => { old.result.current.change('old content'); });
+    const current = await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.clear(); });
+    await act(() => { callbacks[0]('background'); });
+    expect(data.has('one')).toBe(false);
+    expect(old.result.current.content).toBe('old content');
+  });
+
+  test('closing an unchanged older window leaves a newer saved draft intact', async () => {
+    const old = await renderHook(() => useReplyDraft('one'));
+    await act(() => { old.result.current.change('old'); });
+    const current = await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.change('new'); });
+    await act(() => { expect(old.result.current.dismiss()).toBe(true); });
+    expect(data.get('one')).toBe('new');
+  });
+
+  test('a stale save retry cannot overwrite a newer draft without a choice', async () => {
+    const old = await renderHook(() => useReplyDraft('one'));
+    jest.mocked(Storage.setItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { old.result.current.change('unsaved old window'); });
+    const current = await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.change('new saved window'); });
+    await act(() => { expect(old.result.current.retry()).toBe(false); });
+    expect(data.get('one')).toBe('new saved window');
+    expect(old.result.current.content).toBe('unsaved old window');
+  });
+
+  test('stale edits remain unsaved even when changed back to identical text; direct save and clear cannot overwrite', async () => {
+    const { old } = await conflictingWindows();
+    await act(() => { old.result.current.change('original'); });
+    await act(() => {
+      expect(old.result.current.save()).toBe(false);
+      expect(old.result.current.clear()).toBe(false);
+      expect(old.result.current.dismiss()).toBe(false);
+    });
+    expect(data.get('one')).toBe('new saved');
+    expect(old.result.current.content).toBe('original');
+    expect(old.result.current.error).toContain('另一窗口');
+  });
+
+  test('cancel preserves both versions; loading the saved version updates the editor without rewriting storage', async () => {
+    const { old, current } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    const cancelledChoice = choice('保存当前内容');
+    await act(() => { choice('取消')(); });
+    expect(old.result.current.content).toBe('local edit');
+    expect(data.get('one')).toBe('new saved');
+    await act(() => { old.result.current.retry(); });
+    const calls = jest.mocked(Storage.setItemSync).mock.calls.length;
+    await act(() => { choice('使用本机草稿')(); cancelledChoice(); });
+    expect(old.result.current.content).toBe('new saved');
+    expect(old.result.current.error).toBe('');
+    expect(jest.mocked(Storage.setItemSync).mock.calls).toHaveLength(calls);
+    await act(() => { expect(current.result.current.save()).toBe(false); });
+    expect(data.get('one')).toBe('new saved');
+  });
+
+  test('choosing the deleted saved version empties the old editor without restoring its text', async () => {
+    const { old, current } = await conflictingWindows();
+    await act(() => { current.result.current.clear(); old.result.current.retry(); });
+    await act(() => { choice('使用本机草稿')(); });
+    expect(old.result.current.content).toBe('');
+    expect(data.has('one')).toBe(false);
+  });
+
+  test('an explicitly chosen local version can fail to save and retry; an old sender cannot clear it', async () => {
+    const { old, current } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    jest.mocked(Storage.setItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    const save = choice('保存当前内容');
+    await act(() => { save(); save(); });
+    expect(old.result.current.content).toBe('local edit');
+    expect(old.result.current.error).toContain('保存失败');
+    expect(data.get('one')).toBe('new saved');
+    await act(() => { current.result.current.complete(); });
+    expect(data.get('one')).toBe('new saved');
+    await act(() => { expect(old.result.current.retry()).toBe(true); });
+    expect(data.get('one')).toBe('local edit');
+    await act(() => { current.result.current.retry(); });
+    expect(data.get('one')).toBe('local edit');
+  });
+
+  test('sending after an explicitly chosen overwrite fails clears the accepted saved fallback', async () => {
+    const { old } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    jest.mocked(Storage.setItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { choice('保存当前内容')(); });
+    expect(data.get('one')).toBe('new saved');
+    await act(async () => { await old.result.current.submit(async () => 'sent'); });
+    expect(data.has('one')).toBe(false);
+  });
+
+  test('choosing unchanged window text still counts as unsaved intent if the write fails', async () => {
+    const old = await renderHook(() => useReplyDraft('one'));
+    await act(() => { old.result.current.change('original'); });
+    const current = await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.change('new saved'); old.result.current.retry(); });
+    jest.mocked(Storage.setItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { choice('保存当前内容')(); });
+    const third = await renderHook(() => useReplyDraft('one'));
+    await act(() => { third.result.current.change('newest'); });
+    await act(() => { expect(old.result.current.dismiss()).toBe(false); });
+    expect(old.result.current.content).toBe('original');
+    expect(data.get('one')).toBe('newest');
+  });
+
+  test.each(['newer editor', 'current input', 'storage'])('a conflict choice expires when %s changes', async (changed) => {
+    const { old, current } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    const save = choice('保存当前内容');
+    await act(() => {
+      if (changed === 'newer editor') current.result.current.change('newer again');
+      if (changed === 'current input') { old.result.current.change('changed'); old.result.current.change('local edit'); }
+      if (changed === 'storage') data.set('one', 'external update');
+      save();
+    });
+    expect(data.get('one')).toBe(changed === 'newer editor' ? 'newer again' : changed === 'storage' ? 'external update' : 'new saved');
+    expect(old.result.current.content).toBe('local edit');
+    expect(alerts.mock.calls.at(-1)![0]).toBe('草稿再次更新');
+  });
+
+  test('read failures before and after a conflict choice keep both versions available', async () => {
+    const { old } = await conflictingWindows();
+    jest.mocked(Storage.getItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { old.result.current.retry(); });
+    expect(alerts).not.toHaveBeenCalled();
+    expect(old.result.current.error).toContain('读取失败');
+    await act(() => { old.result.current.retry(); });
+    jest.mocked(Storage.getItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { choice('使用本机草稿')(); });
+    expect(data.get('one')).toBe('new saved');
+    expect(old.result.current.content).toBe('local edit');
+    expect(old.result.current.error).toContain('读取失败');
+    await act(() => { old.result.current.retry(); });
+    await act(() => { choice('使用本机草稿')(); });
+    expect(old.result.current.content).toBe('new saved');
+  });
+
+  test('unmounted callbacks and a stale conflict choice cannot affect a reopened draft', async () => {
+    const { old, current } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    const save = choice('保存当前内容');
+    const stale = old.result.current;
+    await old.unmount();
+    await current.unmount();
+    const reopened = await renderHook(() => useReplyDraft('one'));
+    await act(() => { reopened.result.current.change('reopened'); });
+    await act(() => {
+      stale.change('stale input');
+      expect(stale.save()).toBe(false);
+      expect(stale.clear()).toBe(false);
+      expect(stale.retry()).toBe(false);
+      expect(stale.dismiss()).toBe(false);
+      save();
+    });
+    expect(data.get('one')).toBe('reopened');
+    expect(reopened.result.current.content).toBe('reopened');
+  });
+
+  test('a pending conflict choice cannot save text after submission starts or finishes', async () => {
+    const { old } = await conflictingWindows();
+    await act(() => { old.result.current.retry(); });
+    const save = choice('保存当前内容');
+    let resolve!: () => void;
+    const submission = old.result.current.submit(() => new Promise<void>(done => { resolve = done; }));
+    await act(() => { save(); });
+    expect(data.get('one')).toBe('new saved');
+    await act(async () => { resolve(); await submission; old.result.current.retry(); });
+    expect(old.result.current.phase).toBe('sent');
+    expect(data.get('one')).toBe('new saved');
+  });
 });
 
 describe('discard confirmation scope', () => {

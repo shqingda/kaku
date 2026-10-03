@@ -46,6 +46,8 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   const latest = useRef(state.content);
   const sent = useRef(false);
   const persisted = useRef(state.content);
+  const dirty = useRef(false);
+  const localVersion = useRef(0);
   const edit = useRef<{ revision: DraftRevision; version: number } | null>(null);
   const windowScope = useRef<object | null>(null);
   const confirmation = useRef<object | null>(null);
@@ -66,12 +68,26 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     return () => releaseRevision(key, revision);
   }, [key]);
 
+  function hasNewerEdit() {
+    const current = edit.current;
+    return Boolean(key && current && (
+      revisions.get(key) !== current.revision || current.version !== current.revision.version
+    ));
+  }
+  function reportConflict() {
+    setState(previous => ({ ...previous, error: '草稿已在另一窗口更新，当前内容仍在此窗口；请重试并选择要保留的版本' }));
+    return false;
+  }
   function save(content = latest.current) {
+    if (!windowScope.current && !sent.current) return false;
     if (!key) return true;
+    if (!state.loaded) return false;
+    if (hasNewerEdit()) return reportConflict();
     try {
       if (content) Storage.setItemSync(key, content);
       else Storage.removeItemSync(key);
       persisted.current = content;
+      dirty.current = false;
       setState((previous) => ({ ...previous, error: '' }));
       return true;
     } catch {
@@ -85,20 +101,79 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     }
   }
   function change(value: SetStateAction<string>) {
+    if (!windowScope.current || sent.current || submitting.current) return;
     const content = typeof value === 'function' ? value(latest.current) : value;
-    // Even a failed save is a newer edit that an older send must not clear.
-    if (edit.current) edit.current.version = ++edit.current.revision.version;
+    const stale = hasNewerEdit();
+    dirty.current = true;
+    localVersion.current += 1;
+    // Current owners advance before saving, including failures. A stale window
+    // retains its edit separately until the user resolves the conflict.
+    if (!stale && edit.current) edit.current.version = ++edit.current.revision.version;
     latest.current = content;
     setState((previous) => ({ ...previous, content }));
+    if (stale) { reportConflict(); return; }
     save(content);
   }
+  function resolveConflict() {
+    const scope = windowScope.current;
+    const current = edit.current;
+    if (!key || !scope || !current || submitting.current || confirmation.current) return false;
+    reportConflict();
+    let stored: string | null;
+    try { stored = Storage.getItemSync(key); } catch {
+      setState(previous => ({ ...previous, error: '草稿读取失败，当前窗口内容已保留，请重试' }));
+      return false;
+    }
+    const version = current.revision.version;
+    const local = localVersion.current;
+    const token = {};
+    confirmation.current = token;
+    const choose = (source: 'stored' | 'window' | 'cancel') => {
+      if (confirmation.current !== token) return;
+      confirmation.current = null;
+      if (source === 'cancel' || windowScope.current !== scope || sent.current || submitting.current) return;
+      try {
+        if (revisions.get(key) !== current.revision || current.revision.version !== version
+          || localVersion.current !== local || Storage.getItemSync(key) !== stored) {
+          reportConflict();
+          Alert.alert('草稿再次更新', '当前窗口内容已保留，请重试后重新选择。');
+          return;
+        }
+      } catch {
+        setState(previous => ({ ...previous, error: '草稿读取失败，当前窗口内容已保留，请重试' }));
+        return;
+      }
+      current.version = ++current.revision.version;
+      if (source === 'window') {
+        // The user accepted replacing this saved fallback, even if saving fails.
+        persisted.current = stored ?? '';
+        dirty.current = true;
+        save();
+        return;
+      }
+      const content = stored ?? '';
+      latest.current = content;
+      persisted.current = content;
+      dirty.current = false;
+      localVersion.current += 1;
+      setState({ content, error: '', loaded: true, phase: 'editing' });
+    };
+    Alert.alert('选择要保留的草稿', '使用本机草稿会替换当前窗口的内容；保存当前内容会覆盖本机草稿。取消会保留两个版本。', [
+      { text: '取消', style: 'cancel', onPress: () => choose('cancel') },
+      { text: '使用本机草稿', onPress: () => choose('stored') },
+      { text: '保存当前内容', style: 'destructive', onPress: () => choose('window') },
+    ], { cancelable: true, onDismiss: () => choose('cancel') });
+    return false;
+  }
   function retry() {
+    if (!windowScope.current && !sent.current) return false;
     if (sent.current) return complete();
-    if (state.loaded) return save();
+    if (state.loaded) return hasNewerEdit() ? resolveConflict() : save();
     try {
       const content = key ? Storage.getItemSync(key) ?? '' : initialContent;
       latest.current = content;
       persisted.current = content;
+      dirty.current = false;
       if (edit.current) edit.current.version = edit.current.revision.version;
       setState({ content, error: '', loaded: true, phase: 'editing' });
       return true;
@@ -110,6 +185,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     if (!save('')) return false;
     if (edit.current) edit.current.version = ++edit.current.revision.version;
     latest.current = '';
+    localVersion.current += 1;
     setState({
       content: '',
       error: '',
@@ -121,7 +197,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   function complete() {
     sent.current = true;
     setState((previous) => ({ ...previous, error: '', phase: 'sent' }));
-    if (edit.current && edit.current.version !== edit.current.revision.version) return true;
+    if (hasNewerEdit()) return true;
     try {
       // A previous composer may finish sending after a new one opened.
       if (key && Storage.getItemSync(key) !== persisted.current) return true;
@@ -169,14 +245,17 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     showDiscardConfirmation(() => finish(true), kind, () => finish(false));
   }
   function dismiss() {
+    if (!windowScope.current) return false;
     if (sent.current) return complete();
     if (!state.loaded) return true;
+    if (hasNewerEdit() && !dirty.current) return true;
     return save();
   }
   useEffect(() => {
     if (!active) return;
+    const scope = windowScope.current;
     const listener = AppState.addEventListener('change', (status) => {
-      if (status === 'active' || !state.loaded) return;
+      if (scope !== windowScope.current || status === 'active' || !state.loaded) return;
       if (sent.current) complete();
       else save();
     });

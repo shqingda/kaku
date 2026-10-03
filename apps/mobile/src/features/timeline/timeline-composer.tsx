@@ -175,7 +175,7 @@ function TimelineComposerContent({
         ) : null}
         {content && !sent && !draft.error ? <Text style={styles.hintText}>草稿已保存在本机</Text> : null}
         {draft.error ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => { if (draft.retry() && sent) finishClose(); }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`重试动态草稿：${draft.error}`} hitSlop={HIT_SLOP} style={({ pressed }) => [styles.draftAction, pressed && styles.pressed]} onPress={() => { if (draft.retry() && sent) finishClose(); }}>
             <Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text>
           </Pressable>
         ) : null}
