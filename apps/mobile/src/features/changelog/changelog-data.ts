@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.18',
+    date: '2026-10-03',
+    notes: [
+      '修复 Android 评论正文多图滚动时的闪白和叠影。',
+      '修复图片反复解码调整高度造成的轻微颤动，换图时正确重置尺寸。',
+      '保留 GIF 播放、图片预览与 iOS 原有过渡。',
+    ],
+  },
+  {
     version: '1.1.17',
     date: '2026-10-03',
     notes: [
