@@ -1,0 +1,24 @@
+# 从首页进入账户页；访客的头像直接打开账户页，不显示已登录菜单。
+appId: placeholder
+---
+- runFlow:
+    when:
+      visible: "登录 Bangumi"
+    commands:
+      - tapOn:
+          text: "登录 Bangumi"
+          index: 0
+- runFlow:
+    when:
+      visible: "打开账户菜单"
+    commands:
+      - tapOn: "打开账户菜单"
+      - runFlow:
+          when:
+            notVisible: "账户与设备"
+          commands:
+            - tapOn: "打开账户菜单"
+      - tapOn: "账户与设备"
+- extendedWaitUntil:
+    visible: "连接 Bangumi|查看我的 Bangumi 主页"
+    timeout: 10000

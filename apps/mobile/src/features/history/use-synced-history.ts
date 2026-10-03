@@ -137,11 +137,9 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
     local.recovery = (async () => {
       if (!local.hydrated) {
         try {
-          // Wait for previous writes to this owner, but never for another
-          // account's slow load. No writes can start until hydration succeeds.
-          await localQueues.current.get(local.userId);
-          if (!currentLocal(local)) return false;
-          const stored = await options.load(local.userId);
+          // Reads share the owner's queue too: returning to A waits for A's
+          // previous I/O, while account B remains independent.
+          const stored = await enqueueLocal(local, () => options.load(local.userId));
           if (!currentLocal(local)) return false;
           const pending = local.pending;
           local.record = pending.updatedAt === null ? stored : {

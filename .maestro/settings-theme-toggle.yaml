@@ -8,10 +8,11 @@ tags:
 # 保证后续流程（截图对比、录屏）仍在默认外观下运行。
 - runFlow:
     file: reset-home.yaml
-- tapOn: "打开账户菜单"
-- extendedWaitUntil:
-    visible: "外观与同步"
-    timeout: 8000
+- runFlow:
+    file: open-account.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element: "外观与同步"
 - tapOn: "外观与同步"
 - extendedWaitUntil:
     visible: "外观"

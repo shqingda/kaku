@@ -33,7 +33,7 @@ Maestro 和 argent **不进 CI**。
 流程都在仓库根 `.maestro/`。平台入口持有真实包名，子流程用占位
 `appId`，避免 Maestro 嵌套 `openLink` 丢 `${APP_ID}`。
 
-iOS 全量入口 2026-10-02 已在登录态实跑；本轮专项和环境限制见 [优化验收记录](../test-records/2026-10-02-project-optimization.md)。Android 入口文件在，**还没有实跑**
+iOS 全量入口 2026-10-02 已在登录态实跑；当时专项和环境限制见 [优化验收记录](../test-records/2026-10-02-project-optimization.md)，2026-10-03 独立访客模拟器结果见 [历史恢复记录](../test-records/2026-10-03-history-recovery.md)。Android 入口文件在，**还没有实跑**
 （见 `TODO.md`）。同一台设备必须串行，不要并发跑两条 flow。
 
 ### 入口
@@ -48,7 +48,10 @@ iOS 全量入口 2026-10-02 已在登录态实跑；本轮专项和环境限制�
 iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧首页先满足等待条件；通过启动参数 `EXDevMenuShowFloatingActionButton=NO` 仅在本次进程隐藏 Expo 悬浮工具按钮，防止遮挡表单，不修改持久偏好。验收期间停止源码编辑、依赖安装和 prebuild；热更新会让搜索输入及导航失效。全量入口把冒烟步骤
 和下面各业务 flow 串起来；每条业务 flow 开头用 `reset-home.yaml` 回首页，
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
-分别保留门控，不写远端。本轮全量使用已有登录态，未执行登出或真实 OAuth；分支存在不代表未登录路径已实跑。
+分别保留门控，不写远端。`open-account.yaml` 处理两种账户入口：访客头像直接进入账户页，登录态先打开菜单。每次记录实际登录状态与跳过分支；分支存在不代表已实跑，也不能代替真实 OAuth。
+
+访客历史专项：`maestro test --device <专用模拟器UDID> .maestro/history-guest-ios.yaml`。
+必须使用独立、未登录的测试模拟器，流程先断言访客状态，再生成并清除本机测试历史，验证重启恢复、取消、两个清除入口、另一类历史保留及清除后再次新增。该专项不会加入通用全量入口，避免删除已有历史。可在标准字号和最大辅助字号各跑一遍并检查截图；结束后恢复字体设置。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
 
 回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
 需 iOS 开发客户端、Metro 和已登录账号；独立冷启动后连续关闭/重开三次，

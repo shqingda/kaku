@@ -1,0 +1,84 @@
+# 仅在独立测试模拟器运行：会清除访客搜索／浏览历史，不写远端。
+# 不加入通用全量入口，避免误删验收者已有历史。先确认访客，再测试。
+appId: com.shqingda.kaku.debug
+name: Guest history recovery and clear actions
+---
+- runFlow:
+    file: reset-home.yaml
+- runFlow:
+    file: open-account.yaml
+- assertVisible: "连接 Bangumi"
+- runFlow:
+    file: public-browse-smoke.yaml
+# 冷启动验证搜索和浏览均已落盘，返回后仍能打开历史条目。
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element: "综合"
+- tapOn: "综合"
+- assertVisible: "最近搜索"
+- assertVisible: "最近浏览"
+- assertVisible: "搜索葬送的芙莉莲"
+- takeScreenshot: history-restored
+# 综合页：取消不删除，再确认清除；另一类历史保留。
+- tapOn: "清除最近搜索"
+- assertVisible: "清除搜索历史？"
+- assertVisible: ".*只清除本机访客.*"
+- takeScreenshot: history-clear-confirm
+- tapOn: "取消"
+- assertVisible: "搜索葬送的芙莉莲"
+- tapOn: "清除最近搜索"
+- tapOn: "清除"
+- assertVisible: "搜索历史已在本机清除"
+- tapOn: "OK|好|确定"
+- assertNotVisible: "最近搜索"
+- assertVisible: "最近浏览"
+# 账户页：同样取消一次，再清除浏览记录。
+- runFlow:
+    file: reset-home.yaml
+- runFlow:
+    file: open-account.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      text: "管理历史记录"
+- tapOn: "管理历史记录"
+- waitForAnimationToEnd
+- tapOn: "清除浏览历史"
+- assertVisible: "清除浏览历史？"
+- tapOn: "取消"
+- tapOn: "管理历史记录"
+- waitForAnimationToEnd
+- tapOn: "清除浏览历史"
+- tapOn: "清除"
+- assertVisible: "浏览历史已在本机清除"
+- tapOn: "OK|好|确定"
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element: "综合"
+- tapOn: "综合"
+- assertNotVisible: "最近搜索"
+- assertNotVisible: "最近浏览"
+- takeScreenshot: history-cleared-after-restart
+# 清除后仍能新增、落盘恢复，留下样例供字体检查。
+- runFlow:
+    file: public-browse-smoke.yaml
+- runFlow:
+    file: reset-home.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element: "综合"
+- tapOn: "综合"
+- assertVisible: "最近搜索"
+- assertVisible: "最近浏览"
+- assertVisible: "搜索葬送的芙莉莲"
+- takeScreenshot: history-added-after-clear
+- tapOn: "再次打开葬送的芙莉莲"
+- extendedWaitUntil:
+    visible: "打开收藏盒"
+    timeout: 15000
+- tapOn: "返回"
+- assertVisible: "最近浏览"

@@ -239,6 +239,29 @@ test('account changes discard pending additions and late reads, including A to B
   expect(options.save).not.toHaveBeenCalled();
 });
 
+test('returning to an account serializes new reads and writes behind its old read', async () => {
+  mockEnabled = false;
+  const old = deferred<SearchHistoryRecord>();
+  options.load.mockReturnValueOnce(old.promise)
+    .mockResolvedValueOnce({ items: ['B'], updatedAt: 100 })
+    .mockResolvedValueOnce({ items: ['fresh A'], updatedAt: 100 });
+  const hook = await renderHook(() => useSyncedHistory(options));
+  mockSession = { user: { id: 2 } };
+  await hook.rerender(undefined);
+  expect(hook.result.current.items).toEqual(['B']);
+  mockSession = { user: { id: 1 } };
+  await hook.rerender(undefined);
+  await act(async () => { await hook.result.current.updateItems(items => addRecentSearch(items, 'new A')); });
+  expect(hook.result.current.localStatus).toBe('loading');
+  expect(options.load).toHaveBeenCalledTimes(2);
+  expect(options.save).not.toHaveBeenCalled();
+  await act(async () => { old.resolve({ items: ['stale A'], updatedAt: 999 }); });
+  expect(hook.result.current.items).toEqual(['new A', 'fresh A']);
+  expect(options.load).toHaveBeenCalledTimes(3);
+  expect(options.save).toHaveBeenCalledTimes(1);
+  expect(options.save).toHaveBeenCalledWith(expect.objectContaining({ items: ['new A', 'fresh A'] }), 1);
+});
+
 test('clear stays visible while saving, coalesces clicks and keeps later additions', async () => {
   mockEnabled = false;
   options.load.mockResolvedValueOnce({ items: ['old'], updatedAt: 100 });

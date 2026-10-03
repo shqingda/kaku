@@ -10,6 +10,10 @@ appId: placeholder
       text: "版本 1.1.1，展开更新内容"
     direction: DOWN
 - tapOn: "版本 1.1.1，展开更新内容"
+- scrollUntilVisible:
+    element:
+      text: "长按图标的快捷方式现在显示各自的功能图标：日历、搜索、排行、筛选"
+    direction: DOWN
 - assertVisible: "长按图标的快捷方式现在显示各自的功能图标：日历、搜索、排行、筛选"
 - takeScreenshot: changelog-expanded
 - tapOn: "返回"

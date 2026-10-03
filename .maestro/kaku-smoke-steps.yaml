@@ -8,20 +8,13 @@ appId: placeholder
     file: reset-home.yaml
 # 冷启动 bundle 编译最长给 3 分钟
 - extendedWaitUntil:
-    visible: "打开账户菜单"
+    visible: "打开账户菜单|登录 Bangumi"
     timeout: 180000
 - takeScreenshot: home
 # 启动后布局分阶段挂载，等稳定再点，避免用过期坐标点到搜索框
 - waitForAnimationToEnd
-- tapOn: "打开账户菜单"
 - runFlow:
-    when:
-      notVisible: "账户与设备"
-    commands:
-      # 首次 tap 可能落在尚未稳定的布局上，复核失败再点一次
-      - tapOn: "打开账户菜单"
-- assertVisible: "账户与设备"
-- tapOn: "账户与设备"
+    file: open-account.yaml
 # ---- 更新日志页：先把入口滚入视野，兼容系统大字体 ----
 - scrollUntilVisible:
     direction: DOWN
