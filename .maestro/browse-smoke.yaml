@@ -16,8 +16,18 @@ tags:
 - extendedWaitUntil:
     visible: "分类浏览"
     timeout: 15000
-- tapOn: "分类浏览"
-- extendedWaitUntil:
-    visible: "分类浏览"
-    timeout: 15000
+# 冷加载后热门区会撑开页面，入口坐标可能改变；只重试无写入的导航。
+# 使用目标页独有文案确认跳转，不能拿来源页也有的“分类浏览”判断成功。
+- retry:
+    maxRetries: 2
+    commands:
+      - scrollUntilVisible:
+          centerElement: true
+          direction: DOWN
+          element:
+            text: "分类浏览"
+      - tapOn: "分类浏览"
+      - extendedWaitUntil:
+          visible: "动画 · 排名"
+          timeout: 15000
 - assertVisible: "动画 · 排名"

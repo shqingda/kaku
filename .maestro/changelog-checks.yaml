@@ -5,6 +5,8 @@ appId: placeholder
 ---
 - assertVisible: "更新日志"
 - takeScreenshot: changelog
+# 先收起默认展开的最新版本；最大辅助字号下长说明可能占很多屏。
+- tapOn: "版本 .*，收起更新内容"
 - scrollUntilVisible:
     element:
       text: "版本 1.1.1，展开更新内容"
