@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前 GitHub 版本 v1.1.17 为 42.13 MB 裁剪包，构建、签名及上传核验见 [发布记录](../test-records/2026-10-03-sheet-interaction.md)。本地正式包、EAS production 和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前 GitHub 版本 v1.1.18 提供 42.13 MB 正式裁剪包和 52.93 MB 独立 debug 包，构建、签名及上传核验见 [发布记录](../test-records/2026-10-03-android-images.md)。本地正式包、EAS production 和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 
@@ -92,7 +92,7 @@ pnpm dlx eas-cli@22.2.0 build --platform android --profile github
 
 云端发布从 [Release Android APK workflow](../../.github/workflows/release-apk.yml) 手动触发，需要仓库 Secret `EXPO_TOKEN`。选择 `github`，tag 留空使用当前 `v<app 版本>`，显式 tag 必须匹配版本。流程构建、轮询、下载后检查 APK 结构，才创建 Release；标题也从当前版本生成。此流程同样需要明确的发布授权。
 
-EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号显式维护在 `app.config.js` 的 `android.versionCode`，每次发新版递增。v1.1.16 从历史值 1 递增为 2，v1.1.17 递增为 3。包名与签名保持现有渠道约定，构建与签名核对见验收记录。
+EAS `production` 开启 `autoIncrement`，版本构建号由远端管理；本地构建号显式维护在 `app.config.js` 的 `android.versionCode`，每次发新版递增。v1.1.16 从历史值 1 递增为 2，v1.1.17 递增为 3，v1.1.18 递增为 4。包名与签名保持现有渠道约定，构建与签名核对见验收记录。
 
 Play 上架使用 `production` AAB 和正式签名，不能上传本地 debug 签名 APK。商店账号、提交凭据与设备验收仍是独立后续工作；素材见 [商店清单](../store/listing.md)。Sentry source map 上传还依赖 EAS 环境中的 DSN、组织和认证配置，不能仅凭构建 profile 宣称已经可用。
 
