@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # 纯本地构建，不同步更新日志、不提交、不推送、不发布。
-# 用法：bash scripts/build-android.sh [release|debug] [--optimized]
+# 用法：bash scripts/build-android.sh [release|debug] [--optimized|--no-optimize]
 set -euo pipefail
 CHANNEL="${1:-release}"
-OPTIMIZED="${2:-}"
+OPTIMIZATION="${2:-}"
 if [[ "$CHANNEL" != release && "$CHANNEL" != debug ]] ||
-   [[ -n "$OPTIMIZED" && "$OPTIMIZED" != --optimized ]] || (( $# > 2 )); then
-  echo "用法: $0 [release|debug] [--optimized]" >&2
+   [[ -n "$OPTIMIZATION" && "$OPTIMIZATION" != --optimized && "$OPTIMIZATION" != --no-optimize ]] ||
+   [[ "$CHANNEL" == debug && "$OPTIMIZATION" == --optimized ]] || (( $# > 2 )); then
+  echo "用法: $0 [release|debug] [--optimized|--no-optimize]（--optimized 仅限 release）" >&2
   exit 2
 fi
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,10 +19,14 @@ export EAS_BUILD_PROFILE=
 if [[ "$CHANNEL" == release ]]; then export EAS_BUILD_PROFILE=production; fi
 export KAKU_UPDATE_CHANNEL=github
 export KAKU_OPTIMIZE_NATIVE=0
+if [[ "$CHANNEL" == release ]]; then export KAKU_OPTIMIZE_NATIVE=1; fi
 SUFFIX=
-if [[ "$OPTIMIZED" == --optimized ]]; then
-  export KAKU_OPTIMIZE_NATIVE=1
+if [[ "$OPTIMIZATION" == --optimized ]]; then
+  # 保留旧入口与文件名；默认 release 已启用相同优化。
   SUFFIX=-optimized
+elif [[ "$OPTIMIZATION" == --no-optimize ]]; then
+  export KAKU_OPTIMIZE_NATIVE=0
+  SUFFIX=-unoptimized
 fi
 # 本地不上传 sourcemap，保留运行时 Sentry 与现有签名。
 export SENTRY_DISABLE_AUTO_UPLOAD=true

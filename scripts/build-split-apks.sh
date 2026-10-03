@@ -54,10 +54,6 @@ if [[ "$TAG" != "v$VERSION" ]]; then echo "tag 必须是 v$VERSION" >&2; exit 2;
 if [[ "$BUILD_ONLY" == true ]]; then
   exec bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"
 fi
-if [[ "${KAKU_OPTIMIZE_NATIVE:-0}" == 1 ]]; then
-  echo "原生优化候选尚待设备验收，不能通过发布入口发布。" >&2
-  exit 2
-fi
 APK_NAME="kaku-${CHANNEL}.apk"
 # Direct APK distribution may download updates; store builds must not request this permission.
 export KAKU_UPDATE_CHANNEL=github

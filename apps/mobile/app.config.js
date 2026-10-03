@@ -4,8 +4,8 @@
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
 const isProduction = EAS_BUILD_PROFILE === 'production' || EAS_BUILD_PROFILE === 'github';
-// 候选包需完成 Android 运行验收后才能成为默认发布配置。
-const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE === '1';
+// 正式 Android 包默认启用 R8 与资源裁剪；显式设为 0 可生成诊断对照包。
+const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE !== '0';
 const suffix = isProduction ? '' : '.debug';
 const channel = isProduction ? 'production' : 'debug';
 const iconDirectory = './assets/images/app-icons';

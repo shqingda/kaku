@@ -9,7 +9,10 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "KAKU_OPTIMIZE_NATIVE": "1"
+      }
     },
     "github": {
       "extends": "production",
@@ -18,8 +21,7 @@
         "buildType": "apk"
       },
       "env": {
-        "KAKU_UPDATE_CHANNEL": "github",
-        "KAKU_OPTIMIZE_NATIVE": "0"
+        "KAKU_UPDATE_CHANNEL": "github"
       }
     }
   }

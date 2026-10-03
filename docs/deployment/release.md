@@ -1,17 +1,19 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 已发布 v1.1.15 默认包，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验，通用构建默认关闭裁剪。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。2026-10-03 已发布的 v1.1.15 使用当时默认的非裁剪配置，构建、签名及上传核验见 [最新发布记录](../test-records/2026-10-03-release-1.1.15.md)。随后用户确认以后默认启用 R8 与资源裁剪，本地正式包、EAS production 和 GitHub APK 均遵循该规则；调试包保持关闭。此前 v1.1.13 默认包与 v1.1.14 裁剪包的体积证据见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 GitHub 登录或发版说明。
 
 ```bash
-# 默认 GitHub 渠道、正式包名，单一 arm64-v8a APK
+# 默认 GitHub 渠道、正式包名，单一 arm64-v8a APK，启用 R8 与资源裁剪
 pnpm build:android
 # 使用 debug 包名和图标；仍是可独立运行的 Release 构建，不依赖 Metro
 bash scripts/build-android.sh debug
-# 独立原生裁剪候选：R8 + 资源裁剪，默认不启用
+# 显式关闭裁剪，生成独立诊断对照包
+bash scripts/build-android.sh release --no-optimize
+# 兼容旧入口：与默认 release 配置相同，保留 -optimized 文件名
 bash scripts/build-android.sh release --optimized
 # 兼容旧入口：省略 tag 时自动使用当前 app 版本
 bash scripts/build-split-apks.sh --build-only
@@ -19,26 +21,29 @@ bash scripts/build-split-apks.sh --build-only
 
 | 渠道 | 包名 | `apps/mobile/dist-split/` 产物 |
 | --- | --- | --- |
-| release | `com.shqingda.kaku` | `kaku-release.apk` |
+| release（默认裁剪） | `com.shqingda.kaku` | `kaku-release.apk` |
 | debug | `com.shqingda.kaku.debug` | `kaku-debug.apk` |
 | release + `--optimized` | `com.shqingda.kaku` | `kaku-release-optimized.apk` |
+| release + `--no-optimize` | `com.shqingda.kaku` | `kaku-release-unoptimized.apk` |
 
 纯构建只生成原生工程、打包和报告体积，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
 
 ### 测量与裁剪
 
-先保存相同工具版本、ABI、签名、渠道的默认包，再构建候选。比较源码范围也要记录，不能把依赖升级或不同 ABI 当作优化收益。
+先保存相同工具版本、ABI、签名、渠道的非裁剪对照包，再构建默认裁剪包。比较源码范围也要记录，不能把依赖升级或不同 ABI 当作优化收益。
 
 ```bash
-cp apps/mobile/dist-split/kaku-release.apk /tmp/kaku-baseline.apk
-bash scripts/build-android.sh release --optimized
-python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release-optimized.apk --baseline /tmp/kaku-baseline.apk
+bash scripts/build-android.sh release --no-optimize
+bash scripts/build-android.sh release
+python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --baseline apps/mobile/dist-split/kaku-release-unoptimized.apk
 # 添加 --json 得到 SHA-256、分类字节数和变化比例
 ```
 
 报告按 ZIP 压缩后大小分类为原生库、DEX、JS、资源和其他，单列 ZIP/签名/对齐开销；它不是安装后的磁盘占用。仓库资产清理另记，不合并到 APK 收益。
 
-`--optimized` 通过 Expo 配置源显式打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。Android 运行验收完成前，不作为默认发布配置；本地发布入口拒绝 `KAKU_OPTIMIZE_NATIVE=1`。v1.1.14 是用户明确授权提前发布的裁剪包，不代表该入口或默认配置已经改为允许裁剪发布。候选生成后，直接使用忽略的 `android/` 工程会沿用其配置；下一次应从纯构建入口重新生成所需配置。
+正式包通过 Expo 配置源默认打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。本地发布入口默认上传裁剪后的 `kaku-release.apk`；纯构建显式传入 `--no-optimize` 才关闭，并使用独立文件名。脚本按参数确定开关，旧 shell 或 `.env` 中的 `KAKU_OPTIMIZE_NATIVE=0` 不会悄悄关闭默认裁剪。EAS `production` 显式设为 `1`，`github` 继承；直接调用 Expo 配置时可用 `KAKU_OPTIMIZE_NATIVE=0` 生成诊断配置。
+
+v1.1.14 是早期裁剪包，v1.1.15 发布时仍未裁剪；后续默认规则按用户新要求调整，不能据此改写已发布产物的事实。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
 ## 本地构建并发布 GitHub Release
 
@@ -68,8 +73,8 @@ bash scripts/build-split-apks.sh "" release
 | Profile | 用途 | Android 产物 |
 | --- | --- | --- |
 | `development` | 开发客户端、Metro | 内部分发开发包，debug 包名 |
-| `production` | Play / App Store 正式构建 | AAB，正式包名 |
-| `github` | GitHub 安装包 | APK，正式包名，继承 production 签名配置；启用 GitHub 更新权限，关闭原生裁剪 |
+| `production` | Play / App Store 正式构建 | AAB，正式包名，启用 R8 与资源裁剪 |
+| `github` | GitHub 安装包 | APK，正式包名，继承 production 签名及裁剪配置；启用 GitHub 更新权限 |
 
 EAS 默认 Android 产物为 AAB；直接安装需显式 `android.buildType: apk`，见 [Expo APK 指南](https://docs.expo.dev/build-reference/apk/)。不能只把 AAB 改名为 `.apk`。
 
