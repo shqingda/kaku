@@ -24,6 +24,8 @@ export function usePeopleSearch(
     number
   >({
     enabled: enabled && normalizedKeyword.length > 0,
+    // 与条目搜索一致：只回收不再被页面使用的临时结果。
+    gcTime: 10 * 60 * 1000,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>

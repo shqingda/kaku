@@ -20,7 +20,9 @@ export function AppUpdateProvider({ children }: PropsWithChildren) {
   const [selected, setSelected] = useState<UpdateRelease>();
   const busy = useRef(false);
   const manualRequested = useRef(false);
-  const history = useRef<History>(readHistory());
+  // 下载进度会频繁重渲染，只在本次 Provider 挂载时读取一次 SQLite。
+  const [initialHistory] = useState(readHistory);
+  const history = useRef<History>(initialHistory);
   const alive = useRef(true);
   function persist() { try { Storage.setItemSync(KEY, JSON.stringify(history.current)); } catch { /* Memory still throttles this running session. */ } }
   async function openPage(release: UpdateRelease) {

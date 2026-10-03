@@ -4,13 +4,14 @@ import { AppUpdateProvider, useAppUpdate } from '@/features/app-update/update-pr
 import { CHECK_INTERVAL } from '@/features/app-update/update-policy';
 const mockFetch = jest.fn();
 const mockStore = new Map<string, string>();
-jest.mock('expo-sqlite/kv-store', () => ({ getItemSync: (key: string) => mockStore.get(key) ?? null, setItemSync: (key: string, value: string) => mockStore.set(key, value) }));
+const mockRead = jest.fn((key: string) => mockStore.get(key) ?? null);
+jest.mock('expo-sqlite/kv-store', () => ({ getItemSync: (key: string) => mockRead(key), setItemSync: (key: string, value: string) => mockStore.set(key, value) }));
 jest.mock('@/features/app-update/update-client', () => ({ fetchLatestRelease: () => mockFetch(), installedVersion: '1.0.0', updateSupport: 'apk' }));
 const mockDownload = jest.fn();
 jest.mock('@/features/app-update/use-apk-download', () => ({ useApkDownload: () => ({ status: 'idle', download: mockDownload, progress: 0, error: '' }) }));
 jest.mock('@/features/app-update/update-download-sheet', () => ({ UpdateDownloadSheet: () => null }));
 let alerts: jest.SpyInstance;
-beforeEach(() => { mockStore.clear(); mockFetch.mockReset(); mockDownload.mockReset(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+beforeEach(() => { mockStore.clear(); mockRead.mockClear(); mockFetch.mockReset(); mockDownload.mockReset(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
 afterEach(async () => { await cleanup(); alerts.mockRestore(); Object.defineProperty(globalThis, '__DEV__', { configurable: true, value: true }); });
 test('manual retry bypasses throttle, failures never become latest, requests deduplicate', async () => {
   const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
@@ -74,4 +75,16 @@ test('new version is offered directly and never downloads before consent', async
   expect(buttons[1].text).toBe('下载更新');
   await act(() => buttons[1].onPress());
   expect(mockDownload).toHaveBeenCalledWith(release);
+});
+
+test('provider state changes read update history once per mount', async () => {
+  mockFetch.mockResolvedValue({ version: '1.0.0' });
+  const first = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+  await act(() => first.result.current.check());
+  await act(() => first.result.current.check());
+  await first.rerender(undefined);
+  expect(mockRead).toHaveBeenCalledTimes(1);
+  await first.unmount();
+  await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+  expect(mockRead).toHaveBeenCalledTimes(2);
 });

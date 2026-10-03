@@ -77,6 +77,8 @@ export function useBangumiSearch(
     number
   >({
     enabled: enabled && keyword.trim().length > 0,
+    // 临时搜索不持久化；离开后短暂保留，避免每个关键词常驻一天。
+    gcTime: 10 * 60 * 1000,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
