@@ -116,3 +116,23 @@ test('invalid saved JSON is preserved and cannot be overwritten by publishing', 
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('{invalid');
 });
+
+test('a late send preserves a newly edited identical topic after returning to the same account', async () => {
+  let resolve!: (value: Response) => void;
+  mockRequest.mockImplementationOnce(() => new Promise<Response>(done => { resolve = done; }));
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题标题'), '测试标题');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '同样的内容');
+  await fireEvent.press(screen.getByLabelText('发布话题'));
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  mockUserId = 1;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '重新编辑');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '同样的内容');
+  await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '测试标题', content: '同样的内容' });
+  expect(screen.getByLabelText('话题内容').props.value).toBe('同样的内容');
+  expect(mockCreated).not.toHaveBeenCalled();
+});

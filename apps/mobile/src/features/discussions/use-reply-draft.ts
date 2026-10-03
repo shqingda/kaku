@@ -4,8 +4,26 @@ import Storage from 'expo-sqlite/kv-store';
 
 type DraftPhase = 'editing' | 'sent';
 
-// One mounted composer owns one key. Synchronous writes avoid late saves restoring
-// deleted drafts and persist each edit before a background/unmount can interrupt it.
+type DraftRevision = { version: number; users: number };
+const revisions = new Map<string, DraftRevision>();
+
+function retainRevision(key: string) {
+  let revision = revisions.get(key);
+  if (!revision) {
+    revision = { version: 0, users: 0 };
+    revisions.set(key, revision);
+  }
+  revision.users += 1;
+  return revision;
+}
+
+function releaseRevision(key: string, revision: DraftRevision) {
+  revision.users -= 1;
+  if (revision.users === 0) revisions.delete(key);
+}
+
+// Synchronous writes persist each edit before background/unmount. Revisions live
+// only while a composer or its request exists; no stored draft format changes.
 export function useReplyDraft(key: string | null, initialContent = '', active = true, completedMessage = '回复已发送') {
   const [state, setState] = useState(() => {
     try {
@@ -27,6 +45,14 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   const latest = useRef(state.content);
   const sent = useRef(false);
   const persisted = useRef(state.content);
+  const edit = useRef<{ revision: DraftRevision; version: number } | null>(null);
+
+  useEffect(() => {
+    if (!key) return;
+    const revision = retainRevision(key);
+    edit.current = { revision, version: revision.version };
+    return () => releaseRevision(key, revision);
+  }, [key]);
 
   function save(content = latest.current) {
     if (!key) return true;
@@ -48,6 +74,8 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   }
   function change(value: SetStateAction<string>) {
     const content = typeof value === 'function' ? value(latest.current) : value;
+    // Even a failed save is a newer edit that an older send must not clear.
+    if (edit.current) edit.current.version = ++edit.current.revision.version;
     latest.current = content;
     setState((previous) => ({ ...previous, content }));
     save(content);
@@ -59,6 +87,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
       const content = key ? Storage.getItemSync(key) ?? '' : initialContent;
       latest.current = content;
       persisted.current = content;
+      if (edit.current) edit.current.version = edit.current.revision.version;
       setState({ content, error: '', loaded: true, phase: 'editing' });
       return true;
     } catch {
@@ -67,6 +96,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   }
   function clear() {
     if (!save('')) return false;
+    if (edit.current) edit.current.version = ++edit.current.revision.version;
     latest.current = '';
     setState({
       content: '',
@@ -78,7 +108,8 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   }
   function complete() {
     sent.current = true;
-    setState((previous) => ({ ...previous, phase: 'sent' }));
+    setState((previous) => ({ ...previous, error: '', phase: 'sent' }));
+    if (edit.current && edit.current.version !== edit.current.revision.version) return true;
     try {
       // A previous composer may finish sending after a new one opened.
       if (key && Storage.getItemSync(key) !== persisted.current) return true;
@@ -91,6 +122,17 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
       return false;
     }
     return clear();
+  }
+  async function submit<T>(send: () => Promise<T>) {
+    // Account changes may unmount the sender before its request finishes. Keep
+    // its revision shared with any reopened composer until cleanup completes.
+    const revision = key ? retainRevision(key) : null;
+    try {
+      const result = await send();
+      return { result, cleared: complete() };
+    } finally {
+      if (key && revision) releaseRevision(key, revision);
+    }
   }
   function dismiss() {
     if (sent.current) return complete();
@@ -113,6 +155,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     change,
     clear,
     complete,
+    submit,
     dismiss,
     retry,
     save,

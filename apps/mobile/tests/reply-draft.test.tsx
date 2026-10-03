@@ -11,6 +11,7 @@ jest.mock('expo-sqlite/kv-store', () => ({
 const data = new Map<string, string>();
 beforeEach(() => {
   data.clear();
+  jest.mocked(AppState.addEventListener).mockImplementation(() => ({ remove: jest.fn() }));
   jest.mocked(Storage.getItemSync).mockImplementation(key => data.get(key) ?? null);
   jest.mocked(Storage.setItemSync).mockImplementation((key, value) => { data.set(key, typeof value === 'function' ? value(data.get(key) ?? null) : value); });
   jest.mocked(Storage.removeItemSync).mockImplementation(key => data.delete(key));
@@ -108,4 +109,75 @@ test('closed composers do not write stale contents when the app enters backgroun
   expect(listener).not.toHaveBeenCalled();
   await hook.unmount();
   listener.mockRestore();
+});
+
+test('retrying old cleanup preserves a new edit even when its text is identical', async () => {
+  const old = await renderHook(() => useReplyDraft('one'));
+  await act(() => { old.result.current.change('same text'); });
+  jest.mocked(Storage.removeItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+  await act(() => { expect(old.result.current.complete()).toBe(false); });
+  const current = await renderHook(() => useReplyDraft('one'));
+  await act(() => {
+    current.result.current.change('revised');
+    current.result.current.change('same text');
+  });
+  await act(() => { expect(old.result.current.retry()).toBe(true); });
+  expect(data.get('one')).toBe('same text');
+  expect(old.result.current.error).toBe('');
+});
+
+test('an old send preserves the saved fallback when a newer edit fails to save', async () => {
+  const old = await renderHook(() => useReplyDraft('one'));
+  await act(() => { old.result.current.change('saved fallback'); });
+  const current = await renderHook(() => useReplyDraft('one'));
+  jest.mocked(Storage.setItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+  await act(() => { current.result.current.change('new unsaved content'); });
+  await act(() => { expect(old.result.current.complete()).toBe(true); });
+  expect(data.get('one')).toBe('saved fallback');
+  expect(current.result.current.error).toContain('保存失败');
+  expect(current.result.current.content).toBe('new unsaved content');
+  await act(() => { expect(current.result.current.retry()).toBe(true); });
+  expect(data.get('one')).toBe('new unsaved content');
+  await act(() => { expect(current.result.current.complete()).toBe(true); });
+  expect(data.has('one')).toBe(false);
+});
+
+test('an old request preserves an identical new draft after both composers unmount', async () => {
+  const old = await renderHook(() => useReplyDraft('one'));
+  await act(() => { old.result.current.change('same text'); });
+  let resolve!: () => void;
+  const request = new Promise<void>(done => { resolve = done; });
+  const submission = old.result.current.submit(() => request);
+  await old.unmount();
+  const current = await renderHook(() => useReplyDraft('one'));
+  await act(() => {
+    current.result.current.change('revised');
+    current.result.current.change('same text');
+  });
+  await current.unmount();
+  await act(async () => { resolve(); await submission; });
+  expect(data.get('one')).toBe('same text');
+  const reopened = await renderHook(() => useReplyDraft('one'));
+  expect(reopened.result.current.content).toBe('same text');
+  await act(async () => {
+    expect((await reopened.result.current.submit(async () => 'ok')).cleared).toBe(true);
+  });
+  expect(data.has('one')).toBe(false);
+});
+
+test('a rejected request retains an unmounted draft and allows a new composer to send it', async () => {
+  const old = await renderHook(() => useReplyDraft('one'));
+  await act(() => { old.result.current.change('retry later'); });
+  let reject!: (error: Error) => void;
+  const request = new Promise<void>((_, fail) => { reject = fail; });
+  const submission = old.result.current.submit(() => request);
+  const rejected = expect(submission).rejects.toThrow('offline');
+  await old.unmount();
+  await act(async () => { reject(new Error('offline')); await rejected; });
+  expect(data.get('one')).toBe('retry later');
+  const current = await renderHook(() => useReplyDraft('one'));
+  await act(async () => {
+    expect((await current.result.current.submit(async () => 'ok')).cleared).toBe(true);
+  });
+  expect(data.has('one')).toBe(false);
 });

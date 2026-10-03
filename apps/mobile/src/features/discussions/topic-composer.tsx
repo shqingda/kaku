@@ -133,9 +133,8 @@ function TopicComposerContent({
   function submit() {
     if (!canPublish || submitting.current) return;
     submitting.current = true;
-    void mutation.mutateAsync({ content: content.trim(), title: title.trim() }).then((topic) => {
+    void draft.submit(() => mutation.mutateAsync({ content: content.trim(), title: title.trim() })).then(({ result: topic, cleared }) => {
       createdId.current = topic.id;
-      const cleared = draft.complete();
       if (!mounted.current) return;
       playSuccessHaptic();
       if (cleared) { Keyboard.dismiss(); onCreated(topic.id); }

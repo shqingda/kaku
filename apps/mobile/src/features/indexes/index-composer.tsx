@@ -141,12 +141,11 @@ function IndexComposerContent({
     if (!canPublish || submitting.current) return;
     submitting.current = true;
     const input = { desc: desc.trim(), isPrivate, title: title.trim() };
-    const task = isEditing
+    void draft.submit(() => isEditing
       ? updateIndex.mutateAsync(input).then(() => null)
-      : createIndex.mutateAsync(input).then(result => result.id);
-    void task.then((id) => {
+      : createIndex.mutateAsync(input).then(result => result.id)
+    ).then(({ result: id, cleared }) => {
       createdId.current = id;
-      const cleared = draft.complete();
       if (!mounted.current) return;
       playSuccessHaptic();
       if (cleared) {

@@ -99,3 +99,20 @@ test('a late send completion does not erase the current account draft or close i
   expect(screen.getByLabelText('动态内容').props.value).toBe('账号二正在写');
 });
 
+test('a late send preserves a newly edited identical draft after returning to the same account', async () => {
+  let resolve!: (value: Response) => void;
+  mockRequest.mockImplementationOnce(() => new Promise<Response>(done => { resolve = done; }));
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '同样的内容');
+  await fireEvent.press(screen.getByLabelText('发布动态'));
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  mockUserId = 1;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '重新编辑');
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '同样的内容');
+  await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
+  expect(mockStorage.get(key)).toBe('同样的内容');
+  expect(screen.getByLabelText('动态内容').props.value).toBe('同样的内容');
+});

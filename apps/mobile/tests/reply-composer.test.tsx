@@ -99,3 +99,24 @@ test('a late send completion does not erase the current account draft or close i
   await waitFor(() => expect(mockStorage.has(key)).toBe(false));
   expect(screen.getByLabelText('回复内容').props.value).toBe('账号二正在写');
 });
+
+test('returning to an account and editing back to identical text protects the new draft from an old send', async () => {
+  let resolve!: (value: Response) => void;
+  mockRequest.mockImplementationOnce(() => new Promise<Response>(done => { resolve = done; }));
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '同样的内容');
+  await fireEvent.press(screen.getByLabelText('发送回复'));
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  mockUserId = 1;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '重新编辑');
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '同样的内容');
+  await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
+  expect(mockStorage.get(key)).toBe('同样的内容');
+  expect(screen.getByLabelText('回复内容').props.value).toBe('同样的内容');
+  await view.unmount();
+  await render(<Page />);
+  expect(screen.getByLabelText('回复内容').props.value).toBe('同样的内容');
+});

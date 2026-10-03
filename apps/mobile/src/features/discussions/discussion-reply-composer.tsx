@@ -135,11 +135,10 @@ function ReplyComposerContent({
       return;
     }
 
-    void createReply.mutateAsync({
+    void draft.submit(() => createReply.mutateAsync({
       content: nextContent,
       replyTo: replyingTo ? Number(replyingTo.id) : undefined,
-    }).then(() => {
-      const cleared = draft.complete();
+    })).then(({ cleared }) => {
       if (!mounted.current) return;
       playSuccessHaptic();
       if (cleared) finishClose();
@@ -182,7 +181,7 @@ function ReplyComposerContent({
             accessibilityRole="button"
             accessibilityState={{ disabled: !canSend }}
             disabled={!canSend}
-            hitSlop={5}
+            hitSlop={HIT_SLOP}
             onPress={send}
             style={({ pressed }) => [
               styles.sendButton,

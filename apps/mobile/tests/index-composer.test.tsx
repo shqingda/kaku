@@ -179,3 +179,23 @@ test('closing an editor after a storage read failure does not erase its unread d
   await fireEvent.press(screen.getByLabelText('关闭'));
   expect(mockStorage.get('kaku:index-draft:v1:1:42')).toBe('unread draft');
 });
+
+test('a late save preserves a newly edited identical directory after returning to the same account', async () => {
+  let resolve!: (value: Response) => void;
+  mockRequest.mockImplementationOnce(() => new Promise<Response>(done => { resolve = done; }));
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('目录标题'), '测试标题');
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '同样的内容');
+  await fireEvent.press(screen.getByLabelText('创建目录'));
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  mockUserId = 1;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '重新编辑');
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '同样的内容');
+  await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '测试标题', desc: '同样的内容', isPrivate: false });
+  expect(screen.getByLabelText('目录说明').props.value).toBe('同样的内容');
+  expect(mockCreated).not.toHaveBeenCalled();
+});

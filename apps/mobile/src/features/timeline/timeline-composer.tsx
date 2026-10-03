@@ -82,8 +82,7 @@ function TimelineComposerContent({
   function send() {
     if (!canSend || submitting.current) return;
     submitting.current = true;
-    void createTimeline.mutateAsync(content.trim()).then(() => {
-      const cleared = draft.complete();
+    void draft.submit(() => createTimeline.mutateAsync(content.trim())).then(({ cleared }) => {
       if (!mounted.current) return;
       if (cleared) finishClose();
     }).catch(() => {
