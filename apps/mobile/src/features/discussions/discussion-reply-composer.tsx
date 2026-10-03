@@ -22,7 +22,6 @@ import type { ThemeColors } from '@/constants/theme';
 import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
-import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -104,7 +103,7 @@ function ReplyComposerContent({
     }
 
     if (hasUnsavedChanges) {
-      confirmDiscard(finishClose);
+      draft.confirmDiscard(finishClose, 'unsaved');
       return;
     }
 
@@ -249,7 +248,7 @@ function ReplyComposerContent({
             <Text style={styles.count}>{content.length}/{MAX_CONTENT_LENGTH}</Text>
           </View>
           {!isEditing && draft.loaded && content && !sent && !pending ? (
-            <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}
+            <Pressable accessibilityRole="button" onPress={() => draft.confirmDiscard(finishClose)}
               style={({ pressed }) => [{ minHeight: MIN_TOUCH_SIZE, justifyContent: 'center' }, pressed && styles.pressed]}>
               <Text style={styles.hint}>丢弃草稿</Text>
             </Pressable>

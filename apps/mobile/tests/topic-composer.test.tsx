@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'react-native';
+import { Alert, Button } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicComposer } from '@/features/discussions/topic-composer';
@@ -135,4 +135,21 @@ test('a late send preserves a newly edited identical topic after returning to th
   expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '测试标题', content: '同样的内容' });
   expect(screen.getByLabelText('话题内容').props.value).toBe('同样的内容');
   expect(mockCreated).not.toHaveBeenCalled();
+});
+
+test('discard confirmation cannot remove a topic draft after switching accounts', async () => {
+  const alerts = jest.spyOn(Alert, 'alert');
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题标题'), '账号一标题');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '账号一内容');
+  await fireEvent.press(screen.getByText('丢弃草稿'));
+  const discard = alerts.mock.calls.at(-1)![2]![1].onPress!;
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '账号二内容');
+  await act(() => { discard(); });
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '账号一标题', content: '账号一内容' });
+  expect(screen.getByLabelText('话题内容').props.value).toBe('账号二内容');
+  expect(mockCreated).not.toHaveBeenCalled();
+  alerts.mockRestore();
 });

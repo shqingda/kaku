@@ -19,7 +19,6 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useReplyDraft } from '@/features/discussions/use-reply-draft';
 import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
-import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -280,7 +279,7 @@ function IndexComposerContent({
         </View>
 
         {draft.content && !sent && !mutation.isPending ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}>
+          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => draft.confirmDiscard(finishClose)}>
             <Text style={styles.privacyDescription}>丢弃草稿</Text>
           </Pressable>
         ) : null}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type SetStateAction } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
+import { confirmDiscard as showDiscardConfirmation } from '@/features/shared/confirm-discard';
 
 type DraftPhase = 'editing' | 'sent';
 
@@ -46,6 +47,17 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
   const sent = useRef(false);
   const persisted = useRef(state.content);
   const edit = useRef<{ revision: DraftRevision; version: number } | null>(null);
+  const windowScope = useRef<object | null>(null);
+  const confirmation = useRef<object | null>(null);
+  const submitting = useRef(0);
+
+  useEffect(() => {
+    windowScope.current = active ? {} : null;
+    return () => {
+      windowScope.current = null;
+      confirmation.current = null;
+    };
+  }, [active]);
 
   useEffect(() => {
     if (!key) return;
@@ -127,12 +139,34 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     // Account changes may unmount the sender before its request finishes. Keep
     // its revision shared with any reopened composer until cleanup completes.
     const revision = key ? retainRevision(key) : null;
+    submitting.current += 1;
     try {
       const result = await send();
       return { result, cleared: complete() };
     } finally {
+      submitting.current -= 1;
       if (key && revision) releaseRevision(key, revision);
     }
+  }
+  function confirmDiscard(onDiscarded: () => void, kind: 'draft' | 'unsaved' = 'draft') {
+    const scope = windowScope.current;
+    if (!scope || sent.current || submitting.current || confirmation.current) return;
+    const token = {};
+    const content = latest.current;
+    const version = edit.current?.version;
+    confirmation.current = token;
+    function finish(discard: boolean) {
+      if (confirmation.current !== token) return;
+      confirmation.current = null;
+      if (!discard || windowScope.current !== scope || sent.current || submitting.current) return;
+      // The native alert can outlive the account, window, or text it described.
+      if (latest.current !== content || edit.current?.revision.version !== version) {
+        Alert.alert('草稿已更新', '原内容已保留，请重新查看后再选择丢弃。');
+        return;
+      }
+      if (kind === 'unsaved' || clear()) onDiscarded();
+    }
+    showDiscardConfirmation(() => finish(true), kind, () => finish(false));
   }
   function dismiss() {
     if (sent.current) return complete();
@@ -156,6 +190,7 @@ export function useReplyDraft(key: string | null, initialContent = '', active = 
     clear,
     complete,
     submit,
+    confirmDiscard,
     dismiss,
     retry,
     save,

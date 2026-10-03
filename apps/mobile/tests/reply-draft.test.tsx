@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 import { useReplyDraft } from '@/features/discussions/use-reply-draft';
 import { replyDraftKey } from '@/features/discussions/reply-draft';
@@ -180,4 +180,115 @@ test('a rejected request retains an unmounted draft and allows a new composer to
     expect((await current.result.current.submit(async () => 'ok')).cleared).toBe(true);
   });
   expect(data.has('one')).toBe(false);
+});
+
+describe('discard confirmation scope', () => {
+  let alerts: jest.SpiedFunction<typeof Alert.alert>;
+  const lastButtons = () => alerts.mock.calls.at(-1)![2]!;
+  beforeEach(() => { alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+  afterEach(() => { alerts.mockRestore(); });
+
+  test('cancel and Android dismissal allow a fresh confirmation; repeated taps and callbacks do not repeat deletion', async () => {
+    const hook = await renderHook(() => useReplyDraft('one'));
+    const closed = jest.fn();
+    await act(() => { hook.result.current.change('keep until confirmed'); });
+    hook.result.current.confirmDiscard(closed);
+    const staleDiscard = lastButtons()[1].onPress!;
+    hook.result.current.confirmDiscard(closed);
+    expect(alerts).toHaveBeenCalledTimes(1);
+    await act(() => { lastButtons()[0].onPress!(); });
+    expect(data.get('one')).toBe('keep until confirmed');
+    hook.result.current.confirmDiscard(closed);
+    await act(() => { alerts.mock.calls.at(-1)![3]!.onDismiss!(); });
+    hook.result.current.confirmDiscard(closed);
+    const discard = lastButtons()[1].onPress!;
+    await act(() => { staleDiscard(); });
+    expect(data.get('one')).toBe('keep until confirmed');
+    await act(() => { discard(); discard(); });
+    expect(data.has('one')).toBe(false);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  test('hiding and reopening a window invalidates its old confirmation', async () => {
+    const hook = await renderHook(({ active }: { active: boolean }) => useReplyDraft('one', '', active), { initialProps: { active: true } });
+    const closed = jest.fn();
+    await act(() => { hook.result.current.change('keep'); });
+    hook.result.current.confirmDiscard(closed);
+    const discard = lastButtons()[1].onPress!;
+    await hook.rerender({ active: false });
+    hook.result.current.confirmDiscard(closed);
+    expect(alerts).toHaveBeenCalledTimes(1);
+    await hook.rerender({ active: true });
+    await act(() => { discard(); });
+    expect(data.get('one')).toBe('keep');
+    expect(closed).not.toHaveBeenCalled();
+    hook.result.current.confirmDiscard(closed);
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(data.has('one')).toBe(false);
+  });
+
+  test.each(['same window', 'another window'])('new identical text in %s invalidates the old confirmation', async (where) => {
+    const old = await renderHook(() => useReplyDraft('one'));
+    const closed = jest.fn();
+    await act(() => { old.result.current.change('same'); });
+    old.result.current.confirmDiscard(closed);
+    const discard = lastButtons()[1].onPress!;
+    const current = where === 'same window' ? old : await renderHook(() => useReplyDraft('one'));
+    await act(() => { current.result.current.change('different'); current.result.current.change('same'); });
+    await act(() => { discard(); });
+    expect(data.get('one')).toBe('same');
+    expect(closed).not.toHaveBeenCalled();
+    expect(alerts.mock.calls.at(-1)![0]).toBe('草稿已更新');
+    current.result.current.confirmDiscard(closed);
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(data.has('one')).toBe(false);
+  });
+
+  test('a failed discard retains the editor and can be confirmed again', async () => {
+    const hook = await renderHook(() => useReplyDraft('one'));
+    const closed = jest.fn();
+    await act(() => { hook.result.current.change('keep on failure'); });
+    hook.result.current.confirmDiscard(closed);
+    jest.mocked(Storage.removeItemSync).mockImplementationOnce(() => { throw new Error('disk'); });
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(data.get('one')).toBe('keep on failure');
+    expect(hook.result.current.content).toBe('keep on failure');
+    expect(hook.result.current.error).not.toBe('');
+    expect(closed).not.toHaveBeenCalled();
+    hook.result.current.confirmDiscard(closed);
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(data.has('one')).toBe(false);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  test('an open discard confirmation cannot delete a draft once sending starts', async () => {
+    const hook = await renderHook(() => useReplyDraft('one'));
+    const closed = jest.fn();
+    await act(() => { hook.result.current.change('sending'); });
+    hook.result.current.confirmDiscard(closed);
+    const discard = lastButtons()[1].onPress!;
+    let reject!: (reason: Error) => void;
+    const submission = hook.result.current.submit(() => new Promise<void>((_, fail) => { reject = fail; }));
+    const rejected = expect(submission).rejects.toThrow('offline');
+    await act(() => { discard(); });
+    expect(data.get('one')).toBe('sending');
+    expect(closed).not.toHaveBeenCalled();
+    hook.result.current.confirmDiscard(closed);
+    expect(alerts).toHaveBeenCalledTimes(1);
+    await act(async () => { reject(new Error('offline')); await rejected; });
+    hook.result.current.confirmDiscard(closed);
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(data.has('one')).toBe(false);
+  });
+
+  test('discarding an existing reply edit closes it without touching a stored draft', async () => {
+    data.set('one', 'unrelated draft');
+    const hook = await renderHook(() => useReplyDraft(null, 'original'));
+    const closed = jest.fn();
+    await act(() => { hook.result.current.change('edited'); });
+    hook.result.current.confirmDiscard(closed, 'unsaved');
+    await act(() => { lastButtons()[1].onPress!(); });
+    expect(closed).toHaveBeenCalledTimes(1);
+    expect(data.get('one')).toBe('unrelated draft');
+  });
 });

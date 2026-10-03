@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'react-native';
+import { Alert, Button } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
@@ -119,4 +119,25 @@ test('returning to an account and editing back to identical text protects the ne
   await view.unmount();
   await render(<Page />);
   expect(screen.getByLabelText('回复内容').props.value).toBe('同样的内容');
+});
+
+test('an old discard confirmation cannot delete a new draft or close another account composer', async () => {
+  const alerts = jest.spyOn(Alert, 'alert');
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '账号一草稿');
+  await fireEvent.press(screen.getByText('丢弃草稿'));
+  const discard = alerts.mock.calls.at(-1)![2]!.at(-1)!.onPress!;
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '账号二草稿');
+  await act(() => { discard(); });
+  expect(mockStorage.get(key)).toBe('账号一草稿');
+  expect(screen.getByLabelText('回复内容').props.value).toBe('账号二草稿');
+  mockUserId = 1;
+  await view.rerender(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '账号一新草稿');
+  await act(() => { discard(); });
+  expect(mockStorage.get(key)).toBe('账号一新草稿');
+  expect(screen.getByLabelText('回复内容').props.value).toBe('账号一新草稿');
+  alerts.mockRestore();
 });

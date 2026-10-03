@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'react-native';
+import { Alert, Button } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -115,4 +115,22 @@ test('a late send preserves a newly edited identical draft after returning to th
   await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
   expect(mockStorage.get(key)).toBe('同样的内容');
   expect(screen.getByLabelText('动态内容').props.value).toBe('同样的内容');
+});
+
+test('discard confirmation becomes invalid after closing and reopening the composer', async () => {
+  const alerts = jest.spyOn(Alert, 'alert');
+  await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '保留草稿');
+  await fireEvent.press(screen.getByText('丢弃草稿'));
+  const discard = alerts.mock.calls.at(-1)![2]![1].onPress!;
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  await fireEvent.press(screen.getByText('重新打开'));
+  await act(() => { discard(); });
+  expect(mockStorage.get(key)).toBe('保留草稿');
+  expect(screen.getByLabelText('动态内容').props.value).toBe('保留草稿');
+  await fireEvent.press(screen.getByText('丢弃草稿'));
+  await act(() => { alerts.mock.calls.at(-1)![2]![1].onPress!(); });
+  expect(mockStorage.has(key)).toBe(false);
+  expect(screen.queryByLabelText('动态内容')).toBeNull();
+  alerts.mockRestore();
 });

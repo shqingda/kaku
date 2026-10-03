@@ -21,7 +21,6 @@ import type { ThemeColors } from '@/constants/theme';
 import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
-import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
 
@@ -237,7 +236,7 @@ function TopicComposerContent({
 
         {editable ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
         {draft.content && !sent && !mutation.isPending ? (
-          <Pressable accessibilityRole="button" onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')} style={styles.draftAction}>
+          <Pressable accessibilityRole="button" onPress={() => draft.confirmDiscard(finishClose)} style={styles.draftAction}>
             <Text style={styles.hint}>丢弃草稿</Text>
           </Pressable>
         ) : null}

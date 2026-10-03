@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'react-native';
+import { Alert, Button } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { IndexComposer } from '@/features/indexes/index-composer';
@@ -198,4 +198,19 @@ test('a late save preserves a newly edited identical directory after returning t
   expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '测试标题', desc: '同样的内容', isPrivate: false });
   expect(screen.getByLabelText('目录说明').props.value).toBe('同样的内容');
   expect(mockCreated).not.toHaveBeenCalled();
+});
+
+test('discard confirmation preserves directory edits made after the confirmation opened', async () => {
+  const alerts = jest.spyOn(Alert, 'alert');
+  await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('目录标题'), '目录标题');
+  await fireEvent.press(screen.getByText('丢弃草稿'));
+  const discard = alerts.mock.calls.at(-1)![2]![1].onPress!;
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '新的说明');
+  await act(() => { discard(); });
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '目录标题', desc: '新的说明', isPrivate: false });
+  expect(screen.getByLabelText('目录说明').props.value).toBe('新的说明');
+  expect(alerts.mock.calls.at(-1)![0]).toBe('草稿已更新');
+  expect(mockCreated).not.toHaveBeenCalled();
+  alerts.mockRestore();
 });

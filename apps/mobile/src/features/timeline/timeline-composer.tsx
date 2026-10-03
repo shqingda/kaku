@@ -21,7 +21,6 @@ import type { ThemeColors } from '@/constants/theme';
 import { BangumiRichTextToolbar } from '@/features/emoji-picker/bangumi-emoji-picker';
 import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-emoji-insertion';
 import { AppSheet } from '@/features/shared/app-sheet';
-import { confirmDiscard } from '@/features/shared/confirm-discard';
 import { useTheme } from '@/features/theme/theme-provider';
 import { useCreateTimelineSay } from './use-create-timeline-say';
 
@@ -170,7 +169,7 @@ function TimelineComposerContent({
 
         {draft.loaded && !sent && !createTimeline.isPending ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
         {content && !sent && !createTimeline.isPending ? (
-          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => confirmDiscard(() => { if (draft.clear()) finishClose(); }, 'draft')}>
+          <Pressable accessibilityRole="button" style={styles.draftAction} onPress={() => draft.confirmDiscard(finishClose)}>
             <Text style={styles.hintText}>丢弃草稿</Text>
           </Pressable>
         ) : null}
