@@ -16,7 +16,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { HIT_SLOP, TYPE } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import {
   CHANGELOG,
@@ -149,6 +149,7 @@ function VersionCard({
           onLayout={(event) => {
             contentHeight.value = event.nativeEvent.layout.height;
           }}
+          // 独立于裁切容器测量，收起时也保留正文的完整高度。
           style={styles.notes}
         >
           {entry.notes.map((note) => (
@@ -166,7 +167,7 @@ function VersionCard({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
-    content: { gap: 12, padding: 20, paddingBottom: 44 },
+    content: { gap: SPACING.md, padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
     card: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
@@ -177,8 +178,8 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       flexDirection: 'row',
       minHeight: 76,
-      paddingHorizontal: 18,
-      paddingVertical: 14,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.lg,
     },
     chevronBadge: {
       alignItems: 'center',
@@ -189,8 +190,8 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'center',
       width: 42,
     },
-    headingCopy: { flex: 1, marginLeft: 14 },
-    headingRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+    headingCopy: { flex: 1, marginLeft: SPACING.lg },
+    headingRow: { alignItems: 'center', flexDirection: 'row', gap: SPACING.sm },
     version: {
       color: colors.ink,
       fontSize: TYPE.title.fontSize,
@@ -201,24 +202,31 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.accentSoft,
       borderCurve: 'continuous',
       borderRadius: 8,
-      paddingHorizontal: 7,
-      paddingVertical: 3,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: SPACING.xs,
     },
-    currentBadgeText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
+    currentBadgeText: { color: colors.accent, fontSize: TYPE.micro.fontSize, fontWeight: '800' },
     date: {
       color: colors.subtle,
       fontSize: TYPE.caption.fontSize,
       letterSpacing: TYPE.caption.letterSpacing,
-      marginTop: 3,
+      marginTop: SPACING.xs,
     },
     body: { overflow: 'hidden' },
-    notes: { paddingHorizontal: 20, paddingBottom: 18 },
-    noteRow: { flexDirection: 'row', marginTop: 8 },
+    notes: {
+      position: 'absolute',
+      top: SPACING.none,
+      left: SPACING.none,
+      right: SPACING.none,
+      paddingHorizontal: SPACING.xl,
+      paddingBottom: SPACING.lg,
+    },
+    noteRow: { flexDirection: 'row', marginTop: SPACING.sm },
     noteDot: {
       backgroundColor: colors.subtle,
       borderRadius: 2,
       height: 4,
-      marginTop: 9,
+      marginTop: SPACING.sm,
       width: 4,
     },
     noteText: {
@@ -226,9 +234,9 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       fontSize: TYPE.body.fontSize,
       lineHeight: TYPE.body.lineHeight,
-      marginLeft: 10,
+      marginLeft: SPACING.md,
     },
-    releasesLink: { alignSelf: 'center', marginTop: 6, padding: 10 },
+    releasesLink: { alignSelf: 'center', marginTop: SPACING.sm, padding: SPACING.md },
     releasesLinkText: {
       color: colors.muted,
       fontSize: TYPE.caption.fontSize,
