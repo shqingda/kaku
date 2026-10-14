@@ -17,6 +17,16 @@ This repository is both a product and a learning project.
 - Prefer code the owner can explain in an interview over clever abstractions.
 - Keep the product provider-neutral. Bangumi is an adapter, not the domain model.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.
+- Local iOS testing must reuse the existing iPhone 18 Pro (iOS 27.0), UDID
+  `498E27B7-5192-48CE-9B13-F4A27F10F806`. List devices before use; if it is
+  missing, report the blocker instead of creating or cloning another simulator.
+  Never erase this device, uninstall Kaku, sign out, or clear its application data,
+  keychain, history, or drafts for test setup. Skip tests that require a fresh guest
+  device or destructive data cleanup, and report the skipped coverage.
+  These rules apply to setup skills and test tools too; exceptions require a new
+  explicit user instruction. Keep this device's PosterBoard wallpaper service
+  disabled; do not change other simulator services. See
+  `docs/development/argent-usage.md` for verification and recovery commands.
 - Let Codex handle staging, commits, and pushes. Before every commit, inspect the
   complete diff, exclude generated or sensitive files, run the relevant checks,
   and summarize the resulting commit and remote branch. The user has opted in to

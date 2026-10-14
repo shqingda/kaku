@@ -50,8 +50,15 @@ iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
 分别保留门控，不写远端。`open-account.yaml` 处理两种账户入口：访客头像直接进入账户页，登录态先打开菜单。每次记录实际登录状态与跳过分支；分支存在不代表已实跑，也不能代替真实 OAuth。
 
-访客历史专项：`maestro test --device <专用模拟器UDID> .maestro/history-guest-ios.yaml`。
-必须使用独立、未登录的测试模拟器，流程先断言访客状态，再生成并清除本机测试历史，验证重启恢复、取消、两个清除入口、另一类历史保留及清除后再次新增。该专项不会加入通用全量入口，避免删除已有历史。可在标准字号和最大辅助字号各跑一遍并检查截图；结束后恢复字体设置。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
+本机 iOS 测试只复用 `498E27B7-5192-48CE-9B13-F4A27F10F806`（iPhone 18 Pro / iOS 27.0），
+先列出设备核实，不创建或克隆备用设备。保留登录状态、应用数据、钥匙串、历史和草稿。
+不通过退出登录、卸载、抹掉设备或清空数据准备测试；设备缺失时报告阻塞。
+需要不同登录状态的流程按当前状态跳过并报告覆盖缺口。
+
+访客历史专项 `.maestro/history-guest-ios.yaml` 会生成并清除本机历史，
+因此本机默认跳过；只有用户另行明确授权可丢弃的测试环境时才可运行。
+它验证重启恢复、取消、两个清除入口、另一类历史保留及清除后再次新增，
+不会加入通用全量入口。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
 
 回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
 
@@ -65,7 +72,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
 是哪一种包，必要时改 yaml 或装 release APK。
 
-前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。首次安装可运行 `xcrun simctl openurl booted "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`；多个模拟器启动时将 `booted` 换成目标 UDID。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。
+前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。可运行 `xcrun simctl openurl 498E27B7-5192-48CE-9B13-F4A27F10F806 "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`。Maestro 用 `--device 498E27B7-5192-48CE-9B13-F4A27F10F806` 明确选择设备。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。壁纸服务停用与恢复方法见 [Argent 使用手册](argent-usage.md)。
 
 ### 覆盖范围（16 项，对应全量入口）
 
