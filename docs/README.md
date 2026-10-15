@@ -27,6 +27,7 @@
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-10-15 代码清理 | [审查、清理与精准验证](plans/2026-10-15-code-review-cleanup.md) | 决策与验证结果随计划保留 |
 | 2026-10-03 启动优化 | 按可验证的小切片推进 | [启动、缓存、动效与包体验收](test-records/2026-10-03-startup-optimization.md) |
 | 2026-10-03 弹层交互 | 完成共享弹层的小切片 | [拖动连续性与取消恢复](test-records/2026-10-03-sheet-interaction.md) |
 | 2026-10-03 剩余工作 | [可靠性、设备与渠道执行顺序](plans/2026-10-03-remaining-work-plan.md) | [缓存取消与历史失败回归](test-records/2026-10-03-remaining-work.md)、[历史保护与模拟器验收](test-records/2026-10-03-history-recovery.md)、[草稿保护与保存冲突](test-records/2026-10-03-draft-revisions.md)、[v1.1.15 发布](test-records/2026-10-03-release-1.1.15.md) |

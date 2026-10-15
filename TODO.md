@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-03。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.18](https://github.com/shqingda/kaku/releases/tag/v1.1.18) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。Android 多图修复及发布证据见 [本轮验收](docs/test-records/2026-10-03-android-images.md)，此前启动与包体优化见 [启动优化记录](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
+> 更新：2026-10-15。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.18](https://github.com/shqingda/kaku/releases/tag/v1.1.18) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。Android 多图修复及发布证据见 [本轮验收](docs/test-records/2026-10-03-android-images.md)，此前启动与包体优化见 [启动优化记录](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
 
 ## 当前工作入口
 
@@ -18,7 +18,7 @@
 - [ ] 目录草稿冲突提示：验证当前页面快照与草稿基准不一致时阻止直接保存，并可保留草稿重新确认。
 - [ ] 双设备目录并发保存：记录实际覆盖行为与用户反馈；当前没有服务端原子版本锁，快照比较不能保证防止所有并发覆盖，也不能约束上游网页或其他客户端的写入。
 - [ ] 双设备通知权限、登记、实际送达及升级后的 token 恢复；本机关闭推送/退出不能影响另一台。
-- [ ] 实际 VoiceOver、Reduce Motion/Transparency、小屏/大字体和核心阅读页面触控，重点复核弹层入场/回弹过程中再次拖动的连续性。已有模拟器大字体及回复弹层无障碍树验证，不替代实际读屏。
+- [ ] 实际 VoiceOver、Reduce Motion/Transparency、小屏/大字体和核心阅读页面触控，重点复核弹层入场/回弹过程中再次拖动的连续性，以及图片预览横移、缩放回弹中断和减少动态效果。已有模拟器大字体及回复弹层无障碍树验证，不替代实际读屏；图片组件验证边界见 [代码清理记录](docs/plans/2026-10-15-code-review-cleanup.md)。
 
 ## 待验证：Android 实机（按用户要求暂缓）
 
