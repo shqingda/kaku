@@ -5,7 +5,6 @@ type LegalSection = { title: string; body: string };
 type LegalDoc = { title: string; intro: string; updated: string; sections: LegalSection[] };
 
 type Translation = {
-  langLabel: string;
   skipLink: string;
   header: {
     github: string;
@@ -70,7 +69,6 @@ type Translation = {
 };
 
 const zh: Translation = {
-  langLabel: '中文',
   skipLink: '跳到主要内容',
   header: {
     github: 'GitHub 仓库',
@@ -262,7 +260,6 @@ const zh: Translation = {
 };
 
 const en: Translation = {
-  langLabel: 'EN',
   skipLink: 'Skip to main content',
   header: {
     github: 'GitHub repository',
