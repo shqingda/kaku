@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -23,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import {
   containedTranslation,
   resistedScale,
@@ -80,6 +82,7 @@ export function FullscreenImageViewer({
   const savedScale = useSharedValue(1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
+  const savedDismissY = useSharedValue(0);
 
   const fitted =
     containerSize.width > 0 &&
@@ -141,7 +144,8 @@ export function FullscreenImageViewer({
     savedScale.value = 1;
     savedTranslateX.value = 0;
     savedTranslateY.value = 0;
-  }, [dismissOpacity, dismissY, savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
+    savedDismissY.value = 0;
+  }, [dismissOpacity, dismissY, savedDismissY, savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
 
   const style = useAnimatedStyle(() => {
     if (reduceMotion) {
@@ -162,8 +166,11 @@ export function FullscreenImageViewer({
   }));
 
   const pinch = Gesture.Pinch()
-    .enabled(!reduceMotion && fitted !== null)
+    .enabled(fitted !== null)
     .onStart(() => {
+      cancelAnimation(scale);
+      cancelAnimation(translateX);
+      cancelAnimation(translateY);
       savedScale.value = scale.value;
       savedTranslateX.value = translateX.value;
       savedTranslateY.value = translateY.value;
@@ -182,10 +189,12 @@ export function FullscreenImageViewer({
       const target = settleScale(scale.value);
       const fittedWidth = fitted?.width ?? 0;
       const fittedHeight = fitted?.height ?? 0;
-      scale.value = withSpring(target, {
-        ...ZOOM_SPRING,
-        overshootClamping: target > 1,
-      });
+      scale.value = reduceMotion
+        ? target
+        : withSpring(target, {
+            ...ZOOM_SPRING,
+            overshootClamping: target > 1,
+          });
       translateX.value = containedTranslation(
         translateX.value,
         fittedWidth,
@@ -201,23 +210,33 @@ export function FullscreenImageViewer({
     });
 
   const pan = Gesture.Pan()
-    .enabled(!reduceMotion)
-    .activeOffsetY(12)
-    .failOffsetX([-36, 36])
-    .onStart(() => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
+    .minDistance(SPACING.md)
+    .onStart((event) => {
+      cancelAnimation(scale);
+      cancelAnimation(translateX);
+      cancelAnimation(translateY);
+      cancelAnimation(dismissY);
+      cancelAnimation(dismissOpacity);
+      savedTranslateX.value = translateX.value - event.translationX;
+      savedTranslateY.value = translateY.value - event.translationY;
+      // 反解橡皮筋，重新抓住回弹中的图片时从当前展示位置继续。
+      const offset = dismissY.value;
+      savedDismissY.value =
+        (offset * windowHeight) /
+          (RUBBERBAND_CONSTANT * Math.max(1, windowHeight - offset)) -
+        event.translationY;
     })
     .onUpdate((event) => {
       if (scale.value <= 1.01) {
         // 未缩放时，向下拖拽用于关闭预览；其余方向忽略。
-        if (event.translationY <= 0) {
+        const translationY = savedDismissY.value + event.translationY;
+        if (translationY <= 0) {
           dismissY.value = 0;
           dismissOpacity.value = 1;
           return;
         }
         const distance = rubberband(
-          event.translationY,
+          translationY,
           windowHeight,
           RUBBERBAND_CONSTANT,
         );
@@ -244,54 +263,85 @@ export function FullscreenImageViewer({
         scale.value,
       );
     })
-    .onEnd((event) => {
-      if (scale.value > 1.01) {
+    .onEnd((event, success) => {
+      const targetScale = settleScale(scale.value);
+      if (targetScale !== scale.value) {
+        const targetX = containedTranslation(
+          translateX.value,
+          fitted?.width ?? 0,
+          fitted?.width ?? 0,
+          targetScale,
+        );
+        const targetY = containedTranslation(
+          translateY.value,
+          fitted?.height ?? 0,
+          fitted?.height ?? 0,
+          targetScale,
+        );
+        scale.value = reduceMotion
+          ? targetScale
+          : withSpring(targetScale, {
+              ...ZOOM_SPRING,
+              overshootClamping: targetScale > 1,
+            });
+        translateX.value = reduceMotion ? targetX : withSpring(targetX, ZOOM_SPRING);
+        translateY.value = reduceMotion ? targetY : withSpring(targetY, ZOOM_SPRING);
+      }
+      if (targetScale > 1.01) {
         return;
       }
       if (
-        shouldDismissImage(event.translationY, event.velocityY, windowHeight)
+        success &&
+        shouldDismissImage(
+          savedDismissY.value + event.translationY,
+          event.velocityY,
+          windowHeight,
+        )
       ) {
         // 达到阈值立刻走和关闭按钮同一条路径。不要等弹簧回调——iOS 上经常不触发。
         runOnJS(onClose)();
         return;
       }
-      dismissY.value = withSpring(0, SHEET_DISMISS_SPRING);
+      dismissY.value = reduceMotion
+        ? 0
+        : withSpring(0, {
+            ...SHEET_DISMISS_SPRING,
+            velocity: success ? event.velocityY : 0,
+          });
       dismissOpacity.value = withTiming(1, { duration: 160 });
     });
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
-    .enabled(!reduceMotion && fitted !== null)
+    .enabled(fitted !== null)
     .onStart((event) => {
       if (scale.value > 1.01) {
         // 已放大：回到 1x。
-        scale.value = withSpring(1, ZOOM_SPRING);
-        translateX.value = withSpring(0, ZOOM_SPRING);
-        translateY.value = withSpring(0, ZOOM_SPRING);
+        scale.value = reduceMotion ? 1 : withSpring(1, ZOOM_SPRING);
+        translateX.value = reduceMotion ? 0 : withSpring(0, ZOOM_SPRING);
+        translateY.value = reduceMotion ? 0 : withSpring(0, ZOOM_SPRING);
         return;
       }
       // 以双击点为原点放大：该点下的内容位置保持不变。
       const focalX = event.x - halfWindowWidth;
       const focalY = event.y - halfWindowHeight;
-      scale.value = withSpring(DOUBLE_TAP_SCALE, ZOOM_SPRING);
-      translateX.value = withSpring(
-        containedTranslation(
-          focalX * (1 - DOUBLE_TAP_SCALE),
-          fitted?.width ?? 0,
-          fitted?.width ?? 0,
-          DOUBLE_TAP_SCALE,
-        ),
-        ZOOM_SPRING,
+      scale.value = reduceMotion
+        ? DOUBLE_TAP_SCALE
+        : withSpring(DOUBLE_TAP_SCALE, ZOOM_SPRING);
+      const targetX = containedTranslation(
+        focalX * (1 - DOUBLE_TAP_SCALE),
+        fitted?.width ?? 0,
+        fitted?.width ?? 0,
+        DOUBLE_TAP_SCALE,
       );
-      translateY.value = withSpring(
-        containedTranslation(
-          focalY * (1 - DOUBLE_TAP_SCALE),
-          fitted?.height ?? 0,
-          fitted?.height ?? 0,
-          DOUBLE_TAP_SCALE,
-        ),
-        ZOOM_SPRING,
+      const targetY = containedTranslation(
+        focalY * (1 - DOUBLE_TAP_SCALE),
+        fitted?.height ?? 0,
+        fitted?.height ?? 0,
+        DOUBLE_TAP_SCALE,
       );
+      translateX.value = reduceMotion ? targetX : withSpring(targetX, ZOOM_SPRING);
+      translateY.value = reduceMotion ? targetY : withSpring(targetY, ZOOM_SPRING);
     });
 
   const zoomGestures = Gesture.Simultaneous(pinch, pan, doubleTap);
@@ -379,11 +429,11 @@ export function FullscreenImageViewer({
           <Pressable
             accessibilityLabel="关闭图片预览"
             accessibilityRole="button"
-            hitSlop={8}
+            hitSlop={HIT_SLOP}
             onPress={onClose}
             style={({ pressed }) => [
               styles.close,
-              { top: insets.top + 10 },
+              { top: insets.top + SPACING.md },
               pressed && styles.pressed,
             ]}
           >
@@ -401,7 +451,7 @@ export function FullscreenImageViewer({
             onPress={() => void saveImage()}
             style={({ pressed }) => [
               styles.download,
-              { bottom: insets.bottom + 22 },
+              { bottom: insets.bottom + SPACING.xl },
               (pressed || isSaving) && styles.pressed,
             ]}
           >
@@ -437,8 +487,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    marginHorizontal: 12,
-    marginVertical: 72,
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.xxl * 2 + SPACING.sm,
     overflow: 'hidden',
   },
   close: {
@@ -449,7 +499,7 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     position: 'absolute',
-    right: 18,
+    right: SPACING.lg,
     width: 40,
   },
   download: {
@@ -459,11 +509,11 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 18,
     flexDirection: 'row',
-    gap: 7,
+    gap: SPACING.sm,
     minHeight: 44,
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
     position: 'absolute',
   },
-  downloadText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  downloadText: { ...TYPE.caption, color: '#FFFFFF', fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });
