@@ -30,6 +30,9 @@ Maestro 和 argent **不进 CI**。
 
 ## 3. Maestro（本地手动跑，不进 CI）
 
+本机可先运行 `pnpm dev:sim` 统一启动 Metro、模拟器和浏览器预览；输入恢复与数据保护见
+[模拟器启动指南](ios-simulator.md)。脚本回归包含在 `pnpm test:tooling` 中。
+
 流程都在仓库根 `.maestro/`。平台入口持有真实包名，子流程用占位
 `appId`，避免 Maestro 嵌套 `openLink` 丢 `${APP_ID}`。
 

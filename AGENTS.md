@@ -27,6 +27,12 @@ This repository is both a product and a learning project.
   explicit user instruction. Keep this device's PosterBoard wallpaper service
   disabled; do not change other simulator services. See
   `docs/development/argent-usage.md` for verification and recovery commands.
+  User-authorized exception: `pnpm dev:sim` may run `serve-sim repair-input`
+  when DeviceHub input shadowing is detected. This restarts backboardd / SpringBoard
+  and reopens Kaku without clearing data; do not change other service settings.
+- When the user says “打开 Kaku 模拟器”, run `pnpm dev:sim`, then open or reuse
+  `http://localhost:3200/` in Codex's in-app browser and verify a real click.
+  See `docs/development/ios-simulator.md` for lifecycle and troubleshooting.
 - Let Codex handle staging, commits, and pushes. Before every commit, inspect the
   complete diff, exclude generated or sensitive files, run the relevant checks,
   and summarize the resulting commit and remote branch. The user has opted in to

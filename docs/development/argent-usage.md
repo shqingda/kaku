@@ -1,5 +1,8 @@
 # Argent 使用手册（Kaku 项目）
 
+当前 Codex 内置浏览器的日常入口是 `pnpm dev:sim`，见 [模拟器启动与输入恢复](ios-simulator.md)。
+下面保留 Argent 的历史工具说明。
+
 > 核对日期：2026-09-10
 > 适用：已配置 argent MCP 的 agent 会话 + 本仓库的模拟器开发与测试
 > 历史 Argent：0.24.0（当时由 pnpm 全局安装）；2026-10-02 本会话没有 Argent MCP / CLI。

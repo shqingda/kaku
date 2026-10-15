@@ -8,6 +8,7 @@
   "scripts": {
     "dev:api": "pnpm --filter @kaku/api dev",
     "dev:mobile": "pnpm --filter @kaku/mobile start",
+    "dev:sim": "node scripts/dev-sim.mjs",
     "dev:web": "pnpm --filter @kaku/web dev",
     "build:web": "pnpm --filter @kaku/web build",
     "test": "pnpm -r test",
@@ -20,5 +21,8 @@
     "test:performance": "node --test scripts/check-performance.test.mjs",
     "test:tooling": "node --test scripts/*.test.mjs && python3 -m unittest discover -s scripts -p '*_test.py'",
     "build:android": "bash scripts/build-android.sh"
+  },
+  "devDependencies": {
+    "serve-sim": "0.1.48"
   }
 }

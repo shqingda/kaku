@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 理解项目怎么组成、数据怎么走 | [技术架构](architecture.md) | 分层、登录、收藏、缓存、存储与代码阅读顺序 |
 | 跑测试、确认 CI 检查范围 | [测试指南](development/testing.md) | 测试命令与验收方式 |
+| 在 Codex 里运行 iOS 模拟器 | [模拟器启动与输入恢复](development/ios-simulator.md) | `pnpm dev:sim`、内置浏览器预览、输入恢复 |
 | 操作模拟器、用 Argent 验收 | [Argent 使用手册](development/argent-usage.md) | 工具使用与本机注意事项 |
 | 构建 Android 包、发布到 GitHub / Play | [发版指南](deployment/release.md) | 构建渠道、版本号与发布步骤 |
 | 部署或回滚后端 | [API 部署指南](deployment/deploy-api.md) | Worker、数据库迁移与环境配置 |

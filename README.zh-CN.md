@@ -35,6 +35,9 @@ pnpm install
 pnpm dev:mobile
 ```
 
+在 Codex 中运行本机 iOS 模拟器：`pnpm dev:sim`，再用内置浏览器打开预览。
+也可以直接对 Codex 说“打开 Kaku 模拟器”。详见 [启动与输入恢复](docs/development/ios-simulator.md)。
+
 首次安装或原生依赖变化后重建开发客户端：
 
 ```sh

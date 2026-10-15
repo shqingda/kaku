@@ -35,6 +35,9 @@ pnpm install
 pnpm dev:mobile
 ```
 
+For the local iOS simulator in Codex, run `pnpm dev:sim`, then open the preview
+in the in-app browser. See [simulator setup and input recovery](docs/development/ios-simulator.md).
+
 Rebuild the native client after first install or native dependency changes:
 
 ```sh
