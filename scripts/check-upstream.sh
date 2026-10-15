@@ -17,18 +17,15 @@ BANGUMI="https://api.bgm.tv"
 PROXY="http://127.0.0.1:7890"
 TIMEOUT=10
 
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-RED='\033[0;31m'
-RESET='\033[0m'
-
-result() { printf "${1}%s${RESET}\n" "$2"; }
-
 fetch() {
-  # $1 = label, $2 = url, $3 = 额外 curl 参数（如 -x 代理）
-  local label="$1" url="$2" extra="${3:-}"
+  # $1 = label, $2 = url, $3 = 可选的显式代理 URL
+  local label="$1" url="$2" proxy="${3:-}"
+  local proxy_args=(--noproxy '*')
+  if [[ -n "$proxy" ]]; then
+    proxy_args=(-x "$proxy" --noproxy '')
+  fi
   local out
-  out=$(curl -sS $extra -o /dev/null -w "%{http_code} %{time_total}s" \
+  out=$(curl -sS "${proxy_args[@]}" -o /dev/null -w "%{http_code} %{time_total}s" \
     --max-time "$TIMEOUT" "$url" 2>&1) || out="失败/超时"
   printf '%-28s %s\n' "$label" "$out"
 }
@@ -55,8 +52,8 @@ fetch "基础网络 baidu" "https://www.baidu.com"
 
 echo ""
 echo "== 2. 显式代理 127.0.0.1:7890（测 Clash 节点链路）=="
-fetch "worker (代理)" "$WORKER/public/rankings?type=2" "-x $PROXY"
-fetch "Bangumi (代理)" "$BANGUMI/v0/subjects/1" "-x $PROXY"
+fetch "worker (代理)" "$WORKER/public/rankings?type=2" "$PROXY"
+fetch "Bangumi (代理)" "$BANGUMI/v0/subjects/1" "$PROXY"
 
 echo ""
 echo "== 3. DNS 污染检测 =="
