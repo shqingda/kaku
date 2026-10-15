@@ -203,7 +203,7 @@ test('sendExpoPush authenticates with the Expo access token', async () => {
   const fetcher = async (url, init) => {
     calls.push({ url: String(url), init });
     return Response.json({
-      data: [{ status: 'ok' }],
+      data: [{ id: 'ticket-1', status: 'ok' }],
     });
   };
 
@@ -217,6 +217,84 @@ test('sendExpoPush authenticates with the Expo access token', async () => {
   assert.equal(invalid.length, 0);
   assert.equal(calls[0].init.headers.Authorization, 'Bearer expo-token');
   assert.deepEqual(JSON.parse(calls[0].init.body)[0].to, 'ExponentPushToken[abc]');
+});
+
+test('malformed Expo responses preserve pending notification cursors', async (t) => {
+  const validTicket = { id: 'ticket-1', status: 'ok' };
+  const invalidResponses = [
+    ['null body', null],
+    ['missing tickets', {}],
+    ['non-array tickets', { data: validTicket }],
+    ['empty tickets', { data: [] }],
+    ['too few tickets', { data: [validTicket] }],
+    ['too many tickets', { data: [validTicket, validTicket, validTicket] }],
+    ...[
+      ['null ticket', null],
+      ['missing status', { id: 'ticket-2' }],
+      ['invalid status', { id: 'ticket-2', status: 'pending' }],
+      ['non-string status', { id: 'ticket-2', status: 1 }],
+      ['missing success id', { status: 'ok' }],
+      ['empty success id', { id: '', status: 'ok' }],
+      ['non-string success id', { id: 42, status: 'ok' }],
+      ['null details', { details: null, status: 'error' }],
+      ['non-object details', { details: 'DeviceNotRegistered', status: 'error' }],
+      ['array details', { details: [], status: 'error' }],
+      ['empty error reason', { details: { error: '' }, status: 'error' }],
+      ['invalid error reason', { details: { error: 42 }, status: 'error' }],
+    ].map(([name, ticket]) => [name, { data: [ticket, validTicket] }]),
+  ];
+
+  for (const [name, body] of invalidResponses) {
+    await t.test(name, async () => {
+      const cursors = new Map([
+        ['ExpoPushToken[a]', 10],
+        ['ExpoPushToken[b]', 10],
+      ]);
+
+      await assert.rejects(deliverPushForUser({
+        devices: [...cursors].map(([token, lastNotificationId]) => ({
+          lastNotificationId,
+          platform: 'ios',
+          token,
+          updatedAt: now,
+          userId: 42,
+        })),
+        loadNotifications: async () => ({
+          items: [notification(12)], total: 1, unreadCount: 1,
+        }),
+        saveCursor: async (token, cursor) => { cursors.set(token, cursor); },
+        sendPush: (tokens, payload) =>
+          sendExpoPush(async () => Response.json(body), tokens, payload),
+      }), /无法识别/);
+
+      assert.deepEqual([...cursors.values()], [10, 10]);
+    });
+  }
+});
+
+test('sendExpoPush preserves ticket order when cleaning up a mixed batch', async () => {
+  const invalid = await sendExpoPush(
+    async () => Response.json({
+      data: [
+        { id: 'ticket-1', status: 'ok' },
+        { details: { error: 'DeviceNotRegistered' }, status: 'error' },
+      ],
+    }),
+    ['ExpoPushToken[active]', 'ExpoPushToken[stale]'],
+    { body: '有新通知', title: 'Kaku', unreadCount: 1 },
+  );
+
+  assert.deepEqual(invalid, ['ExpoPushToken[stale]']);
+});
+
+test('sendExpoPush treats error tickets without a reason as unknown failures', async () => {
+  for (const ticket of [{ status: 'error' }, { details: {}, status: 'error' }]) {
+    await assert.rejects(sendExpoPush(
+      async () => Response.json({ data: [ticket] }),
+      ['ExpoPushToken[abc]'],
+      { body: '有新通知', title: 'Kaku', unreadCount: 1 },
+    ), /UnknownError/);
+  }
 });
 
 test('sendExpoPush reports misconfiguration instead of failing silently', async () => {

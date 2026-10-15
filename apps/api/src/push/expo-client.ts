@@ -1,14 +1,21 @@
+import { z } from 'zod';
+
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+const expoPushResponseSchema = z.object({
+  data: z.array(z.discriminatedUnion('status', [
+    z.object({ id: z.string().min(1), status: z.literal('ok') }),
+    z.object({
+      details: z.object({ error: z.string().min(1).optional() }).optional(),
+      status: z.literal('error'),
+    }),
+  ])),
+});
 
 export type ExpoPushPayload = {
   body: string;
   title: string;
   unreadCount: number;
-};
-
-type ExpoTicket = {
-  details?: { error?: string };
-  status?: string;
 };
 
 export async function sendExpoPush(
@@ -46,10 +53,13 @@ export async function sendExpoPush(
     throw new Error(`Expo 推送服务返回了 ${response.status}`);
   }
 
-  const body: unknown = await response.json();
-  const tickets = Array.isArray((body as { data?: unknown }).data)
-    ? ((body as { data: ExpoTicket[] }).data)
-    : [];
+  const parsed = expoPushResponseSchema.safeParse(
+    await response.json().catch(() => null),
+  );
+  if (!parsed.success || parsed.data.data.length !== tokens.length) {
+    throw new Error('Expo 推送服务返回了无法识别的结果。');
+  }
+  const tickets = parsed.data.data;
 
   const invalidTokens: string[] = [];
   let misconfigured: string | null = null;
