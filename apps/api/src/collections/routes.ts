@@ -1,3 +1,4 @@
+import { COLLECTION_STATUSES } from '@kaku/shared';
 import type { Context, Hono } from 'hono';
 import { z } from 'zod';
 
@@ -20,7 +21,7 @@ import {
 
 const collectionUpdateSchema = z.object({
   collectionStatus: z
-    .enum(['wish', 'completed', 'doing', 'onHold', 'dropped'])
+    .enum(COLLECTION_STATUSES)
     .nullable()
     .optional(),
   comment: z.string().max(1000).optional(),
@@ -39,9 +40,7 @@ const entityCollectionUpdateSchema = z.object({ collected: z.boolean() });
 const entityKindSchema = z.enum(['character', 'person']);
 const collectionListQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(1_000_000).optional().default(0),
-  status: z
-    .enum(['wish', 'completed', 'doing', 'onHold', 'dropped'])
-    .optional(),
+  status: z.enum(COLLECTION_STATUSES).optional(),
   subjectType: z.coerce
     .number()
     .int()

@@ -3,6 +3,11 @@ import type { Hono } from 'hono';
 import type { AuthDependencies } from '../auth/routes.ts';
 import type { Env } from '../env.ts';
 import {
+  getPublicCache,
+  type PublicCache,
+  withCacheStatus,
+} from '../public-cache.ts';
+import {
   BangumiRankingError,
   getBangumiRankedSubjects,
 } from './bangumi-client.ts';
@@ -11,19 +16,8 @@ const SUPPORTED_SUBJECT_TYPES = new Set([1, 2, 3, 4, 6]);
 const MAX_OFFSET = 100_000;
 
 export type RankingDependencies = {
-  rankingCache?: Pick<Cache, 'match' | 'put'>;
+  rankingCache?: PublicCache;
 };
-
-function withCacheStatus(response: Response, status: 'HIT' | 'MISS') {
-  const headers = new Headers(response.headers);
-  headers.set('X-Kaku-Cache', status);
-
-  return new Response(response.body, {
-    headers,
-    status: response.status,
-    statusText: response.statusText,
-  });
-}
 
 export function registerRankingRoutes(
   app: Hono<{ Bindings: Env }>,
@@ -50,9 +44,7 @@ export function registerRankingRoutes(
       );
     }
 
-    const cache =
-      dependencies.rankingCache ??
-      (typeof caches === 'undefined' ? undefined : caches.default);
+    const cache = getPublicCache(dependencies.rankingCache);
     const cacheUrl = new URL(context.req.url);
     cacheUrl.search = '';
     cacheUrl.searchParams.set('type', String(subjectType));
