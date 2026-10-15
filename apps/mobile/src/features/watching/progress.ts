@@ -1,31 +1,9 @@
-import type { CollectionStatus, WatchingItem } from './model';
+import type { CollectionStatus } from './model';
 
 export function canRateCollectionStatus(
   collectionStatus?: CollectionStatus | null,
 ) {
   return collectionStatus != null && collectionStatus !== 'wish';
-}
-
-export function shouldShowWatchProgress({
-  collectionStatus,
-  totalEpisodes,
-  watchedCount,
-}: {
-  collectionStatus?: CollectionStatus | null;
-  totalEpisodes: number;
-  watchedCount: number;
-}) {
-  if (totalEpisodes <= 0 || collectionStatus === 'wish') {
-    return false;
-  }
-
-  return (
-    watchedCount > 0 ||
-    collectionStatus === 'completed' ||
-    collectionStatus === 'doing' ||
-    collectionStatus === 'onHold' ||
-    collectionStatus === 'dropped'
-  );
 }
 
 export function resizeWatchedEpisodes(
@@ -64,74 +42,4 @@ export function resizeWatchedEpisodes(
   }
 
   return [...watched].sort((left, right) => left - right);
-}
-
-export function changeCollectionStatus(
-  item: WatchingItem,
-  collectionStatus?: CollectionStatus,
-) {
-  const clearsPersonalData =
-    collectionStatus === 'wish' || collectionStatus === undefined;
-
-  return {
-    ...item,
-    collectionStatus: collectionStatus ?? null,
-    rating: clearsPersonalData ? undefined : item.rating,
-    watchedEpisodeNumbers:
-      clearsPersonalData ? [] : item.watchedEpisodeNumbers,
-  };
-}
-
-export function changeRating(item: WatchingItem, rating?: number) {
-  return {
-    ...item,
-    rating: canRateCollectionStatus(item.collectionStatus)
-      ? rating
-      : undefined,
-  };
-}
-
-export function changeWatchedEpisodeCount(
-  item: WatchingItem,
-  watchedCount: number,
-) {
-  const watchedEpisodeNumbers = resizeWatchedEpisodes(
-    item.watchedEpisodeNumbers,
-    watchedCount,
-    item.totalEpisodes,
-  );
-  const shouldStartWatching =
-    watchedEpisodeNumbers.length > 0 &&
-    (item.collectionStatus == null || item.collectionStatus === 'wish');
-
-  return {
-    ...item,
-    collectionStatus: shouldStartWatching
-      ? ('doing' as const)
-      : item.collectionStatus ?? null,
-    watchedEpisodeNumbers,
-  };
-}
-
-export function toggleWatchedEpisode(
-  item: WatchingItem,
-  episodeNumber: number,
-) {
-  const isWatched = item.watchedEpisodeNumbers.includes(episodeNumber);
-  const watchedEpisodeNumbers = isWatched
-    ? item.watchedEpisodeNumbers.filter((number) => number !== episodeNumber)
-    : [...item.watchedEpisodeNumbers, episodeNumber].sort(
-        (left, right) => left - right,
-      );
-  const shouldStartWatching =
-    !isWatched &&
-    (item.collectionStatus == null || item.collectionStatus === 'wish');
-
-  return {
-    ...item,
-    collectionStatus: shouldStartWatching
-      ? ('doing' as const)
-      : item.collectionStatus ?? null,
-    watchedEpisodeNumbers,
-  };
 }
