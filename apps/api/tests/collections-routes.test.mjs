@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { after, before, beforeEach, test } from 'node:test';
+import { drizzle } from 'drizzle-orm/d1';
+import { migrate } from 'drizzle-orm/d1/migrator';
+import { Miniflare } from 'miniflare';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 import { encryptSecret } from '../src/auth/crypto.ts';
 
 const now = 1_800_000_000_000;
@@ -13,6 +16,16 @@ const env = {
   DB: null,
   TOKEN_ENCRYPTION_KEY: TOKEN_KEY,
 };
+
+let miniflare;
+before(async () => {
+  miniflare = new Miniflare({ d1Databases: { DB: 'collections-test' }, modules: [{ type: 'ESModule', path: 'index.mjs', contents: 'export default { fetch() { return new Response("ok"); } }' }] });
+  env.DB = await miniflare.getD1Database('DB');
+  await migrate(drizzle(env.DB), { migrationsFolder: 'drizzle' });
+  await env.DB.prepare('INSERT INTO users (bangumi_user_id, username, nickname, created_at, updated_at) VALUES (42, ?, ?, ?, ?)').bind('kaku', 'Kaku', now, now).run();
+});
+after(async () => { await miniflare?.dispose(); });
+beforeEach(async () => { await env.DB.prepare('DELETE FROM collection_write_locks').run(); });
 
 const encryptedToken = await encryptSecret('bangumi-access-token', TOKEN_KEY);
 const authHeaders = { Authorization: 'Bearer '.concat('x'.repeat(32)) };
@@ -100,6 +113,7 @@ test('GET /me/collections/:subjectId maps the stored book collection', async () 
       rating: 8,
       subjectId: 400,
       tags: ['小说'],
+      watchedEpisodeIds: [],
       watchedEpisodeNumbers: [],
     },
   });
@@ -154,6 +168,7 @@ test('GET /me/collections/:subjectId for anime also loads watched episodes', asy
       isPrivate: false,
       subjectId: 8,
       tags: [],
+      watchedEpisodeIds: [101],
       watchedEpisodeNumbers: [1],
     },
   });
@@ -607,4 +622,48 @@ test('incomplete and malformed upstream pages fail explicitly', async () => {
     const response = await app.request('/me/collections', { headers: authHeaders }, env);
     assert.ok(response.status >= 500);
   }
+});
+
+
+test('concurrent collection writes cannot both pass their baseline check', async () => {
+  let release;
+  let entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  let posts = 0;
+  const app = createAuthedApp(async (_url, init) => {
+    if (init?.method === 'POST') { posts++; entered(); await gate; return new Response(null, { status: 204 }); }
+    return Response.json(storedBookCollection);
+  });
+  const first = app.request('/me/collections/400', jsonRequest('', { body: { comment: 'first' } }).init, env);
+  await started;
+  const second = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'second' } }).init, env);
+  assert.equal(second.status, 423);
+  release();
+  assert.equal((await first).status, 200);
+  assert.equal(posts, 1);
+});
+
+test('unknown upstream write retains its claim across subsequent requests', async () => {
+  let posts = 0;
+  const app = createAuthedApp(async (_url, init) => {
+    if (init?.method === 'POST') { posts++; throw new Error('connection lost after commit'); }
+    return Response.json(storedBookCollection);
+  });
+  for (let count = 0; count < 2; count++) {
+    const result = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'unknown' } }).init, env);
+    assert.equal(result.status, 423);
+    assert.equal((await result.json()).error, 'collection_write_unconfirmed');
+  }
+  assert.equal(posts, 1);
+  assert.ok(await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first());
+});
+
+test('a successful write followed by a failed read reports saved results needing confirmation', async () => {
+  const app = createAuthedApp(async (_url, init) => init?.method === 'POST'
+    ? new Response(null, { status: 204 }) : new Response(null, { status: 503 }));
+  const response = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'saved' } }).init, env);
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).error, 'collection_partial_success');
+  assert.equal(await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first(), null);
 });

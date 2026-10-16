@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import type { WatchingItem } from '@/features/watching/model';
 import { canRateCollectionStatus } from '@/features/watching/progress';
@@ -15,6 +15,7 @@ export function useCollectionBoxForm({ item, visible, supportsProgress, onClose,
     collectionBoxSessionFromItem(item),
   );
   const { baseline, form } = session;
+  const wasVisible = useRef(false);
   const { status, tagDraft, tags } = form;
   const subjectType = item.type ?? 2;
   const canEditPersonalData = canRateCollectionStatus(status);
@@ -49,7 +50,9 @@ export function useCollectionBoxForm({ item, visible, supportsProgress, onClose,
   }
 
   useEffect(() => {
-    if (!visible) {
+    const opening = visible && !wasVisible.current;
+    wasVisible.current = visible;
+    if (!visible || (!opening && isDirty)) {
       return;
     }
 
@@ -67,7 +70,7 @@ export function useCollectionBoxForm({ item, visible, supportsProgress, onClose,
   ]);
 
   function save() {
-    onSave(collectionBoxDraftFromForm(form, item, showsProgress));
+    onSave(collectionBoxDraftFromForm(form, session.source, showsProgress));
   }
 
   function addTag() {

@@ -228,6 +228,7 @@ export default function SubjectScreen() {
     totalEpisodes,
     type: catalogSubject.type,
     watchedEpisodeNumbers,
+    watchedEpisodeIds: personalCollection?.watchedEpisodeIds ?? (collectionQuery.isSuccess && personalCollection === null ? [] : undefined),
     year: year ?? 0,
   };
   function openEpisode(episodeNumber: number) {

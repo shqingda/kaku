@@ -30,7 +30,7 @@ export function useEpisodeDiscussion(subjectId: number, episodeNumber: number, u
   const hiddenDiscussion = shouldHideEpisodeDiscussion({
     enabled: spoiler.enabled,
     supportsProgress: tracksWatchProgress,
-    watched: Boolean(userId && collectionQuery.isSuccess && personalCollection?.watchedEpisodeNumbers.includes(episodeNumber)),
+    watched: Boolean(userId && collectionQuery.isSuccess && personalCollection?.watchedEpisodeIds?.includes(catalogEpisode?.id ?? 0)),
     revealed: reveal.scope === discussionScope && reveal.visible,
   });
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id, !hiddenDiscussion);

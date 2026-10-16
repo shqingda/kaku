@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
+import { SPACING } from '@/constants/design';
 import { CollectionControls } from '@/features/subject-detail/collection-controls';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserCollection } from '@/features/users/model';
@@ -43,6 +44,7 @@ function toCollectionEditorItem(
     title: item.title,
     totalEpisodes: item.totalEpisodes,
     type: item.subjectType,
+    watchedEpisodeIds: personal?.watchedEpisodeIds ?? (personal === null ? [] : undefined),
     watchedEpisodeNumbers:
       personal?.watchedEpisodeNumbers ??
       Array.from({ length: item.progress }, (_, index) => index + 1),
@@ -148,7 +150,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: StyleSheet.hairlineWidth,
       height: 34,
       justifyContent: 'center',
-      marginLeft: 10,
+      marginLeft: SPACING.sm,
       width: 34,
     },
     pressed: { opacity: 0.62 },

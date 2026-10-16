@@ -169,7 +169,7 @@ export default function EpisodeScreen() {
 
   const isWatched =
     tracksWatchProgress &&
-    (personalCollection?.watchedEpisodeNumbers.includes(episodeNumber) ??
+    (personalCollection?.watchedEpisodeIds?.includes(catalogEpisode?.id ?? 0) ??
       false);
   const subjectTitle = catalogSubject?.title ?? '未知条目';
   const headerTitle = `第 ${episodeNumber} ${episodeUnit}`;
@@ -198,10 +198,10 @@ export default function EpisodeScreen() {
       return;
     }
 
-    const currentNumbers = personalCollection?.watchedEpisodeNumbers ?? [];
-    const watchedEpisodeNumbers = isWatched
-      ? currentNumbers.filter((number) => number !== episodeNumber)
-      : [...currentNumbers, episodeNumber].sort((left, right) => left - right);
+    if (!catalogEpisode) {
+      Alert.alert('章节尚未就绪', '请先刷新章节资料后再标记进度。');
+      return;
+    }
     const currentStatus = personalCollection?.collectionStatus;
 
     try {
@@ -212,7 +212,7 @@ export default function EpisodeScreen() {
         !currentStatus || currentStatus === 'wish' ? 'doing' : currentStatus;
       await saveCollection.mutateAsync({
         ...(nextStatus !== currentStatus ? { collectionStatus: nextStatus } : {}),
-        watchedEpisodeNumbers,
+        episodeChanges: [{ episodeId: catalogEpisode.id, watched: !isWatched }],
       });
       playEpisodeToggleHaptic(isWatched);
     } catch (error) {

@@ -9,6 +9,11 @@ import {
 } from '../watching/progress.ts';
 import { getCollectionStatusLabel } from '../catalog/subject-types.ts';
 
+type CollectionBoxInitialValues = Pick<WatchingItem,
+  'collectionStatus' | 'comment' | 'isPrivate' | 'rating' | 'tags' |
+  'readChapterCount' | 'readVolumeCount' | 'watchedEpisodeNumbers'
+>;
+
 export type CollectionBoxDraft = {
   collectionStatus?: CollectionStatus;
   comment?: string;
@@ -18,6 +23,8 @@ export type CollectionBoxDraft = {
   rating?: number;
   tags?: string[];
   watchedCount: number;
+  expectedWatchedEpisodeIds?: number[];
+  initialValues?: CollectionBoxInitialValues;
 };
 
 export type CollectionBoxForm = {
@@ -66,6 +73,7 @@ export function collectionBoxBaselineFromItem(
 export type CollectionBoxSession = {
   baseline: CollectionBoxDraft;
   form: CollectionBoxForm;
+  source: WatchingItem;
 };
 
 export function collectionBoxSessionFromItem(
@@ -74,6 +82,7 @@ export function collectionBoxSessionFromItem(
   return {
     baseline: collectionBoxBaselineFromItem(item),
     form: collectionBoxFormFromItem(item),
+    source: item,
   };
 }
 
@@ -109,6 +118,17 @@ export function collectionBoxDraftFromForm(
       : form.tags;
 
   return {
+    initialValues: {
+      collectionStatus: item.collectionStatus,
+      comment: item.comment,
+      isPrivate: item.isPrivate,
+      rating: item.rating,
+      tags: item.tags,
+      readChapterCount: item.readChapterCount,
+      readVolumeCount: item.readVolumeCount,
+      watchedEpisodeNumbers: item.watchedEpisodeNumbers,
+    },
+    expectedWatchedEpisodeIds: item.watchedEpisodeIds,
     collectionStatus: form.status,
     comment: item.comment !== undefined ? form.comment.trim() : undefined,
     isPrivate: item.isPrivate !== undefined ? form.isPrivate : undefined,
@@ -126,7 +146,9 @@ export function collectionBoxDraftFromForm(
     tags: item.tags !== undefined ? nextTags : undefined,
     watchedCount:
       showsProgress && Number.isInteger(parsedCount)
-        ? Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
+        ? parsedCount === item.watchedEpisodeNumbers.length
+          ? parsedCount
+          : Math.min(Math.max(parsedCount, 0), item.totalEpisodes)
         : 0,
   };
 }
@@ -145,6 +167,7 @@ export function collectionBoxUpdateFromDraft(
   capabilities: CollectionBoxCapabilities,
 ): PersonalCollectionUpdate {
   const isActive = canRateCollectionStatus(draft.collectionStatus);
+  const initialValues = draft.initialValues ?? item;
 
   return omitUnchanged(
     {
@@ -163,6 +186,7 @@ export function collectionBoxUpdateFromDraft(
         draft.readVolumeCount,
       ),
       tags: draft.tags,
+      expectedWatchedEpisodeIds: draft.initialValues ? draft.expectedWatchedEpisodeIds : item.watchedEpisodeIds,
       watchedEpisodeNumbers: recordWatchedEpisodes(
         capabilities.supportsWatchProgress,
         isActive,
@@ -170,7 +194,7 @@ export function collectionBoxUpdateFromDraft(
         item,
       ),
     },
-    item,
+    initialValues,
   );
 }
 
@@ -196,9 +220,12 @@ function recordWatchedEpisodes(
     return undefined;
   }
 
+  const original = draft.initialValues?.watchedEpisodeNumbers ?? item.watchedEpisodeNumbers;
+  if (isActive && draft.watchedCount === original.length) return undefined;
+
   return isActive
     ? resizeWatchedEpisodes(
-        item.watchedEpisodeNumbers,
+        original,
         draft.watchedCount,
         item.totalEpisodes,
       )
@@ -207,7 +234,7 @@ function recordWatchedEpisodes(
 
 function omitUnchanged(
   update: PersonalCollectionUpdate,
-  item: WatchingItem,
+  item: CollectionBoxInitialValues,
 ): PersonalCollectionUpdate {
   const result = { ...update };
 
@@ -219,6 +246,9 @@ function omitUnchanged(
   if (result.rating !== undefined && result.rating === item.rating) {
     delete result.rating;
   }
+  if (result.comment === item.comment) delete result.comment;
+  if (result.isPrivate === item.isPrivate) delete result.isPrivate;
+  if (result.tags && !tagsDiffer(result.tags, item.tags ?? [])) delete result.tags;
   if (
     result.readChapterCount !== undefined &&
     result.readChapterCount === (item.readChapterCount ?? 0)
@@ -241,6 +271,7 @@ function omitUnchanged(
     delete result.watchedEpisodeNumbers;
   }
 
+  if (result.watchedEpisodeNumbers === undefined) delete result.expectedWatchedEpisodeIds;
   return result;
 }
 

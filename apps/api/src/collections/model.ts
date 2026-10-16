@@ -2,17 +2,7 @@ import type { CollectionStatus } from '@kaku/shared';
 
 export type { CollectionStatus };
 
-export type PersonalCollection = {
-  collectionStatus: CollectionStatus;
-  comment: string;
-  isPrivate: boolean;
-  readChapterCount?: number;
-  readVolumeCount?: number;
-  rating?: number;
-  subjectId: number;
-  tags: string[];
-  watchedEpisodeNumbers: number[];
-};
+export type { PersonalCollection } from '@kaku/shared/collections-contract';
 
 export const collectionStatusToBangumiType: Record<CollectionStatus, number> = {
   completed: 2,

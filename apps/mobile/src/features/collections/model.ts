@@ -1,27 +1,5 @@
-import type { CollectionStatus } from '@/features/watching/model';
-
-export type PersonalCollection = {
-  collectionStatus: CollectionStatus;
-  comment: string;
-  isPrivate: boolean;
-  readChapterCount?: number;
-  readVolumeCount?: number;
-  rating?: number;
-  subjectId: number;
-  tags: string[];
-  watchedEpisodeNumbers: number[];
-};
-
-export type PersonalCollectionUpdate = {
-  collectionStatus?: CollectionStatus | null;
-  comment?: string;
-  isPrivate?: boolean;
-  readChapterCount?: number;
-  readVolumeCount?: number;
-  rating?: number;
-  tags?: string[];
-  watchedEpisodeNumbers?: number[];
-};
+import type { PersonalCollection, PersonalCollectionUpdate } from '@kaku/shared/collections-contract';
+export type { PersonalCollection, PersonalCollectionUpdate };
 
 // 乐观缓存合并：更新里省略的字段（被编辑器判定为未变化而剔除）保持
 // 原值，而不是被清空。收藏状态为空时整条收藏视为不存在。
@@ -46,6 +24,7 @@ export function mergePersonalCollection(
     readVolumeCount: update.readVolumeCount ?? previous?.readVolumeCount,
     rating: update.rating ?? previous?.rating,
     tags: update.tags ?? previous?.tags ?? [],
+    watchedEpisodeIds: previous?.watchedEpisodeIds ?? [],
     watchedEpisodeNumbers:
       update.watchedEpisodeNumbers ?? previous?.watchedEpisodeNumbers ?? [],
   };

@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-import { useAuth } from '@/features/auth/auth-provider';
+import { AuthSessionChangedError, useAuth, useAuthActions, type AuthRequestScope } from '@/features/auth/auth-provider';
 import {
   getPersonalCollection,
   savePersonalCollection,
@@ -45,27 +45,39 @@ export function usePersonalCollection(
 }
 
 export function useSavePersonalCollection(subjectId: number) {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
+  const { captureRequest } = useAuthActions();
   const queryClient = useQueryClient();
   const queryKey = queryKeys.personalCollection(session?.user.id, subjectId);
 
-  return useMutation<
+  type Variables = { update: PersonalCollectionUpdate; scope: AuthRequestScope; subjectId: number; username: string };
+  const mutation = useMutation<
     PersonalCollection | null,
     Error,
-    PersonalCollectionUpdate,
+    Variables,
     { previous: PersonalCollection | null | undefined }
   >({
     scope: { id: JSON.stringify(queryKey) },
-    mutationFn: (update: PersonalCollectionUpdate) =>
-      savePersonalCollection(request, subjectId, update),
-    onError: (_error, _update, context) => {
+    retry: false,
+    mutationFn: async ({ update, scope, subjectId }) => {
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
+      const collection = await savePersonalCollection(scope.request, subjectId, update);
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
+      return collection;
+    },
+    onError: (_error, { scope, subjectId }, context) => {
+      if (!scope.isCurrent()) return;
+      const queryKey = queryKeys.personalCollection(scope.identity.userId, subjectId);
       if (context) {
         queryClient.setQueryData(queryKey, context.previous);
       }
       void queryClient.invalidateQueries({ queryKey });
     },
-    onMutate: async (update) => {
+    onMutate: async ({ update, scope, subjectId }) => {
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
+      const queryKey = queryKeys.personalCollection(scope.identity.userId, subjectId);
       await queryClient.cancelQueries({ queryKey });
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
       const previous = queryClient.getQueryData<PersonalCollection | null>(
         queryKey,
       );
@@ -75,11 +87,13 @@ export function useSavePersonalCollection(subjectId: number) {
       );
       return { previous };
     },
-    onSuccess: (collection) => {
+    onSuccess: (collection, { scope, subjectId, username }) => {
+      if (!scope.isCurrent()) return;
+      const queryKey = queryKeys.personalCollection(scope.identity.userId, subjectId);
       queryClient.setQueryData(queryKey, collection);
       if (collection) {
         queryClient.setQueryData<InfiniteData<PublicUserCollectionPage>>(
-          queryKeys.myCollectionSearch(session?.user.id),
+          queryKeys.myCollectionSearch(scope.identity.userId),
           (data) => {
             if (!data) return data;
             const updatedAt = new Date().toISOString();
@@ -98,12 +112,22 @@ export function useSavePersonalCollection(subjectId: number) {
         );
       }
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.myCollections(session?.user.id),
+        queryKey: queryKeys.myCollections(scope.identity.userId),
         predicate: (query) => query.queryKey[3] === 'browse',
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.publicUser(session?.user.username ?? ''),
+        queryKey: queryKeys.publicUser(username),
       });
     },
   });
+  return {
+    ...mutation,
+    mutate: (update: PersonalCollectionUpdate) => mutation.mutate({ update, scope: captureRequest(), subjectId, username: session?.user.username ?? '' }),
+    mutateAsync: async (update: PersonalCollectionUpdate) => {
+      const scope = captureRequest();
+      const collection = await mutation.mutateAsync({ update, scope, subjectId, username: session?.user.username ?? '' });
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
+      return collection;
+    },
+  };
 }

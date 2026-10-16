@@ -1,4 +1,6 @@
 import { COLLECTION_STATUSES } from '@kaku/shared';
+import { personalCollectionUpdateSchema } from '@kaku/shared/collections-contract';
+import { CollectionWriteError, withCollectionWriteLock } from './write-lock.ts';
 import type { Context, Hono } from 'hono';
 import { z } from 'zod';
 
@@ -18,23 +20,6 @@ import {
   saveBangumiPersonalCollection,
   setBangumiEntityCollection,
 } from './bangumi-client.ts';
-
-const collectionUpdateSchema = z.object({
-  collectionStatus: z
-    .enum(COLLECTION_STATUSES)
-    .nullable()
-    .optional(),
-  comment: z.string().max(1000).optional(),
-  isPrivate: z.boolean().optional(),
-  readChapterCount: z.number().int().nonnegative().optional(),
-  readVolumeCount: z.number().int().nonnegative().optional(),
-  rating: z.number().int().min(1).max(10).optional(),
-  tags: z.array(z.string().min(1).regex(/^\S+$/)).optional(),
-  watchedEpisodeNumbers: z
-    .array(z.number().int().positive())
-    .max(5000)
-    .optional(),
-});
 
 const entityCollectionUpdateSchema = z.object({ collected: z.boolean() });
 const entityKindSchema = z.enum(['character', 'person']);
@@ -187,6 +172,7 @@ export function registerCollectionRoutes(
     action: (input: {
       accessToken: string;
       username: string;
+      userId: number;
     }) => Promise<unknown>,
   ) {
     const { authentication, store } = await authenticateContext(
@@ -211,6 +197,7 @@ export function registerCollectionRoutes(
         await action({
           accessToken,
           username: authentication.user.username,
+          userId: authentication.userId,
         }),
       );
     } catch (error) {
@@ -233,6 +220,10 @@ export function registerCollectionRoutes(
           { error: 'bangumi_unavailable', message: error.message },
           error.status >= 500 ? 503 : 502,
         );
+      }
+
+      if (error instanceof CollectionWriteError) {
+        return context.json({ error: error.code, message: error.message }, error.status);
       }
 
       if (error instanceof z.ZodError) {
@@ -296,7 +287,7 @@ export function registerCollectionRoutes(
 
   app.put('/me/collections/:subjectId', async (context) => {
     const subjectId = getSubjectId(context.req.param('subjectId'));
-    const parsedBody = collectionUpdateSchema.safeParse(
+    const parsedBody = personalCollectionUpdateSchema.safeParse(
       await context.req.json().catch(() => null),
     );
 
@@ -318,29 +309,23 @@ export function registerCollectionRoutes(
       );
     }
 
-    return withPersonalCollection(context, async ({ accessToken, username }) => {
-      await saveBangumiPersonalCollection({
-        accessToken,
-        collectionStatus: update.collectionStatus ?? undefined,
-        comment: update.comment,
-        fetcher,
-        isPrivate: update.isPrivate,
-        readChapterCount: update.readChapterCount,
-        readVolumeCount: update.readVolumeCount,
-        rating: update.rating,
-        subjectId,
-        tags: update.tags,
-        watchedEpisodeNumbers: update.watchedEpisodeNumbers,
-      });
-
-      const collection = await getBangumiPersonalCollection({
-        accessToken,
-        fetcher,
-        subjectId,
-        username,
-      });
-
-      return { collection };
-    });
+    return withPersonalCollection(context, ({ accessToken, username, userId }) =>
+      withCollectionWriteLock({
+        database: context.env.DB, userId, subjectId, now: now(), fetcher,
+        action: async (guardedFetcher) => {
+          await saveBangumiPersonalCollection({
+            ...update, accessToken, fetcher: guardedFetcher, subjectId,
+          });
+          try {
+            const collection = await getBangumiPersonalCollection({
+              accessToken, fetcher: guardedFetcher, subjectId, username,
+            });
+            return { collection };
+          } catch {
+            throw new CollectionWriteError('collection_partial_success', '修改已提交，但读取最新收藏失败。请先刷新确认结果后再操作。', 409);
+          }
+        },
+      }),
+    );
   });
 }

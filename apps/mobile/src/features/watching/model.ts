@@ -14,6 +14,7 @@ export type WatchingItem = {
   rating?: number;
   tags?: string[];
   watchedEpisodeNumbers: number[];
+  watchedEpisodeIds?: number[];
   totalEpisodes: number;
   year: number;
   summary: string;

@@ -1,28 +1,11 @@
 import { z } from 'zod';
+import { personalCollectionSchema, personalCollectionUpdateSchema } from '@kaku/shared/collections-contract';
 
 import type {
   PersonalCollection,
   PersonalCollectionUpdate,
 } from '@/features/collections/model';
 import { KakuApiError, readErrorMessage } from './auth-client.ts';
-
-const personalCollectionSchema = z.object({
-  collectionStatus: z.enum([
-    'wish',
-    'completed',
-    'doing',
-    'onHold',
-    'dropped',
-  ]),
-  comment: z.string(),
-  isPrivate: z.boolean(),
-  readChapterCount: z.number().int().nonnegative().optional(),
-  readVolumeCount: z.number().int().nonnegative().optional(),
-  rating: z.number().int().min(1).max(10).optional(),
-  subjectId: z.number().int().positive(),
-  tags: z.array(z.string()),
-  watchedEpisodeNumbers: z.array(z.number().int().positive()),
-});
 
 const responseSchema = z.object({
   collection: personalCollectionSchema.nullable(),
@@ -48,7 +31,7 @@ export async function savePersonalCollection(
   update: PersonalCollectionUpdate,
 ): Promise<PersonalCollection | null> {
   const response = await request(`/me/collections/${subjectId}`, {
-    body: JSON.stringify(update),
+    body: JSON.stringify(personalCollectionUpdateSchema.parse(update)),
     headers: { 'Content-Type': 'application/json' },
     method: 'PUT',
   });

@@ -15,6 +15,7 @@ const collection = {
   rating: 8,
   subjectId: 12,
   tags: ['科幻'],
+  watchedEpisodeIds: [101, 102, 103],
   watchedEpisodeNumbers: [1, 2, 3],
 };
 

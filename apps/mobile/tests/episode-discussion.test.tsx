@@ -9,8 +9,9 @@ jest.mock('@/features/catalog/use-catalog-subject', () => ({
     { id: 13, number: 1 }, { id: 14, number: 2 },
   ] } }),
 }));
+let mockCollection: { isSuccess: boolean; isError?: boolean; data?: { watchedEpisodeNumbers: number[]; watchedEpisodeIds?: number[] } } = { isSuccess: false, isError: true };
 jest.mock('@/features/collections/use-personal-collection', () => ({
-  usePersonalCollection: () => ({ isSuccess: false, isError: true }),
+  usePersonalCollection: () => mockCollection,
   useSavePersonalCollection: () => ({}),
 }));
 const mockComments = jest.fn((..._args: unknown[]) => ({ data: [{ id: '1' }] }));
@@ -36,4 +37,13 @@ it('keeps failed progress reads hidden and resets a temporary reveal on chapter,
   await unmount();
   const mounted = await renderHook(() => useEpisodeDiscussion(1, 2, 2));
   expect(mounted.result.current.hiddenDiscussion).toBe(true);
+});
+
+
+it('keeps legacy cached progress without episode IDs safe until a fresh response arrives', async () => {
+  mockCollection = { isSuccess: true, data: { watchedEpisodeNumbers: [1] } };
+  const { result } = await renderHook(() => useEpisodeDiscussion(1, 1, 1));
+  expect(result.current.hiddenDiscussion).toBe(true);
+  expect(result.current.replies).toEqual([]);
+  mockCollection = { isSuccess: false, isError: true };
 });

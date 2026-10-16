@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { PersonalCollectionUpdate } from '@kaku/shared/collections-contract';
+import { CollectionWriteError } from './write-lock.ts';
 
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 
@@ -247,141 +249,76 @@ export async function getBangumiPersonalCollection({
     ...(collection.rate > 0 ? { rating: collection.rate } : {}),
     subjectId,
     tags: collection.tags,
+    watchedEpisodeIds: episodeCollections.filter(item => item.type === 2 && item.episode.type === 0 && item.episode.ep > 0).map(item => item.episode.id).sort((a, b) => a - b),
     watchedEpisodeNumbers: episodeCollections
       .filter((item) => item.type === 2 && item.episode.type === 0)
-      .map((item) => Math.trunc(item.episode.ep))
+      .map((item) => item.episode.ep)
       .filter((episodeNumber) => episodeNumber > 0)
       .sort((left, right) => left - right),
   };
 }
 
-async function updateEpisodeCollections({
-  accessToken,
-  fetcher,
-  subjectId,
-  watchedEpisodeNumbers,
-}: {
-  accessToken: string;
-  fetcher: typeof fetch;
-  subjectId: number;
-  watchedEpisodeNumbers: number[];
-}) {
-  const episodeCollections = await getEpisodeCollections(
-    subjectId,
-    accessToken,
-    fetcher,
-  );
-  const watchedNumbers = new Set(watchedEpisodeNumbers);
-  const markWatched: number[] = [];
-  const markUnwatched: number[] = [];
-
-  for (const item of episodeCollections) {
-    if (item.episode.type !== 0) {
-      continue;
-    }
-
-    const shouldBeWatched = watchedNumbers.has(Math.trunc(item.episode.ep));
-
-    if (shouldBeWatched && item.type !== 2) {
-      markWatched.push(item.episode.id);
-    } else if (!shouldBeWatched && item.type === 2) {
-      markUnwatched.push(item.episode.id);
-    }
-  }
-
-  for (const [episodeIds, type] of [
-    [markWatched, 2],
-    [markUnwatched, 0],
-  ] as const) {
-    if (episodeIds.length === 0) {
-      continue;
-    }
-
-    const response = await fetcher(
-      `${BANGUMI_API_URL}/v0/users/-/collections/${subjectId}/episodes`,
-      {
-        body: JSON.stringify({ episode_id: episodeIds, type }),
-        headers: headers(accessToken, true),
-        method: 'PATCH',
-        signal: AbortSignal.timeout(12_000),
-      },
-    );
-
-    if (!response.ok) {
-      throw new BangumiApiError(
-        `Bangumi 章节进度更新失败（${response.status}）`,
-        response.status,
-      );
-    }
-  }
-}
-
 export async function saveBangumiPersonalCollection({
-  accessToken,
-  collectionStatus,
-  comment,
-  fetcher,
-  isPrivate,
-  readChapterCount,
-  readVolumeCount,
-  rating,
-  subjectId,
-  tags,
-  watchedEpisodeNumbers,
-}: {
+  accessToken, fetcher, subjectId, ...update
+}: PersonalCollectionUpdate & {
   accessToken: string;
-  collectionStatus?: CollectionStatus;
-  comment?: string;
   fetcher: typeof fetch;
-  isPrivate?: boolean;
-  readChapterCount?: number;
-  readVolumeCount?: number;
-  rating?: number;
   subjectId: number;
-  tags?: string[];
-  watchedEpisodeNumbers?: number[];
 }) {
-  const response = await fetcher(
-    `${BANGUMI_API_URL}/v0/users/-/collections/${subjectId}`,
-    {
-      body: JSON.stringify({
-        ...(comment !== undefined ? { comment } : {}),
-        ...(isPrivate !== undefined ? { private: isPrivate } : {}),
-        ...(readChapterCount !== undefined
-          ? { ep_status: readChapterCount }
-          : {}),
-        // Bangumi v0 creates a timeline entry whenever `type` is present,
-        // even when unchanged, so only send fields that actually changed.
-        ...(rating !== undefined ? { rate: rating } : {}),
-        ...(tags !== undefined ? { tags } : {}),
-        ...(collectionStatus !== undefined
-          ? { type: collectionStatusToBangumiType[collectionStatus] }
-          : {}),
-        ...(readVolumeCount !== undefined
-          ? { vol_status: readVolumeCount }
-          : {}),
-      }),
-      headers: headers(accessToken, true),
-      method: 'POST',
+  const patches: { episode_id: number[]; type: number }[] = [];
+  if (update.watchedEpisodeNumbers !== undefined && update.expectedWatchedEpisodeIds === undefined) {
+    throw new CollectionWriteError('collection_baseline_required', '批量进度缺少同步基线，请更新 Kaku 并刷新收藏后再保存。', 428);
+  }
+  if (update.episodeChanges || update.watchedEpisodeNumbers !== undefined) {
+    const episodes = (await getEpisodeCollections(subjectId, accessToken, fetcher)).filter(item => item.episode.type === 0 && item.episode.ep > 0);
+    const episodesById = new Map(episodes.map(item => [item.episode.id, item]));
+    const numberCounts = new Map<number, number>();
+    for (const { episode } of episodes) {
+      numberCounts.set(episode.ep, (numberCounts.get(episode.ep) ?? 0) + 1);
+    }
+    const currentIds = episodes.filter(item => item.type === 2).map(item => item.episode.id).sort((a, b) => a - b);
+    if (update.watchedEpisodeNumbers !== undefined) {
+      const expectedIds = [...new Set(update.expectedWatchedEpisodeIds)].sort((a, b) => a - b);
+      if (JSON.stringify(expectedIds) !== JSON.stringify(currentIds)) {
+        throw new CollectionWriteError('collection_conflict', '其他设备已更新章节进度，请刷新确认后重新修改。', 412);
+      }
+    }
+    const watchedNumbers = new Set(update.watchedEpisodeNumbers);
+    const changes = update.episodeChanges ?? episodes.map(item => ({ episodeId: item.episode.id, watched: watchedNumbers.has(item.episode.ep) }));
+    for (const change of changes) {
+      if (!episodesById.has(change.episodeId)) throw new CollectionWriteError('invalid_episode_change', '章节不属于这个条目，请刷新后重试。', 400);
+    }
+    if (update.watchedEpisodeNumbers?.some(number => numberCounts.get(number) !== 1)) {
+      throw new CollectionWriteError('invalid_episode_change', '章节编号缺失或重复，请逐集修改进度。', 400);
+    }
+    for (const watched of [true, false]) {
+      const ids = changes.filter(change => change.watched === watched && (episodesById.get(change.episodeId)!.type === 2) !== watched).map(change => change.episodeId);
+      if (ids.length) patches.push({ episode_id: ids, type: watched ? 2 : 0 });
+    }
+  }
+  const body = {
+    ...(update.comment !== undefined ? { comment: update.comment } : {}),
+    ...(update.isPrivate !== undefined ? { private: update.isPrivate } : {}),
+    ...(update.readChapterCount !== undefined ? { ep_status: update.readChapterCount } : {}),
+    ...(update.rating !== undefined ? { rate: update.rating } : {}),
+    ...(update.tags !== undefined ? { tags: update.tags } : {}),
+    ...(update.collectionStatus != null ? { type: collectionStatusToBangumiType[update.collectionStatus] } : {}),
+    ...(update.readVolumeCount !== undefined ? { vol_status: update.readVolumeCount } : {}),
+  };
+  let completedWrites = 0;
+  async function write(url: string, method: string, body: unknown) {
+    const response = await fetcher(url, {
+      body: JSON.stringify(body), headers: headers(accessToken, true), method,
       signal: AbortSignal.timeout(12_000),
-    },
-  );
-
-  if (!response.ok) {
-    throw new BangumiApiError(
-      `Bangumi 收藏更新失败（${response.status}）`,
-      response.status,
-    );
-  }
-
-  if (watchedEpisodeNumbers) {
-    await updateEpisodeCollections({
-      accessToken,
-      fetcher,
-      subjectId,
-      watchedEpisodeNumbers,
     });
+    if (!response.ok) {
+      if (completedWrites) throw new CollectionWriteError('collection_partial_success', '部分修改已经保存，后续修改失败。请先刷新确认结果后再操作。', 409);
+      throw new BangumiApiError(`Bangumi 收藏更新失败（${response.status}）`, response.status);
+    }
+    completedWrites += 1;
   }
+  if (Object.keys(body).length) await write(`${BANGUMI_API_URL}/v0/users/-/collections/${subjectId}`, 'POST', body);
+  for (const patch of patches) await write(`${BANGUMI_API_URL}/v0/users/-/collections/${subjectId}/episodes`, 'PATCH', patch);
 }
 
 const collectionListPageSchema = z.object({

@@ -19,8 +19,8 @@ export function resizeWatchedEpisodes(
   const watched = new Set(
     watchedEpisodeNumbers.filter(
       (episodeNumber) =>
-        Number.isInteger(episodeNumber) &&
-        episodeNumber >= 1 &&
+        Number.isFinite(episodeNumber) &&
+        episodeNumber > 0 &&
         episodeNumber <= safeTotal,
     ),
   );
@@ -33,13 +33,5 @@ export function resizeWatchedEpisodes(
     watched.add(episodeNumber);
   }
 
-  for (
-    let episodeNumber = safeTotal;
-    watched.size > nextCount && episodeNumber >= 1;
-    episodeNumber -= 1
-  ) {
-    watched.delete(episodeNumber);
-  }
-
-  return [...watched].sort((left, right) => left - right);
+  return [...watched].sort((left, right) => left - right).slice(0, nextCount);
 }

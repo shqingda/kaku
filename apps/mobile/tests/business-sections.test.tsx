@@ -72,3 +72,18 @@ test('collection saving preserves input until a confirmed item update or reopeni
   await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} item={{ ...item, comment: '已保存' }} /></ThemeProvider>);
   expect(screen.getByLabelText('吐槽').props.value).toBe('已保存');
 });
+
+
+test('refresh after a conflict preserves dirty form and its original progress baseline', async () => {
+  const original = { ...item, watchedEpisodeNumbers: [1], watchedEpisodeIds: [101] };
+  const save = jest.fn();
+  const props = { item: original, visible: true, isSaving: false, supportsProgress: true, onSave: save, onClose: jest.fn(), onRemove: jest.fn() };
+  const view = await render(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
+  await fireEvent.changeText(screen.getByLabelText('吐槽'), '保留草稿');
+  await fireEvent.changeText(screen.getByLabelText('已看集数'), '3');
+  await view.rerender(<ThemeProvider><CollectionBoxSheet {...props} item={{ ...original, comment: '另一设备', watchedEpisodeNumbers: [1, 5], watchedEpisodeIds: [101, 105] }} /></ThemeProvider>);
+  expect(screen.getByLabelText('吐槽').props.value).toBe('保留草稿');
+  expect(screen.getByLabelText('已看集数').props.value).toBe('3');
+  await fireEvent.press(screen.getByLabelText('保存收藏'));
+  expect(save).toHaveBeenCalledWith(expect.objectContaining({ expectedWatchedEpisodeIds: [101], initialValues: expect.objectContaining({ watchedEpisodeNumbers: [1] }) }));
+});
