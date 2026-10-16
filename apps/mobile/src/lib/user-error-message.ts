@@ -14,6 +14,8 @@ export function userErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE) {
         return '内容不存在或已删除。';
       case 412:
         return '目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。';
+      case 423:
+        return '目录有操作尚未完成或结果未确认，草稿已保留。请稍后重试；若持续出现，请联系维护者。';
       case 429:
         return '请求太频繁，请稍后再试。';
       case 409:

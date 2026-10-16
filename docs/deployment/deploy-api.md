@@ -111,3 +111,25 @@ pnpm --filter @kaku/api dev                # wrangler dev 热重载
 - 免费 Cron 额度足够当前两个触发器；改动 Cron 计划要同步更新
   `wrangler.jsonc` 的 `triggers.crons`，并核对 `apps/api/src/index.ts`
   里对 `0 3 * * *` 的分支判断。
+
+
+## 目录写入保护与恢复
+
+部署包含目录并发保护的版本前，先应用 `0008_perpetual_gressill.sql`，再部署新版 API。迁移只新增 `index_write_locks` 表；不要回滚时删表。旧版 API 不遵守占用，混用旧／新 Worker 的部署切换期间不能保证互斥；回滚旧版 API 会撤销这项保护。新 API 也保护旧客户端的重叠写入，但旧客户端没有 `expected`，顺序保存仍可能覆盖新内容。
+
+表以 `(user_id, index_id)` 为主键，`operation_id` 标识持有者，`created_at` 便于定位。正常完成／明确拒绝后释放；上游写入超时、5xx、202 或 Worker 中断后，结果无法确认，记录会保留，后续写入返回 423。此时不能仅因等待时间较长就解锁：上游请求可能仍会执行，超时／中止本地 fetch 不能证明上游已停止。
+
+恢复时先停止对该账号／目录的重试，核查对应请求已经结束、上游写入已完成或确定不再执行，并读回目录最终状态。确认前保持占用并让用户保留草稿；无法确认时不自动清除。只在核查确认并获得恢复授权后，按**账号、目录和原始操作编号**删除单条记录，防止误删其他操作。不清空整表，不加入定时清理。
+
+以下是数据库内的查询模板，需由维护者替换参数并在正确环境执行；本轮仅测试独立 Miniflare 数据库，没有对线上运行：
+
+```sql
+SELECT user_id, index_id, operation_id, created_at
+FROM index_write_locks WHERE user_id = :user_id AND index_id = :index_id;
+
+-- 完成上述核查并确认恢复后，使用刚核查的 operation_id，检查仅影响一行。
+DELETE FROM index_write_locks
+WHERE user_id = :user_id AND index_id = :index_id AND operation_id = :operation_id;
+```
+
+不对占用记录设置自动过期，也不在删除账号或认证清理时级联删除，避免尚未确认的上游写入失去保护。

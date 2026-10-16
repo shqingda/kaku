@@ -216,13 +216,15 @@ test('discard confirmation preserves directory edits made after the confirmation
 });
 
 
-test('a stale page sends its editing baseline and retains the draft after a remote conflict', async () => {
+test.each([412, 423])('a rejected save (%s) retains the baseline and draft', async (status) => {
   mockEditing = { indexId: 42, title: '原目录', desc: '原说明', isPrivate: false };
-  mockRequest.mockResolvedValue(new Response(JSON.stringify({ error: 'index_edit_conflict' }), { status: 412 }));
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ error: 'index_edit_conflict' }), { status }));
   await render(<Page />);
   await fireEvent.changeText(screen.getByLabelText('目录说明'), '本机说明');
   await fireEvent.press(screen.getByLabelText('保存目录'));
-  await screen.findByText('目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。');
+  await screen.findByText(status === 412
+    ? '目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。'
+    : '目录有操作尚未完成或结果未确认，草稿已保留。请稍后重试；若持续出现，请联系维护者。');
   expect(JSON.parse(mockRequest.mock.calls[0][1].body)).toEqual({
     title: '原目录', desc: '本机说明', isPrivate: false,
     expected: { title: '原目录', desc: '原说明', isPrivate: false },

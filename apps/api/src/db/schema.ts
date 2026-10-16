@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   avatarUrl: text('avatar_url'),
@@ -83,3 +83,11 @@ export const pushDevices = sqliteTable('push_devices', {
     .notNull()
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
+
+// No expiry: an unconfirmed upstream write must not be overtaken by another one.
+export const indexWriteLocks = sqliteTable('index_write_locks', {
+  userId: integer('user_id').notNull(),
+  indexId: integer('index_id').notNull(),
+  operationId: text('operation_id').notNull(),
+  createdAt: integer('created_at').notNull(),
+}, (table) => [primaryKey({ columns: [table.userId, table.indexId] })]);

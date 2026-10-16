@@ -22,6 +22,8 @@ import {
   updateBangumiIndex,
 } from './bangumi-client.ts';
 
+import { IndexWriteUnconfirmedError, withIndexWriteLock } from './write-lock.ts';
+
 const INDEX_SORTS = new Set<IndexSort>(['latest', 'popular']);
 
 const createIndexSchema = z.object({
@@ -95,7 +97,8 @@ export function registerIndexRoutes(
   async function withIndexWrite(
     context: Context<{ Bindings: Env }>,
     errorKey: string,
-    action: (accessToken: string) => Promise<unknown>,
+    action: (accessToken: string, fetcher: typeof fetch) => Promise<unknown>,
+    writeIndexId?: number,
   ) {
     const { authentication, store } = await authenticateContext(
       context,
@@ -115,10 +118,24 @@ export function registerIndexRoutes(
         store,
         userId: authentication.userId,
       });
-      return context.json(await action(accessToken));
+      const result = writeIndexId === undefined
+        ? await action(accessToken, fetcher)
+        : await withIndexWriteLock({
+          database: context.env.DB,
+          userId: authentication.userId,
+          indexId: writeIndexId,
+          now: now(),
+          fetcher,
+          action: (guardedFetcher) => action(accessToken, guardedFetcher),
+        });
+      return context.json(result);
     } catch (error) {
       const authError = mapBangumiAuthError(context, error);
       if (authError) return authError;
+
+      if (error instanceof IndexWriteUnconfirmedError) {
+        return context.json({ error: 'index_write_unconfirmed', message: error.message }, 423);
+      }
 
       if (error instanceof BangumiIndexWriteError) {
         if (error.status === 401) {
@@ -188,16 +205,17 @@ export function registerIndexRoutes(
       );
     }
 
-    return withIndexWrite(context, 'bangumi_index_update_failed', (accessToken) =>
+    return withIndexWrite(context, 'bangumi_index_update_failed', (accessToken, guardedFetcher) =>
       updateBangumiIndex({
         accessToken,
         desc: parsedBody.data.desc ?? '',
         expected: parsedBody.data.expected,
-        fetcher,
+        fetcher: guardedFetcher,
         indexId,
         isPrivate: parsedBody.data.isPrivate ?? parsedBody.data.private,
         title: parsedBody.data.title,
       }),
+      indexId,
     );
   });
 
@@ -211,8 +229,9 @@ export function registerIndexRoutes(
       );
     }
 
-    return withIndexWrite(context, 'bangumi_index_delete_failed', (accessToken) =>
-      deleteBangumiIndex({ accessToken, fetcher, indexId }),
+    return withIndexWrite(context, 'bangumi_index_delete_failed', (accessToken, guardedFetcher) =>
+      deleteBangumiIndex({ accessToken, fetcher: guardedFetcher, indexId }),
+      indexId,
     );
   });
 
