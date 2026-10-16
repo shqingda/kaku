@@ -17,7 +17,7 @@ jest.mock('expo-sqlite/kv-store', () => ({ __esModule: true, default: {
 } }));
 jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ session: { user: { id: mockUserId } } }),
-  useAuthActions: () => ({ request: mockRequest }),
+  useAuthActions: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => mockUserId === userId }; } }),
 }));
 jest.mock('@/features/auth/bangumi-turnstile', () => ({ requestBangumiTurnstileToken: async () => 'test-token' }));
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
@@ -108,7 +108,7 @@ test('a late send completion does not erase the current account draft or close i
   await fireEvent.changeText(screen.getByLabelText('目录标题'), '测试标题');
   await fireEvent.changeText(screen.getByLabelText('目录说明'), '账号二正在写');
   await act(async () => { resolve(new Response(JSON.stringify({ id: 123 }))); });
-  await waitFor(() => expect(mockStorage.has(key)).toBe(false));
+  await waitFor(() => expect(mockStorage.has(key)).toBe(true));
   expect(screen.getByLabelText('目录说明').props.value).toBe('账号二正在写');
 });
 

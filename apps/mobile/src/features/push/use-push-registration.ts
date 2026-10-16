@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { AppState, Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 
+import type { AuthRequest } from '@/features/auth/auth-request-scope';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   registerPushDevice,
@@ -46,7 +47,7 @@ function projectId() {
 }
 
 export function usePushRegistration() {
-  const { request, session } = useAuth();
+  const { authEpoch, captureRequest, session } = useAuth();
   const [ready, setReady] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
   const [preferenceError, setPreferenceError] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export function usePushRegistration() {
   useEffect(() => { void restoreEnabled(); }, [restoreEnabled]);
 
   const syncRegistration = useCallback(
-    async (shouldEnable: boolean, isCurrent: () => boolean, mayAskPermission: boolean) => {
+    async (shouldEnable: boolean, isCurrent: () => boolean, mayAskPermission: boolean, request?: AuthRequest) => {
       if (Platform.OS === 'web') {
         setStatus('unavailable');
         return;
@@ -100,7 +101,7 @@ export function usePushRegistration() {
         setError('模拟器收不到远程推送，请用真机打开。');
         return;
       }
-      if (!session) {
+      if (!session || !request) {
         setStatus('off');
         setError(null);
         return;
@@ -167,21 +168,22 @@ export function usePushRegistration() {
         setError(describePushRegistrationError(caughtError));
       }
     },
-    [request, session],
+    [session],
   );
 
   useEffect(() => {
     if (!ready) return;
     let active = true;
     const owner = session?.user.id;
+    const auth = session ? captureRequest() : null;
     const mayAskPermission = askPermission.current;
     askPermission.current = false;
-    const isCurrent = () => active && currentIdentity.current === owner;
+    const isCurrent = () => active && currentIdentity.current === owner && (auth?.isCurrent() ?? true);
     registrationQueue.current = registrationQueue.current.catch(() => undefined).then(async () => {
-      if (isCurrent()) await syncRegistration(enabled, isCurrent, mayAskPermission);
+      if (isCurrent()) await syncRegistration(enabled, isCurrent, mayAskPermission, auth?.request);
     });
     return () => { active = false; };
-  }, [enabled, ready, retryVersion, syncRegistration, session?.user.id]);
+  }, [authEpoch, captureRequest, enabled, ready, retryVersion, syncRegistration, session?.sessionId, session?.user.id]);
 
   useEffect(() => {
     let previous = AppState.currentState;

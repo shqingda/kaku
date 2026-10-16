@@ -1,9 +1,11 @@
-import { authSessionSchema } from '../../features/auth/auth-session.ts';
+import { authSessionSchema, handoffSessionRequestSchema, handoffStartQuerySchema, type HandoffSessionRequest } from '@kaku/shared/auth-contract';
 import type { DeviceSession } from '@/features/auth/model';
 
 import { z } from 'zod';
 
-const KAKU_API_URL = 'https://kaku-api.shqingda.workers.dev';
+import { resolveApiUrl } from '../../../config/api-url.cjs';
+
+const KAKU_API_URL = resolveApiUrl(process.env.EXPO_PUBLIC_KAKU_API_URL, process.env.NODE_ENV === 'production');
 const APP_CALLBACK_URL = 'kaku://auth/callback';
 
 export async function readErrorMessage(response: Response) {
@@ -47,9 +49,10 @@ async function ensureOk(response: Response) {
   return response;
 }
 
-export function getBangumiLoginUrl() {
+export function getBangumiLoginUrl(proof: { codeChallenge: string; requestId: string }) {
   const url = new URL('/auth/bangumi/start', KAKU_API_URL);
-  url.searchParams.set('app_redirect_uri', APP_CALLBACK_URL);
+  const query = handoffStartQuerySchema.parse({ app_redirect_uri: APP_CALLBACK_URL, code_challenge: proof.codeChallenge, code_challenge_method: 'S256', request_id: proof.requestId });
+  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
   return url.toString();
 }
 
@@ -57,9 +60,9 @@ export function getAppCallbackUrl() {
   return APP_CALLBACK_URL;
 }
 
-export async function exchangeHandoffCode(code: string, deviceName: string) {
+export async function exchangeHandoffCode(input: HandoffSessionRequest) {
   const response = await fetch(`${KAKU_API_URL}/auth/session`, {
-    body: JSON.stringify({ code, deviceName }),
+    body: JSON.stringify(handoffSessionRequestSchema.parse(input)),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
     signal: AbortSignal.timeout(12_000),
@@ -79,14 +82,17 @@ export async function refreshAuthSession(refreshToken: string) {
   return authSessionSchema.parse(await (await ensureOk(response)).json());
 }
 
-export async function fetchKaku(
+export function fetchKaku(
   path: string,
   sessionToken: string,
   init: RequestInit = {},
 ) {
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${sessionToken}`);
+  return fetchWithTimeout(path, { ...init, headers });
+}
 
+async function fetchWithTimeout(path: string, init: RequestInit) {
   const controller = new AbortController();
   let timedOut = false;
   const abort = () => controller.abort();
@@ -98,7 +104,7 @@ export async function fetchKaku(
   }, 12_000);
   try {
     return await fetch(`${KAKU_API_URL}${path}`, {
-      ...init, headers, signal: controller.signal,
+      ...init, signal: controller.signal,
     });
   } catch (error) {
     if (timedOut) {
@@ -114,10 +120,7 @@ export async function fetchKaku(
 }
 
 export function fetchPublicKaku(path: string, init: RequestInit = {}) {
-  return fetch(`${KAKU_API_URL}${path}`, {
-    ...init,
-    signal: init.signal ?? AbortSignal.timeout(12_000),
-  });
+  return fetchWithTimeout(path, init);
 }
 
 const deviceSessionsSchema = z.object({

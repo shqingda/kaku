@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./auth-contract": "./src/auth-contract.ts",
+    "./collections-contract": "./src/collections-contract.ts"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
@@ -12,5 +14,8 @@
   },
   "devDependencies": {
     "typescript": "~7.0.2"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

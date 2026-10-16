@@ -14,6 +14,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      EXPO_PUBLIC_KAKU_API_URL: https://kaku-api.shqingda.workers.dev
 
     steps:
       - name: Check out repository

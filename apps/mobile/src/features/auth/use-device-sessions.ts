@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
@@ -63,11 +64,11 @@ async function revokeOtherDeviceSessions(
 }
 
 export function useRevokeOtherDeviceSessions() {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async () =>
+  return useAuthMutation({
+    mutationFn: async (_: void, request) =>
       revokeOtherDeviceSessions(
         request,
         queryClient.getQueryData<DeviceSession[]>(
@@ -82,11 +83,11 @@ export function useRevokeOtherDeviceSessions() {
 }
 
 export function useRevokeDeviceSession() {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (sessionId: string) => {
+  return useAuthMutation({
+    mutationFn: async (sessionId: string, request) => {
       const response = await request(
         `/auth/sessions/${encodeURIComponent(sessionId)}`,
         { method: 'DELETE' },

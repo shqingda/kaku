@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { AuthProvider, useAuth } from '@/features/auth/auth-provider';
+import { createLoginProof, loginAttemptStorage } from '@/features/auth/login-proof';
+import * as WebBrowser from 'expo-web-browser';
+import { unregisterPushDevice } from '@/features/push/device-registration';
 import { authStorage } from '@/features/auth/auth-storage';
 import {
   exchangeHandoffCode,
@@ -8,8 +11,13 @@ import {
   KakuApiError,
 } from '@/infrastructure/kaku/auth-client';
 
+const mockQueryClient = { removeQueries: jest.fn() };
 jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ removeQueries: jest.fn() }),
+  useQueryClient: () => mockQueryClient,
+}));
+jest.mock('@/features/auth/login-proof', () => ({
+  createLoginProof: jest.fn(),
+  loginAttemptStorage: { load: jest.fn(), save: jest.fn().mockResolvedValue(undefined), clear: jest.fn().mockResolvedValue(undefined) },
 }));
 jest.mock('expo-web-browser', () => ({ openAuthSessionAsync: jest.fn() }));
 jest.mock('@/features/auth/auth-storage', () => ({
@@ -27,6 +35,9 @@ jest.mock('@/infrastructure/kaku/auth-client', () => ({
   refreshAuthSession: jest.fn(),
 }));
 
+const requestId = '498e27b7-5192-48ce-9b13-f4a27f10f806';
+const pendingLogin = { codeVerifier: 'A'.repeat(43), requestId, createdAt: Date.now() };
+const callback = `kaku://auth/callback?code=12345678901234567890&request_id=${requestId}`;
 const original = {
   expiresAt: Date.now() + 3_600_000,
   refreshExpiresAt: Date.now() + 86_400_000,
@@ -47,6 +58,8 @@ beforeEach(() => {
   jest.mocked(fetchKaku).mockReset();
   jest.mocked(refreshAuthSession).mockReset();
   jest.mocked(authStorage.load).mockResolvedValue(original);
+  jest.mocked(loginAttemptStorage.load).mockResolvedValue(pendingLogin);
+  jest.mocked(createLoginProof).mockResolvedValue({ codeChallenge: 'B'.repeat(43), pending: pendingLogin });
 });
 
 test.each(['collection_removal_unsupported', 'another_conflict'])(
@@ -86,7 +99,7 @@ test('a late 401 reuses credentials rotated by an earlier request', async () => 
   });
   await act(async () => { pending.resolve(new Response(null, { status: 401 })); await late; });
   expect(refreshAuthSession).toHaveBeenCalledTimes(1);
-  expect(fetchKaku).toHaveBeenLastCalledWith('/second', 'new-access', undefined);
+  expect(fetchKaku).toHaveBeenLastCalledWith('/second', 'new-access', expect.objectContaining({ signal: expect.any(AbortSignal) }));
   expect(hook.result.current.session).toEqual(refreshed);
 });
 
@@ -102,7 +115,7 @@ test.each(['success', 'failure'])('old refresh %s cannot replace or clear a new 
   const other = { ...original, sessionId: 'other', user: { id: 2, username: 'b', nickname: 'B' } };
   jest.mocked(exchangeHandoffCode).mockResolvedValue(other);
   await act(async () => {
-    await hook.result.current.completeSignIn('kaku://auth/callback?code=12345678901234567890');
+    await hook.result.current.completeSignIn(callback);
   });
   await act(async () => {
     if (outcome === 'success') pending.resolve(refreshed);
@@ -111,5 +124,98 @@ test.each(['success', 'failure'])('old refresh %s cannot replace or clear a new 
   });
   expect(hook.result.current.session).toEqual(other);
   expect(authStorage.save).toHaveBeenLastCalledWith(other);
+  expect(authStorage.clear).not.toHaveBeenCalled();
+});
+
+
+test('a handoff without a local login request cannot replace the current account', async () => {
+  jest.mocked(loginAttemptStorage.load).mockResolvedValue(null);
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  await act(async () => { await expect(hook.result.current.completeSignIn(callback)).rejects.toThrow('登录'); });
+  expect(exchangeHandoffCode).not.toHaveBeenCalled();
+  expect(hook.result.current.session).toEqual(original);
+});
+
+test('a callback for another request preserves the legitimate pending proof', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  await act(async () => { await expect(hook.result.current.completeSignIn(callback.replace(requestId, '498e27b7-5192-48ce-9b13-f4a27f10f807'))).rejects.toThrow('登录'); });
+  expect(exchangeHandoffCode).not.toHaveBeenCalled();
+  expect(loginAttemptStorage.clear).not.toHaveBeenCalled();
+});
+
+test('the auth browser and deep link share one verified session exchange', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  jest.mocked(exchangeHandoffCode).mockResolvedValue(refreshed);
+  await act(async () => { await Promise.all([hook.result.current.completeSignIn(callback), hook.result.current.completeSignIn(callback)]); });
+  await act(async () => { await hook.result.current.completeSignIn(callback); });
+  expect(exchangeHandoffCode).toHaveBeenCalledTimes(1);
+  expect(exchangeHandoffCode).toHaveBeenCalledWith({ code: '12345678901234567890', deviceName: 'iOS 设备', codeVerifier: pendingLogin.codeVerifier, requestId });
+  expect(loginAttemptStorage.clear).toHaveBeenCalledTimes(1);
+});
+
+test('sign in persists client proof before opening the browser and sends only its challenge', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  jest.mocked(exchangeHandoffCode).mockResolvedValue(refreshed);
+  jest.mocked(WebBrowser.openAuthSessionAsync).mockImplementation(async (url) => {
+    expect(loginAttemptStorage.save).toHaveBeenCalledWith(pendingLogin);
+    const loginUrl = new URL(url);
+    expect(loginUrl.searchParams.get('code_challenge')).toBe('B'.repeat(43));
+    expect(loginUrl.searchParams.get('request_id')).toBe(requestId);
+    expect(url).not.toContain(pendingLogin.codeVerifier);
+    return { type: 'success', url: callback };
+  });
+  await act(async () => { expect(await hook.result.current.signIn()).toBe(true); });
+});
+
+test('captured requests cannot borrow a replacement account', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  const scope = hook.result.current.captureRequest();
+  const other = { ...original, sessionId: 'other', user: { id: 2, username: 'b', nickname: 'B' } };
+  jest.mocked(exchangeHandoffCode).mockResolvedValue(other);
+  await act(async () => { await hook.result.current.completeSignIn(callback); });
+  expect(scope.isCurrent()).toBe(false);
+  await expect(scope.request('/write', { method: 'POST' })).rejects.toMatchObject({ name: 'AuthSessionChangedError' });
+  expect(fetchKaku).not.toHaveBeenCalled();
+});
+
+test('an old successful response cannot reach feature callbacks after a new login', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  const response = deferred<Response>();
+  jest.mocked(fetchKaku).mockReturnValue(response.promise);
+  let oldRequest!: Promise<unknown>;
+  await act(async () => { oldRequest = hook.result.current.request('/write', { method: 'POST' }).catch(error => error); });
+  jest.mocked(exchangeHandoffCode).mockResolvedValue({ ...original, sessionId: 'replacement' });
+  await act(async () => { await hook.result.current.completeSignIn(callback); response.resolve(new Response(null, { status: 200 })); });
+  expect(await oldRequest).toMatchObject({ name: 'AuthSessionChangedError' });
+});
+
+
+test('captured identity survives token rotation but not a same-account replacement session', async () => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  const scope = hook.result.current.captureRequest();
+  jest.mocked(fetchKaku).mockResolvedValueOnce(new Response(null, { status: 401 })).mockResolvedValue(new Response(null, { status: 200 }));
+  jest.mocked(refreshAuthSession).mockResolvedValue(refreshed);
+  await act(async () => { await scope.request('/rotate'); });
+  expect(scope.isCurrent()).toBe(true);
+  jest.mocked(exchangeHandoffCode).mockResolvedValue({ ...original, sessionId: 'replacement' });
+  await act(async () => { await hook.result.current.completeSignIn(callback); });
+  expect(scope.isCurrent()).toBe(false);
+  await expect(scope.request('/write')).rejects.toMatchObject({ name: 'AuthSessionChangedError' });
+});
+
+
+test.each(['signOut', 'disconnectBangumi'] as const)('an old %s cannot revoke or clear a replacement login', async (action) => {
+  const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+  const pending = deferred<void>();
+  jest.mocked(unregisterPushDevice).mockReturnValueOnce(pending.promise);
+  let exiting!: Promise<unknown>;
+  await act(async () => { exiting = hook.result.current[action]().catch(error => error); });
+  const other = { ...original, sessionId: 'other', user: { id: 2, username: 'b', nickname: 'B' } };
+  jest.mocked(exchangeHandoffCode).mockResolvedValue(other);
+  await act(async () => { await hook.result.current.completeSignIn(callback); });
+  await act(async () => { pending.resolve(); await exiting; });
+  expect(hook.result.current.session).toEqual(other);
+  expect(hook.result.current.error).toBeUndefined();
+  expect(fetchKaku).not.toHaveBeenCalled();
   expect(authStorage.clear).not.toHaveBeenCalled();
 });

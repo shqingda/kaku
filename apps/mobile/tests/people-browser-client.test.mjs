@@ -82,7 +82,7 @@ test('getGlobalPeople throws KakuApiError with the server message', async (t) =>
   );
 });
 
-test('getGlobalPeople forwards the abort signal', async (t) => {
+test('getGlobalPeople preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -93,8 +93,10 @@ test('getGlobalPeople forwards the abort signal', async (t) => {
     return Response.json({ items: [], page: 1 });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getGlobalPeople('person', 'comment', undefined, undefined, 1, controller.signal);
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

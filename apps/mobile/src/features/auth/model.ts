@@ -5,14 +5,7 @@ export type AuthUser = {
   username: string;
 };
 
-export type AuthSession = {
-  expiresAt: number;
-  refreshExpiresAt: number;
-  refreshToken: string;
-  sessionId: string;
-  sessionToken: string;
-  user: AuthUser;
-};
+export type AuthSession = import('@kaku/shared/auth-contract').AuthSessionResponse;
 
 export type DeviceSession = {
   createdAt: number;

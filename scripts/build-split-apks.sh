@@ -32,6 +32,7 @@ set -a
 # shellcheck disable=SC1091
 if [[ -f .env ]]; then source .env; fi
 set +a
+export EXPO_PUBLIC_KAKU_API_URL="${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev}"
 
 VERSION="$(node -e "process.stdout.write(require('./app.config.js').expo.version)")"
 TAG="${1:-v${VERSION}}"

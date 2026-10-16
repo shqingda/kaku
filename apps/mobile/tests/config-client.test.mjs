@@ -91,7 +91,7 @@ test('getPublicConfig throws KakuApiError with the server message', async (t) =>
   );
 });
 
-test('getPublicConfig forwards the abort signal', async (t) => {
+test('getPublicConfig preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -106,8 +106,10 @@ test('getPublicConfig forwards the abort signal', async (t) => {
     });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getPublicConfig(controller.signal);
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

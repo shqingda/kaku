@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -22,12 +23,12 @@ export function useBlocklist() {
 }
 
 export function useSetUserBlocked(username: string) {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = queryKeys.blocklist(session?.user.id);
 
-  return useMutation<number[], Error, boolean>({
-    mutationFn: (shouldBlock: boolean) =>
+  return useAuthMutation<number[], Error, boolean>({
+    mutationFn: (shouldBlock: boolean, request) =>
       setUserBlocked(request, username.trim(), shouldBlock),
     onSuccess: (blocklist) => {
       queryClient.setQueryData(queryKey, blocklist);

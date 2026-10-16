@@ -62,7 +62,7 @@ test('getPublicRankedSubjects throws KakuApiError with the server message', asyn
   );
 });
 
-test('getPublicRankedSubjects forwards the abort signal', async (t) => {
+test('getPublicRankedSubjects preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -73,8 +73,10 @@ test('getPublicRankedSubjects forwards the abort signal', async (t) => {
     return Response.json({ items: [] });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getPublicRankedSubjects(1, 0, controller.signal);
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

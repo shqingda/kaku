@@ -61,7 +61,7 @@ test('getChannelSubjects throws KakuApiError with the server message', async (t)
   );
 });
 
-test('getChannelSubjects forwards the abort signal', async (t) => {
+test('getChannelSubjects preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -72,8 +72,10 @@ test('getChannelSubjects forwards the abort signal', async (t) => {
     return Response.json({ items: [] });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getChannelSubjects(1, controller.signal);
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

@@ -27,6 +27,7 @@ fs.appendFileSync(process.env.KAKU_TEST_COMMAND_LOG, JSON.stringify({
   optimization: process.env.KAKU_OPTIMIZE_NATIVE,
   updateChannel: process.env.KAKU_UPDATE_CHANNEL,
   sentryUploadDisabled: process.env.SENTRY_DISABLE_AUTO_UPLOAD,
+  apiUrl: process.env.EXPO_PUBLIC_KAKU_API_URL,
 }) + '\\n');
 if (command === 'git') {
   const operation = args[0] === '-C' ? args[2] : args[0];
@@ -43,10 +44,10 @@ if (command === 'git') {
   assert.equal(fixture.status, 0);
   return {
     root, mobile, manifest,
-    run(script, args, optimization = '0') {
+    run(script, args, optimization = '0', extraEnv = {}) {
       writeFileSync(log, '');
       return spawnSync('bash', [join(root, 'scripts', script), ...args], {
-        env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, KAKU_TEST_COMMAND_LOG: log, KAKU_OPTIMIZE_NATIVE: optimization },
+        env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, KAKU_TEST_COMMAND_LOG: log, KAKU_OPTIMIZE_NATIVE: optimization, ...extraEnv },
         encoding: 'utf8',
       });
     },
@@ -68,6 +69,7 @@ function assertBuild(fixture, result, { profile, optimization, artifact }) {
   assert.equal(prebuild.optimization, optimization);
   assert.equal(prebuild.updateChannel, 'github');
   assert.equal(prebuild.sentryUploadDisabled, 'true');
+  assert.equal(prebuild.apiUrl, 'https://kaku-api.shqingda.workers.dev');
   const gradle = commands.find(entry => entry.command === 'gradlew');
   assert.equal(gradle.optimization, optimization);
   assert.deepEqual(gradle.args, [':app:assembleRelease', '-PreactNativeArchitectures=arm64-v8a']);
@@ -138,7 +140,7 @@ test('release publishing accepts shrinking and uploads the standard APK name', (
 });
 
 function readConfig(profile, flag, extraEnv = {}) {
-  const env = { ...process.env, EAS_BUILD_PROFILE: profile, KAKU_UPDATE_CHANNEL: '', ...extraEnv };
+  const env = { ...process.env, EXPO_PUBLIC_KAKU_API_URL: 'https://kaku-api.shqingda.workers.dev', EAS_BUILD_PROFILE: profile, KAKU_UPDATE_CHANNEL: '', ...extraEnv };
   if (flag === undefined) delete env.KAKU_OPTIMIZE_NATIVE;
   else env.KAKU_OPTIMIZE_NATIVE = flag;
   const result = spawnSync(process.execPath, ['-e', 'process.stdout.write(JSON.stringify(require("./apps/mobile/app.config.js").expo))'], {
@@ -178,4 +180,13 @@ test('cloud profiles retain shrinking defaults while separating store and GitHub
     assert.equal(properties.android.enableMinifyInReleaseBuilds, production);
     assert.equal(properties.android.enableShrinkResourcesInReleaseBuilds, production);
   }
+});
+
+test('local build keeps an explicitly selected isolated API target', () => {
+  const fixture = createBuildFixture();
+  try {
+    const result = fixture.run('build-android.sh', ['debug'], '0', { EXPO_PUBLIC_KAKU_API_URL: 'http://127.0.0.1:8787' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(fixture.commands().find(entry => entry.command === 'pnpm').apiUrl, 'http://127.0.0.1:8787');
+  } finally { fixture.cleanup(); }
 });

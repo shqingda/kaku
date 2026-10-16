@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useAuthActions } from '@/features/auth/auth-provider';
 import {
   createIndex,
   deleteIndex,
@@ -11,11 +11,10 @@ import { queryKeys } from '@/lib/query-keys';
 type IndexInput = { desc: string; isPrivate?: boolean; title: string };
 
 export function useCreateIndex() {
-  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (input: IndexInput) => createIndex(request, input),
+  return useAuthMutation({
+    mutationFn: (input: IndexInput, request) => createIndex(request, input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['indexes', 'kaku'],
@@ -25,15 +24,15 @@ export function useCreateIndex() {
 }
 
 export function useUpdateIndex(indexId: number) {
-  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (input: IndexInput & { expected: { desc: string; isPrivate: boolean; title: string } }) => updateIndex(request, indexId, input),
-    onSuccess: async () => {
+  return useAuthMutation({
+    mutationFn: (input: IndexInput & { expected: { desc: string; isPrivate: boolean; title: string } }, request) => updateIndex(request, indexId, input),
+    onSuccess: async (_data, _input, _context, scope) => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.publicIndex(indexId),
       });
+      if (!scope.isCurrent()) return;
       await queryClient.invalidateQueries({
         queryKey: ['indexes', 'kaku'],
       });
@@ -42,11 +41,10 @@ export function useUpdateIndex(indexId: number) {
 }
 
 export function useDeleteIndex() {
-  const { request } = useAuthActions();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (indexId: number) => deleteIndex(request, indexId),
+  return useAuthMutation({
+    mutationFn: (indexId: number, request) => deleteIndex(request, indexId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['indexes', 'kaku'],

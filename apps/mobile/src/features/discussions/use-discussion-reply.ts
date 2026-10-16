@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useAuthActions } from '@/features/auth/auth-provider';
 import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 
 import {
@@ -16,7 +16,6 @@ export type {
 } from './discussion-reply-target';
 
 export function useDiscussionReply(target: DiscussionReplyTarget) {
-  const { request } = useAuthActions();
   const queryClient = useQueryClient();
   const ops = discussionReplyOps(target);
   const queryKey = discussionReplyQueryKey(target);
@@ -25,8 +24,8 @@ export function useDiscussionReply(target: DiscussionReplyTarget) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
-  const create = useMutation({
-    mutationFn: async ({ content, replyTo }: CreateDiscussionReplyInput) => {
+  const create = useAuthMutation({
+    mutationFn: async ({ content, replyTo }: CreateDiscussionReplyInput, request) => {
       const turnstileToken = await requestBangumiTurnstileToken();
       return ops.create(request, target.id, {
         content,
@@ -37,19 +36,19 @@ export function useDiscussionReply(target: DiscussionReplyTarget) {
     onSuccess: invalidate,
   });
 
-  const edit = useMutation({
+  const edit = useAuthMutation({
     mutationFn: ({
       content,
       postId,
     }: {
       content: string;
       postId: number;
-    }) => ops.edit(request, postId, content),
+    }, request) => ops.edit(request, postId, content),
     onSuccess: invalidate,
   });
 
-  const remove = useMutation({
-    mutationFn: (postId: number) => ops.remove(request, postId),
+  const remove = useAuthMutation({
+    mutationFn: (postId: number, request) => ops.remove(request, postId),
     onSuccess: invalidate,
   });
 

@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { z } from 'zod';
+import { handoffSessionRequestSchema, handoffStartQuerySchema } from '@kaku/shared/auth-contract';
 
 import type { Env } from '../env.ts';
 import { requireEnv } from '../env.ts';
@@ -26,11 +27,6 @@ const HANDOFF_TTL_MS = 60 * 1000;
 const SESSION_TTL_MS = 60 * 60 * 1000;
 const REFRESH_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
-const sessionRequestSchema = z.object({
-  code: z.string().min(20),
-  deviceName: z.string().trim().min(1).max(80).default('未知设备'),
-});
-
 const refreshRequestSchema = z.object({
   refreshToken: z.string().min(20),
 });
@@ -46,11 +42,13 @@ function getStore(env: Env, dependencies: AuthDependencies) {
 }
 
 async function createSessionTokens({
+  connectionId,
   createdAt,
   deviceName,
   store,
   userId,
 }: {
+  connectionId: string;
   createdAt: number;
   deviceName: string;
   store: AuthStore;
@@ -62,7 +60,8 @@ async function createSessionTokens({
   const expiresAt = createdAt + SESSION_TTL_MS;
   const refreshExpiresAt = createdAt + REFRESH_TTL_MS;
 
-  await store.createSession({
+  const created = await store.createSessionForConnection({
+    connectionId,
     createdAt,
     deviceName,
     expiresAt,
@@ -72,6 +71,7 @@ async function createSessionTokens({
     tokenHash: await hashToken(sessionToken),
     userId,
   });
+  if (!created) return null;
 
   return {
     expiresAt,
@@ -103,6 +103,14 @@ export function registerAuthRoutes(
       );
     }
 
+    const proof = handoffStartQuerySchema.safeParse(context.req.query());
+    if (!proof.success) {
+      return context.json({
+        error: 'login_upgrade_required',
+        message: '请升级 Kaku 后重新发起安全登录。',
+      }, 400);
+    }
+
     const clientId = requireEnv(
       context.env.BANGUMI_CLIENT_ID,
       'BANGUMI_CLIENT_ID',
@@ -116,6 +124,8 @@ export function registerAuthRoutes(
 
     await getStore(context.env, dependencies).createOAuthTransaction({
       appRedirectUri,
+      codeChallenge: proof.data.code_challenge,
+      requestId: proof.data.request_id,
       createdAt,
       expiresAt: createdAt + OAUTH_TRANSACTION_TTL_MS,
       stateHash: await hashToken(state),
@@ -179,7 +189,7 @@ export function registerAuthRoutes(
     }
 
     const updatedAt = now();
-    await store.saveBangumiLogin({
+    const connectionId = await store.saveBangumiLogin({
       accessToken: await encryptSecret(token.access_token, encryptionKey),
       accessTokenExpiresAt: updatedAt + token.expires_in * 1000,
       refreshToken: await encryptSecret(token.refresh_token, encryptionKey),
@@ -198,6 +208,9 @@ export function registerAuthRoutes(
     const handoffCode = createRandomToken();
     await store.createHandoff({
       codeHash: await hashToken(handoffCode),
+      codeChallenge: transaction.codeChallenge,
+      connectionId,
+      requestId: transaction.requestId,
       createdAt: updatedAt,
       expiresAt: updatedAt + HANDOFF_TTL_MS,
       userId: bangumiUser.id,
@@ -205,12 +218,13 @@ export function registerAuthRoutes(
 
     const appRedirect = new URL(transaction.appRedirectUri);
     appRedirect.searchParams.set('code', handoffCode);
+    appRedirect.searchParams.set('request_id', transaction.requestId);
 
     return context.redirect(appRedirect.toString());
   });
 
   app.post('/auth/session', async (context) => {
-    const parsedBody = sessionRequestSchema.safeParse(
+    const parsedBody = handoffSessionRequestSchema.safeParse(
       await context.req.json().catch(() => null),
     );
 
@@ -218,7 +232,7 @@ export function registerAuthRoutes(
       return context.json(
         {
           error: 'invalid_handoff_code',
-          message: '登录交接码格式不正确。',
+          message: '登录信息不完整，请升级 Kaku 后重新登录。',
         },
         400,
       );
@@ -226,12 +240,16 @@ export function registerAuthRoutes(
 
     const store = getStore(context.env, dependencies);
     const currentTime = now();
-    const user = await store.consumeHandoff(
+    const handoff = await store.consumeHandoff(
       await hashToken(parsedBody.data.code),
       currentTime,
+      {
+        codeChallenge: await hashToken(parsedBody.data.codeVerifier),
+        requestId: parsedBody.data.requestId,
+      },
     );
 
-    if (!user) {
+    if (!handoff) {
       return context.json(
         {
           error: 'invalid_handoff_code',
@@ -242,15 +260,19 @@ export function registerAuthRoutes(
     }
 
     const tokens = await createSessionTokens({
+      connectionId: handoff.connectionId,
       createdAt: currentTime,
       deviceName: parsedBody.data.deviceName,
       store,
-      userId: user.id,
+      userId: handoff.user.id,
     });
+    if (!tokens) {
+      return context.json({ error: 'connection_changed', message: '连接状态已经改变，请重新登录。' }, 409);
+    }
 
     return context.json({
       ...tokens,
-      user,
+      user: handoff.user,
     });
   });
 
@@ -387,8 +409,10 @@ export function registerAuthRoutes(
       return authentication;
     }
 
-    await store.deleteAllSessions(authentication.userId);
-    await store.deleteBangumiCredential(authentication.userId);
+    const disconnected = await store.deleteBangumiCredential(authentication.userId, authentication.connectionId);
+    if (!disconnected) {
+      return context.json({ error: 'connection_changed', message: '连接状态已经改变，请重试。' }, 409);
+    }
 
     return context.json({
       bangumiTokenRevoked: false,

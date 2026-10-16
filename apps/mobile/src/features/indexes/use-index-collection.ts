@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AuthSessionChangedError } from '@/features/auth/auth-request-scope';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -28,16 +30,17 @@ export function useSetIndexCollection(indexId: number) {
   const queryClient = useQueryClient();
   const queryKey = queryKeys.indexCollection(session?.user.id, indexId);
 
-  return useMutation<boolean, Error, boolean, { previous: boolean | undefined }>({
-    mutationFn: (shouldCollect: boolean) =>
+  return useAuthMutation<boolean, Error, boolean, { previous: boolean | undefined }>({
+    mutationFn: (shouldCollect: boolean, request) =>
       setIndexCollection(request, indexId, shouldCollect),
     onError: (_error, _shouldCollect, context) => {
       if (context) {
         queryClient.setQueryData(queryKey, context.previous);
       }
     },
-    onMutate: async (shouldCollect) => {
+    onMutate: async (shouldCollect, scope) => {
       await queryClient.cancelQueries({ queryKey });
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
       const previous = queryClient.getQueryData<boolean>(queryKey);
       queryClient.setQueryData(queryKey, shouldCollect);
       return { previous };

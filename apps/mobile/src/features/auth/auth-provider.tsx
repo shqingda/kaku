@@ -27,13 +27,17 @@ import { userErrorMessage } from '@/lib/user-error-message';
 
 import {
   canRefreshSession,
-  getHandoffCode,
   isSessionActive,
 } from './auth-session';
 import { authStorage } from './auth-storage';
+import { getHandoffCallback, parsePendingLogin, type PendingLogin } from './login-attempt';
+import { createLoginProof, loginAttemptStorage } from './login-proof';
+import { AuthSessionChangedError, type AuthRequestScope } from './auth-request-scope';
+export { AuthSessionChangedError, type AuthRequestIdentity, type AuthRequestScope } from './auth-request-scope';
 import type { AuthSession } from './model';
 
 type AuthSessionValue = {
+  authEpoch: number;
   error?: string;
   isLoading: boolean;
   isSigningIn: boolean;
@@ -41,6 +45,7 @@ type AuthSessionValue = {
 };
 
 type AuthActionsValue = {
+  captureRequest: () => AuthRequestScope;
   clearError: () => void;
   completeSignIn: (callbackUrl: string) => Promise<void>;
   disconnectBangumi: () => Promise<void>;
@@ -64,45 +69,70 @@ function getErrorMessage(error: unknown) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [authEpoch, setAuthEpoch] = useState(0);
+  const authEpochRef = useRef(0);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string>();
   const handoffPromiseRef = useRef<Promise<void> | null>(null);
   const handoffCodeRef = useRef<string | undefined>(undefined);
+  const pendingLoginRef = useRef<PendingLogin | null>(null);
+  const pendingLoginLoadRef = useRef<Promise<void> | null>(null);
+  const signingInRef = useRef(false);
+  const sessionAbortRef = useRef(new AbortController());
   const refreshPromiseRef = useRef<{ session: AuthSession; task: Promise<AuthSession> } | null>(null);
   const storageWriteRef = useRef<Promise<void>>(Promise.resolve());
   const sessionVersionRef = useRef(0);
   const sessionRef = useRef<AuthSession | null>(null);
 
   // SecureStore writes must retain the same order as session changes.
-  const persistSession = useCallback((next: AuthSession | null) => {
-    const task = storageWriteRef.current.catch(() => undefined).then(() =>
-      next ? authStorage.save(next) : authStorage.clear(),
-    );
+  const persistSession = useCallback((next: AuthSession | null, version: number) => {
+    const task = storageWriteRef.current.catch(() => undefined).then(() => {
+      if (sessionVersionRef.current !== version) throw new AuthSessionChangedError();
+      return next ? authStorage.save(next) : authStorage.clear();
+    });
     storageWriteRef.current = task;
     return task;
   }, []);
 
+  const invalidateIdentity = useCallback(() => {
+    authEpochRef.current += 1;
+    setAuthEpoch(authEpochRef.current);
+    sessionAbortRef.current.abort();
+    sessionAbortRef.current = new AbortController();
+    // Removing queries also cancels their retryers; old optimistic values cannot
+    // survive into another login when its mutation callbacks are now invalid.
+    queryClient.removeQueries({ predicate: isPrivateQuery });
+  }, [queryClient]);
+
   const commitSession = useCallback(async (
     nextSession: AuthSession,
     version: number,
+    replaceIdentity = false,
   ) => {
-    if (sessionVersionRef.current !== version) throw new Error('登录状态已变化。');
-    await persistSession(nextSession);
-    if (sessionVersionRef.current !== version) throw new Error('登录状态已变化。');
+    if (sessionVersionRef.current !== version) throw new AuthSessionChangedError();
+    const identityChanges = replaceIdentity || sessionRef.current?.sessionId !== nextSession.sessionId ||
+      sessionRef.current?.user.id !== nextSession.user.id;
+    // Invalidate refreshes started while the handoff was pending before the new
+    // session enters the serialized storage queue. Token rotation keeps its owner.
+    const commitVersion = identityChanges ? ++sessionVersionRef.current : version;
+    await persistSession(nextSession, commitVersion);
+    if (sessionVersionRef.current !== commitVersion) throw new AuthSessionChangedError();
+    if (identityChanges) invalidateIdentity();
     sessionRef.current = nextSession;
     setSession(nextSession);
     setError(undefined);
     return nextSession;
-  }, [persistSession]);
+  }, [invalidateIdentity, persistSession]);
 
   const clearSession = useCallback(async () => {
-    sessionVersionRef.current += 1;
+    const version = ++sessionVersionRef.current;
+    invalidateIdentity();
     sessionRef.current = null;
     setSession(null);
-    await persistSession(null);
-  }, [persistSession]);
+    await persistSession(null, version);
+  }, [invalidateIdentity, persistSession]);
 
   const refreshSession = useCallback(
     async (currentSession: AuthSession) => {
@@ -113,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Another request may already have rotated these credentials.
       if (latest.refreshToken !== currentSession.refreshToken) return latest;
       const pending = refreshPromiseRef.current;
-      if (pending?.session === currentSession) return pending.task;
+      if (pending && pending.session === currentSession) return pending.task;
       const version = sessionVersionRef.current;
       const task = refreshAuthSession(currentSession.refreshToken)
         .then((next) => commitSession(next, version))
@@ -124,7 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             caughtError instanceof KakuApiError && caughtError.status === 401
           ) {
             await clearSession();
-            setError('登录已失效，请重新登录。');
+            if (sessionVersionRef.current === version + 1 && !sessionRef.current) {
+              setError('登录已失效，请重新登录。');
+            }
           }
           throw caughtError;
         })
@@ -158,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionRef.current = storedSession;
             await refreshSession(storedSession);
           } catch (caughtError) {
-            if (!(caughtError instanceof KakuApiError) || caughtError.status !== 401) {
+            if (sessionVersionRef.current === version && (!(caughtError instanceof KakuApiError) || caughtError.status !== 401)) {
               setError('登录服务暂时不可用，稍后重试即可。');
             }
           }
@@ -169,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearSession();
         }
       } catch {
-        setError('无法读取设备上的登录状态。');
+        if (sessionVersionRef.current === version) setError('无法读取设备上的登录状态。');
       } finally {
         setIsLoading(false);
       }
@@ -184,146 +216,188 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.removeQueries({ predicate: isPrivateQuery });
   }, [isLoading, queryClient, session]);
 
-  const completeSignIn = useCallback(async (callbackUrl: string) => {
-    const code = getHandoffCode(callbackUrl);
-
-    if (handoffCodeRef.current === code) {
-      // The auth session and the deep-link route may deliver the same callback.
-      // Reuse an in-flight exchange, or ignore it after the first one succeeds.
-      return handoffPromiseRef.current ?? Promise.resolve();
-    }
-
-    handoffCodeRef.current = code;
-    const deviceName = Platform.select({
-      android: 'Android 设备',
-      ios: 'iOS 设备',
-      default: 'Kaku 设备',
-    });
-    const version = ++sessionVersionRef.current;
-    const task = exchangeHandoffCode(code, deviceName)
-      .then((next) => commitSession(next, version))
-      .then(() => undefined)
-      .catch((caughtError) => {
-        handoffCodeRef.current = undefined;
+  const loadPendingLogin = useCallback(() => {
+    if (!pendingLoginLoadRef.current) {
+      pendingLoginLoadRef.current = loginAttemptStorage.load().then((pending) => {
+        pendingLoginRef.current = pending;
+      }).catch((caughtError) => {
+        pendingLoginLoadRef.current = null;
         throw caughtError;
       });
-    handoffPromiseRef.current = task;
+    }
+    return pendingLoginLoadRef.current;
+  }, []);
 
-    return task.finally(() => {
-      handoffPromiseRef.current = null;
-    });
-  }, [commitSession]);
+  const clearPendingLogin = useCallback(async (pending: PendingLogin) => {
+    if (pendingLoginRef.current !== pending) return;
+    pendingLoginRef.current = null;
+    await loginAttemptStorage.clear();
+  }, []);
 
-  const request = useCallback(
-    async (path: string, init?: RequestInit) => {
-      let currentSession = sessionRef.current;
-
-      if (!currentSession) {
-        throw new Error('请先登录 Kaku。');
-      }
-
-      if (!isSessionActive(currentSession.expiresAt, Date.now() + 60_000)) {
-        currentSession = await refreshSession(currentSession);
-      }
-
-      let response = await fetchKaku(
-        path,
-        currentSession.sessionToken,
-        init,
-      );
-
-      if (response.status === 401) {
-        currentSession = await refreshSession(currentSession);
-        response = await fetchKaku(path, currentSession.sessionToken, init);
-      }
-
-      if (
-        await isReauthorizationResponse(response) &&
-        sessionRef.current === currentSession
-      ) {
-        await clearSession();
-        setError('Bangumi 授权已失效，请重新登录。');
-      }
-
-      return response;
-    },
-    [clearSession, refreshSession],
-  );
-
-  const signIn = useCallback(async () => {
-    if (isSigningIn) {
-      return false;
+  const completeSignIn = useCallback(async (callbackUrl: string) => {
+    const { code, requestId } = getHandoffCallback(callbackUrl);
+    const callbackKey = `${requestId}:${code}`;
+    if (handoffCodeRef.current === callbackKey) return handoffPromiseRef.current ?? Promise.resolve();
+    await loadPendingLogin();
+    if (handoffCodeRef.current === callbackKey) return handoffPromiseRef.current ?? Promise.resolve();
+    if (handoffPromiseRef.current) throw new Error('正在完成其他登录回调，请稍后重试。');
+    const pending = pendingLoginRef.current;
+    if (!pending || pending.requestId !== requestId || !parsePendingLogin(JSON.stringify(pending))) {
+      throw new Error('本机没有匹配的登录请求，请重新发起登录。');
     }
 
+    handoffCodeRef.current = callbackKey;
+    const deviceName = Platform.select({ android: 'Android 设备', ios: 'iOS 设备', default: 'Kaku 设备' });
+    const version = sessionVersionRef.current;
+    const task = exchangeHandoffCode({ code, codeVerifier: pending.codeVerifier, requestId, deviceName })
+      .then((next) => commitSession(next, version, true))
+      .then(() => undefined)
+      .finally(() => clearPendingLogin(pending));
+    handoffPromiseRef.current = task;
+    try {
+      await task;
+    } catch (caughtError) {
+      if (handoffCodeRef.current === callbackKey) handoffCodeRef.current = undefined;
+      throw caughtError;
+    } finally {
+      if (handoffPromiseRef.current === task) handoffPromiseRef.current = null;
+    }
+  }, [clearPendingLogin, commitSession, loadPendingLogin]);
+
+  const captureRequest = useCallback((): AuthRequestScope => {
+    const originalSession = sessionRef.current;
+    if (!originalSession) throw new Error('请先登录 Kaku。');
+    const identity = { userId: originalSession.user.id, sessionId: originalSession.sessionId, authEpoch: authEpochRef.current };
+    const sessionSignal = sessionAbortRef.current.signal;
+    const isCurrent = () => authEpochRef.current === identity.authEpoch &&
+      sessionRef.current?.sessionId === identity.sessionId && sessionRef.current?.user.id === identity.userId;
+    const assertCurrent = () => { if (!isCurrent()) throw new AuthSessionChangedError(); };
+    const scopedRequest = async (path: string, init?: RequestInit) => {
+      assertCurrent();
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      const signals = [sessionSignal, init?.signal];
+      for (const signal of signals) {
+        if (signal?.aborted) abort();
+        else signal?.addEventListener('abort', abort, { once: true });
+      }
+      try {
+        let currentSession = sessionRef.current!;
+        if (!isSessionActive(currentSession.expiresAt, Date.now() + 60_000)) {
+          currentSession = await refreshSession(currentSession);
+          assertCurrent();
+        }
+        const options = { ...init, signal: controller.signal };
+        let response = await fetchKaku(path, currentSession.sessionToken, options);
+        assertCurrent();
+        if (response.status === 401) {
+          currentSession = await refreshSession(currentSession);
+          assertCurrent();
+          response = await fetchKaku(path, currentSession.sessionToken, options);
+          assertCurrent();
+        }
+        const reauthorizationRequired = await isReauthorizationResponse(response);
+        assertCurrent();
+        if (reauthorizationRequired) {
+          await clearSession();
+          if (authEpochRef.current === identity.authEpoch + 1 && !sessionRef.current) {
+            setError('Bangumi 授权已失效，请重新登录。');
+          }
+        }
+        return response;
+      } catch (caughtError) {
+        assertCurrent();
+        throw caughtError;
+      } finally {
+        for (const signal of signals) signal?.removeEventListener('abort', abort);
+      }
+    };
+    return { identity, isCurrent, request: scopedRequest };
+  }, [clearSession, refreshSession]);
+
+  const request = useCallback((path: string, init?: RequestInit) => captureRequest().request(path, init), [captureRequest]);
+
+  const signIn = useCallback(async () => {
+    if (signingInRef.current) return false;
+    signingInRef.current = true;
     setError(undefined);
     setIsSigningIn(true);
-
+    let pending: PendingLogin | undefined;
+    const previousSession = sessionRef.current;
+    const previousVersion = sessionVersionRef.current;
+    const previousAuthEpoch = authEpochRef.current;
     try {
+      await loadPendingLogin();
+      const proof = await createLoginProof();
+      if (sessionVersionRef.current !== previousVersion) throw new AuthSessionChangedError();
+      pending = proof.pending;
+      pendingLoginRef.current = pending;
+      await loginAttemptStorage.save(pending);
       const result = await WebBrowser.openAuthSessionAsync(
-        getBangumiLoginUrl(),
+        getBangumiLoginUrl({ codeChallenge: proof.codeChallenge, requestId: pending.requestId }),
         getAppCallbackUrl(),
       );
-
       if (result.type === 'success') {
         await completeSignIn(result.url);
         return true;
       }
-
       return false;
     } catch (caughtError) {
-      setError(getErrorMessage(caughtError));
+      if (sessionRef.current === previousSession && authEpochRef.current === previousAuthEpoch) {
+        setError(getErrorMessage(caughtError));
+      }
       return false;
     } finally {
+      if (pending) await clearPendingLogin(pending);
+      signingInRef.current = false;
       setIsSigningIn(false);
     }
-  }, [completeSignIn, isSigningIn]);
+  }, [clearPendingLogin, completeSignIn, loadPendingLogin]);
 
   const signOut = useCallback(async () => {
+    if (!sessionRef.current) return;
+    const scope = captureRequest();
     try {
-      if (sessionRef.current) {
-        try {
-          await unregisterPushDevice(request);
-        } catch {
-          // 退出仍继续；下次登录会重新登记。
-        }
-        const response = await request('/auth/session', { method: 'DELETE' });
-
-        if (!response.ok) {
-          throw new Error('server_sign_out_failed');
-        }
+      try {
+        await unregisterPushDevice(scope.request);
+      } catch {
+        // A failed unregister must not prevent this device from signing out.
       }
+      if (!scope.isCurrent()) return;
+      const response = await scope.request('/auth/session', { method: 'DELETE' });
+      if (!response.ok) throw new Error('server_sign_out_failed');
     } catch {
-      setError('本机已退出，但服务端会话暂时无法注销。');
+      if (scope.isCurrent()) setError('本机已退出，但服务端会话暂时无法注销。');
     } finally {
-      await clearSession();
+      if (scope.isCurrent()) await clearSession();
     }
-  }, [clearSession, request]);
+  }, [captureRequest, clearSession]);
 
   const disconnectBangumi = useCallback(async () => {
+    const scope = captureRequest();
     try {
-      await unregisterPushDevice(request);
+      await unregisterPushDevice(scope.request);
     } catch {
-      // 断开授权仍继续。
+      // An unavailable push service must not prevent revoking the connection.
     }
-    const response = await request('/auth/connection', { method: 'DELETE' });
-
-    if (!response.ok) {
-      throw new Error('无法断开 Bangumi，请稍后重试。');
-    }
-
-    await clearSession();
+    if (!scope.isCurrent()) throw new AuthSessionChangedError();
+    const response = await scope.request('/auth/connection', { method: 'DELETE' });
+    if (!response.ok) throw new Error('无法断开 Bangumi，请稍后重试。');
+    if (!scope.isCurrent()) throw new AuthSessionChangedError();
     setError(undefined);
-  }, [clearSession, request]);
+    await clearSession();
+  }, [captureRequest, clearSession]);
 
   const clearError = useCallback(() => setError(undefined), []);
 
   const sessionValue = useMemo(
-    () => ({ error, isLoading, isSigningIn, session }),
-    [error, isLoading, isSigningIn, session],
+    () => ({ authEpoch, error, isLoading, isSigningIn, session }),
+    [authEpoch, error, isLoading, isSigningIn, session],
   );
 
   const actionsValue = useMemo(
     () => ({
+      captureRequest,
       clearError,
       completeSignIn,
       disconnectBangumi,
@@ -331,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
     }),
-    [clearError, completeSignIn, disconnectBangumi, request, signIn, signOut],
+    [captureRequest, clearError, completeSignIn, disconnectBangumi, request, signIn, signOut],
   );
 
   return (

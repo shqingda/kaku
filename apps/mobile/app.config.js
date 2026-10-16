@@ -1,10 +1,12 @@
 // 按 EAS 构建环境动态设置包名：
 // - production / github：正式包名 com.shqingda.kaku（商店 / GitHub APK）
 // - 本地与 debug 构建（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
+const { resolveApiUrl } = require('./config/api-url.cjs');
 const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
 
 const isProduction = EAS_BUILD_PROFILE === 'production' || EAS_BUILD_PROFILE === 'github';
 // 正式 Android 包默认启用 R8 与资源裁剪；显式设为 0 可生成诊断对照包。
+const apiUrl = resolveApiUrl(process.env.EXPO_PUBLIC_KAKU_API_URL, isProduction);
 const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE !== '0';
 const suffix = isProduction ? '' : '.debug';
 const channel = isProduction ? 'production' : 'debug';
@@ -144,6 +146,7 @@ module.exports = {
       reactCompiler: true,
     },
     extra: {
+      apiUrl,
       appUpdate: {
         channel: process.env.KAKU_UPDATE_CHANNEL || 'store',
         iosAppStoreId: process.env.KAKU_IOS_APP_STORE_ID || '',

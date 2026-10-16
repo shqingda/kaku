@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 
 import type { Env } from '../env.ts';
 import { BangumiOAuthError } from './bangumi-client.ts';
-import { BangumiReauthorizationRequiredError } from './bangumi-token-service.ts';
+import { BangumiReauthorizationRequiredError, BangumiRefreshPendingError, BangumiRefreshUnconfirmedError } from './bangumi-token-service.ts';
 import { createD1AuthStore } from './store.ts';
 import type { AuthStore } from './store.ts';
 import { authenticateRequest } from './session-service.ts';
@@ -32,6 +32,12 @@ export function mapBangumiAuthError(
   context: Context<{ Bindings: Env }>,
   error: unknown,
 ): Response | null {
+  if (error instanceof BangumiRefreshUnconfirmedError) {
+    return context.json({ error: 'bangumi_refresh_unconfirmed', message: error.message }, 503);
+  }
+  if (error instanceof BangumiRefreshPendingError) {
+    return context.json({ error: 'bangumi_refresh_pending', message: error.message }, 503, { 'Retry-After': '1' });
+  }
   if (error instanceof BangumiReauthorizationRequiredError) {
     return context.json(
       { error: 'bangumi_reauthorization_required', message: error.message },

@@ -2,8 +2,23 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { BangumiOAuthError } from '../src/auth/bangumi-client.ts';
-import { getValidBangumiAccessToken } from '../src/auth/bangumi-token-service.ts';
+import { getValidBangumiAccessToken as getValidToken } from '../src/auth/bangumi-token-service.ts';
 import { decryptSecret, encryptSecret } from '../src/auth/crypto.ts';
+
+// These unit tests inject the owner of a refresh lease. Contention and CAS
+// are exercised against actual D1 in credential-lifecycle.test.mjs.
+function getValidBangumiAccessToken(input) {
+  const store = input.store;
+  return getValidToken({ ...input, store: {
+    ...store,
+    async claimBangumiRefresh() { return true; },
+    async releaseBangumiRefresh() {},
+    async saveBangumiCredential(next) {
+      await store.saveBangumiCredential(next);
+      return true;
+    },
+  } });
+}
 
 const now = 1_800_000_000_000;
 const encryptionKey = Buffer.alloc(32, 7).toString('base64url');
@@ -15,6 +30,7 @@ async function encryptedCredential(overrides = {}) {
     refreshToken: await encryptSecret('old-refresh-token', encryptionKey),
     updatedAt: now - 10_000,
     userId: 42,
+    connectionId: 'connection-1', refreshOperationId: null, refreshLeaseExpiresAt: null,
     ...overrides,
   };
 }
@@ -217,7 +233,7 @@ test('a refresh that belongs to another Bangumi account is rejected', async () =
       },
       userId: 42,
     }),
-    { name: 'BangumiReauthorizationRequiredError' },
+    { name: 'BangumiRefreshUnconfirmedError' },
   );
   assert.equal(saved, null);
 });
@@ -230,6 +246,7 @@ test('a losing concurrent refresh recovers by reading back the newer credential'
     refreshToken: await encryptSecret('winner-refresh', encryptionKey),
     updatedAt: now + 5_000,
     userId: 42,
+    connectionId: 'connection-1', refreshOperationId: null, refreshLeaseExpiresAt: null,
   };
   let reads = 0;
 
@@ -259,6 +276,7 @@ test('a concurrent winner whose token is already expired does not recover', asyn
     refreshToken: await encryptSecret('stale-refresh', encryptionKey),
     updatedAt: now + 5_000,
     userId: 42,
+    connectionId: 'connection-1', refreshOperationId: null, refreshLeaseExpiresAt: null,
   };
   let reads = 0;
 

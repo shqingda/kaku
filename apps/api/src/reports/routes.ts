@@ -74,7 +74,7 @@ export function registerReportRoutes(
 
       if (error instanceof BangumiReportError) {
         if (error.status === 401) {
-          await store.deleteBangumiCredential(authentication.userId);
+          await store.deleteBangumiCredential(authentication.userId, authentication.connectionId);
           return context.json(
             {
               error: 'bangumi_reauthorization_required',

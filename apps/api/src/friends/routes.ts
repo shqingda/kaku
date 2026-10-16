@@ -71,7 +71,7 @@ export function registerFriendRoutes(
 
       if (error instanceof BangumiFriendsError) {
         if (error.status === 401) {
-          await store.deleteBangumiCredential(authentication.userId);
+          await store.deleteBangumiCredential(authentication.userId, authentication.connectionId);
           return context.json(
             {
               error: 'bangumi_reauthorization_required',
@@ -153,7 +153,7 @@ export function registerFriendRoutes(
 
       if (error instanceof BangumiFriendsError) {
         if (error.status === 401) {
-          await store.deleteBangumiCredential(authentication.userId);
+          await store.deleteBangumiCredential(authentication.userId, authentication.connectionId);
           return context.json(
             {
               error: 'bangumi_reauthorization_required',

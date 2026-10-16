@@ -44,7 +44,7 @@ const user = {
 };
 
 test('saveBangumiLogin upserts the user and credential', async () => {
-  await store.saveBangumiLogin({
+  const connectionId = await store.saveBangumiLogin({
     accessToken: 'encrypted-access-token',
     accessTokenExpiresAt: FUTURE,
     refreshToken: 'encrypted-refresh-token',
@@ -55,6 +55,7 @@ test('saveBangumiLogin upserts the user and credential', async () => {
   const credential = await store.getBangumiCredential(user.id);
   assert.equal(credential.accessToken, 'encrypted-access-token');
   assert.equal(credential.accessTokenExpiresAt, FUTURE);
+  assert.equal(credential.connectionId, connectionId);
 
   // 再次登录用新昵称：应是更新而非新增，用户与凭证仍各只有一条。
   await store.saveBangumiLogin({
@@ -121,18 +122,22 @@ test('rotateSession swaps the refresh token atomically', async () => {
 });
 
 test('consumeHandoff is one-time', async () => {
+  const credential = await store.getBangumiCredential(user.id);
   await store.createHandoff({
     codeHash: 'handoff-hash',
+    codeChallenge: 'one-time-challenge', requestId: 'one-time-request',
+    connectionId: credential.connectionId,
     createdAt: NOW,
     expiresAt: FUTURE,
     userId: user.id,
   });
 
-  const first = await store.consumeHandoff('handoff-hash', NOW);
-  assert.equal(first.username, 'kaku-user');
+  const first = await store.consumeHandoff('handoff-hash', NOW, { codeChallenge: 'one-time-challenge', requestId: 'one-time-request' });
+  assert.equal(first.user.username, 'kaku-user');
+  assert.equal(first.connectionId, credential.connectionId);
 
-  assert.equal(await store.consumeHandoff('handoff-hash', NOW), null);
-  assert.equal(await store.consumeHandoff('handoff-hash', FUTURE + 1), null);
+  assert.equal(await store.consumeHandoff('handoff-hash', NOW, { codeChallenge: 'one-time-challenge', requestId: 'one-time-request' }), null);
+  assert.equal(await store.consumeHandoff('handoff-hash', FUTURE + 1, { codeChallenge: 'one-time-challenge', requestId: 'one-time-request' }), null);
 });
 
 test('listSessions only returns unexpired sessions ordered by recency', async () => {
@@ -207,6 +212,43 @@ test('deleteSessionById and deleteAllSessions remove the right rows', async () =
 });
 
 test('deleteBangumiCredential clears the credential', async () => {
-  await store.deleteBangumiCredential(user.id);
+  const credential = await store.getBangumiCredential(user.id);
+  assert.equal(await store.deleteBangumiCredential(user.id, credential.connectionId), true);
   assert.equal(await store.getBangumiCredential(user.id), null);
+});
+
+test('a wrong proof cannot burn a handoff and concurrent correct exchange consumes it once', async () => {
+  const connectionId = await store.saveBangumiLogin({
+    accessToken: 'current', accessTokenExpiresAt: FUTURE, refreshToken: 'current-refresh', updatedAt: NOW, user,
+  });
+  await store.createHandoff({
+    codeHash: 'bound-code', codeChallenge: 'correct-challenge', requestId: 'request-1',
+    connectionId, createdAt: NOW, expiresAt: FUTURE, userId: user.id,
+  });
+  assert.equal(await store.consumeHandoff('bound-code', NOW, {
+    codeChallenge: 'wrong-challenge', requestId: 'request-1',
+  }), null);
+  assert.equal(await store.consumeHandoff('bound-code', NOW, {
+    codeChallenge: 'correct-challenge', requestId: 'wrong-request',
+  }), null);
+  const results = await Promise.all(Array.from({ length: 2 }, () => store.consumeHandoff('bound-code', NOW, {
+    codeChallenge: 'correct-challenge', requestId: 'request-1',
+  })));
+  assert.equal(results.filter(Boolean).length, 1);
+});
+
+test('refresh cannot recreate a revoked credential or overwrite a new connection', async () => {
+  const input = { accessToken: 'old', accessTokenExpiresAt: FUTURE, refreshToken: 'old-refresh', updatedAt: NOW, user };
+  await store.saveBangumiLogin(input);
+  const previous = await store.getBangumiCredential(user.id);
+  const operationId = 'refresh-before-revoke';
+  assert.equal(await store.claimBangumiRefresh({ ...previous, operationId, now: NOW, leaseExpiresAt: FUTURE }), true);
+  await store.deleteBangumiCredential(user.id, previous.connectionId);
+  assert.equal(await store.saveBangumiCredential({ ...previous, previousRefreshToken: previous.refreshToken, operationId, accessToken: 'late-refresh' }), false);
+  assert.equal(await store.getBangumiCredential(user.id), null);
+  await store.saveBangumiLogin({ ...input, accessToken: 'reconnected', updatedAt: NOW + 1 });
+  const reconnected = await store.getBangumiCredential(user.id);
+  assert.notEqual(reconnected.connectionId, previous.connectionId);
+  assert.equal(await store.saveBangumiCredential({ ...previous, previousRefreshToken: previous.refreshToken, operationId, accessToken: 'late-refresh' }), false);
+  assert.equal((await store.getBangumiCredential(user.id)).accessToken, 'reconnected');
 });

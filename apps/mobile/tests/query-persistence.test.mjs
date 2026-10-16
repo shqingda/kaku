@@ -57,3 +57,22 @@ test('only explicitly private queries are cleared after sign out', () => {
   assert.equal(isPrivateQuery({ meta: { persist: true } }), false);
   assert.equal(isPrivateQuery({}), false);
 });
+
+test('account query keys remain private when an optimistic mutation creates them without metadata', () => {
+  for (const kind of ['collections', 'my-collections', 'timeline', 'notifications', 'friends', 'blocklist']) {
+    for (const owner of [1, 'signed-out']) {
+      assert.equal(isPrivateQuery({ queryKey: [kind, 'kaku', owner, 'item'] }), true, `${kind}/${owner}`);
+    }
+  }
+  assert.equal(isPrivateQuery({ queryKey: ['indexes', 'kaku', 1, 'collection', 42] }), true);
+  assert.equal(isPrivateQuery({ queryKey: ['auth', 'kaku', 'sessions', 1] }), true);
+});
+
+test('account classification preserves neighboring public queries and malformed owner keys', () => {
+  for (const queryKey of [
+    ['indexes', 'kaku', 'collect'], ['indexes', 'kaku', 'updated'], ['blogs', 'kaku', 'anime'],
+    ['tags', 'kaku', 2], ['friends', 'bangumi', 1], ['users', 'bangumi', 'a', 'timeline'],
+    ['collections', 'kaku', 'public'], ['notifications', 'kaku', 0], ['friends', 'kaku', '1'],
+    ['indexes', 'kaku', 1, 'public'], ['auth', 'kaku', 'public', 1],
+  ]) assert.equal(isPrivateQuery({ queryKey, meta: PUBLIC_QUERY_META }), false, JSON.stringify(queryKey));
+});

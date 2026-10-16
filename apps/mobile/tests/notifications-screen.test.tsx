@@ -4,7 +4,7 @@ import NotificationsScreen from '@/app/notifications';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
 const mockRequest = jest.fn();
-jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ request: mockRequest, session: { user: { id: 1 } } }) }));
+jest.mock('@/features/auth/auth-provider', () => ({ useAuthActions: () => ({ captureRequest: () => ({ identity: { userId: 1, sessionId: 'test', authEpoch: 0 }, request: mockRequest, isCurrent: () => true }) }), useAuth: () => ({ request: mockRequest, session: { user: { id: 1 } } }) }));
 jest.mock('expo-router', () => ({ Stack: { Screen: () => null } }));
 jest.mock('@/lib/use-connectivity', () => ({ useIsOffline: () => false }));
 jest.mock('@/features/shared/swipeable-row', () => ({ SwipeableRow: ({ children }: { children: React.ReactNode }) => children }));

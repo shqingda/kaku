@@ -24,7 +24,7 @@ jest.mock('expo-sqlite/kv-store', () => ({
 }));
 jest.mock('@/lib/diagnostic-log', () => ({ recordDiagnosticError: jest.fn() }));
 jest.mock('@/features/auth/auth-provider', () => ({
-  useAuth: () => ({ request: mockRequest, session: { user: { id: mockUserId } }, isLoading: false }),
+  useAuth: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => userId === mockUserId }; }, session: { user: { id: mockUserId } }, isLoading: false }),
 }));
 jest.mock('@/features/preferences/preferences-provider', () => ({
   usePreferences: () => ({ preferences: { syncEnabled: mockSync }, isReady: true, cloudSyncAvailable: true }),

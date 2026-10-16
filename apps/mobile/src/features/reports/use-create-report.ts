@@ -1,15 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
 
-import { useAuthActions } from '@/features/auth/auth-provider';
 import {
   createReport,
   type ReportInput,
 } from '@/infrastructure/kaku/reports-client';
 
 export function useCreateReport() {
-  const { request } = useAuthActions();
 
-  return useMutation({
-    mutationFn: (input: ReportInput) => createReport(request, input),
+  return useAuthMutation({
+    mutationFn: (input: ReportInput, request) => createReport(request, input),
   });
 }

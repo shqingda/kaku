@@ -6,12 +6,16 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_KAKU_API_URL": "https://kaku-api.shqingda.workers.dev"
+      }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "KAKU_OPTIMIZE_NATIVE": "1"
+        "KAKU_OPTIMIZE_NATIVE": "1",
+        "EXPO_PUBLIC_KAKU_API_URL": "https://kaku-api.shqingda.workers.dev"
       }
     },
     "github": {
@@ -21,7 +25,8 @@
         "buildType": "apk"
       },
       "env": {
-        "KAKU_UPDATE_CHANNEL": "github"
+        "KAKU_UPDATE_CHANNEL": "github",
+        "EXPO_PUBLIC_KAKU_API_URL": "https://kaku-api.shqingda.workers.dev"
       }
     }
   }

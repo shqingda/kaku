@@ -82,7 +82,7 @@ test('getBrowseSubjects throws KakuApiError with the server message', async (t) 
   );
 });
 
-test('getBrowseSubjects forwards the abort signal', async (t) => {
+test('getBrowseSubjects preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -93,6 +93,7 @@ test('getBrowseSubjects forwards the abort signal', async (t) => {
     return Response.json({ items: [], totalPages: 0 });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getBrowseSubjects({
     page: 1,
@@ -101,5 +102,6 @@ test('getBrowseSubjects forwards the abort signal', async (t) => {
     subjectType: 1,
   });
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

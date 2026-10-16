@@ -66,7 +66,7 @@ test('getGlobalTags throws KakuApiError with the server message', async (t) => {
   );
 });
 
-test('getGlobalTags forwards the abort signal', async (t) => {
+test('getGlobalTags preserves caller cancellation through the timeout signal', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -77,8 +77,10 @@ test('getGlobalTags forwards the abort signal', async (t) => {
     return Response.json({ items: [], page: 1 });
   };
   const controller = new AbortController();
+  controller.abort();
 
   await getGlobalTags(1, 1, controller.signal);
 
-  assert.equal(receivedSignal, controller.signal);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
 });

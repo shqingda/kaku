@@ -2,12 +2,13 @@ import { act, renderHook } from '@testing-library/react-native';
 import { useSyncedHistory } from '@/features/history/use-synced-history';
 import { addRecentSearch, mergeSearchHistory, type SearchHistoryRecord } from '@/features/search/search-history-model';
 
-let mockSession: { user: { id: number } } | null;
+let mockSession: { sessionId?: string; user: { id: number } } | null;
+const mockCaptureRequest = () => { const owner = mockSession!; return { identity: { userId: owner.user.id, sessionId: owner.sessionId ?? `session-${owner.user.id}`, authEpoch: 0 }, request: mockRequest, isCurrent: () => mockSession === owner }; };
 let mockEnabled = true;
 let mockReady = true;
 const mockRequest = jest.fn();
 jest.mock('@/features/auth/auth-provider', () => ({
-  useAuth: () => ({ request: mockRequest, session: mockSession, isLoading: false }),
+  useAuth: () => ({ request: mockRequest, captureRequest: mockCaptureRequest, session: mockSession, isLoading: false }),
 }));
 jest.mock('@/features/preferences/preferences-provider', () => ({
   usePreferences: () => ({ preferences: { syncEnabled: mockEnabled }, isReady: mockReady, cloudSyncAvailable: true }),
@@ -323,4 +324,16 @@ test('unmount drops pending recovery without writing the buffered records', asyn
   await act(async () => { read.resolve({ items: ['old'], updatedAt: 100 }); });
   expect(options.save).not.toHaveBeenCalled();
   expect(mockRequest).not.toHaveBeenCalled();
+});
+
+
+test('queued cloud history cannot borrow a replacement login before effects are cleaned up', async () => {
+  const old = deferred<Response>();
+  mockRequest.mockReset().mockReturnValueOnce(old.promise).mockImplementation(async () => Response.json(empty));
+  const hook = await renderHook(() => useSyncedHistory(options));
+  await act(async () => { await hook.result.current.updateItems(() => ['keep-local']); });
+  mockSession = { sessionId: 'replacement', user: { id: 1 } };
+  await act(async () => { old.resolve(Response.json({ items: ['old-cloud'], updatedAt: 100 })); });
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.items).toEqual(['keep-local']);
 });

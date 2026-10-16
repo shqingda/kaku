@@ -5,9 +5,10 @@ import type { AppPreferences } from '@/features/preferences/preferences-model';
 
 jest.unmock('@/features/preferences/preferences-provider');
 const mockRequest = jest.fn();
-const mockSession = { user: { id: 1 } };
+let mockSession = { sessionId: 'first', user: { id: 1 } };
+const mockCaptureRequest = () => { const owner = mockSession; return { identity: { userId: owner.user.id, sessionId: owner.sessionId, authEpoch: 0 }, request: mockRequest, isCurrent: () => mockSession === owner }; };
 jest.mock('@/features/auth/auth-provider', () => ({
-  useAuth: () => ({ request: mockRequest, session: mockSession }),
+  useAuth: () => ({ request: mockRequest, captureRequest: mockCaptureRequest, session: mockSession }),
 }));
 jest.mock('@/features/config/use-public-config', () => ({
   usePublicConfig: () => ({ data: undefined }),
@@ -27,6 +28,7 @@ function deferred<T>() {
 const initial: AppPreferences = { theme: 'system', updatedAt: null, syncEnabled: true };
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSession = { sessionId: 'first', user: { id: 1 } };
   mockRequest.mockReset();
   jest.mocked(loadAppPreferences).mockResolvedValue(initial);
   mockRequest.mockResolvedValueOnce({ theme: 'system', updatedAt: null });
@@ -79,4 +81,16 @@ test('an edit during initial pull is preserved and then pushed', async () => {
   await act(async () => { old.resolve({ theme: 'dark', updatedAt: Date.now() + 1000 }); });
   expect(hook.result.current.preferences.theme).toBe('light');
   expect(mockRequest).toHaveBeenLastCalledWith('/me/preferences', expect.objectContaining({ method: 'PUT' }));
+});
+
+
+test('queued preferences stop immediately when a same-account login replaces their owner', async () => {
+  const old = deferred<{ theme: string; updatedAt: number }>();
+  mockRequest.mockReset().mockReturnValueOnce(old.promise).mockResolvedValue({ theme: 'dark', updatedAt: 200 });
+  const hook = await renderHook(usePreferences, { wrapper: PreferencesProvider });
+  await act(() => hook.result.current.setTheme('light'));
+  mockSession = { sessionId: 'replacement', user: { id: 1 } };
+  await act(async () => { old.resolve({ theme: 'dark', updatedAt: 100 }); });
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.preferences.theme).toBe('light');
 });

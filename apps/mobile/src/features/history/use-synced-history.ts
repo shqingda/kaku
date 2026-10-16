@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import type { AuthRequestScope } from '@/features/auth/auth-request-scope';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePreferences } from '@/features/preferences/preferences-provider';
 import { userErrorMessage } from '@/lib/user-error-message';
@@ -34,6 +35,7 @@ type LocalScope<T> = {
   clearing: boolean;
 };
 type CloudScope = {
+  auth: AuthRequestScope;
   controller: AbortController;
   queue: Promise<void>;
   pull: Promise<void> | null;
@@ -45,7 +47,7 @@ const WRITE_ERROR = '历史未能保存到本机，当前窗口的记录仍可�
 // Local work is serialized per account. A new scope invalidates callbacks from
 // an earlier session, including A → B → A; the storage keys themselves stay v2.
 export function useSyncedHistory<T>(options: HistoryOptions<T>) {
-  const { request, session, isLoading } = useAuth();
+  const { authEpoch, captureRequest, session, isLoading } = useAuth();
   const { preferences, isReady, cloudSyncAvailable } = usePreferences();
   const userId = session?.user.id;
   const enabled = isReady && cloudSyncAvailable && preferences.syncEnabled && !isLoading;
@@ -94,7 +96,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
     const scope = cloudRef.current;
     if (!scope) return Promise.resolve();
     const current = () => currentLocal(local) && enabledRef.current &&
-      cloudRef.current === scope && !scope.controller.signal.aborted && local.status === 'ready';
+      cloudRef.current === scope && scope.auth.isCurrent() && !scope.controller.signal.aborted && local.status === 'ready';
     scope.queue = scope.queue.then(async () => {
       await localQueues.current.get(local.userId);
       if (!current()) return;
@@ -113,7 +115,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
 
   const push = useCallback(async (record: HistoryRecord<T>, revision: number, scope: CloudScope, current: () => boolean) => {
     if (!current() || !local.dirty || local.revision !== revision || local.record !== record) return;
-    const saved = await options.parse(await request(options.path, {
+    const saved = await options.parse(await scope.auth.request(options.path, {
       body: JSON.stringify({ items: record.items }), headers: { 'Content-Type': 'application/json' },
       method: 'PUT', signal: scope.controller.signal,
     }));
@@ -125,7 +127,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       local.dirty = false;
       publish(local);
     });
-  }, [enqueueLocal, local, options, publish, request, save]);
+  }, [enqueueLocal, local, options, publish, save]);
   const upload = useCallback((record: HistoryRecord<T>, revision: number) => {
     void enqueueCloud((scope, current) => push(record, revision, scope, current));
   }, [enqueueCloud, push]);
@@ -179,13 +181,13 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
     setCloudError(null);
     setSyncing(false);
     if (!enabled || userId === undefined || !ready) return;
-    const scope: CloudScope = { controller: new AbortController(), queue: Promise.resolve(), pull: null, lastPullAt: 0 };
+    const scope: CloudScope = { auth: captureRequest(), controller: new AbortController(), queue: Promise.resolve(), pull: null, lastPullAt: 0 };
     cloudRef.current = scope;
     return () => {
       scope.controller.abort();
       if (cloudRef.current === scope) cloudRef.current = null;
     };
-  }, [enabled, local, ready, userId]);
+  }, [authEpoch, captureRequest, enabled, local, ready, session?.sessionId, userId]);
 
   const pullFromCloud = useCallback((force = false) => {
     const scope = cloudRef.current;
@@ -197,7 +199,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       const before = local.record;
       const revision = local.revision;
       if (local.dirty) { await push(before, revision, scope, current); return; }
-      const cloud = await options.parse(await request(options.path, { signal: scope.controller.signal }));
+      const cloud = await options.parse(await scope.auth.request(options.path, { signal: scope.controller.signal }));
       if (!current() || local.revision !== revision) return;
       const merged = options.merge(before, cloud);
       await enqueueLocal(local, async () => {
@@ -211,7 +213,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       if (merged.pushToCloud) await push(merged.record, revision, scope, current);
     }).finally(() => { scope.pull = null; });
     return scope.pull;
-  }, [enqueueCloud, enqueueLocal, local, options, publish, push, request, save]);
+  }, [enqueueCloud, enqueueLocal, local, options, publish, push, save]);
   useEffect(() => { void pullFromCloud(true); }, [enabled, local, ready, pullFromCloud]);
   useEffect(() => {
     let previous = AppState.currentState;

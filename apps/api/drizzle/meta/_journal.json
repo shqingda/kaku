@@ -64,6 +64,13 @@
       "when": 1792131038179,
       "tag": "0008_perpetual_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792136669069,
+      "tag": "0009_architecture_safety",
+      "breakpoints": true
     }
   ]
 }

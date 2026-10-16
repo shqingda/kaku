@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 
+import type { AuthRequestScope } from '@/features/auth/auth-request-scope';
 import { useAuth } from '@/features/auth/auth-provider';
 import { usePublicConfig } from '@/features/config/use-public-config';
 import {
@@ -39,7 +40,7 @@ type PreferencesContextValue = {
 const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const { request, session } = useAuth();
+  const { authEpoch, captureRequest, session } = useAuth();
   const configQuery = usePublicConfig();
   const cloudSyncAvailable =
     configQuery.data?.config.features.preferenceCloudSync ?? true;
@@ -53,6 +54,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const writesRef = useRef(Promise.resolve());
   const dirtyRef = useRef(false);
   const scopeRef = useRef<{
+    auth: AuthRequestScope;
     controller: AbortController;
     queue: Promise<void>;
   } | null>(null);
@@ -81,7 +83,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const enqueue = useCallback((pushOnly: boolean) => {
     const scope = scopeRef.current;
     if (!scope) return Promise.resolve();
-    const current = () => scopeRef.current === scope && !scope.controller.signal.aborted;
+    const current = () => scopeRef.current === scope && scope.auth.isCurrent() && !scope.controller.signal.aborted;
     scope.queue = scope.queue.then(async () => {
       if (!current()) return;
       const revision = revisionRef.current;
@@ -90,7 +92,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         let next = preferencesRef.current;
         let shouldPush = pushOnly || dirtyRef.current;
         if (!shouldPush) {
-          const cloud = await parseCloudPreferences(await request('/me/preferences', {
+          const cloud = await parseCloudPreferences(await scope.auth.request('/me/preferences', {
             signal: scope.controller.signal,
           }));
           if (!current() || revisionRef.current !== revision) return;
@@ -100,7 +102,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
           await applyLocal(next);
         }
         if (shouldPush && current()) {
-          const cloud = await parseCloudPreferences(await request('/me/preferences', {
+          const cloud = await parseCloudPreferences(await scope.auth.request('/me/preferences', {
             body: buildPreferencesBody(next.theme),
             headers: { 'Content-Type': 'application/json' },
             method: 'PUT', signal: scope.controller.signal,
@@ -122,21 +124,21 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       }
     });
     return scope.queue;
-  }, [applyLocal, request]);
+  }, [applyLocal]);
 
   const userId = session?.user.id;
   useEffect(() => {
     setCloudError(null);
     setSyncing(false);
     if (!isReady || userId === undefined || !cloudSyncAvailable || !preferences.syncEnabled) return;
-    const scope = { controller: new AbortController(), queue: Promise.resolve() };
+    const scope = { auth: captureRequest(), controller: new AbortController(), queue: Promise.resolve() };
     scopeRef.current = scope;
     void enqueue(false);
     return () => {
       scope.controller.abort();
       if (scopeRef.current === scope) scopeRef.current = null;
     };
-  }, [cloudSyncAvailable, enqueue, isReady, preferences.syncEnabled, userId]);
+  }, [authEpoch, captureRequest, cloudSyncAvailable, enqueue, isReady, preferences.syncEnabled, session?.sessionId, userId]);
 
   const setTheme = useCallback((theme: ThemePreference) => {
     revisionRef.current += 1;

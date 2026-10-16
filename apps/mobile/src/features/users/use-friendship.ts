@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AuthSessionChangedError } from '@/features/auth/auth-request-scope';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -25,25 +27,26 @@ export function useUserFriendship(username: string) {
 }
 
 export function useSetUserFriend(username: string) {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = queryKeys.userFriendship(session?.user.id, username.trim());
 
-  return useMutation<
+  return useAuthMutation<
     boolean,
     Error,
     boolean,
     { previous: boolean | undefined }
   >({
-    mutationFn: (shouldAdd: boolean) =>
+    mutationFn: (shouldAdd: boolean, request) =>
       setUserFriend(request, username.trim(), shouldAdd),
     onError: (_error, _shouldAdd, context) => {
       if (context) {
         queryClient.setQueryData(queryKey, context.previous);
       }
     },
-    onMutate: async (shouldAdd) => {
+    onMutate: async (shouldAdd, scope) => {
       await queryClient.cancelQueries({ queryKey });
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
       const previous = queryClient.getQueryData<boolean>(queryKey);
       queryClient.setQueryData(queryKey, shouldAdd);
       return { previous };

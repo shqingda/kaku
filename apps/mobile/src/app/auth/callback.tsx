@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { takeReturnTo } from '@/lib/auth-redirect';
@@ -17,17 +18,17 @@ import { useTheme } from '@/features/theme/theme-provider';
 export default function AuthCallbackScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
-  const { code } = useLocalSearchParams<{ code?: string }>();
+  const { code, request_id: requestId } = useLocalSearchParams<{ code?: string; request_id?: string }>();
   const { completeSignIn, isSigningIn, signIn } = useAuth();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    if (!code) {
-      setError('登录回调缺少一次性交接码。');
+    if (!code || !requestId) {
+      setError('登录回调缺少必要信息，请重新发起登录。');
       return;
     }
 
-    void completeSignIn(`kaku://auth/callback?code=${encodeURIComponent(code)}`)
+    void completeSignIn(`kaku://auth/callback?code=${encodeURIComponent(code)}&request_id=${encodeURIComponent(requestId)}`)
       .then(() => {
         const target = takeReturnTo();
         router.dismissTo((target ?? '/') as Href);
@@ -39,7 +40,7 @@ export default function AuthCallbackScreen() {
             : '登录没有完成，请返回后重试。',
         );
       });
-  }, [code, completeSignIn]);
+  }, [code, completeSignIn, requestId]);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -99,62 +100,61 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    padding: 32,
+    padding: SPACING.xxl,
   },
   errorMark: {
     alignItems: 'center',
     backgroundColor: colors.accentSoft,
-    borderRadius: 22,
-    height: 64,
+    borderRadius: SPACING.xl,
+    height: SPACING.xxl * 2,
     justifyContent: 'center',
-    marginBottom: 22,
-    width: 64,
+    marginBottom: SPACING.xl,
+    width: SPACING.xxl * 2,
   },
   errorMarkText: {
     color: colors.accent,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
   },
-  title: { color: colors.ink, fontSize: 22, fontWeight: '800' },
+  title: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '800' },
   message: {
     color: colors.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 12,
+    ...TYPE.body,
+    marginTop: SPACING.md,
     textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 28,
+    gap: SPACING.md,
+    marginTop: SPACING.xxl,
     width: '100%',
   },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.track,
-    borderRadius: 16,
+    borderRadius: SPACING.lg,
     borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: MIN_TOUCH_SIZE + SPACING.sm,
   },
   secondaryButtonText: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
   },
   primaryButton: {
     alignItems: 'center',
     backgroundColor: colors.ink,
-    borderRadius: 16,
+    borderRadius: SPACING.lg,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: MIN_TOUCH_SIZE + SPACING.sm,
   },
   primaryButtonText: {
     color: colors.surface,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
   },
   pressed: { opacity: 0.62 },

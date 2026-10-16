@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AuthSessionChangedError } from '@/features/auth/auth-request-scope';
+import { useAuthMutation } from '@/features/auth/use-auth-mutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -24,22 +26,23 @@ export function useNotifications() {
 }
 
 export function useMarkNotificationsRead() {
-  const { request, session } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = queryKeys.notifications(session?.user.id);
 
-  return useMutation<
+  return useAuthMutation<
     void,
     Error,
     number[] | undefined,
     { previous: NotificationList | undefined }
   >({
-    mutationFn: (ids) => markNotificationsRead(request, ids),
+    mutationFn: (ids, request) => markNotificationsRead(request, ids),
     onError: (_error, _ids, context) => {
       queryClient.setQueryData(queryKey, context?.previous);
     },
-    onMutate: async (ids) => {
+    onMutate: async (ids, scope) => {
       await queryClient.cancelQueries({ queryKey });
+      if (!scope.isCurrent()) throw new AuthSessionChangedError();
       const previous = queryClient.getQueryData<NotificationList>(queryKey);
       const selected = ids ? new Set(ids) : null;
 

@@ -13,6 +13,7 @@ import {
   refreshAuthSession,
 } from '../src/infrastructure/kaku/auth-client.ts';
 
+const proof = { codeChallenge: 'A'.repeat(43), codeVerifier: 'B'.repeat(43), requestId: '498e27b7-5192-48ce-9b13-f4a27f10f806' };
 const KAKU_API_URL = 'https://kaku-api.shqingda.workers.dev';
 
 const session = {
@@ -48,10 +49,13 @@ test('readErrorMessage falls back to the status', async () => {
 });
 
 test('getBangumiLoginUrl points at the hosted callback', () => {
-  const url = new URL(getBangumiLoginUrl());
+  const url = new URL(getBangumiLoginUrl(proof));
 
   assert.equal(url.origin, 'https://kaku-api.shqingda.workers.dev');
   assert.equal(url.pathname, '/auth/bangumi/start');
+  assert.equal(url.searchParams.get('code_challenge'), proof.codeChallenge);
+  assert.equal(url.searchParams.get('code_challenge_method'), 'S256');
+  assert.equal(url.searchParams.get('request_id'), proof.requestId);
   assert.equal(url.searchParams.get('app_redirect_uri'), 'kaku://auth/callback');
 });
 
@@ -74,7 +78,7 @@ test('exchangeHandoffCode posts the code to /auth/session and parses the session
   });
   const calls = stubFetch(() => Response.json(session));
 
-  const parsed = await exchangeHandoffCode('handoff-code-0123456789', 'Pixel 8');
+  const parsed = await exchangeHandoffCode({ code: 'handoff-code-0123456789', deviceName: 'Pixel 8', codeVerifier: proof.codeVerifier, requestId: proof.requestId });
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, `${KAKU_API_URL}/auth/session`);
@@ -82,6 +86,8 @@ test('exchangeHandoffCode posts the code to /auth/session and parses the session
   assert.deepEqual(JSON.parse(calls[0].init.body), {
     code: 'handoff-code-0123456789',
     deviceName: 'Pixel 8',
+    codeVerifier: proof.codeVerifier,
+    requestId: proof.requestId,
   });
   assert.equal(calls[0].init.headers['Content-Type'], 'application/json');
   assert.ok(calls[0].init.signal instanceof AbortSignal);
@@ -98,7 +104,7 @@ test('exchangeHandoffCode throws KakuApiError with the server message', async (t
   );
 
   await assert.rejects(
-    () => exchangeHandoffCode('bad-code', 'Pixel 8'),
+    () => exchangeHandoffCode({ code: 'bad-code-0123456789012345', deviceName: 'Pixel 8', codeVerifier: proof.codeVerifier, requestId: proof.requestId }),
     (error) => {
       assert.ok(error instanceof KakuApiError);
       assert.equal(error.status, 400);
@@ -257,5 +263,50 @@ test('fetchKaku preserves external cancellation as AbortError', async (t) => {
   const pending = fetchKaku('/me/preferences', 'token', { signal: external.signal });
   const rejected = assert.rejects(pending, { name: 'AbortError' });
   external.abort();
+  await rejected;
+});
+
+test('public requests keep a timeout when a query supplies its own signal', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  t.mock.method(globalThis, 'fetch', async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+  }));
+  const external = new AbortController();
+  let sentSignal;
+  t.mock.method(globalThis, 'fetch', async (_url, init) => {
+    sentSignal = init.signal;
+    return new Promise((_resolve, reject) => init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+  });
+  const pending = fetchPublicKaku('/public/blogs', { signal: external.signal }).catch(error => error);
+  t.mock.timers.tick(12_000);
+  try {
+    assert.equal(sentSignal.aborted, true);
+    assert.equal((await pending).name, 'TimeoutError');
+    assert.equal(external.signal.aborted, false);
+  } finally { external.abort(); await pending; }
+});
+
+test('public request completion releases the external abort listener and timeout', async (t) => {
+  const external = new AbortController();
+  let added = 0;
+  let removed = 0;
+  const add = external.signal.addEventListener.bind(external.signal);
+  const remove = external.signal.removeEventListener.bind(external.signal);
+  t.mock.method(external.signal, 'addEventListener', (...args) => { added += 1; add(...args); });
+  t.mock.method(external.signal, 'removeEventListener', (...args) => { removed += 1; remove(...args); });
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 200 }));
+  await fetchPublicKaku('/public/blogs', { signal: external.signal });
+  assert.equal(added, 1);
+  assert.equal(removed, 1);
+});
+
+test('public requests preserve a caller cancellation as AbortError', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+  }));
+  const controller = new AbortController();
+  const pending = fetchPublicKaku('/public/blogs', { signal: controller.signal });
+  const rejected = assert.rejects(pending, { name: 'AbortError' });
+  controller.abort();
   await rejected;
 });

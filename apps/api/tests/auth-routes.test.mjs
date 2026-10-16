@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 import { hashToken } from '../src/auth/crypto.ts';
 
 const now = 1_800_000_000_000;
+const codeVerifier = 'v'.repeat(43);
+const codeChallenge = await hashToken(codeVerifier);
+const requestId = '75164bd7-cdb1-42e6-8595-79273b2b90bf';
+const startPath = `/auth/bangumi/start?code_challenge=${codeChallenge}&code_challenge_method=S256&request_id=${requestId}`;
 const env = {
   BANGUMI_CLIENT_ID: 'kaku-client',
   BANGUMI_CLIENT_SECRET: 'server-only-secret',
@@ -16,6 +20,7 @@ const env = {
 function createFakeStore() {
   let handoff;
   let oauthTransaction;
+  let connectionSequence = 0;
 
   const state = {
     extraSessions: [],
@@ -36,6 +41,9 @@ function createFakeStore() {
           return null;
         }
         return {
+          connectionId: state.savedLogin?.userId === session.userId
+            ? state.savedLogin.connectionId
+            : null,
           sessionId: session.sessionId,
           user: {
             avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
@@ -46,11 +54,16 @@ function createFakeStore() {
           userId: session.userId,
         };
       },
-      async consumeHandoff(codeHash, currentTime) {
+      async consumeHandoff(codeHash, currentTime, binding) {
         if (
           !handoff ||
           handoff.codeHash !== codeHash ||
-          handoff.expiresAt <= currentTime
+          handoff.expiresAt <= currentTime ||
+          handoff.codeChallenge !== binding?.codeChallenge ||
+          handoff.requestId !== binding?.requestId ||
+          !handoff.connectionId ||
+          state.savedLogin?.userId !== handoff.userId ||
+          state.savedLogin?.connectionId !== handoff.connectionId
         ) {
           return null;
         }
@@ -59,10 +72,13 @@ function createFakeStore() {
         handoff = undefined;
 
         return {
-          avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
-          id: consumed.userId,
-          nickname: 'Kaku User',
-          username: 'kaku-user',
+          connectionId: consumed.connectionId,
+          user: {
+            avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+            id: consumed.userId,
+            nickname: 'Kaku User',
+            username: 'kaku-user',
+          },
         };
       },
       async consumeOAuthTransaction(stateHash, currentTime) {
@@ -77,7 +93,7 @@ function createFakeStore() {
         const consumed = oauthTransaction;
         oauthTransaction = undefined;
 
-        return { appRedirectUri: consumed.appRedirectUri };
+        return { appRedirectUri: consumed.appRedirectUri, codeChallenge: consumed.codeChallenge, requestId: consumed.requestId };
       },
       async createHandoff(input) {
         handoff = input;
@@ -87,6 +103,16 @@ function createFakeStore() {
       },
       async createSession(input) {
         state.session = input;
+      },
+      async createSessionForConnection(input) {
+        if (
+          state.savedLogin?.userId !== input.userId ||
+          state.savedLogin?.connectionId !== input.connectionId
+        ) {
+          return false;
+        }
+        state.session = input;
+        return true;
       },
       async deleteAllSessions() {
         state.session = undefined;
@@ -100,8 +126,19 @@ function createFakeStore() {
         }
         return extras;
       },
-      async deleteBangumiCredential() {
+      async deleteBangumiCredential(userId, expectedConnectionId) {
+        if (
+          !expectedConnectionId ||
+          state.savedLogin?.userId !== userId ||
+          state.savedLogin?.connectionId !== expectedConnectionId
+        ) {
+          return false;
+        }
+        state.session = undefined;
+        state.extraSessions = [];
         state.savedLogin = undefined;
+        handoff = undefined;
+        return true;
       },
       async deleteSession(tokenHash) {
         if (state.session?.tokenHash === tokenHash) {
@@ -163,10 +200,20 @@ function createFakeStore() {
         return true;
       },
       async saveBangumiCredential(input) {
-        state.savedLogin = input;
+        if (
+          state.savedLogin?.userId !== input.userId ||
+          state.savedLogin?.connectionId !== input.connectionId ||
+          state.savedLogin?.refreshToken !== input.previousRefreshToken
+        ) {
+          return false;
+        }
+        state.savedLogin = { ...state.savedLogin, ...input };
+        return true;
       },
       async saveBangumiLogin(input) {
-        state.savedLogin = input;
+        const connectionId = `connection-${++connectionSequence}`;
+        state.savedLogin = { ...input, connectionId, userId: input.user.id };
+        return connectionId;
       },
     },
   };
@@ -206,7 +253,7 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
     now: () => now,
   });
 
-  const startResponse = await app.request('/auth/bangumi/start', {}, env);
+  const startResponse = await app.request(startPath, {}, env);
   const authorizeUrl = new URL(startResponse.headers.get('location'));
   const oauthState = authorizeUrl.searchParams.get('state');
 
@@ -226,13 +273,14 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
   assert.equal(callbackResponse.status, 302);
   assert.equal(appRedirect.protocol, 'kaku:');
   assert.ok(handoffCode);
+  assert.equal(appRedirect.searchParams.get('request_id'), requestId);
   assert.notEqual(fake.state.savedLogin.accessToken, 'raw-access-token');
   assert.notEqual(fake.state.savedLogin.refreshToken, 'raw-refresh-token');
 
   const sessionResponse = await app.request(
     '/auth/session',
     {
-      body: JSON.stringify({ code: handoffCode }),
+      body: JSON.stringify({ code: handoffCode, codeVerifier, requestId }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     },
@@ -251,7 +299,7 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
   const replayResponse = await app.request(
     '/auth/session',
     {
-      body: JSON.stringify({ code: handoffCode }),
+      body: JSON.stringify({ code: handoffCode, codeVerifier, requestId }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     },
@@ -397,12 +445,17 @@ test('disconnecting Bangumi removes every Kaku credential', async () => {
     tokenHash: await hashToken(accessToken),
     userId: 42,
   });
-  await fake.store.saveBangumiCredential({
+  await fake.store.saveBangumiLogin({
     accessToken: 'encrypted-access-token',
     accessTokenExpiresAt: now + 10_000,
     refreshToken: 'encrypted-refresh-token',
     updatedAt: now,
-    userId: 42,
+    user: {
+      avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+      id: 42,
+      nickname: 'Kaku User',
+      username: 'kaku-user',
+    },
   });
 
   const response = await app.request(
@@ -453,4 +506,42 @@ test('OAuth start rejects arbitrary app redirect URIs', async () => {
   );
 
   assert.equal(response.status, 400);
+});
+
+
+test('login start refuses absent or downgraded proof binding', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  for (const path of ['/auth/bangumi/start', `/auth/bangumi/start?code_challenge=${codeChallenge}&code_challenge_method=plain&request_id=${requestId}`]) {
+    const response = await app.request(path, {}, env);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'login_upgrade_required');
+  }
+});
+
+test('missing, wrong verifier or mismatched request cannot consume a bound handoff', async () => {
+  const fake = createFakeStore();
+  const app = createApp({ createStore: () => fake.store, now: () => now });
+  const code = 'bound-handoff-code-abcdefghijklmnopqrstuvwxyz';
+  const connectionId = await fake.store.saveBangumiLogin({
+    accessToken: 'encrypted-access-token',
+    accessTokenExpiresAt: now + 10_000,
+    refreshToken: 'encrypted-refresh-token',
+    updatedAt: now,
+    user: {
+      avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+      id: 42,
+      nickname: 'Kaku User',
+      username: 'kaku-user',
+    },
+  });
+  await fake.store.createHandoff({ codeHash: await hashToken(code), codeChallenge, connectionId, requestId, createdAt: now, expiresAt: now + 60_000, userId: 42 });
+  for (const body of [ { code }, { code, codeVerifier: 'x'.repeat(43), requestId }, { code, codeVerifier, requestId: 'c9d93139-61be-4733-b950-1df272e8a6ad' } ]) {
+    const response = await app.request('/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, env);
+    assert.ok([400, 401].includes(response.status));
+    assert.equal(fake.state.session, undefined);
+  }
+  const request = () => app.request('/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, codeVerifier, requestId }) }, env);
+  const responses = await Promise.all([request(), request()]);
+  assert.deepEqual(responses.map(r => r.status).sort(), [200, 401]);
 });

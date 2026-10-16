@@ -15,6 +15,7 @@ cd "$REPO_DIR/apps/mobile"
 set -a
 if [[ -f .env ]]; then source .env; fi
 set +a
+export EXPO_PUBLIC_KAKU_API_URL="${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev}"
 export EAS_BUILD_PROFILE=
 if [[ "$CHANNEL" == release ]]; then export EAS_BUILD_PROFILE=production; fi
 export KAKU_UPDATE_CHANNEL=github
@@ -32,7 +33,7 @@ fi
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 
 # 保留仓库声明的依赖版本；现有 scripts 已满足 Expo prebuild 要求。
-SKIP_DEPENDENCIES="$(node -e 'const p=require("./package.json"); for (const [key,value] of Object.entries({ios:"expo run:ios",android:"expo run:android"})) { if(p.scripts?.[key]!==value) throw new Error("请先显式配置 Expo 原生启动脚本: "+key); } process.stdout.write(Object.keys(p.dependencies).join(","))')"
+SKIP_DEPENDENCIES="$(node -e 'const p=require("./package.json"); const prefix="EXPO_PUBLIC_KAKU_API_URL=${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev} "; for (const [key,value] of Object.entries({ios:"expo run:ios",android:"expo run:android"})) { if(![value,prefix+value].includes(p.scripts?.[key])) throw new Error("请先显式配置 Expo 原生启动脚本: "+key); } process.stdout.write(Object.keys(p.dependencies).join(","))')"
 pnpm exec expo prebuild --platform android --no-install --skip-dependency-update "$SKIP_DEPENDENCIES"
 (
   cd android

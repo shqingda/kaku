@@ -11,12 +11,17 @@ export const users = sqliteTable('users', {
 
 export const oauthTransactions = sqliteTable('oauth_transactions', {
   appRedirectUri: text('app_redirect_uri').notNull(),
+  codeChallenge: text('code_challenge'),
+  requestId: text('request_id'),
   createdAt: integer('created_at').notNull(),
   expiresAt: integer('expires_at').notNull(),
   stateHash: text('state_hash').primaryKey(),
 });
 
 export const bangumiCredentials = sqliteTable('bangumi_credentials', {
+  connectionId: text('connection_id').notNull().default('legacy'),
+  refreshOperationId: text('refresh_operation_id'),
+  refreshLeaseExpiresAt: integer('refresh_lease_expires_at'),
   accessToken: text('access_token').notNull(),
   accessTokenExpiresAt: integer('access_token_expires_at').notNull(),
   refreshToken: text('refresh_token').notNull(),
@@ -28,6 +33,9 @@ export const bangumiCredentials = sqliteTable('bangumi_credentials', {
 
 export const authHandoffs = sqliteTable('auth_handoffs', {
   codeHash: text('code_hash').primaryKey(),
+  codeChallenge: text('code_challenge'),
+  connectionId: text('connection_id'),
+  requestId: text('request_id'),
   createdAt: integer('created_at').notNull(),
   expiresAt: integer('expires_at').notNull(),
   userId: integer('user_id')
@@ -75,6 +83,8 @@ export const userRecentSubjects = sqliteTable('user_recent_subjects', {
 });
 
 export const pushDevices = sqliteTable('push_devices', {
+  sessionId: text('session_id').references(() => sessions.sessionId, { onDelete: 'cascade' }),
+  registrationId: text('registration_id'),
   lastNotificationId: integer('last_notification_id'),
   platform: text('platform').notNull(),
   token: text('token').primaryKey(),
@@ -84,6 +94,23 @@ export const pushDevices = sqliteTable('push_devices', {
     .references(() => users.bangumiUserId, { onDelete: 'cascade' }),
 });
 
+export const pushReceipts = sqliteTable('push_receipts', {
+  ticketId: text('ticket_id').primaryKey(),
+  token: text('token').notNull(),
+  userId: integer('user_id').notNull(),
+  sessionId: text('session_id').notNull().references(() => sessions.sessionId, { onDelete: 'cascade' }),
+  registrationId: text('registration_id').notNull(),
+  createdAt: integer('created_at').notNull(),
+  lastCheckedAt: integer('last_checked_at').notNull().default(0),
+});
+
+export const collectionWriteLocks = sqliteTable('collection_write_locks', {
+  userId: integer('user_id').notNull(),
+  subjectId: integer('subject_id').notNull(),
+  operationId: text('operation_id').notNull(),
+  createdAt: integer('created_at').notNull(),
+}, (table) => [primaryKey({ columns: [table.userId, table.subjectId] })]);
+
 // No expiry: an unconfirmed upstream write must not be overtaken by another one.
 export const indexWriteLocks = sqliteTable('index_write_locks', {
   userId: integer('user_id').notNull(),
@@ -91,3 +118,9 @@ export const indexWriteLocks = sqliteTable('index_write_locks', {
   operationId: text('operation_id').notNull(),
   createdAt: integer('created_at').notNull(),
 }, (table) => [primaryKey({ columns: [table.userId, table.indexId] })]);
+
+export const rateLimitBuckets = sqliteTable('rate_limit_buckets', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull(),
+  resetAt: integer('reset_at').notNull(),
+});
