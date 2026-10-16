@@ -141,7 +141,7 @@ function IndexComposerContent({
     submitting.current = true;
     const input = { desc: desc.trim(), isPrivate, title: title.trim() };
     void draft.submit(() => isEditing
-      ? updateIndex.mutateAsync(input).then(() => null)
+      ? updateIndex.mutateAsync({ ...input, expected: saved?.base ?? snapshot }).then(() => null)
       : createIndex.mutateAsync(input).then(result => result.id)
     ).then(({ result: id, cleared }) => {
       createdId.current = id;

@@ -29,7 +29,7 @@ export function useUpdateIndex(indexId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: IndexInput) => updateIndex(request, indexId, input),
+    mutationFn: (input: IndexInput & { expected: { desc: string; isPrivate: boolean; title: string } }) => updateIndex(request, indexId, input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.publicIndex(indexId),

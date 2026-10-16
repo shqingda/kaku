@@ -30,6 +30,16 @@ const createIndexSchema = z.object({
   private: z.boolean().optional(),
 });
 
+// Optional for older clients; updated editors always send their opening snapshot.
+const updateIndexSchema = createIndexSchema.extend({
+  isPrivate: z.boolean().optional(),
+  expected: z.object({
+    title: z.string(),
+    desc: z.string(),
+    isPrivate: z.boolean(),
+  }).optional(),
+});
+
 function getPositiveId(value: string | undefined) {
   const id = Number(value);
   return Number.isSafeInteger(id) && id > 0 ? id : null;
@@ -122,6 +132,10 @@ export function registerIndexRoutes(
           );
         }
 
+        if (error.status === 412) {
+          return context.json({ error: 'index_edit_conflict', message: error.message }, 412);
+        }
+
         return context.json(
           { error: errorKey, message: error.message },
           error.status === 404
@@ -163,7 +177,7 @@ export function registerIndexRoutes(
 
   app.patch('/me/indexes/:indexId', async (context) => {
     const indexId = getPositiveId(context.req.param('indexId'));
-    const parsedBody = createIndexSchema.safeParse(
+    const parsedBody = updateIndexSchema.safeParse(
       await context.req.json().catch(() => null),
     );
 
@@ -178,9 +192,10 @@ export function registerIndexRoutes(
       updateBangumiIndex({
         accessToken,
         desc: parsedBody.data.desc ?? '',
+        expected: parsedBody.data.expected,
         fetcher,
         indexId,
-        isPrivate: parsedBody.data.private,
+        isPrivate: parsedBody.data.isPrivate ?? parsedBody.data.private,
         title: parsedBody.data.title,
       }),
     );

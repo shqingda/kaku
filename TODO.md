@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-15。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.18](https://github.com/shqingda/kaku/releases/tag/v1.1.18) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。Android 多图修复及发布证据见 [本轮验收](docs/test-records/2026-10-03-android-images.md)，此前启动与包体优化见 [启动优化记录](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
+> 更新：2026-10-16。只记录当前有效事项；完成证据见 [测试记录](docs/test-records/README.md)。Android GitHub 包 [v1.1.18](https://github.com/shqingda/kaku/releases/tag/v1.1.18) 已发布，42.13 MB，继续启用 R8 与资源裁剪，未上架 App Store / Google Play。Android 多图修复及发布证据见 [本轮验收](docs/test-records/2026-10-03-android-images.md)，此前启动与包体优化见 [启动优化记录](docs/test-records/2026-10-03-startup-optimization.md)，构建规则见 [发版指南](docs/deployment/release.md)。
 
 ## 当前工作入口
 
@@ -16,7 +16,7 @@
 - [ ] 真实 OAuth、多账号切换、弱网迟到响应、关闭/重开同步及旧安装升级。自动化已覆盖竞态和账号隔离，旧无归属缓存保留但不自动导入。
 - [ ] 双设备历史同步：验证新增、删除及同步开关切换后的合并结果与账号隔离。
 - [ ] 目录草稿冲突提示：验证当前页面快照与草稿基准不一致时阻止直接保存，并可保留草稿重新确认。
-- [ ] 双设备目录并发保存：记录实际覆盖行为与用户反馈；当前没有服务端原子版本锁，快照比较不能保证防止所有并发覆盖，也不能约束上游网页或其他客户端的写入。
+- [ ] 双设备目录并发保存：已用自动化复现并保护“另一设备已保存、当前页面仍旧”的覆盖：新客户端提交编辑基准，API 重新读取后不一致返回 412，保留本机草稿。见 [过期保存保护](docs/test-records/2026-10-16-index-save-conflict.md)。真机与双设备仍待验；读取与写入之间没有原子版本锁，旧客户端未携带基准的保存、上游网页或其他客户端写入仍不受此保护。
 - [ ] 双设备通知权限、登记、实际送达及升级后的 token 恢复；本机关闭推送/退出不能影响另一台。
 - [ ] 实际 VoiceOver、Reduce Motion/Transparency、小屏/大字体和核心阅读页面触控，重点复核弹层入场/回弹过程中再次拖动的连续性，以及图片预览横移、缩放回弹中断和减少动态效果。已有模拟器大字体及回复弹层无障碍树验证，不替代实际读屏；图片组件验证边界见 [代码清理记录](docs/plans/2026-10-15-code-review-cleanup.md)。
 

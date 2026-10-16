@@ -253,3 +253,49 @@ test('uncollecting an index DELETEs the v0 collect endpoint', async () => {
 
   assert.equal(collected, false);
 });
+
+// Both editors opened the same baseline; device A saves before device B submits.
+test('a stale directory save cannot overwrite a completed save from another device', async () => {
+  const { updateBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+  const expected = { title: '原目录', desc: '原说明', isPrivate: false };
+  let stored = { title: expected.title, desc: expected.desc, private: expected.isPrivate };
+  const fetcher = async (_input, init) => {
+    if (init.method === 'GET') return Response.json(stored);
+    stored = JSON.parse(init.body);
+    return Response.json({});
+  };
+  await updateBangumiIndex({ accessToken: 'token', fetcher, indexId: 42,
+    ...expected, title: '设备 A 的标题', expected });
+  await assert.rejects(() => updateBangumiIndex({ accessToken: 'token', fetcher, indexId: 42,
+    ...expected, desc: '设备 B 的说明', expected }), { status: 412 });
+  assert.deepEqual(stored, { title: '设备 A 的标题', desc: '原说明', private: false });
+});
+
+for (const change of [{ title: '远端标题' }, { desc: '远端说明' }, { private: true }]) {
+  test(`a changed ${Object.keys(change)[0]} rejects a stale save`, async () => {
+    const { updateBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+    const methods = [];
+    await assert.rejects(() => updateBangumiIndex({
+      accessToken: 'token', indexId: 42, title: '本机', desc: '', isPrivate: false,
+      expected: { title: '原目录', desc: '原说明', isPrivate: false },
+      fetcher: async (_input, init) => {
+        methods.push(init.method);
+        return Response.json({ title: '原目录', desc: '原说明', private: false, ...change });
+      },
+    }), { status: 412 });
+    assert.deepEqual(methods, ['GET']);
+  });
+}
+
+test('unreadable snapshots fail closed without writing', async () => {
+  const { updateBangumiIndex } = await import('../src/indexes/bangumi-client.ts');
+  for (const body of ['not JSON', '{}', '{"title":"old","desc":5}', '{"title":"old","desc":"","private":null}']) {
+    const methods = [];
+    await assert.rejects(() => updateBangumiIndex({
+      accessToken: 'token', indexId: 42, title: '本机', desc: '',
+      expected: { title: 'old', desc: '', isPrivate: false },
+      fetcher: async (_input, init) => { methods.push(init.method); return new Response(body); },
+    }), { status: 502 });
+    assert.deepEqual(methods, ['GET']);
+  }
+});

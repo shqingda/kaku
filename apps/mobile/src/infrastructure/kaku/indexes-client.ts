@@ -67,7 +67,7 @@ export async function createIndex(
 export async function updateIndex(
   request: (path: string, init?: RequestInit) => Promise<Response>,
   indexId: number,
-  input: { desc: string; isPrivate?: boolean; title: string },
+  input: { desc: string; isPrivate?: boolean; title: string; expected: { desc: string; isPrivate: boolean; title: string } },
 ): Promise<void> {
   const response = await request(`/me/indexes/${indexId}`, {
     body: JSON.stringify(input),

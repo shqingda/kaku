@@ -115,7 +115,7 @@ test('updateIndex patches the index', async () => {
     calls.push({ path, init });
     return new Response(null, { status: 200 });
   };
-  const input = { desc: '更新描述', title: '新标题' };
+  const input = { desc: '更新描述', title: '新标题', expected: { desc: '原说明', title: '原标题', isPrivate: false } };
 
   await updateIndex(request, 77, input);
 

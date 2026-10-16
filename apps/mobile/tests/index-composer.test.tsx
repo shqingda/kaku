@@ -214,3 +214,24 @@ test('discard confirmation preserves directory edits made after the confirmation
   expect(mockCreated).not.toHaveBeenCalled();
   alerts.mockRestore();
 });
+
+
+test('a stale page sends its editing baseline and retains the draft after a remote conflict', async () => {
+  mockEditing = { indexId: 42, title: '原目录', desc: '原说明', isPrivate: false };
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ error: 'index_edit_conflict' }), { status: 412 }));
+  await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('目录说明'), '本机说明');
+  await fireEvent.press(screen.getByLabelText('保存目录'));
+  await screen.findByText('目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。');
+  expect(JSON.parse(mockRequest.mock.calls[0][1].body)).toEqual({
+    title: '原目录', desc: '本机说明', isPrivate: false,
+    expected: { title: '原目录', desc: '原说明', isPrivate: false },
+  });
+  expect(JSON.parse(mockStorage.get('kaku:index-draft:v1:1:42')!)).toEqual({
+    title: '原目录', desc: '本机说明', isPrivate: false,
+    base: { title: '原目录', desc: '原说明', isPrivate: false },
+  });
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  await fireEvent.press(screen.getByText('重新打开'));
+  expect(screen.getByLabelText('目录说明').props.value).toBe('本机说明');
+});

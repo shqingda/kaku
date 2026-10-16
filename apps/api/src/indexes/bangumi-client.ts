@@ -71,9 +71,16 @@ export async function createBangumiIndex({
   return createdIndexSchema.parse(await response.json());
 }
 
+const indexEditSnapshotSchema = z.object({
+  title: z.string(),
+  desc: z.string(),
+  private: z.boolean().optional().default(false),
+});
+
 export async function updateBangumiIndex({
   accessToken,
   desc,
+  expected,
   fetcher = fetch,
   indexId,
   isPrivate,
@@ -81,11 +88,51 @@ export async function updateBangumiIndex({
 }: {
   accessToken: string;
   desc: string;
+  expected?: { title: string; desc: string; isPrivate: boolean };
   fetcher?: typeof fetch;
   indexId: number;
   isPrivate?: boolean;
   title: string;
 }): Promise<void> {
+  // This detects stale editors, not writes racing between this read and PATCH.
+  if (expected) {
+    const latestResponse = await fetcher(
+      `${BANGUMI_PRIVATE_API_URL}/indexes/${indexId}`,
+      {
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          'User-Agent': BANGUMI_USER_AGENT,
+        },
+        method: 'GET',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(12_000),
+      },
+    );
+    if (!latestResponse.ok) {
+      throw new BangumiIndexWriteError(
+        latestResponse.status,
+        '目录最新内容读取失败，请稍后重试。',
+      );
+    }
+    const latest = indexEditSnapshotSchema.safeParse(
+      await latestResponse.json().catch(() => null),
+    );
+    if (!latest.success) {
+      throw new BangumiIndexWriteError(502, '目录最新内容无法确认，请稍后重试。');
+    }
+    if (
+      latest.data.title !== expected.title ||
+      latest.data.desc !== expected.desc ||
+      latest.data.private !== expected.isPrivate
+    ) {
+      throw new BangumiIndexWriteError(
+        412,
+        '目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。',
+      );
+    }
+  }
+
   const response = await fetcher(
     `${BANGUMI_PRIVATE_API_URL}/indexes/${indexId}`,
     {

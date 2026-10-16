@@ -12,6 +12,8 @@ export function userErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE) {
         return '没有权限执行这个操作。';
       case 404:
         return '内容不存在或已删除。';
+      case 412:
+        return '目录内容已更新，草稿已保留。请关闭编辑器并刷新目录后重新确认。';
       case 429:
         return '请求太频繁，请稍后再试。';
       case 409:
