@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 import { encryptSecret } from '../src/auth/crypto.ts';
 
 const now = 1_800_000_000_000;

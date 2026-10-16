@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 
 test('health endpoint reports that the API is ready', async () => {
   const response = await createApp().request('/health');

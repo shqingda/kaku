@@ -6,7 +6,7 @@ import {
 } from './auth/routes.ts';
 import type { Env } from './env.ts';
 import { getPublicCache } from './public-cache.ts';
-import { enforceRateLimit } from './rate-limit.ts';
+import { enforceRateLimit, type RateLimitStore } from './rate-limit.ts';
 import { registerBlogRoutes } from './blogs/routes.ts';
 import { registerChannelRoutes } from './channels/routes.ts';
 import { registerBrowseRoutes } from './browse/routes.ts';
@@ -51,7 +51,7 @@ type AppDependencies = AuthDependencies &
   PushDeviceDependencies &
   RankingDependencies &
   RecentSubjectsDependencies &
-  SearchHistoryDependencies;
+  SearchHistoryDependencies & { rateLimitStore?: RateLimitStore };
 
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<{ Bindings: Env }>();
@@ -62,6 +62,7 @@ export function createApp(dependencies: AppDependencies = {}) {
       context,
       getPublicCache(dependencies.cache),
       now(),
+      dependencies.rateLimitStore,
     );
     if (limited) return limited;
     await next();

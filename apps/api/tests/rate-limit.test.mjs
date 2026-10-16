@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { after, before, beforeEach, test } from 'node:test';
+import { drizzle } from 'drizzle-orm/d1';
+import { migrate } from 'drizzle-orm/d1/migrator';
+import { Miniflare } from 'miniflare';
 
 import { createApp } from '../src/app.ts';
 import {
@@ -10,6 +13,16 @@ import {
   getRateLimitKey,
   isWriteMethod,
 } from '../src/rate-limit.ts';
+
+let miniflare;
+let database;
+before(async () => {
+  miniflare = new Miniflare({ d1Databases: { DB: 'rate-limit-compat-test' }, modules: [{ type: 'ESModule', path: 'index.mjs', contents: 'export default { fetch() { return new Response("ok"); } }' }] });
+  database = await miniflare.getD1Database('DB');
+  await migrate(drizzle(database), { migrationsFolder: 'drizzle' });
+});
+after(async () => { await miniflare?.dispose(); });
+beforeEach(async () => { await database.prepare('DELETE FROM rate_limit_buckets').run(); });
 
 function createMemoryCache() {
   const items = new Map();
@@ -25,14 +38,14 @@ function createMemoryCache() {
   };
 }
 
-test('client IP prefers CF-Connecting-IP then X-Forwarded-For', () => {
+test('client IP trusts CF-Connecting-IP and ignores caller supplied X-Forwarded-For', () => {
   assert.equal(
     getClientIp(new Headers({ 'CF-Connecting-IP': '203.0.113.8' })),
     '203.0.113.8',
   );
   assert.equal(
     getClientIp(new Headers({ 'X-Forwarded-For': '198.51.100.2, 10.0.0.1' })),
-    '198.51.100.2',
+    'unknown',
   );
   assert.equal(getClientIp(new Headers()), 'unknown');
 });
@@ -168,14 +181,14 @@ test('read and write buckets are independent per IP', async () => {
     await app.request(
       '/me/reports',
       { headers: writeHeaders, method: 'POST', body: '{}' },
-      { DB: {} },
+      { DB: database },
     );
   }
 
   const writeLimited = await app.request(
     '/me/reports',
     { headers: writeHeaders, method: 'POST', body: '{}' },
-    { DB: {} },
+    { DB: database },
   );
   const publicStillOpen = await app.request('/missing', {
     headers: { 'CF-Connecting-IP': '203.0.113.11' },
@@ -190,7 +203,7 @@ test('read and write buckets are independent per IP', async () => {
       method: 'POST',
       body: '{}',
     },
-    { DB: {} },
+    { DB: database },
   );
 
   assert.equal(writeLimited.status, 429);
@@ -214,7 +227,7 @@ test('write routes use a tighter limit than public reads', async () => {
     const response = await app.request(
       '/me/reports',
       { headers, method: 'POST', body: '{}' },
-      { DB: {} },
+      { DB: database },
     );
     assert.notEqual(response.status, 429);
   }
@@ -222,7 +235,7 @@ test('write routes use a tighter limit than public reads', async () => {
   const limited = await app.request(
     '/me/reports',
     { headers, method: 'POST', body: '{}' },
-    { DB: {} },
+    { DB: database },
   );
   assert.equal(limited.status, 429);
   assert.equal(limited.headers.get('RateLimit-Limit'), String(WRITE_REQUEST_LIMIT));

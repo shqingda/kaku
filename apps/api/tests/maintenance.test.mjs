@@ -22,13 +22,14 @@ const WORKER_MODULES = [
 
 let miniflare;
 let store;
+let database;
 
 before(async () => {
   miniflare = new Miniflare({
     d1Databases: { DB: 'kaku-test' },
     modules: WORKER_MODULES,
   });
-  const database = await miniflare.getD1Database('DB');
+  database = await miniflare.getD1Database('DB');
   await migrate(drizzle(database), { migrationsFolder: 'drizzle' });
   store = createD1AuthStore(database);
   await store.saveBangumiLogin({
@@ -85,6 +86,8 @@ test('cleanupExpiredAuthData removes only expired handoffs, transactions and ses
     userId: user.id,
   });
 
+  await database.prepare('INSERT INTO rate_limit_buckets (key, count, reset_at) VALUES (?, 1, ?), (?, 1, ?)').bind('expired-bucket', NOW, 'active-bucket', FUTURE).run();
+
   const result = await cleanupExpiredAuthData(
     await miniflare.getD1Database('DB'),
     NOW,
@@ -94,7 +97,10 @@ test('cleanupExpiredAuthData removes only expired handoffs, transactions and ses
     deletedAuthHandoffs: 1,
     deletedOAuthTransactions: 1,
     deletedSessions: 1,
+    deletedRateLimitBuckets: 1,
   });
+
+  assert.deepEqual((await database.prepare('SELECT key FROM rate_limit_buckets').all()).results, [{ key: 'active-bucket' }]);
 
   const remainingSessions = await store.listSessions(user.id, NOW);
   assert.deepEqual(

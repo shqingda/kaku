@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 
 test('public rankings return a small provider-neutral page', async () => {
   const storedResponses = new Map();

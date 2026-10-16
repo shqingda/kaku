@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 import { parseBangumiTagPage } from '../src/tags/bangumi-client.ts';
 
 const TAG_HTML = `
