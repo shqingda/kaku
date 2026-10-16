@@ -18,6 +18,7 @@ import {
   getBangumiPersonalCollection,
   getBangumiPersonalCollectionPage,
   saveBangumiPersonalCollection,
+  normalizeBangumiCollectionWriteResponse,
   setBangumiEntityCollection,
 } from './bangumi-client.ts';
 
@@ -311,7 +312,8 @@ export function registerCollectionRoutes(
 
     return withPersonalCollection(context, ({ accessToken, username, userId }) =>
       withCollectionWriteLock({
-        database: context.env.DB, userId, subjectId, now: now(), fetcher,
+        database: context.env.DB, userId, subjectId, now: now(),
+        fetcher: async (input, init) => normalizeBangumiCollectionWriteResponse(input, init, await fetcher(input, init)),
         action: async (guardedFetcher) => {
           await saveBangumiPersonalCollection({
             ...update, accessToken, fetcher: guardedFetcher, subjectId,

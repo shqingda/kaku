@@ -259,3 +259,23 @@ test('entity collection reads v0 state and writes through P1 collection routes',
     ],
   );
 });
+
+
+test('only the verified empty Bangumi collection POST 202 is normalized', async () => {
+  const { normalizeBangumiCollectionWriteResponse: normalize } = await import('../src/collections/bangumi-client.ts');
+  const endpoint = 'https://api.bgm.tv/v0/users/-/collections/42';
+  const completed = await normalize(endpoint, { method: 'POST' }, new Response(null, { status: 202, headers: { 'x-request-id': 'synthetic-id' } }));
+  assert.equal(completed.status, 204);
+  assert.equal(completed.headers.get('x-request-id'), 'synthetic-id');
+  for (const [url, method, body, status] of [
+    [endpoint, 'PATCH', null, 202],
+    [endpoint + '/episodes', 'POST', null, 202],
+    ['https://other.invalid/v0/users/-/collections/42', 'POST', null, 202],
+    [endpoint + '?queued=true', 'POST', null, 202],
+    [endpoint, 'POST', '{"operation":"still-pending"}', 202],
+    [endpoint, 'POST', null, 503],
+  ]) {
+    const response = new Response(body, { status });
+    assert.equal(await normalize(url, { method }, response), response);
+  }
+});

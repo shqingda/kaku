@@ -15,6 +15,20 @@ const BANGUMI_API_URL = 'https://api.bgm.tv';
 const BANGUMI_PRIVATE_API_URL = 'https://next.bgm.tv/p1';
 const PAGE_SIZE = 1000;
 
+// This handler returns empty 202 only after its synchronous update completes:
+// https://github.com/bangumi/server/blob/5fc276a1f22368a80655c2b72427f24d177dee83/web/handler/user/post_subject_collection.go#L44-L57
+// Translate that adapter contract; generic 202 and episode writes stay unknown.
+export async function normalizeBangumiCollectionWriteResponse(
+  input: Parameters<typeof fetch>[0], init: RequestInit | undefined, response: Response,
+): Promise<Response> {
+  if (response.status !== 202 || response.redirected || init?.method !== 'POST') return response;
+  const url = new URL(input instanceof Request ? input.url : String(input));
+  if (url.origin !== BANGUMI_API_URL || url.username || url.password || url.search || url.hash ||
+    !/^\/v0\/users\/-\/collections\/[1-9]\d*$/.test(url.pathname)) return response;
+  if (await response.clone().text() !== '') return response;
+  return new Response(null, { status: 204, headers: response.headers });
+}
+
 const userCollectionSchema = z.object({
   comment: z.string().nullish().transform((comment) => comment ?? ''),
   ep_status: z

@@ -667,3 +667,62 @@ test('a successful write followed by a failed read reports saved results needing
   assert.equal((await response.json()).error, 'collection_partial_success');
   assert.equal(await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first(), null);
 });
+
+
+test('unknown writes log only a safe reason and their claim owner', async (t) => {
+  const logs = [];
+  t.mock.method(console, 'error', (...args) => logs.push(args));
+  const app = createAuthedApp(async (_url, init) => init?.method === 'POST'
+    ? new Response('private upstream content', { status: 503 }) : Response.json(storedBookCollection));
+  const result = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'private test comment' } }).init, env);
+  assert.equal(result.status, 423);
+  const claim = await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first();
+  assert.equal(logs.length, 1);
+  assert.deepEqual(logs[0], ['collection_write_unconfirmed', { method: 'POST', operationId: claim.operation_id, status: 503 }]);
+  assert.equal(JSON.stringify(logs).includes('private'), false);
+});
+
+
+test('unknown network writes never log raw exception contents', async (t) => {
+  const logs = [];
+  t.mock.method(console, 'error', (...args) => logs.push(args));
+  const app = createAuthedApp(async (_url, init) => {
+    if (init?.method === 'POST') throw new Error('private-token-do-not-log');
+    return Response.json(storedBookCollection);
+  });
+  const result = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'private comment' } }).init, env);
+  assert.equal(result.status, 423);
+  const claim = await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first();
+  assert.deepEqual(logs, [['collection_write_unconfirmed', { method: 'POST', operationId: claim.operation_id, reason: 'network_or_timeout' }]]);
+  assert.equal(JSON.stringify(logs).includes('private'), false);
+});
+
+
+test('Bangumi synchronous collection POST 202 is complete and releases its claim', async () => {
+  let writes = 0;
+  const app = createAuthedApp(async (_url, init) => {
+    if (init?.method === 'POST') { writes++; return new Response(null, { status: 202 }); }
+    return Response.json(storedBookCollection);
+  });
+  for (let count = 0; count < 2; count++) {
+    const result = await app.request('/me/collections/400', jsonRequest('', { body: { comment: storedBookCollection.comment } }).init, env);
+    assert.equal(result.status, 200);
+    assert.equal(await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first(), null);
+  }
+  assert.equal(writes, 2);
+});
+
+
+test('a nonempty collection POST 202 remains unknown and cannot be retried', async () => {
+  let writes = 0;
+  const app = createAuthedApp(async (_url, init) => {
+    if (init?.method === 'POST') { writes++; return Response.json({ operation: 'pending' }, { status: 202 }); }
+    return Response.json(storedBookCollection);
+  });
+  for (let count = 0; count < 2; count++) {
+    const result = await app.request('/me/collections/400', jsonRequest('', { body: { comment: 'pending' } }).init, env);
+    assert.equal(result.status, 423);
+  }
+  assert.equal(writes, 1);
+  assert.ok(await env.DB.prepare('SELECT operation_id FROM collection_write_locks WHERE user_id = 42 AND subject_id = 400').first());
+});

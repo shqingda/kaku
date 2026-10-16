@@ -43,7 +43,10 @@ export async function withCollectionWriteLock({ database, userId, subjectId, now
         unknown = false;
         return response;
       }
+      console.error('collection_write_unconfirmed', { method: init?.method, operationId, status: response.status });
     } catch {
+      // No body, URL, token or raw exception can enter production logs.
+      console.error('collection_write_unconfirmed', { method: init?.method, operationId, reason: 'network_or_timeout' });
       // The provider may have applied the write before the connection failed.
     }
     throw unconfirmed();
