@@ -8,9 +8,9 @@
 
 2026-10-02 优化切片已完成，实施过程见 [优化计划](docs/plans/2026-10-02-project-optimization-plan.md)，模块整理、包体对比、测试与后续发布证据见 [优化验收记录](docs/test-records/2026-10-02-project-optimization.md)。下面仅保留未完成事项，每项只在对应分类维护。
 
-## 待发布：架构安全修复
+## 待发布与验证：架构安全修复
 
-- [ ] 先准备含安全登录模块的新原生构建，再推送并按顺序应用 `0009_architecture_safety.sql`、部署 API、协调客户端发布，最后验证真实登录与推送。代码已补 proof 绑定、连接 generation、会话推送撤销、账号作用域、章节增量、超时、原子限流和 receipt；自动化及发布兼容边界见 [架构修复记录](docs/test-records/2026-10-16-architecture-review-fixes.md)。现有账号、会话、草稿和历史保留，旧客户端的新登录及无基线章节覆盖会安全拒绝。
+- [ ] 正式发布含安全登录模块的新原生客户端，验证真实新登录与真机推送。五个修复提交及 `abaa60c` 已推送，`0009_architecture_safety.sql` 与 API 已上线；指定 iOS 模拟器已更新含 expo-crypto 的原生开发客户端，通过现有会话恢复、收藏等值保存和受控 412，原草稿／历史摘要保持一致。代码已补 proof 绑定、连接 generation、会话推送撤销、账号作用域、章节增量、超时、原子限流和 receipt；自动化及发布兼容边界见 [架构修复记录](docs/test-records/2026-10-16-architecture-review-fixes.md)。现有账号、会话、草稿和历史保留，旧客户端的新登录及无基线章节覆盖会安全拒绝。
 
 ## 待验证：iOS 与账号数据
 

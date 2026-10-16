@@ -155,3 +155,6 @@ WHERE user_id = :user_id AND index_id = :index_id AND operation_id = :operation_
 Expo ticket 与游标通过 D1 batch 原子提交；receipt 15 分钟后检查、24 小时清理。`DeviceNotRegistered` 只清理仍匹配原 registrationId 的订阅。其他 receipt 错误可通过安全错误码观察，本轮不自动重放已获 ticket 的消息，不承诺恰好一次投递。
 
 开发、CI 与发布构建显式设置 `EXPO_PUBLIC_KAKU_API_URL`。EAS profile 与本地原生构建脚本保留现有生产 origin；本地隔离测试需显式选择 loopback API，示例见 [移动端环境模板](../../apps/mobile/.env.example)。不要把本机测试库当作现有生产账号的数据源。正式 profile 拒绝 HTTP API 地址。
+
+
+Bangumi v0 的条目收藏 POST 在同步完成后返回空 202（[固定实现](https://github.com/bangumi/server/blob/5fc276a1f22368a80655c2b72427f24d177dee83/web/handler/user/post_subject_collection.go#L44-L57)），由专属 adapter 识别完成；这不改变通用占用规则。其他端点、重定向或带 body 的 202 仍视为未确认，不可据此批量解锁。未知收藏写入日志为 `collection_write_unconfirmed`，只含操作编号与安全状态，按对应 D1 key 定位，不记录或索取用户 token。
