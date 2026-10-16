@@ -56,17 +56,21 @@ export function registerPushRoutes(
     if (isAuthenticationResponse(authentication)) return authentication;
 
     const store = getStore(context.env, dependencies);
-    const existing = (await store.listByUser(authentication.userId)).find(
+    const existing = (await store.listByUser(authentication.userId, now())).find(
       (device) => device.token === body.data.token,
     );
     const updatedAt = now();
-    await store.save({
-      lastNotificationId: existing?.lastNotificationId ?? null,
+    const saved = await store.save({
+      lastNotificationId: existing?.sessionId === authentication.sessionId ? existing.lastNotificationId : null,
+      registrationId: crypto.randomUUID(),
+      sessionId: authentication.sessionId,
       platform: body.data.platform,
       token: body.data.token,
       updatedAt,
       userId: authentication.userId,
     });
+
+    if (!saved) return context.json({ error: 'invalid_session', message: '登录会话已失效，请重新登录。' }, 401);
 
     return context.json({
       device: {
@@ -94,6 +98,7 @@ export function registerPushRoutes(
 
     await getStore(context.env, dependencies).deleteByUserAndToken(
       authentication.userId,
+      authentication.sessionId,
       body.data.token,
     );
     return context.json({ ok: true });

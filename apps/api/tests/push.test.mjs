@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createApp } from '../src/app.ts';
+import { createTestApp as createApp } from './helpers/app.mjs';
 import { deliverPushForUser } from '../src/push/deliver.ts';
 import { composePushMessage } from '../src/push/message.ts';
 import { sendExpoPush } from '../src/push/expo-client.ts';
@@ -33,9 +33,9 @@ function createPushStore() {
         const index = devices.findIndex((device) => device.token === token);
         if (index >= 0) devices.splice(index, 1);
       },
-      async deleteByUserAndToken(userId, token) {
+      async deleteByUserAndToken(userId, sessionId, token) {
         for (let index = devices.length - 1; index >= 0; index -= 1) {
-          if (devices[index].userId === userId && devices[index].token === token) devices.splice(index, 1);
+          if (devices[index].userId === userId && devices[index].token === token && devices[index].sessionId === sessionId) devices.splice(index, 1);
         }
       },
       async listByUser(userId) {
@@ -48,6 +48,7 @@ function createPushStore() {
         const index = devices.findIndex((device) => device.token === input.token);
         if (index >= 0) devices[index] = { ...input };
         else devices.push({ ...input });
+        return true;
       },
       async setLastNotificationId(userId, token, lastNotificationId) {
         devices.forEach((device, index) => {
@@ -153,10 +154,10 @@ test('the first poll primes the cursor and does not send old notifications', asy
       total: 1,
       unreadCount: 1,
     }),
-    saveCursor: async () => {},
+    commitDelivery: async () => {},
     sendPush: async (tokens, payload) => {
       sent.push({ payload, tokens });
-      return [];
+      return { failedTokens: [], invalidTokens: [], tickets: tokens.map((token) => ({ id: `ticket-${token}`, token })) };
     },
   });
 
@@ -183,12 +184,12 @@ test('later polls send only unread items newer than the cursor', async () => {
       total: 2,
       unreadCount: 1,
     }),
-    saveCursor: async (_token, lastNotificationId) => {
+    commitDelivery: async (_devices, lastNotificationId) => {
       cursor = lastNotificationId;
     },
     sendPush: async (tokens, payload) => {
       sent.push({ payload, tokens });
-      return [];
+      return { failedTokens: [], invalidTokens: [], tickets: tokens.map((token) => ({ id: `ticket-${token}`, token })) };
     },
   });
 
@@ -214,7 +215,8 @@ test('sendExpoPush authenticates with the Expo access token', async () => {
     { accessToken: 'expo-token' },
   );
 
-  assert.equal(invalid.length, 0);
+  assert.equal(invalid.invalidTokens.length, 0);
+  assert.deepEqual(invalid.tickets, [{ id: 'ticket-1', token: 'ExponentPushToken[abc]' }]);
   assert.equal(calls[0].init.headers.Authorization, 'Bearer expo-token');
   assert.deepEqual(JSON.parse(calls[0].init.body)[0].to, 'ExponentPushToken[abc]');
 });
@@ -262,7 +264,7 @@ test('malformed Expo responses preserve pending notification cursors', async (t)
         loadNotifications: async () => ({
           items: [notification(12)], total: 1, unreadCount: 1,
         }),
-        saveCursor: async (token, cursor) => { cursors.set(token, cursor); },
+        commitDelivery: async (devices, cursor) => { devices.forEach(({ token }) => cursors.set(token, cursor)); },
         sendPush: (tokens, payload) =>
           sendExpoPush(async () => Response.json(body), tokens, payload),
       }), /无法识别/);
@@ -284,16 +286,18 @@ test('sendExpoPush preserves ticket order when cleaning up a mixed batch', async
     { body: '有新通知', title: 'Kaku', unreadCount: 1 },
   );
 
-  assert.deepEqual(invalid, ['ExpoPushToken[stale]']);
+  assert.deepEqual(invalid.invalidTokens, ['ExpoPushToken[stale]']);
+  assert.deepEqual(invalid.tickets, [{ id: 'ticket-1', token: 'ExpoPushToken[active]' }]);
 });
 
 test('sendExpoPush treats error tickets without a reason as unknown failures', async () => {
   for (const ticket of [{ status: 'error' }, { details: {}, status: 'error' }]) {
-    await assert.rejects(sendExpoPush(
+    const result = await sendExpoPush(
       async () => Response.json({ data: [ticket] }),
       ['ExpoPushToken[abc]'],
       { body: '有新通知', title: 'Kaku', unreadCount: 1 },
-    ), /UnknownError/);
+    );
+    assert.deepEqual(result.failedTokens, [{ error: 'UnknownError', token: 'ExpoPushToken[abc]' }]);
   }
 });
 
@@ -309,15 +313,11 @@ test('sendExpoPush reports misconfiguration instead of failing silently', async 
       ],
     });
 
-  await assert.rejects(
-    sendExpoPush(
-      fetcher,
-      ['ExponentPushToken[abc]'],
-      { body: '有新通知', title: 'Kaku', unreadCount: 1 },
-      { accessToken: 'expo-token' },
-    ),
-    /InvalidCredentials/,
+  const result = await sendExpoPush(
+    fetcher, ['ExponentPushToken[abc]'],
+    { body: '有新通知', title: 'Kaku', unreadCount: 1 }, { accessToken: 'expo-token' },
   );
+  assert.deepEqual(result.failedTokens, [{ error: 'InvalidCredentials', token: 'ExponentPushToken[abc]' }]);
 });
 
 test('sendExpoPush still cleans up unregistered devices', async () => {
@@ -335,13 +335,13 @@ test('sendExpoPush still cleans up unregistered devices', async () => {
     { accessToken: 'expo-token' },
   );
 
-  assert.deepEqual(invalid, ['ExponentPushToken[stale]']);
+  assert.deepEqual(invalid.invalidTokens, ['ExponentPushToken[stale]']);
 });
 
 test('unregistering a device preserves other devices and rejects an unspecified target', async () => {
   const push = createPushStore();
   for (const [token, userId] of [['ExpoPushToken[a]', 42], ['ExpoPushToken[b]', 42], ['ExpoPushToken[c]', 43]]) {
-    await push.store.save({ token, userId, platform: 'ios', updatedAt: now, lastNotificationId: 10 });
+    await push.store.save({ token, userId, platform: 'ios', updatedAt: now, lastNotificationId: 10, sessionId: 'session-1', registrationId: token });
   }
   const app = createApp({ createPushDeviceStore: () => push.store, createStore: createAuthStore, now: () => now });
   for (const token of [undefined, 'ExpoPushToken[c]', 'ExpoPushToken[a]']) {
@@ -364,8 +364,8 @@ test('a new device is primed without dropping pending notifications on older dev
       { token: 'caught-up', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: 12 },
     ],
     loadNotifications: async () => ({ items: [notification(12)], total: 1, unreadCount: 1 }),
-    sendPush: async (tokens) => { sent.push(tokens); return []; },
-    saveCursor: async (token, cursor) => { saved.push([token, cursor]); },
+    sendPush: async (tokens) => { sent.push(tokens); return { failedTokens: [], invalidTokens: [], tickets: tokens.map((token) => ({ id: token, token })) }; },
+    commitDelivery: async (devices, cursor) => { devices.forEach(({ token }) => saved.push([token, cursor])); },
   });
   assert.deepEqual(sent, [['old']]);
   assert.deepEqual(saved, [['old', 12], ['new', 12]]);
@@ -379,7 +379,7 @@ test('failed delivery does not advance the affected devices', async () => {
     devices: [{ token: 'old', userId: 42, platform: 'ios', updatedAt: now, lastNotificationId: 10 }],
     loadNotifications: async () => ({ items: [notification(12)], total: 1, unreadCount: 1 }),
     sendPush: async () => { throw new Error('unavailable'); },
-    saveCursor: async (...args) => { saved.push(args); },
+    commitDelivery: async (...args) => { saved.push(args); },
   }), /unavailable/);
   assert.deepEqual(saved, []);
 });
