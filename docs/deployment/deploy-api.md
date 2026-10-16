@@ -133,3 +133,25 @@ WHERE user_id = :user_id AND index_id = :index_id AND operation_id = :operation_
 ```
 
 不对占用记录设置自动过期，也不在删除账号或认证清理时级联删除，避免尚未确认的上游写入失去保护。
+
+## 架构安全修复的发布顺序
+
+2026-10-16 修复的迁移是 `0009_architecture_safety.sql`。本轮代码准备与自动化不代表已经应用远端迁移、部署 Worker 或发布手机客户端；验证记录见 [架构修复](../test-records/2026-10-16-architecture-review-fixes.md)。
+
+发布前先准备并验证含 `expo-crypto` 的原生构建，协调客户端可用时间；API 上线后旧客户端发起新登录会被拒绝，不能把准备安装包留到 API 部署后。
+
+1. 先按标准流程应用 D1 迁移，再部署对应 API；新增表和字段保留既有账号、会话、偏好、历史与草稿，不通过删除旧数据准备发布。
+2. 协调发布已准备的 `expo-crypto` 新原生客户端，保留现有签名与包名。旧开发客户端通过 JS 更新不能获得新的原生模块；仅用 OTA 不能完成新登录能力升级。
+3. API 与客户端均就绪后验证真实新登录、正常会话刷新、目录/收藏保存和推送。不要为验收而退出或清空现有测试设备，应使用另行授权的测试账号流程。
+
+新 API 要求 verifier / S256 challenge / requestId；旧客户端的新登录会明确要求升级，已建立会话与 refresh 协议继续有效。升级前发起、没有 proof 的短期 OAuth transaction / handoff 不能兑换，用户需要重新发起登录。章节批量写入缺少基线的旧请求返回 428，不再静默覆盖；普通收藏字段写入不需要此基线。
+
+旧 `push_devices` 行没有 session 归属时保留原数据，但不参与投递。客户端下一次正常登记会绑定当前 session；无需强制退出或清理 token。迁移中新增 session 外键必须带 `ON DELETE cascade`；Drizzle 的 ALTER TABLE 输出已人工复核补齐，真实 D1 测试验证级联效果。
+
+刷新占用保存在 `bangumi_credentials.refresh_operation_id`。`refresh_lease_expires_at` 是判断结果等待期限的时间，**不是自动解锁租约**。上游超时、5xx、200 返回错误账号或落库失败时，不能因为过了 60 秒就重放旧 refresh token；轮换可能已经在 Bangumi 生效。客户端收到 `bangumi_refresh_unconfirmed` 时保留会话与本机数据，由用户重新授权建立新 connection generation；不要手工清掉占用后重试旧 refresh token。
+
+`collection_write_locks` 与目录占用遵循相同恢复原则：未知上游操作不自动过期。维护者确认上游已结束、读回最终状态并获准恢复后，只按 user_id、subject_id、operation_id 删除对应一行。不要清空整表或把它加入每日维护；与认证会话分离，避免注销使未知写入失去保护。
+
+Expo ticket 与游标通过 D1 batch 原子提交；receipt 15 分钟后检查、24 小时清理。`DeviceNotRegistered` 只清理仍匹配原 registrationId 的订阅。其他 receipt 错误可通过安全错误码观察，本轮不自动重放已获 ticket 的消息，不承诺恰好一次投递。
+
+开发、CI 与发布构建显式设置 `EXPO_PUBLIC_KAKU_API_URL`。EAS profile 与本地原生构建脚本保留现有生产 origin；本地隔离测试需显式选择 loopback API，示例见 [移动端环境模板](../../apps/mobile/.env.example)。不要把本机测试库当作现有生产账号的数据源。正式 profile 拒绝 HTTP API 地址。
