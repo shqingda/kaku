@@ -32,6 +32,22 @@ bash scripts/build-split-apks.sh --build-only
 
 纯构建只生成原生工程、打包和报告体积，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
 
+### macOS 代理下 Gradle 下载停滞
+
+`unset http_proxy ...` 只移除 shell 环境变量，Java 仍可能读取 macOS 系统代理；
+TUN 开启时，忽略显式代理也不等于绕过 TUN。不要因此修改系统代理、IPv6 或局域网共享设置。
+2026-10-16 和 2026-10-18 均遇到 Java 保留代理 host 后下载停滞；可对单次构建明确配置：
+
+```bash
+env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY \
+  GRADLE_OPTS='-Djava.net.useSystemProxies=false -Dhttp.proxyHost= -Dhttps.proxyHost= -DsocksProxyHost= -Dorg.gradle.logging.level=info -Dorg.gradle.internal.http.socketTimeout=30000 -Dorg.gradle.internal.http.connectionTimeout=30000' \
+  pnpm build:android
+```
+
+这里将单次 HTTP 连接/读取超时设为 30 秒并输出下载位置，不修改全局 Gradle 配置。
+仍卡住时先用日志里的同一个具体文件比较无显式代理与 `127.0.0.1:7890` 的下载，
+不能只因系统开了代理就断定代理节点故障。不要并行启动两份正式构建。
+
 ### 测量与裁剪
 
 先保存相同工具版本、ABI、签名、渠道的非裁剪对照包，再构建默认裁剪包。比较源码范围也要记录，不能把依赖升级或不同 ABI 当作优化收益。
