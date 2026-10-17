@@ -28,6 +28,7 @@
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-10-17 Android 签名迁移 | Android 13+ 换签、Android 10–12L 兼容，设备验证暂缓 | [内部包、密钥备份及待验事项](test-records/2026-10-17-signing-migration.md) |
 | 2026-10-16 架构安全修复 | [Review 修复计划](plans/2026-10-16-architecture-review-fixes.md) | [并发、身份与投递回归](test-records/2026-10-16-architecture-review-fixes.md) |
 | 2026-10-15 代码清理 | [审查、清理与精准验证](plans/2026-10-15-code-review-cleanup.md) | 决策与验证结果随计划保留 |
 | 2026-10-03 启动优化 | 按可验证的小切片推进 | [启动、缓存、动效与包体验收](test-records/2026-10-03-startup-optimization.md) |

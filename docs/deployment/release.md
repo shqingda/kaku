@@ -66,6 +66,10 @@ bash scripts/build-split-apks.sh "" release
 - 本地不上传 source map，压缩堆栈定位能力受限。
 - 构建完成只证明可编译，发布前仍要核对签名、版本、权限并完成设备安装/运行验收。
 
+## 签名迁移内部候选包
+
+2026-10-17 已制作 Release 内部包：Android 13+ 使用新正式签名与轮换证明，Android 10–12L 沿用旧签名。默认本地构建入口仍保持原签名；本次候选包不代表公开签名策略已切换。密钥备份位置、产物指纹、后续构建号要求及设备待验事项统一见 [迁移记录](../test-records/2026-10-17-signing-migration.md)。未完成覆盖安装与数据保留实测，暂不发版。
+
 ## 配置与账号边界
 
 当前仅维护本地构建和本地上传 GitHub Release 的流程，已移除 EAS 云构建配置、命令和依赖 EAS 的 GitHub Actions 发版工作流。本地使用 `KAKU_BUILD_PROFILE=production` 选择正式包名；未设置时使用 debug 包名。构建脚本按 release / debug 参数设置该变量。
