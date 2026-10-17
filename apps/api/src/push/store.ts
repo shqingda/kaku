@@ -2,11 +2,14 @@ import { and, asc, eq, gt, lte } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
 import { bangumiCredentials, pushDevices, pushReceipts, sessions } from '../db/schema.ts';
-import type { ExpoAcceptedTicket } from './expo-client.ts';
+import type { PushAcceptance } from './model.ts';
 
 export type PushPlatform = 'android' | 'ios';
 
 export type StoredPushDevice = {
+  provider?: 'fcm' | 'apns' | 'expo';
+  apnsEnvironment?: 'sandbox' | 'production' | null;
+  apnsTopic?: string | null;
   lastNotificationId: number | null;
   platform: PushPlatform;
   registrationId: string | null;
@@ -29,7 +32,7 @@ export type PushDeliveryCommit = {
   createdAt: number;
   devices: StoredPushDevice[];
   lastNotificationId: number;
-  tickets: ExpoAcceptedTicket[];
+  tickets: PushAcceptance[];
 };
 
 export type PushDeviceStore = {
@@ -46,7 +49,10 @@ export type PushDeviceStore = {
 };
 
 function mapRow(row: typeof pushDevices.$inferSelect): StoredPushDevice {
-  return { ...row, platform: row.platform === 'android' ? 'android' : 'ios' };
+  return { ...row, platform: row.platform === 'android' ? 'android' : 'ios',
+    provider: row.provider === 'fcm' ? 'fcm' : row.provider === 'apns' ? 'apns' : 'expo',
+    apnsEnvironment: row.apnsEnvironment === 'sandbox' ? 'sandbox' : row.apnsEnvironment === 'production' ? 'production' : null,
+  };
 }
 
 export function createD1PushDeviceStore(database: D1Database): PushDeviceStore {
@@ -91,25 +97,28 @@ export function createD1PushDeviceStore(database: D1Database): PushDeviceStore {
       // The session may have been revoked after request authentication. A single
       // conditional statement cannot recreate that device after revocation.
       const result = await database.prepare(`
-        INSERT INTO push_devices (last_notification_id, platform, registration_id, session_id, token, updated_at, user_id)
-        SELECT ?, ?, ?, session_id, ?, ?, user_id FROM sessions
+        INSERT INTO push_devices (last_notification_id, platform, registration_id, session_id, token, updated_at, user_id, provider, apns_environment, apns_topic)
+        SELECT ?, ?, ?, session_id, ?, ?, user_id, ?, ?, ? FROM sessions
         WHERE session_id = ? AND user_id = ? AND refresh_expires_at > ?
           AND EXISTS (SELECT 1 FROM bangumi_credentials WHERE user_id = sessions.user_id)
         ON CONFLICT(token) DO UPDATE SET
           last_notification_id = CASE
             WHEN push_devices.user_id = excluded.user_id AND push_devices.session_id = excluded.session_id
+              AND push_devices.provider = excluded.provider
+              AND push_devices.apns_environment IS excluded.apns_environment AND push_devices.apns_topic IS excluded.apns_topic
             THEN CASE
               WHEN push_devices.last_notification_id IS NULL AND excluded.last_notification_id IS NULL THEN NULL
               ELSE MAX(COALESCE(push_devices.last_notification_id, 0), COALESCE(excluded.last_notification_id, 0))
             END
             ELSE NULL
           END,
+          provider = excluded.provider, apns_environment = excluded.apns_environment, apns_topic = excluded.apns_topic,
           platform = excluded.platform,
           registration_id = excluded.registration_id, session_id = excluded.session_id,
           updated_at = excluded.updated_at, user_id = excluded.user_id
         RETURNING token
       `).bind(input.lastNotificationId, input.platform, input.registrationId, input.token,
-        input.updatedAt, input.sessionId, input.userId, input.updatedAt).all();
+        input.updatedAt, input.provider ?? 'expo', input.apnsEnvironment ?? null, input.apnsTopic ?? null, input.sessionId, input.userId, input.updatedAt).all();
       return result.results.length > 0;
     },
 

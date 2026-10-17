@@ -204,6 +204,7 @@ async function seedPushSession(sessionId, userId, { refreshExpiresAt = NOW + 3_6
 
 function pushDevice(token, userId = 42, sessionId = 'push-session-42', overrides = {}) {
   return {
+    provider: 'expo', apnsEnvironment: null, apnsTopic: null,
     lastNotificationId: null, platform: 'ios', registrationId: `registration-${token}`,
     sessionId, token, updatedAt: NOW, userId, ...overrides,
   };
@@ -260,6 +261,7 @@ test('push device store upserts by token and lists distinct user ids', async () 
   assert.deepEqual(
     updated.find((device) => device.token === 'token-a'),
     {
+      provider: 'expo', apnsEnvironment: null, apnsTopic: null,
       lastNotificationId: 7,
       platform: 'ios',
       token: 'token-a',
@@ -426,13 +428,16 @@ test('the push session migration preserves legacy rows without assigning them to
       .bind(201, 'legacy-owner', 'Legacy owner', NOW, NOW).run();
     await legacyDb.prepare('INSERT INTO push_devices (token, platform, updated_at, user_id, last_notification_id) VALUES (?, ?, ?, ?, ?)')
       .bind('legacy-device', 'ios', NOW, 201, 7).run();
-    const migration = journal.entries.find((item) => item.idx === 9);
-    const sql = await readFile(`drizzle/${migration.tag}.sql`, 'utf8');
-    for (const statement of sql.split('--> statement-breakpoint')) {
-      if (statement.trim()) await legacyDb.prepare(statement).run();
+    for (const migration of journal.entries.filter(item => item.idx >= 9)) {
+      const sql = await readFile(`drizzle/${migration.tag}.sql`, 'utf8');
+      for (const statement of sql.split('--> statement-breakpoint')) {
+        if (statement.trim()) await legacyDb.prepare(statement).run();
+      }
     }
     const preserved = (await legacyDb.prepare('SELECT * FROM push_devices WHERE token = ?').bind('legacy-device').all()).results[0];
     assert.equal(preserved.last_notification_id, 7);
+    assert.equal(preserved.provider, 'expo');
+    assert.equal(preserved.apns_environment, null);
     assert.equal(preserved.session_id, null);
     assert.equal(preserved.registration_id, null);
     const legacyStore = createD1PushDeviceStore(legacyDb);
@@ -529,4 +534,14 @@ test('bulk receipt checks and retirement stay below the D1 one-hundred-parameter
   await boundedStore.deleteReceipts(ids);
   assert.equal((await database.prepare('SELECT COUNT(*) AS count FROM push_receipts WHERE user_id = ?').bind(113).first()).count, 0);
   assert.deepEqual(parameterCounts, [100, 3, 100, 1]);
+});
+
+test('native provider and APNs routing identity round-trip and reset cursors on environment changes', async () => {
+  await seedPushSession('native-route-session', 114);
+  const input = pushDevice('a'.repeat(64), 114, 'native-route-session', { provider: 'apns', apnsEnvironment: 'sandbox', apnsTopic: 'com.shqingda.kaku.debug', lastNotificationId: 10 });
+  await pushStore.save(input);
+  assert.deepEqual(await pushStore.listByUser(114, NOW), [input]);
+  await pushStore.save({ ...input, apnsEnvironment: 'production', registrationId: 'production-registration' });
+  const updated = (await pushStore.listByUser(114, NOW))[0];
+  assert.equal(updated.apnsEnvironment, 'production'); assert.equal(updated.lastNotificationId, null);
 });

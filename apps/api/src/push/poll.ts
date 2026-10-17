@@ -4,15 +4,14 @@ import type { Env } from '../env.ts';
 import { getBangumiNotifications } from '../notifications/bangumi-client.ts';
 
 import { deliverPushForUser } from './deliver.ts';
-import { getExpoPushReceipts, sendExpoPush } from './expo-client.ts';
+import { isNativePushDevice, nativePushSender, type SendDevice } from './native-sender.ts';
+import type { PushResult } from './model.ts';
 import { createD1PushDeviceStore, type PushDeviceStore, type StoredPushDevice } from './store.ts';
 
-const RECEIPT_ERRORS = new Set(['DeviceNotRegistered', 'MessageTooBig', 'MessageRateExceeded', 'MismatchSenderId', 'InvalidCredentials']);
-
 export type PushPollResult = {
-  checkedReceipts: number;
   expiredReceipts: number;
   failedReceipts: number;
+  legacyDevices: number;
   failedUsers: number;
   primedUsers: number;
   sentUsers: number;
@@ -20,19 +19,20 @@ export type PushPollResult = {
 };
 
 export async function pollRegisteredPushUsers({
-  env, fetcher = fetch, now, authStore, pushStore,
+  env, fetcher = fetch, now, authStore, pushStore, sendDevice,
 }: {
   authStore: AuthStore;
   env: Env;
   fetcher?: typeof fetch;
   now?: number;
   pushStore?: PushDeviceStore;
+  sendDevice?: SendDevice;
 }): Promise<PushPollResult> {
   const currentTime = () => now ?? Date.now();
   const devices = pushStore ?? createD1PushDeviceStore(env.DB);
   const userIds = await devices.listUserIds(currentTime());
   const result: PushPollResult = {
-    checkedReceipts: 0, expiredReceipts: 0, failedReceipts: 0,
+    expiredReceipts: 0, failedReceipts: 0, legacyDevices: 0,
     failedUsers: 0, primedUsers: 0, sentUsers: 0, users: userIds.length,
   };
   try {
@@ -42,46 +42,14 @@ export async function pollRegisteredPushUsers({
     result.failedReceipts += 1;
     console.error('push_receipt_cleanup_failed');
   }
-  if (!env.EXPO_ACCESS_TOKEN) {
-    console.error('push_expo_access_token_missing', { users: userIds.length });
-    result.failedUsers = userIds.length;
-    return result;
-  }
-
-  // Expo tickets are only queue acceptance. Check provider receipts at least
-  // 15 minutes later; Expo removes them after 24 hours.
-  // https://docs.expo.dev/push-notifications/sending-notifications/#check-push-receipts-for-errors
-  try {
-    const pending = await devices.listPendingReceipts(currentTime());
-    const receipts = await getExpoPushReceipts(fetcher, pending.map((receipt) => receipt.ticketId), {
-      accessToken: env.EXPO_ACCESS_TOKEN,
-    });
-    // Missing receipts must yield their slot to unexamined tickets next time.
-    await devices.markReceiptChecks(pending.map((receipt) => receipt.ticketId), currentTime());
-    const confirmedIds: string[] = [];
-    for (const pendingReceipt of pending) {
-      const receipt = receipts[pendingReceipt.ticketId];
-      if (!receipt) continue;
-      if (receipt.status === 'error') {
-        result.failedReceipts += 1;
-        if (receipt.details?.error === 'DeviceNotRegistered') await devices.deleteRegistration(pendingReceipt);
-        else {
-          const error = receipt.details?.error;
-          console.error('push_receipt_rejected', { reason: error && RECEIPT_ERRORS.has(error) ? error : 'UnknownError' });
-        }
-      }
-      confirmedIds.push(pendingReceipt.ticketId);
-      result.checkedReceipts += 1;
-    }
-    await devices.deleteReceipts(confirmedIds);
-  } catch {
-    result.failedReceipts += 1;
-    console.error('push_receipt_check_failed');
-  }
+  const send = sendDevice ?? nativePushSender(env, fetcher, currentTime);
 
   async function pollUser(userId: number) {
     try {
-      const userDevices = await devices.listByUser(userId, currentTime());
+      const allDevices = await devices.listByUser(userId, currentTime());
+      const userDevices = allDevices.filter(isNativePushDevice);
+      result.legacyDevices += allDevices.length - userDevices.length;
+      if (allDevices.length > userDevices.length) console.error('push_legacy_devices_need_upgrade', { userId, count: allDevices.length - userDevices.length });
       if (userDevices.length === 0) return;
       const accessToken = await getValidBangumiAccessToken({ env, fetcher, now: currentTime(), store: authStore, userId });
       const resolveDevices = async (snapshot: StoredPushDevice[]) => {
@@ -95,18 +63,43 @@ export async function pollRegisteredPushUsers({
         loadNotifications: () => getBangumiNotifications({ accessToken,
           fetcher: (input, init) => fetcher(input, { ...init, signal: AbortSignal.timeout(12_000) }),
         }),
-        commitDelivery: (batch, lastNotificationId, tickets) => devices.commitDelivery({
-          createdAt: currentTime(), devices: batch, lastNotificationId, tickets,
+        commitDelivery: (batch, lastNotificationId) => devices.commitDelivery({
+          // FCM/APNs acceptance is synchronous; no Expo receipt polling.
+          createdAt: currentTime(), devices: batch, lastNotificationId, tickets: [],
         }),
         sendPush: async (tokens, payload) => {
-          const delivery = await sendExpoPush(fetcher, tokens, payload, { accessToken: env.EXPO_ACCESS_TOKEN });
+          const delivery: PushResult = { failedTokens: [], invalidTokens: [], tickets: [] };
+          let nextDevice = 0;
+          // Each provider call is per-device; bound concurrency and recheck
+          // ownership after any provider authentication work, before sending.
+          await Promise.all(Array.from({ length: Math.min(4, tokens.length) }, async () => {
+            while (nextDevice < tokens.length) {
+              const token = tokens[nextDevice++];
+              const snapshot = userDevices.find(device => device.token === token);
+              if (!snapshot) continue;
+              const isCurrent = async () => (await resolveDevices([snapshot])).length === 1;
+              if (!await isCurrent()) continue;
+              let outcome;
+              try { outcome = await send(snapshot, payload, isCurrent); }
+              catch { outcome = { status: 'failed' as const, error: 'provider_request_failed' }; }
+              if (outcome.status === 'accepted') delivery.tickets.push({ id: outcome.id, token: snapshot.token });
+              else if (outcome.status === 'invalid') delivery.invalidTokens.push(snapshot.token);
+              else {
+                delivery.failedTokens.push({ error: outcome.error, token: snapshot.token });
+                // Only provider classifications generated by our adapters are logged.
+                console.error('push_provider_send_failed', { userId, provider: snapshot.provider,
+                  reason: /^[a-z0-9_]{1,80}$/.test(outcome.error) ? outcome.error : 'unknown_failure',
+                });
+              }
+            }
+          }));
           for (const token of delivery.invalidTokens) {
             const snapshot = userDevices.find((device) => device.token === token);
             if (!snapshot) continue;
             try {
               await devices.deleteRegistration(snapshot);
             } catch {
-              // Keep accepted tickets durable even when an invalid token needs
+              // Keep accepted cursor commits durable even when an invalid token needs
               // another cleanup attempt on the next poll.
               console.error('push_invalid_registration_cleanup_failed', { userId });
             }

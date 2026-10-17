@@ -87,3 +87,81 @@ test('APNs only invalidates Unregistered tokens when its timestamp covers the re
     assert.equal((await client.send('ab'.repeat(32), payload, { environment: 'production', topic: 'com.shqingda.kaku', registeredAt: now })).status, expected);
   }
 });
+
+test('a revoked registration after OAuth refresh is never sent to FCM', async () => {
+  let active = true, sends = 0;
+  const client = createFcmClient(account, async url => {
+    if (String(url).includes('oauth2')) { active = false; return Response.json({ access_token: 'test', expires_in: 3600 }); }
+    sends++; return Response.json({ name: 'projects/kaku-test/messages/id' });
+  }, () => now);
+  assert.equal((await client.send('native-token', payload, async () => active)).status, 'failed');
+  assert.equal(sends, 0);
+});
+
+test('credentials cannot redirect private JWTs to an arbitrary token endpoint', async () => {
+  const config = JSON.parse(account); config.token_uri = 'https://attacker.invalid/token';
+  const urls = [];
+  const client = createFcmClient(JSON.stringify(config), async url => {
+    urls.push(String(url)); return String(url).includes('oauth2')
+      ? Response.json({ access_token: 'test', expires_in: 3600 })
+      : Response.json({ name: 'projects/kaku-test/messages/id' });
+  }, () => now);
+  await client.send('native-token', payload);
+  assert.ok(urls.every(url => url.startsWith('https://oauth2.googleapis.com/') || url.startsWith('https://fcm.googleapis.com/')));
+});
+
+test('OAuth refresh failure can recover, expired credentials refresh, and APNs tokens stay cached', async () => {
+  let clock = now, oauth = 0, appleTokens = [];
+  const client = createFcmClient(account, async url => {
+    if (String(url).includes('oauth2')) {
+      oauth++;
+      return oauth === 1 ? Response.json({}, { status: 503 }) : Response.json({ access_token: 'test', expires_in: 3600 });
+    }
+    return Response.json({ name: 'projects/kaku-test/messages/id' });
+  }, () => clock);
+  assert.equal((await client.send('token', payload)).status, 'failed');
+  assert.equal((await client.send('token', payload)).status, 'accepted');
+  clock += 3_600_000;
+  assert.equal((await client.send('token', payload)).status, 'accepted');
+  assert.equal(oauth, 3);
+  const apns = createApnsClient(apple, async (_url, init) => { appleTokens.push(init.headers.authorization); return new Response(null); }, () => clock);
+  const target = { environment: 'sandbox', topic: 'com.shqingda.kaku.debug', registeredAt: now };
+  await apns.send('ab'.repeat(32), payload, target); clock += 15 * 60_000;
+  await apns.send('ab'.repeat(32), payload, target);
+  assert.equal(appleTokens[0], appleTokens[1]);
+  clock += 40 * 60_000; await apns.send('ab'.repeat(32), payload, target);
+  assert.notEqual(appleTokens[1], appleTokens[2]);
+});
+
+test('native provider requests have twelve-second deadlines and do not follow redirects', async t => {
+  const original = AbortSignal.timeout, deadlines = [];
+  t.mock.method(AbortSignal, 'timeout', milliseconds => { deadlines.push(milliseconds); return original(5); });
+  const fetcher = async (_url, init) => {
+    assert.equal(init.redirect, 'error');
+    return new Promise((_, reject) => {
+      const timer = setTimeout(() => reject(new Error('deadline not enforced')), 500);
+      init.signal.addEventListener('abort', () => { clearTimeout(timer); reject(init.signal.reason); }, { once: true });
+    });
+  };
+  assert.equal((await createFcmClient(account, fetcher, () => now).send('token', payload)).status, 'failed');
+  assert.equal((await createApnsClient(apple, fetcher, () => now).send('ab'.repeat(32), payload, { environment: 'sandbox', topic: 'com.shqingda.kaku.debug', registeredAt: now })).status, 'failed');
+  assert.deepEqual(deadlines, [12000, 12000]);
+});
+
+test('native sender routes both platforms and preserves per-environment auth cache without Expo', async () => {
+  const { nativePushSender } = await import('../src/push/native-sender.ts');
+  const env = { FCM_SERVICE_ACCOUNT_JSON: account, APNS_KEY_ID: apple.keyId, APNS_TEAM_ID: apple.teamId, APNS_PRIVATE_KEY: apple.privateKey };
+  const urls = [];
+  const fetcher = async url => {
+    urls.push(String(url));
+    if (String(url).includes('oauth2')) return Response.json({ access_token: 'test', expires_in: 3600 });
+    if (String(url).includes('fcm.googleapis')) return Response.json({ name: 'projects/kaku-test/messages/id' });
+    return new Response(null, { status: 200 });
+  };
+  const sender = nativePushSender(env, fetcher, () => now);
+  assert.equal(sender, nativePushSender(env, fetcher, () => now));
+  assert.equal((await sender({ provider: 'fcm', platform: 'android', token: 'fcm-native-token-1234567890' }, payload, async () => true)).status, 'accepted');
+  assert.equal((await sender({ provider: 'apns', platform: 'ios', token: 'ab'.repeat(32), apnsEnvironment: 'sandbox', apnsTopic: 'com.shqingda.kaku.debug', updatedAt: now }, payload, async () => true)).status, 'accepted');
+  assert.equal((await sender({ provider: 'expo', platform: 'android', token: 'ExpoPushToken[old]' }, payload, async () => true)).status, 'failed');
+  assert.equal(urls.length, 3); assert.ok(urls.some(url => url.includes('api.sandbox.push.apple.com')));
+});

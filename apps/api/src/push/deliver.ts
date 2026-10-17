@@ -1,6 +1,6 @@
 import type { NotificationList } from '../notifications/model.ts';
 
-import type { ExpoAcceptedTicket, ExpoPushPayload, ExpoPushResult } from './expo-client.ts';
+import type { PushAcceptance, PushPayload, PushResult } from './model.ts';
 import { composePushMessage } from './message.ts';
 import type { StoredPushDevice } from './store.ts';
 
@@ -14,8 +14,8 @@ export async function deliverPushForUser({
   devices: StoredPushDevice[];
   loadNotifications: () => Promise<NotificationList>;
   resolveDevices?: (snapshot: StoredPushDevice[]) => Promise<StoredPushDevice[]>;
-  commitDelivery: (devices: StoredPushDevice[], cursor: number, tickets: ExpoAcceptedTicket[]) => Promise<void>;
-  sendPush: (tokens: string[], payload: ExpoPushPayload) => Promise<ExpoPushResult>;
+  commitDelivery: (devices: StoredPushDevice[], cursor: number, tickets: PushAcceptance[]) => Promise<void>;
+  sendPush: (tokens: string[], payload: PushPayload) => Promise<PushResult>;
 }): Promise<{ failed: number; invalidTokens: string[]; primed: boolean; sent: number }> {
   if (devices.length === 0) return { failed: 0, invalidTokens: [], primed: false, sent: 0 };
 
@@ -35,7 +35,7 @@ export async function deliverPushForUser({
     const fresh = cursor === null ? [] : notifications.items.filter((item) => item.unread && item.id > cursor);
     for (let offset = 0; offset < group.length; offset += 100) {
       // Recheck each batch immediately before its external side effect. Revoking
-      // a session cannot recall a push already accepted by Expo.
+      // a session cannot recall a push already accepted by the push provider.
       const batch = await resolveDevices(group.slice(offset, offset + 100));
       if (batch.length === 0) continue;
       if (fresh.length > 0) {

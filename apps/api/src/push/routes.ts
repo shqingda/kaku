@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { z } from 'zod';
+import { pushRegistrationSchema, pushTokenSchema } from '@kaku/shared/push-contract';
 
 import type { AuthDependencies } from '../auth/routes.ts';
 import { authenticateContext } from '../auth/route-helpers.ts';
@@ -10,13 +11,6 @@ import {
   createD1PushDeviceStore,
   type PushDeviceStore,
 } from './store.ts';
-
-const EXPO_PUSH_TOKEN = /^(ExponentPushToken|ExpoPushToken)\[[^\]]+\]$/;
-
-const registerSchema = z.object({
-  platform: z.enum(['android', 'ios']),
-  token: z.string().regex(EXPO_PUSH_TOKEN),
-});
 
 export type PushDeviceDependencies = {
   createPushDeviceStore?: (database: D1Database) => PushDeviceStore;
@@ -38,9 +32,14 @@ export function registerPushRoutes(
   const now = dependencies.now ?? Date.now;
 
   app.put('/me/push-devices', async (context) => {
-    const body = registerSchema.safeParse(
-      await context.req.json().catch(() => null),
-    );
+    const input: unknown = await context.req.json().catch(() => null);
+    const legacy = z.object({ platform: z.enum(['android', 'ios']), token: z.string().regex(/^(ExponentPushToken|ExpoPushToken)\[[^\]]+\]$/) }).safeParse(input);
+    if (legacy.success && !(input && typeof input === 'object' && 'provider' in input)) {
+      const { authentication } = await authenticateContext(context, dependencies.createStore, now);
+      if (isAuthenticationResponse(authentication)) return authentication;
+      return context.json({ error: 'push_client_upgrade_required', message: '请更新 Kaku 后重新打开推送通知。' }, 426);
+    }
+    const body = pushRegistrationSchema.safeParse(input);
     if (!body.success) {
       return context.json(
         { error: 'invalid_push_device', message: '推送设备格式不正确。' },
@@ -55,6 +54,10 @@ export function registerPushRoutes(
     );
     if (isAuthenticationResponse(authentication)) return authentication;
 
+    const configured = body.data.provider === 'fcm' ? Boolean(context.env.FCM_SERVICE_ACCOUNT_JSON)
+      : Boolean(context.env.APNS_KEY_ID && context.env.APNS_TEAM_ID && context.env.APNS_PRIVATE_KEY);
+    if (!configured) return context.json({ error: 'push_provider_not_configured', message: '推送服务尚未配置完成，请稍后重试。' }, 503);
+
     const store = getStore(context.env, dependencies);
     const existing = (await store.listByUser(authentication.userId, now())).find(
       (device) => device.token === body.data.token,
@@ -64,6 +67,9 @@ export function registerPushRoutes(
       lastNotificationId: existing?.sessionId === authentication.sessionId ? existing.lastNotificationId : null,
       registrationId: crypto.randomUUID(),
       sessionId: authentication.sessionId,
+      provider: body.data.provider,
+      apnsEnvironment: body.data.provider === 'apns' ? body.data.apnsEnvironment : null,
+      apnsTopic: body.data.provider === 'apns' ? body.data.apnsTopic : null,
       platform: body.data.platform,
       token: body.data.token,
       updatedAt,
@@ -89,7 +95,7 @@ export function registerPushRoutes(
     );
     if (isAuthenticationResponse(authentication)) return authentication;
 
-    const body = registerSchema.pick({ token: true }).safeParse(
+    const body = z.object({ token: pushTokenSchema }).safeParse(
       await context.req.json().catch(() => null),
     );
     if (!body.success) {

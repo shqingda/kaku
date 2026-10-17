@@ -83,6 +83,9 @@ export const userRecentSubjects = sqliteTable('user_recent_subjects', {
 });
 
 export const pushDevices = sqliteTable('push_devices', {
+  provider: text('provider').notNull().default('expo'),
+  apnsEnvironment: text('apns_environment'),
+  apnsTopic: text('apns_topic'),
   sessionId: text('session_id').references(() => sessions.sessionId, { onDelete: 'cascade' }),
   registrationId: text('registration_id'),
   lastNotificationId: integer('last_notification_id'),
