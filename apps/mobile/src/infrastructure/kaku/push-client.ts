@@ -1,8 +1,9 @@
+import type { PushRegistration } from '@kaku/shared/push-contract';
 import { KakuApiError, readErrorMessage } from './auth-client.ts';
 
 export async function registerPushDevice(
   request: (path: string, init?: RequestInit) => Promise<Response>,
-  input: { platform: 'android' | 'ios'; token: string },
+  input: PushRegistration,
 ) {
   const response = await request('/me/push-devices', {
     body: JSON.stringify(input),

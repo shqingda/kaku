@@ -1,4 +1,4 @@
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { act, renderHook } from '@testing-library/react-native';
 import Storage from 'expo-sqlite/kv-store';
 import { usePushRegistration } from '@/features/push/use-push-registration';
@@ -16,8 +16,9 @@ const mockPermission = jest.fn();
 const mockAskPermission = jest.fn();
 const mockToken = jest.fn();
 const mockRequest = jest.fn();
+let mockTokenListener: (token: { type: string; data: string }) => void;
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: mockSession, request: mockRequest, captureRequest: mockCaptureRequest }) }));
-jest.mock('expo-constants', () => ({ expoConfig: { extra: { eas: { projectId: 'project' } } } }));
+jest.mock('expo-constants', () => ({ expoConfig: { extra: { push: { apnsEnvironment: 'sandbox', apnsTopic: 'com.shqingda.kaku.debug' } } } }));
 jest.mock('expo-sqlite/kv-store', () => ({ getItem: jest.fn(), setItem: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/features/push/device-registration', () => ({ registerPushDevice: jest.fn(), unregisterPushDevice: jest.fn() }));
 jest.mock('@/features/push/native-notifications', () => ({
@@ -26,11 +27,15 @@ jest.mock('@/features/push/native-notifications', () => ({
   loadNotifications: () => ({
     getPermissionsAsync: mockPermission,
     requestPermissionsAsync: mockAskPermission,
-    getExpoPushTokenAsync: mockToken,
+    getDevicePushTokenAsync: mockToken,
+    addPushTokenListener: (callback: typeof mockTokenListener) => { mockTokenListener = callback; return { remove: jest.fn() }; },
+    setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+    AndroidImportance: { DEFAULT: 3 },
   }),
 }));
 let listener: (state: AppStateStatus) => void;
 beforeEach(() => {
+  jest.replaceProperty(Platform, 'OS', 'android');
   jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, fn) => {
     listener = fn; return { remove: jest.fn() };
   });
@@ -39,7 +44,7 @@ beforeEach(() => {
   mockSession = { user: { id: 1 } };
   mockPermission.mockReset().mockResolvedValue({ status: 'granted', canAskAgain: true });
   mockAskPermission.mockReset().mockResolvedValue({ status: 'granted' });
-  mockToken.mockReset().mockResolvedValue({ data: 'ExpoPushToken[local]' });
+  mockToken.mockReset().mockResolvedValue({ type: 'android', data: 'fcm-native-token-local-123456' });
   jest.mocked(Storage.getItem).mockResolvedValue('true');
   jest.mocked(registerPushDevice).mockResolvedValue(undefined);
   jest.mocked(unregisterPushDevice).mockResolvedValue(undefined);
@@ -110,9 +115,9 @@ test('late token for an old account is not registered after switching accounts',
   const hook = await renderHook(usePushRegistration);
   mockSession = { user: { id: 2 } };
   await hook.rerender(undefined);
-  await act(async () => { finish({ data: 'old-token' }); });
+  await act(async () => { finish({ data: 'fcm-native-old-token-123456789' }); });
   expect(registerPushDevice).toHaveBeenCalledTimes(1);
-  expect(registerPushDevice).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ token: 'ExpoPushToken[local]' }));
+  expect(registerPushDevice).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ provider: 'fcm', token: 'fcm-native-token-local-123456' }));
 });
 
 
@@ -130,4 +135,27 @@ test('a delayed device-token write cannot register with a replacement session', 
   expect(mockRequest).not.toHaveBeenCalled();
   await hook.rerender(undefined);
   expect(hook.result.current.status).toBe('on');
+});
+
+test('iOS registers its APNs token with explicit environment and topic', async () => {
+  jest.replaceProperty(Platform, 'OS', 'ios');
+  mockToken.mockResolvedValue({ type: 'ios', data: 'ab'.repeat(32) });
+  const hook = await renderHook(usePushRegistration);
+  expect(registerPushDevice).toHaveBeenCalledWith(expect.any(Function), {
+    platform: 'ios', provider: 'apns', token: 'ab'.repeat(32), apnsEnvironment: 'sandbox', apnsTopic: 'com.shqingda.kaku.debug',
+  });
+  expect(hook.result.current.status).toBe('on');
+});
+
+test('native token events register their token without asking for a token again', async () => {
+  const hook = await renderHook(usePushRegistration);
+  const calls = mockToken.mock.calls.length;
+  const rolled = { type: 'android', data: 'fcm-native-rolled-token-123456' };
+  await act(async () => { mockTokenListener(rolled); });
+  expect(mockToken).toHaveBeenCalledTimes(calls);
+  expect(registerPushDevice).toHaveBeenLastCalledWith(expect.any(Function), { platform: 'android', provider: 'fcm', token: rolled.data });
+  const registrations = jest.mocked(registerPushDevice).mock.calls.length;
+  await act(async () => { mockTokenListener(rolled); });
+  expect(registerPushDevice).toHaveBeenCalledTimes(registrations);
+  await hook.unmount();
 });

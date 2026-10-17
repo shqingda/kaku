@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { DevicePushToken } from 'expo-notifications';
 import Constants from 'expo-constants';
 import { AppState, Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
@@ -9,6 +10,7 @@ import {
   registerPushDevice,
   unregisterPushDevice,
 } from '@/features/push/device-registration';
+import { nativePushRegistration } from './native-token';
 import { userErrorMessage } from '@/lib/user-error-message';
 
 import {
@@ -39,13 +41,6 @@ export type PushStatus =
   | 'simulator'
   | 'unavailable';
 
-function projectId() {
-  const extra = Constants.expoConfig?.extra as
-    | { eas?: { projectId?: string } }
-    | undefined;
-  return extra?.eas?.projectId;
-}
-
 export function usePushRegistration() {
   const { authEpoch, captureRequest, session } = useAuth();
   const [ready, setReady] = useState(false);
@@ -54,6 +49,8 @@ export function usePushRegistration() {
   const preferenceRevision = useRef(0);
   const preferenceWrites = useRef(Promise.resolve());
   const askPermission = useRef(false);
+  const pendingNativeToken = useRef<DevicePushToken | null>(null);
+  const lastNativeToken = useRef<DevicePushToken | null>(null);
   const currentIdentity = useRef(session?.user.id);
   currentIdentity.current = session?.user.id;
   const registrationQueue = useRef<Promise<void>>(Promise.resolve());
@@ -144,21 +141,15 @@ export function usePushRegistration() {
           return;
         }
 
-        const id = projectId();
-        if (!id) {
-          setStatus('failed');
-          setError('当前构建缺少 Expo 项目编号，无法登记推送。');
-          return;
-        }
-
-        const token = await Notifications.getExpoPushTokenAsync({
-          projectId: id,
-        });
+        // Token events must use their supplied value: fetching inside a token
+        // listener can emit the same event again and create an infinite loop.
+        const fetched = pendingNativeToken.current ?? await Notifications.getDevicePushTokenAsync();
+        const token = pendingNativeToken.current ?? fetched;
+        pendingNativeToken.current = null;
+        lastNativeToken.current = token;
         if (!isCurrent()) return;
-        await registerPushDevice(request, {
-          platform: Platform.OS === 'android' ? 'android' : 'ios',
-          token: token.data,
-        });
+        const registration = nativePushRegistration(Platform.OS, token.data, Constants.expoConfig?.extra?.push);
+        await registerPushDevice(request, registration);
         if (!isCurrent()) return;
         setStatus('on');
         setError(null);
@@ -192,6 +183,19 @@ export function usePushRegistration() {
         setRetryVersion((version) => version + 1);
       }
       previous = next;
+    });
+    return () => subscription.remove();
+  }, [ready, enabled]);
+
+  useEffect(() => {
+    const notifications = loadNotifications();
+    if (!ready || !enabled || !notifications) return;
+    // A refreshed native token must replace the previous device identity.
+    const subscription = notifications.addPushTokenListener(token => {
+      if (lastNativeToken.current?.type === token.type && lastNativeToken.current?.data === token.data) return;
+      lastNativeToken.current = token;
+      pendingNativeToken.current = token;
+      setRetryVersion(version => version + 1);
     });
     return () => subscription.remove();
   }, [ready, enabled]);

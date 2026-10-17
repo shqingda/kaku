@@ -171,7 +171,9 @@ test('local profiles preserve package identity and separate GitHub install permi
       assert.equal(config.ios.bundleIdentifier, config.android.package);
       assert.equal(config.android.permissions.includes('android.permission.REQUEST_INSTALL_PACKAGES'), updateChannel === 'github');
       assert.equal(config.extra.apiUrl, 'https://kaku-api.shqingda.workers.dev');
-      assert.equal(config.extra.eas.projectId, '65b88c02-a4de-4cfa-abbb-b4a2cbbd0861');
+      assert.equal(config.extra.eas, undefined);
+      assert.equal(config.extra.push.apnsTopic, config.ios.bundleIdentifier);
+      assert.equal(config.extra.push.apnsEnvironment, profile === 'production' ? 'production' : 'sandbox');
     }
   }
 });

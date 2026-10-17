@@ -25,6 +25,21 @@ test('a device without a known token never sends a user-wide delete', async () =
 
 test('registration retains device identity even when the network reply is lost', async () => {
   const request = jest.fn().mockRejectedValue(new Error('offline'));
-  await expect(registerPushDevice(request, { platform: 'ios', token: 'ExpoPushToken[this-device]' })).rejects.toThrow('offline');
-  expect(Storage.setItem).toHaveBeenCalledWith('kaku-push-device-token', 'ExpoPushToken[this-device]');
+  await expect(registerPushDevice(request, { platform: 'android', provider: 'fcm', token: 'fcm-native-token-1234567890' })).rejects.toThrow('offline');
+  expect(Storage.setItem).toHaveBeenCalledWith('kaku-push-device-token', 'fcm-native-token-1234567890');
+});
+
+test('migration and token rotation remove only the persisted previous token before saving the native identity', async () => {
+  jest.mocked(Storage.getItem).mockResolvedValue('ExpoPushToken[legacy]');
+  const request = jest.fn().mockResolvedValue(new Response(null, { status: 200 }));
+  await registerPushDevice(request, { platform: 'android', provider: 'fcm', token: 'fcm-native-token-1234567890' });
+  expect(request.mock.calls.map(([, init]) => init.method)).toEqual(['DELETE', 'PUT']);
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({ token: 'ExpoPushToken[legacy]' });
+});
+
+test('a failed legacy unregister does not overwrite the retained device identity', async () => {
+  jest.mocked(Storage.getItem).mockResolvedValue('ExpoPushToken[legacy]');
+  const request = jest.fn().mockRejectedValue(new Error('offline'));
+  await expect(registerPushDevice(request, { platform: 'android', provider: 'fcm', token: 'fcm-native-token-1234567890' })).rejects.toThrow('offline');
+  expect(Storage.setItem).not.toHaveBeenCalled();
 });

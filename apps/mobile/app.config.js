@@ -9,6 +9,8 @@ const isProduction = KAKU_BUILD_PROFILE === 'production';
 const apiUrl = resolveApiUrl(process.env.EXPO_PUBLIC_KAKU_API_URL, isProduction);
 const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE !== '0';
 const suffix = isProduction ? '' : '.debug';
+const apnsEnvironment = process.env.KAKU_APNS_ENVIRONMENT || (isProduction ? 'production' : 'sandbox');
+if (!['sandbox', 'production'].includes(apnsEnvironment)) throw new Error('KAKU_APNS_ENVIRONMENT 必须为 sandbox 或 production');
 const channel = isProduction ? 'production' : 'debug';
 const iconDirectory = './assets/images/app-icons';
 const lightIcon = `${iconDirectory}/kaku-${channel}-light.png`;
@@ -40,6 +42,7 @@ module.exports = {
     userInterfaceStyle: 'automatic',
     ios: {
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
+      entitlements: { 'aps-environment': apnsEnvironment === 'sandbox' ? 'development' : 'production' },
       icon: {
         dark: darkIcon,
         light: lightIcon,
@@ -153,10 +156,7 @@ module.exports = {
         iosCountry: process.env.KAKU_IOS_STORE_COUNTRY || 'cn',
       },
       router: {},
-      // Expo Push 用此项目标识生成推送 token，与 EAS 构建无关。
-      eas: {
-        projectId: '65b88c02-a4de-4cfa-abbb-b4a2cbbd0861',
-      },
+      push: { apnsEnvironment, apnsTopic: `com.shqingda.kaku${suffix}` },
     },
     owner: 'shqingda',
   },

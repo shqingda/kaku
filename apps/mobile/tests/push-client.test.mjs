@@ -15,7 +15,7 @@ test('registerPushDevice puts the platform and token', async () => {
   };
 
   await registerPushDevice(request, {
-    platform: 'android',
+    platform: 'android', provider: 'fcm',
     token: 'fcm-token-1',
   });
 
@@ -23,7 +23,7 @@ test('registerPushDevice puts the platform and token', async () => {
     {
       path: '/me/push-devices',
       init: {
-        body: JSON.stringify({ platform: 'android', token: 'fcm-token-1' }),
+        body: JSON.stringify({ platform: 'android', provider: 'fcm', token: 'fcm-token-1' }),
         headers: { 'Content-Type': 'application/json' },
         method: 'PUT',
       },
@@ -36,7 +36,7 @@ test('registerPushDevice throws KakuApiError with the server message', async () 
     new Response(JSON.stringify({ message: '设备注册失败' }), { status: 500 });
 
   await assert.rejects(
-    () => registerPushDevice(request, { platform: 'ios', token: 'apns' }),
+    () => registerPushDevice(request, { platform: 'ios', provider: 'apns', token: 'ab'.repeat(32), apnsEnvironment: 'sandbox', apnsTopic: 'com.shqingda.kaku.debug' }),
     (error) => {
       assert.ok(error instanceof KakuApiError);
       assert.equal(error.status, 500);
