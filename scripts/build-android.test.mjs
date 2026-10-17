@@ -23,7 +23,7 @@ const command = ${JSON.stringify(command)};
 const args = process.argv.slice(2);
 fs.appendFileSync(process.env.KAKU_TEST_COMMAND_LOG, JSON.stringify({
   command, args,
-  profile: process.env.EAS_BUILD_PROFILE,
+  profile: process.env.KAKU_BUILD_PROFILE,
   optimization: process.env.KAKU_OPTIMIZE_NATIVE,
   updateChannel: process.env.KAKU_UPDATE_CHANNEL,
   sentryUploadDisabled: process.env.SENTRY_DISABLE_AUTO_UPLOAD,
@@ -140,7 +140,7 @@ test('release publishing accepts shrinking and uploads the standard APK name', (
 });
 
 function readConfig(profile, flag, extraEnv = {}) {
-  const env = { ...process.env, EXPO_PUBLIC_KAKU_API_URL: 'https://kaku-api.shqingda.workers.dev', EAS_BUILD_PROFILE: profile, KAKU_UPDATE_CHANNEL: '', ...extraEnv };
+  const env = { ...process.env, EXPO_PUBLIC_KAKU_API_URL: 'https://kaku-api.shqingda.workers.dev', KAKU_BUILD_PROFILE: profile, KAKU_UPDATE_CHANNEL: '', ...extraEnv };
   if (flag === undefined) delete env.KAKU_OPTIMIZE_NATIVE;
   else env.KAKU_OPTIMIZE_NATIVE = flag;
   const result = spawnSync(process.execPath, ['-e', 'process.stdout.write(JSON.stringify(require("./apps/mobile/app.config.js").expo))'], {
@@ -151,11 +151,11 @@ function readConfig(profile, flag, extraEnv = {}) {
 }
 
 test('production profiles shrink by default and support an explicit diagnostic opt-out', () => {
-  for (const profile of ['production', 'github', 'development', '']) {
+  for (const profile of ['production', 'development', '']) {
     for (const flag of [undefined, '', '1', '0']) {
       const config = readConfig(profile, flag);
       const properties = config.plugins.find(p => Array.isArray(p) && p[0] === 'expo-build-properties')[1];
-      const expected = ['production', 'github'].includes(profile) && flag !== '0';
+      const expected = profile === 'production' && flag !== '0';
       assert.equal(properties.android.enableMinifyInReleaseBuilds, expected, `R8: profile=${profile}, flag=${flag}`);
       assert.equal(properties.android.enableShrinkResourcesInReleaseBuilds, expected, `resources: profile=${profile}, flag=${flag}`);
       assert.equal(properties.ios.enableSceneSupport, true);
@@ -163,22 +163,16 @@ test('production profiles shrink by default and support an explicit diagnostic o
   }
 });
 
-test('cloud profiles retain shrinking defaults while separating store and GitHub distribution', () => {
-  const eas = JSON.parse(readFileSync(new URL('../apps/mobile/eas.json', import.meta.url), 'utf8'));
-  assert.equal(eas.build.github.extends, 'production');
-  assert.equal(eas.build.github.android.buildType, 'apk');
-  assert.equal(eas.build.production.android?.buildType, undefined);
-  for (const profile of ['production', 'github', 'development']) {
-    const parent = eas.build[profile].extends;
-    const profileEnv = { ...(parent ? eas.build[parent].env : {}), ...eas.build[profile].env };
-    const production = profile !== 'development';
-    if (production) assert.equal(profileEnv.KAKU_OPTIMIZE_NATIVE, '1');
-    const config = readConfig(profile, profileEnv.KAKU_OPTIMIZE_NATIVE, profileEnv);
-    assert.equal(config.android.package, production ? 'com.shqingda.kaku' : 'com.shqingda.kaku.debug');
-    assert.equal(config.android.permissions.includes('android.permission.REQUEST_INSTALL_PACKAGES'), profile === 'github');
-    const properties = config.plugins.find(p => Array.isArray(p) && p[0] === 'expo-build-properties')[1];
-    assert.equal(properties.android.enableMinifyInReleaseBuilds, production);
-    assert.equal(properties.android.enableShrinkResourcesInReleaseBuilds, production);
+test('local profiles preserve package identity and separate GitHub install permission', () => {
+  for (const profile of ['production', 'development', '']) {
+    for (const updateChannel of ['github', 'store']) {
+      const config = readConfig(profile, undefined, { KAKU_UPDATE_CHANNEL: updateChannel });
+      assert.equal(config.android.package, profile === 'production' ? 'com.shqingda.kaku' : 'com.shqingda.kaku.debug');
+      assert.equal(config.ios.bundleIdentifier, config.android.package);
+      assert.equal(config.android.permissions.includes('android.permission.REQUEST_INSTALL_PACKAGES'), updateChannel === 'github');
+      assert.equal(config.extra.apiUrl, 'https://kaku-api.shqingda.workers.dev');
+      assert.equal(config.extra.eas.projectId, '65b88c02-a4de-4cfa-abbb-b4a2cbbd0861');
+    }
   }
 });
 

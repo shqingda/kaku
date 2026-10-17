@@ -16,8 +16,8 @@ set -a
 if [[ -f .env ]]; then source .env; fi
 set +a
 export EXPO_PUBLIC_KAKU_API_URL="${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev}"
-export EAS_BUILD_PROFILE=
-if [[ "$CHANNEL" == release ]]; then export EAS_BUILD_PROFILE=production; fi
+export KAKU_BUILD_PROFILE=
+if [[ "$CHANNEL" == release ]]; then export KAKU_BUILD_PROFILE=production; fi
 export KAKU_UPDATE_CHANNEL=github
 export KAKU_OPTIMIZE_NATIVE=0
 if [[ "$CHANNEL" == release ]]; then export KAKU_OPTIMIZE_NATIVE=1; fi

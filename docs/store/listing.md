@@ -55,6 +55,6 @@ Public content can be browsed without signing in. Collection sync, posting, and 
 5. 收藏盒：登录提示或经授权的演示账号收藏状态。
 6. 深色模式：条目或设置页。
 
-缺少 App Store Connect API key / App ID、Play 服务账号与应用后台配置；仓库 `eas.json` 尚无 submit profile。凭据与商店应用记录齐备后配置提交，不把 debug 签名 APK 当成商店产物。
+缺少 App Store Connect API key / App ID、Play 服务账号与应用后台配置；当前仅维护本地构建和 GitHub 发版，尚未配置商店提交流程。凭据与商店应用记录齐备后配置提交，不把 debug 签名 APK 当成商店产物。
 
 2026-09-18 已在 iPhone 18 Pro / iOS 27.0 采集候选图：`~/.maestro/tests/2026-09-18_235227/Store screenshot candidates/takeScreenshot/`。已检查条目截图，布局正常，但包含开发客户端悬浮齿轮及当前账号收藏状态，因此这批只用作构图参考，不能直接上传商店；正式图需无开发控件的 production 构建和演示账号。

@@ -14,7 +14,7 @@ apps/api/data/
 apps/api/.dev.vars
 !.env.example
 
-# Local EAS tooling (sandbox: HOME override + dlx cache)
+# Legacy local EAS credentials: keep ignored to prevent accidental commits
 .eas-home/
 .eas-env.sh
 .cache/

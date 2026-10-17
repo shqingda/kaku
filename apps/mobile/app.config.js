@@ -1,10 +1,10 @@
-// 按 EAS 构建环境动态设置包名：
-// - production / github：正式包名 com.shqingda.kaku（商店 / GitHub APK）
-// - 本地与 debug 构建（无 EAS_BUILD_PROFILE）：com.shqingda.kaku.debug。
+// 按本地构建配置动态设置包名：
+// - production：正式包名 com.shqingda.kaku。
+// - 本地与 debug 构建（无 KAKU_BUILD_PROFILE）：com.shqingda.kaku.debug。
 const { resolveApiUrl } = require('./config/api-url.cjs');
-const EAS_BUILD_PROFILE = process.env.EAS_BUILD_PROFILE;
+const KAKU_BUILD_PROFILE = process.env.KAKU_BUILD_PROFILE;
 
-const isProduction = EAS_BUILD_PROFILE === 'production' || EAS_BUILD_PROFILE === 'github';
+const isProduction = KAKU_BUILD_PROFILE === 'production';
 // 正式 Android 包默认启用 R8 与资源裁剪；显式设为 0 可生成诊断对照包。
 const apiUrl = resolveApiUrl(process.env.EXPO_PUBLIC_KAKU_API_URL, isProduction);
 const optimizeNative = isProduction && process.env.KAKU_OPTIMIZE_NATIVE !== '0';
@@ -153,6 +153,7 @@ module.exports = {
         iosCountry: process.env.KAKU_IOS_STORE_COUNTRY || 'cn',
       },
       router: {},
+      // Expo Push 用此项目标识生成推送 token，与 EAS 构建无关。
       eas: {
         projectId: '65b88c02-a4de-4cfa-abbb-b4a2cbbd0861',
       },

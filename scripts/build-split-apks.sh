@@ -40,10 +40,10 @@ CHANNEL="${2:-release}"
 
 case "${CHANNEL}" in
   debug)
-    export EAS_BUILD_PROFILE=
+    export KAKU_BUILD_PROFILE=
     ;;
   release)
-    export EAS_BUILD_PROFILE=production
+    export KAKU_BUILD_PROFILE=production
     ;;
   *)
     echo "channel 只能是 debug 或 release，收到: ${CHANNEL}" >&2

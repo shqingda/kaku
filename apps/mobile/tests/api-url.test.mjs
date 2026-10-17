@@ -11,11 +11,3 @@ test('API target is explicit and restricted to an HTTP origin suitable for the b
   }
   assert.throws(() => resolveApiUrl('http://127.0.0.1:8787', true));
 });
-
-test('production build profiles explicitly retain the hosted API target', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const profiles = JSON.parse(await readFile(new URL('../eas.json', import.meta.url), 'utf8')).build;
-  for (const name of ['development', 'production', 'github']) {
-    assert.equal(profiles[name].env.EXPO_PUBLIC_KAKU_API_URL, 'https://kaku-api.shqingda.workers.dev');
-  }
-});

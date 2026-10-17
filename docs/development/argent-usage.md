@@ -76,12 +76,12 @@ OAuth 的场景再开 argent 会话，记录追加到 `docs/test-records/`。
 
 ## 包名
 
-由 `apps/mobile/app.config.js` 的 `EAS_BUILD_PROFILE` 决定：
+由 `apps/mobile/app.config.js` 的 `KAKU_BUILD_PROFILE` 决定：
 
 | 构建 | 包名 |
 | --- | --- |
-| 本地 / debug / 无 `EAS_BUILD_PROFILE`（含 iOS、Android dev client） | `com.shqingda.kaku.debug` |
-| GitHub 日常 release APK、EAS `production` / `github` | `com.shqingda.kaku` |
+| 本地 / debug / 无 `KAKU_BUILD_PROFILE`（含 iOS、Android dev client） | `com.shqingda.kaku.debug` |
+| GitHub 日常 release APK（`production`） | `com.shqingda.kaku` |
 
 `.maestro/kaku-*-ios.yaml` 用 debug 包名。`.maestro/kaku-*-android.yaml`
 目前写的是 `com.shqingda.kaku`（release 包）；用 `expo run:android` 的
