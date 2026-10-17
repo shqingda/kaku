@@ -188,7 +188,7 @@ async function bridgeMessage(type: string, token?: string) {
 test('verification stays inline, opens only on interaction, and sends once after a valid token', async () => {
   mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 123 })));
   await startVerification();
-  expect(screen.getByText('正在安全验证…')).toBeTruthy();
+  expect(screen.getByText('正在发布…')).toBeTruthy();
   expect(screen.queryByText('请完成下方安全验证')).toBeNull();
   expect(mockRequest).not.toHaveBeenCalled();
   await bridgeMessage('interactive');
@@ -201,13 +201,13 @@ test('verification stays inline, opens only on interaction, and sends once after
 
 test('cancelled verification keeps draft and ignores late tokens; retry mounts a new challenge', async () => {
   const old = await startVerification();
-  await fireEvent.press(screen.getByText('取消验证'));
-  await screen.findByText('已取消验证，内容没有发送。');
+  await fireEvent.press(screen.getByText('取消发布'));
+  await screen.findByText('已取消发布，内容没有发送。');
   await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('应用内验证测试');
   await fireEvent.press(screen.getByLabelText('发布动态'));
-  await screen.findByText('正在安全验证…');
+  await screen.findByText('正在发布…');
   await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
   expect(mockRequest).not.toHaveBeenCalled();
 });
@@ -245,7 +245,7 @@ test('automatic verification times out and lets the user retry without losing th
     expect(mockStorage.get(key)).toBe('应用内验证测试');
     expect(mockRequest).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByLabelText('发布动态'));
-    expect(screen.getByText('正在安全验证…')).toBeTruthy();
+    expect(screen.getByText('正在发布…')).toBeTruthy();
   } finally { jest.useRealTimers(); }
 });
 
@@ -277,8 +277,28 @@ test('closing the composer externally cancels pending verification', async () =>
 test('a Cloudflare subresource HTTP error does not fail a valid challenge', async () => {
   const webview = await startVerification();
   await act(() => webview.props.onHttpError({ nativeEvent: { url: 'https://challenges.cloudflare.com/pat', statusCode: 401 } }));
-  expect(screen.getByText('正在安全验证…')).toBeTruthy();
+  expect(screen.getByText('正在发布…')).toBeTruthy();
   await act(() => webview.props.onHttpError({ nativeEvent: { url: webview.props.source.uri, statusCode: 503 } }));
   await screen.findByText('安全验证服务暂时不可用，请稍后重新发布。');
   expect(mockRequest).not.toHaveBeenCalled();
+});
+
+
+test('publishing feedback covers verification and submission, with a slow response hint', async () => {
+  jest.useFakeTimers();
+  try {
+    await startVerification();
+    expect(screen.queryByText('安全验证将尽量自动完成')).toBeNull();
+    expect(screen.queryByText('正在安全验证…')).toBeNull();
+    expect(screen.getByText('正在发布…')).toBeTruthy();
+    await act(() => jest.advanceTimersByTime(8_000));
+    expect(screen.getByText('还在发布，请稍候')).toBeTruthy();
+    let finishRequest!: (response: Response) => void;
+    mockRequest.mockImplementation(() => new Promise<Response>(resolve => { finishRequest = resolve; }));
+    await bridgeMessage('token', 'fresh-token');
+    expect(screen.getByText('还在发布，请稍候')).toBeTruthy();
+    expect(screen.queryByText('取消发布')).toBeNull();
+    await act(() => finishRequest(new Response(JSON.stringify({ id: 123 }))));
+    await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
+  } finally { jest.useRealTimers(); }
 });

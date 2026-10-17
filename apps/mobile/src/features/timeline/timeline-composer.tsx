@@ -63,8 +63,14 @@ function TimelineComposerContent({
     setContent,
     MAX_CONTENT_LENGTH,
   );
-  const { requestToken, verification } = useInlineBangumiVerification(visible);
+  const { requestToken, verification, cancel } = useInlineBangumiVerification(visible);
   const createTimeline = useCreateTimelineSay(requestToken);
+  const [slowPublish, setSlowPublish] = useState(false);
+  useEffect(() => {
+    if (!createTimeline.isPending) { setSlowPublish(false); return; }
+    const timer = setTimeout(() => setSlowPublish(true), 8_000);
+    return () => clearTimeout(timer);
+  }, [createTimeline.isPending]);
   const canSend = content.trim().length > 0 && !createTimeline.isPending && draft.loaded && !sent;
 
   function finishClose() {
@@ -117,13 +123,13 @@ function TimelineComposerContent({
           <Pressable
             accessibilityLabel="发布动态"
             accessibilityRole="button"
-            accessibilityState={{ disabled: !canSend }}
+            accessibilityState={{ disabled: !canSend, busy: createTimeline.isPending }}
             disabled={!canSend}
             hitSlop={HIT_SLOP}
             onPress={send}
             style={({ pressed }) => [
               styles.sendButton,
-              !canSend && styles.sendButtonDisabled,
+              !canSend && !createTimeline.isPending && styles.sendButtonDisabled,
               pressed && canSend && styles.pressed,
             ]}
           >
@@ -182,21 +188,19 @@ function TimelineComposerContent({
           </Pressable>
         ) : null}
 
+        {createTimeline.isPending ? (
+          <View style={styles.publishStatus}>
+            <Text accessibilityLiveRegion="polite" style={styles.hintText}>
+              {slowPublish ? '还在发布，请稍候' : '正在发布…'}
+            </Text>
+            {cancel ? <Pressable accessibilityRole="button" onPress={cancel} style={({ pressed }) => [styles.cancelPublish, pressed && styles.pressed]}>
+              <Text style={styles.hintText}>取消发布</Text>
+            </Pressable> : null}
+          </View>
+        ) : null}
         {verification}
 
         <View style={styles.footer}>
-          <View style={styles.verificationHint}>
-            <SymbolView
-              name={{
-                android: 'verified_user',
-                ios: 'checkmark.shield',
-                web: 'verified_user',
-              }}
-              size={13}
-              tintColor={colors.subtle}
-            />
-            <Text style={styles.hintText}>安全验证将尽量自动完成</Text>
-          </View>
           <Text style={styles.count}>
             {content.length}/{MAX_CONTENT_LENGTH}
           </Text>
@@ -254,12 +258,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     minHeight: MIN_TOUCH_SIZE,
     flexWrap: 'wrap',
     gap: SPACING.sm,
   },
-  verificationHint: { flexShrink: 1, alignItems: 'center', flexDirection: 'row', gap: SPACING.sm },
+  publishStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm, minHeight: MIN_TOUCH_SIZE },
+  cancelPublish: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center', paddingHorizontal: SPACING.sm },
   hintText: { flexShrink: 1, color: colors.muted, ...TYPE.caption },
   count: { color: colors.muted, ...TYPE.caption, fontVariant: ['tabular-nums'] },
   errorText: {

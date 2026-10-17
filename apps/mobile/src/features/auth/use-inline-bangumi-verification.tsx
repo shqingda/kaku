@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import { allowTurnstileNavigation, parseTurnstileMessage, TURNSTILE_BRIDGE, TURNSTILE_PAGE_URL } from './inline-turnstile-bridge';
 
@@ -43,6 +43,7 @@ export function useInlineBangumiVerification(active: boolean) {
 
   return {
     requestToken,
+    cancel: attempt === null ? undefined : () => finish(attempt, new InlineVerificationError('已取消发布，内容没有发送。')),
     verification: attempt === null ? null : <InlineChallenge key={attempt} onFinish={result => finish(attempt, result)} />,
   };
 }
@@ -59,16 +60,10 @@ function InlineChallenge({ onFinish }: { onFinish: (result: string | Error) => v
   }, [interactive]);
 
   const fail = (message: string) => onFinish(new InlineVerificationError(message));
-  return <View style={styles.root}>
-    <View style={styles.status}>
-      {!interactive ? <ActivityIndicator size="small" color={colors.muted} /> : null}
-      <Text accessibilityLiveRegion="polite" style={[styles.text, { color: colors.muted }]}>
-        {interactive ? '请完成下方安全验证' : '正在安全验证…'}
-      </Text>
-      <Pressable accessibilityRole="button" onPress={() => fail('已取消验证，内容没有发送。')} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
-        <Text style={[styles.text, { color: colors.accent }]}>取消验证</Text>
-      </Pressable>
-    </View>
+  return <View>
+    {interactive ? <Text accessibilityLiveRegion="polite" style={[styles.text, { color: colors.muted }]}>
+      请完成下方安全验证
+    </Text> : null}
     <View
       accessibilityElementsHidden={!interactive}
       importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}
@@ -108,11 +103,7 @@ function InlineChallenge({ onFinish }: { onFinish: (result: string | Error) => v
 }
 
 const styles = StyleSheet.create({
-  root: { paddingVertical: SPACING.sm },
-  status: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexWrap: 'wrap' },
   text: { ...TYPE.caption, flexShrink: 1 },
-  cancel: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center', paddingHorizontal: SPACING.sm },
-  pressed: { opacity: 0.62 },
   // Keep a real viewport while automatic checks run; revealing it does not
   // remount the browser or lose the in-progress challenge.
   automatic: { position: 'absolute', opacity: 0, width: '100%', height: 100 },
