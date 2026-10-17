@@ -35,7 +35,7 @@ const sentryPlugin =
 module.exports = {
   expo: {
     name: 'Kaku',
-    version: '1.1.19',
+    version: '1.1.20',
     orientation: 'portrait',
     icon: lightIcon,
     scheme: 'kaku',
@@ -55,7 +55,7 @@ module.exports = {
       supportsTablet: false,
     },
     android: {
-      versionCode: 5,
+      versionCode: 7,
       adaptiveIcon: {
         backgroundColor: '#DA6E80',
         foregroundImage: foregroundIcon,
@@ -81,6 +81,7 @@ module.exports = {
       ['expo-build-properties', {
         ios: { enableSceneSupport: true },
         android: {
+          minSdkVersion: 29,
           enableMinifyInReleaseBuilds: optimizeNative,
           enableShrinkResourcesInReleaseBuilds: optimizeNative,
         },

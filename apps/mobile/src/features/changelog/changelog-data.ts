@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.20',
+    date: '2026-10-17',
+    notes: [
+      'Android 远程推送改为直接使用 Firebase FCM，移除 Expo Push 服务依赖。',
+      '改进推送令牌更新与登记失败提示，方便重试和定位配置问题。',
+      '移除 EAS 云构建配置，保留本地构建和 GitHub 下载更新流程。',
+    ],
+  },
+  {
     version: '1.1.19',
     date: '2026-10-16',
     notes: [

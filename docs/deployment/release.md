@@ -6,6 +6,10 @@
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
+从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 36.0.0 及仓库外签名目录，默认 `$HOME/.local/share/kaku-signing/2026-10-17-rotation/`，可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
+
+构建、签名和发布不需要连接手机。手机用于额外验证覆盖、数据保留和真实通知送达；未连接时在发布记录中保留未验范围。
+
 ```bash
 # 默认 GitHub 渠道、正式包名，单一 arm64-v8a APK，启用 R8 与资源裁剪
 pnpm build:android
@@ -61,20 +65,20 @@ bash scripts/build-split-apks.sh "" release
 
 脚本先同步 App 内更新日志（已有版本不覆盖手改内容，缺失时写入并提交），再调用纯构建，执行 `git push origin HEAD:main`，最后创建 GitHub Release 并上传 APK。发版说明中的安装提示不会收入 App 内更新日志。
 
-- 本地包使用 debug 签名，保持现有方式；同包名、同签名可以覆盖，不同签名不能直接覆盖。不要把 EAS keystore 与本地 debug 证书当成同一签名。
+- 正式包 Android 13+ 使用新证书及旧→新轮换证明；Android 10–12L 保留旧证书兼容。后续继续使用同一 lineage 并递增构建号，不能给已换签的安装回退到仅旧签名包。
 - 只构建 arm64-v8a，不支持 32 位机和 x86 模拟器；ABI 参数是 `-PreactNativeArchitectures=arm64-v8a`。
 - 本地不上传 source map，压缩堆栈定位能力受限。
-- 构建完成只证明可编译，发布前仍要核对签名、版本、权限并完成设备安装/运行验收。
+- 构建完成只证明可编译，发布前仍要核对签名、版本和权限；实际设备安装、运行及未验范围另行记录。
 
 ## 签名迁移内部候选包
 
-2026-10-17 已制作 Release 内部包：Android 13+ 使用新正式签名与轮换证明，Android 10–12L 沿用旧签名。默认本地构建入口仍保持原签名；本次候选包不代表公开签名策略已切换。密钥备份位置、产物指纹、后续构建号要求及设备待验事项统一见 [迁移记录](../test-records/2026-10-17-signing-migration.md)。已在一台 Android 16 手机完成首次覆盖、登录保持及本机设置保留检查；草稿、完整历史和连续升级仍待验，暂不发版。
+2026-10-17 已制作并实测构建号 6 的 Release 内部包。用户随后授权正式发版，v1.1.20 / 构建号 7 将同一签名策略接入正式本地入口，见 [发布记录](../test-records/2026-10-17-release-1.1.20.md)。密钥备份、首次覆盖、登录及本机设置保留证据见 [迁移记录](../test-records/2026-10-17-signing-migration.md)。草稿、完整历史和本次连续升级仍待验，不承诺所有设备或全部数据无损。
 
 ## 配置与账号边界
 
 当前仅维护本地构建和本地上传 GitHub Release 的流程，已移除 EAS 云构建配置、命令和依赖 EAS 的 GitHub Actions 发版工作流。本地使用 `KAKU_BUILD_PROFILE=production` 选择正式包名；未设置时使用 debug 包名。构建脚本按 release / debug 参数设置该变量。
 
-版本和 Android 构建号由 `app.config.js` 本地维护；提交商店时还需正式签名和对应商店凭据，不能直接上传当前 debug 签名 APK。
+版本和 Android 构建号由 `app.config.js` 本地维护；GitHub APK 已接入签名轮换，Play 签名与上架流程仍未配置，GitHub 发版不等于商店提交。
 
 Expo SDK / CLI 仍用于原生工程生成和本地开发，不要求登录 Expo。`apps/mobile/.expo/` 是自动生成的本机开发目录，保存设备记录、路由类型等，可删除，开发时会再生成，保持 Git 忽略。推送改为原生 FCM / APNs，已移除 `extra.eas.projectId`，配置和上线顺序见 [原生推送指南](native-push.md)。
 
