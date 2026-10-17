@@ -18,7 +18,17 @@ jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ request: mockRequest, session: { user: { id: mockUserId } } }),
   useAuthActions: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => mockUserId === userId }; } }),
 }));
-jest.mock('@/features/auth/bangumi-turnstile', () => ({ requestBangumiTurnstileToken: async () => 'test-token' }));
+let mockAutomaticVerification = true;
+jest.mock('react-native-webview', () => {
+  const { View } = require('react-native');
+  const { useEffect } = require('react');
+  return { WebView: (props: any) => {
+    useEffect(() => {
+      if (mockAutomaticVerification) props.onMessage({ nativeEvent: { url: props.source.uri, data: JSON.stringify({ type: 'token', token: 'test-token' }) } });
+    }, []);
+    return <View {...props} testID="verification-webview" />;
+  } };
+});
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('@/features/emoji-picker/bangumi-emoji-picker', () => ({ BangumiRichTextToolbar: () => null }));
 jest.mock('@/features/shared/app-sheet', () => {
@@ -35,7 +45,7 @@ function Page() {
   </ThemeProvider></QueryClientProvider>;
 }
 beforeEach(() => {
-  mockUserId = 1; mockStorage.clear(); mockRequest.mockReset();
+  mockUserId = 1; mockAutomaticVerification = true; mockStorage.clear(); mockRequest.mockReset();
   client = new QueryClient({ defaultOptions: { mutations: { retry: false, gcTime: Infinity }, queries: { gcTime: Infinity, retry: false } } });
 });
 afterEach(async () => { await cleanup(); client.clear(); });
@@ -161,4 +171,114 @@ test.each(['使用本机草稿', '保存当前内容'])('two editors resolve a s
   expect(mockStorage.get(key)).toBe(expected);
   expect(mockRequest).not.toHaveBeenCalled();
   alerts.mockRestore();
+});
+
+async function startVerification() {
+  mockAutomaticVerification = false;
+  await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '应用内验证测试');
+  await fireEvent.press(screen.getByLabelText('发布动态'));
+  return screen.findByTestId('verification-webview', { includeHiddenElements: true });
+}
+async function bridgeMessage(type: string, token?: string) {
+  const webview = screen.getByTestId('verification-webview', { includeHiddenElements: true });
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type, token }) } }));
+}
+
+test('verification stays inline, opens only on interaction, and sends once after a valid token', async () => {
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 123 })));
+  await startVerification();
+  expect(screen.getByText('正在安全验证…')).toBeTruthy();
+  expect(screen.queryByText('请完成下方安全验证')).toBeNull();
+  expect(mockRequest).not.toHaveBeenCalled();
+  await bridgeMessage('interactive');
+  expect(screen.getByText('请完成下方安全验证')).toBeTruthy();
+  await bridgeMessage('token', 'fresh-token');
+  await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(mockRequest.mock.calls[0][1].body).turnstileToken).toBe('fresh-token');
+});
+
+test('cancelled verification keeps draft and ignores late tokens; retry mounts a new challenge', async () => {
+  const old = await startVerification();
+  await fireEvent.press(screen.getByText('取消验证'));
+  await screen.findByText('已取消验证，内容没有发送。');
+  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('应用内验证测试');
+  await fireEvent.press(screen.getByLabelText('发布动态'));
+  await screen.findByText('正在安全验证…');
+  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test('network failure is explicit, preserves draft, and releases the composer', async () => {
+  const webview = await startVerification();
+  await act(() => webview.props.onError({ nativeEvent: { description: 'offline' } }));
+  await screen.findByText('无法连接安全验证服务，请检查网络后重新发布。');
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('应用内验证测试');
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  expect(screen.queryByLabelText('动态内容')).toBeNull();
+});
+
+test('account switch while verifying cannot send the previous account content', async () => {
+  mockAutomaticVerification = false;
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '旧账号草稿');
+  await fireEvent.press(screen.getByLabelText('发布动态'));
+  const old = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('旧账号草稿');
+  expect(screen.getByLabelText('动态内容').props.value).toBe('');
+});
+
+test('automatic verification times out and lets the user retry without losing their draft', async () => {
+  jest.useFakeTimers();
+  try {
+    await startVerification();
+    await act(() => jest.advanceTimersByTime(30_000));
+    await screen.findByText('安全验证超时，请重新发布。');
+    expect(mockStorage.get(key)).toBe('应用内验证测试');
+    expect(mockRequest).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByLabelText('发布动态'));
+    expect(screen.getByText('正在安全验证…')).toBeTruthy();
+  } finally { jest.useRealTimers(); }
+});
+
+test.each(['expired', 'timeout', 'error'])('a %s challenge cannot publish or clear the draft', async type => {
+  await startVerification();
+  await bridgeMessage(type);
+  await screen.findByText(type === 'error' ? '安全验证未通过，请重新发布以重试。' : '安全验证已过期，请重新发布。');
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('应用内验证测试');
+});
+
+test('closing the composer externally cancels pending verification', async () => {
+  mockAutomaticVerification = false;
+  const composer = (visible: boolean) => <QueryClientProvider client={client}><ThemeProvider>
+    <TimelineComposer visible={visible} onClose={() => {}} />
+  </ThemeProvider></QueryClientProvider>;
+  const view = await render(composer(true));
+  await fireEvent.changeText(screen.getByLabelText('动态内容'), '保留草稿');
+  await fireEvent.press(screen.getByLabelText('发布动态'));
+  const old = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  await view.rerender(composer(false));
+  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('保留草稿');
+  await view.rerender(composer(true));
+  expect(screen.getByLabelText('动态内容').props.value).toBe('保留草稿');
+});
+
+test('a Cloudflare subresource HTTP error does not fail a valid challenge', async () => {
+  const webview = await startVerification();
+  await act(() => webview.props.onHttpError({ nativeEvent: { url: 'https://challenges.cloudflare.com/pat', statusCode: 401 } }));
+  expect(screen.getByText('正在安全验证…')).toBeTruthy();
+  await act(() => webview.props.onHttpError({ nativeEvent: { url: webview.props.source.uri, statusCode: 503 } }));
+  await screen.findByText('安全验证服务暂时不可用，请稍后重新发布。');
+  expect(mockRequest).not.toHaveBeenCalled();
 });

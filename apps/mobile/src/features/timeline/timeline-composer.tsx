@@ -23,6 +23,7 @@ import { useBangumiEmojiInsertion } from '@/features/emoji-picker/use-bangumi-em
 import { AppSheet } from '@/features/shared/app-sheet';
 import { useTheme } from '@/features/theme/theme-provider';
 import { useCreateTimelineSay } from './use-create-timeline-say';
+import { InlineVerificationError, useInlineBangumiVerification } from '@/features/auth/use-inline-bangumi-verification';
 
 const MAX_CONTENT_LENGTH = 380;
 
@@ -62,7 +63,8 @@ function TimelineComposerContent({
     setContent,
     MAX_CONTENT_LENGTH,
   );
-  const createTimeline = useCreateTimelineSay();
+  const { requestToken, verification } = useInlineBangumiVerification(visible);
+  const createTimeline = useCreateTimelineSay(requestToken);
   const canSend = content.trim().length > 0 && !createTimeline.isPending && draft.loaded && !sent;
 
   function finishClose() {
@@ -180,6 +182,8 @@ function TimelineComposerContent({
           </Pressable>
         ) : null}
 
+        {verification}
+
         <View style={styles.footer}>
           <View style={styles.verificationHint}>
             <SymbolView
@@ -191,7 +195,7 @@ function TimelineComposerContent({
               size={13}
               tintColor={colors.subtle}
             />
-            <Text style={styles.hintText}>发布时完成一次 Bangumi 安全验证</Text>
+            <Text style={styles.hintText}>安全验证将尽量自动完成</Text>
           </View>
           <Text style={styles.count}>
             {content.length}/{MAX_CONTENT_LENGTH}
@@ -200,7 +204,7 @@ function TimelineComposerContent({
 
         {createTimeline.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {userErrorMessage(createTimeline.error)}
+            {createTimeline.error instanceof InlineVerificationError ? createTimeline.error.message : userErrorMessage(createTimeline.error)}
           </Text>
         ) : null}
       </ScrollView>
