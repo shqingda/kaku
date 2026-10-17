@@ -9,8 +9,12 @@ tags:
 - runFlow:
     file: enter-subject-search.yaml
 - extendedWaitUntil:
-    visible: "葬送的芙莉莲.*"
-    timeout: 15000
+    # 等待结果区域的条目，不能把输入框中的同名查询当作结果。
+    visible:
+      text: "葬送的芙莉莲.*"
+      below: "搜索结果"
+      index: 0
+    timeout: 30000
 - tapOn:
     text: "葬送的芙莉莲.*"
     below: "搜索结果"
