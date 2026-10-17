@@ -10,6 +10,7 @@
 | 跑测试、确认 CI 检查范围 | [测试指南](development/testing.md) | 测试命令与验收方式 |
 | 在 Codex 里运行 iOS 模拟器 | [模拟器启动与输入恢复](development/ios-simulator.md) | `pnpm dev:sim`、内置浏览器预览、输入恢复 |
 | 操作模拟器、用 Argent 验收 | [Argent 使用手册](development/argent-usage.md) | 工具使用与本机注意事项 |
+| 配置 Android / iOS 远程推送 | [原生推送指南](deployment/native-push.md) | FCM / APNs 凭据、旧 token 迁移和启用顺序 |
 | 构建 Android 包、发布到 GitHub / Play | [发版指南](deployment/release.md) | 构建渠道、版本号与发布步骤 |
 | 部署或回滚后端 | [API 部署指南](deployment/deploy-api.md) | Worker、数据库迁移与环境配置 |
 | 开发和部署官网 | [Web 说明](../apps/web/README.md) | 官网专用命令与访问地址 |
@@ -28,6 +29,7 @@
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-10-17 原生推送 | [FCM / APNs 实施计划](plans/2026-10-17-direct-fcm.md) | [本地回归及真实送达待验](test-records/2026-10-17-native-push.md) |
 | 2026-10-17 Android 签名迁移 | Android 13+ 换签、Android 10–12L 兼容，设备验证暂缓 | [内部包、密钥备份及待验事项](test-records/2026-10-17-signing-migration.md) |
 | 2026-10-16 架构安全修复 | [Review 修复计划](plans/2026-10-16-architecture-review-fixes.md) | [并发、身份与投递回归](test-records/2026-10-16-architecture-review-fixes.md) |
 | 2026-10-15 代码清理 | [审查、清理与精准验证](plans/2026-10-15-code-review-cleanup.md) | 决策与验证结果随计划保留 |

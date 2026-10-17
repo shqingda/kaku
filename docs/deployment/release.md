@@ -76,7 +76,7 @@ bash scripts/build-split-apks.sh "" release
 
 版本和 Android 构建号由 `app.config.js` 本地维护；提交商店时还需正式签名和对应商店凭据，不能直接上传当前 debug 签名 APK。
 
-Expo SDK / CLI 仍用于原生工程生成和本地开发，不要求登录 Expo。`apps/mobile/.expo/` 是自动生成的本机开发目录，保存设备记录、路由类型等，可删除，开发时会再生成，保持 Git 忽略。`extra.eas.projectId` 仍供 Expo Push 生成推送 token 使用，不应随构建配置删除。
+Expo SDK / CLI 仍用于原生工程生成和本地开发，不要求登录 Expo。`apps/mobile/.expo/` 是自动生成的本机开发目录，保存设备记录、路由类型等，可删除，开发时会再生成，保持 Git 忽略。推送改为原生 FCM / APNs，已移除 `extra.eas.projectId`，配置和上线顺序见 [原生推送指南](native-push.md)。
 
 ## 应用内检查更新
 

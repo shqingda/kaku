@@ -63,10 +63,12 @@ pnpm --filter @kaku/api types:worker
 | `BANGUMI_CLIENT_ID` | Bangumi OAuth 应用 ID |
 | `BANGUMI_CLIENT_SECRET` | Bangumi OAuth 应用密钥 |
 | `TOKEN_ENCRYPTION_KEY` | AES-GCM 加密 Bangumi token（32 字节 base64） |
-| `EXPO_ACCESS_TOKEN` | Expo Push 代发；缺了 Cron 轮询不会发推送 |
+| `FCM_SERVICE_ACCOUNT_JSON` | Android FCM HTTP v1 服务账号 JSON |
+| `APNS_PRIVATE_KEY` | iOS APNs `.p8` PEM 私钥 |
+| `APNS_KEY_ID` / `APNS_TEAM_ID` | Apple 推送签名的 Key ID / Team ID |
 
 本地开发用 `apps/api/.dev.vars`（从 `.dev.vars.example` 复制，不要提交）。
-`.dev.vars.example` 里没有 `EXPO_ACCESS_TOKEN`：本机不发真实推送也可以跑。
+本机不发真实推送时可不配 FCM / APNs Secrets；登记会明确返回配置缺失。原生推送凭据、D1 迁移和启用顺序见 [原生推送指南](native-push.md)。不再依赖 `EXPO_ACCESS_TOKEN`。
 
 生产回调地址在 `wrangler.jsonc` 的 `vars.BANGUMI_REDIRECT_URI`，不是 secret。
 

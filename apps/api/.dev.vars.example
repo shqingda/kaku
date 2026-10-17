@@ -2,3 +2,9 @@ BANGUMI_CLIENT_ID=replace-with-app-id
 BANGUMI_CLIENT_SECRET=replace-with-app-secret
 BANGUMI_REDIRECT_URI=http://localhost:8787/auth/bangumi/callback
 TOKEN_ENCRYPTION_KEY=replace-with-32-byte-base64-key
+
+# Optional for real push delivery; never commit actual credentials.
+# FCM_SERVICE_ACCOUNT_JSON='{"type":"service_account","project_id":"replace-project","client_email":"replace@example.com","private_key":"replace-with-PEM"}'
+# APNS_KEY_ID=replace-key-id
+# APNS_TEAM_ID=replace-team-id
+# APNS_PRIVATE_KEY="replace-with-p8-PEM"
