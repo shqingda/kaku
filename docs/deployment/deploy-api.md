@@ -5,7 +5,7 @@
 （`kaku-production`）、KV（`KAKU_CONFIG`）和两个 Cron 触发器：
 
 - `0 3 * * *`：清理过期认证数据
-- `*/15 * * * *`：给已登记设备轮询 Bangumi 通知并走 Expo Push
+- `*/15 * * * *`：给已登记设备轮询 Bangumi 通知，当前代码分别走 FCM / APNs；线上需部署后才切换
 
 本文只写本机手动部署。CI（`.github/workflows/ci.yml`）跑类型检查、测试和
 覆盖率，**不**自动 `wrangler deploy`。
@@ -56,7 +56,7 @@ pnpm --filter @kaku/api types:worker
 
 ## Secrets
 
-用 `wrangler secret put <NAME>` 写生产，不会进 git。当前代码要求：
+Secrets 不进 git。`wrangler secret put <NAME>` 会立即部署一个新版本；仅准备配置、暂不切换线上时，使用 `wrangler versions secret put <NAME>`，后者只生成未部署版本。确认启用时再部署并复核凭据。当前代码使用：
 
 | 名称 | 用途 |
 | --- | --- |

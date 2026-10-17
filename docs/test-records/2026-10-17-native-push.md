@@ -23,3 +23,10 @@
 - APNs 本机系统 HTTP/2 无认证请求得到 403，说明端点可达；本机 workerd 发同类请求报 `Network connection lost`。官方同类问题见 [workerd #4841](https://github.com/cloudflare/workerd/issues/4841)。部署后的 Worker/APNs 传输需真实验收，本地 HTTP 适配器测试不算送达证据。
 - 默认本地 APK 仍使用原签名，正式签名轮换候选包另见 [签名迁移记录](2026-10-17-signing-migration.md)。本次不把普通本地包覆盖到已换签手机。
 - 搜索冒烟等待条件已改为只匹配“搜索结果”下的条目，避免输入框同名查询误命中；重跑时手机已断开，设备复验未完成，未将此流程标为通过。该修复与推送迁移分别提交。
+
+## 配置前核对（同日）
+
+- 浏览器现有 Google 登录可访问 `kaku-2f94c`，Firebase 控制台明确显示 Cloud Messaging API (V1) Enabled；无需为了此次配置重新登录 Expo。
+- 现有 Cloudflare 登录有效；Secret 名称列表中尚无 FCM / APNs 凭据。此阶段仅做只读核对，不输出已有 Secret 内容。
+- 用户确认没有 iOS 实机；仅 Mac、既有 iOS 模拟器和小米 13 Ultra。核对时 Android 未连接，iPhone 18 Pro 模拟器存在且关闭，没有新建或清理设备。
+- Mac 的硬件和系统满足 Apple 的模拟器 APNs sandbox 条件，但客户端当前还拦截模拟器，未尝试登记或真实沙盒投递。无 iPhone，正式环境及真机行为保留未验状态。
