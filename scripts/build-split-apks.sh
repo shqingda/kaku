@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 本地构建单一 arm64-v8a APK 并发布到 GitHub Release。
-# 不消耗 EAS 云端构建额度。产物用 debug 签名；不同签名不能覆盖安装。
+# 不消耗 EAS 云端构建额度。正式包使用已登记的签名轮换证明。
 #
 # 用法：
 #   bash scripts/build-split-apks.sh [tag] [channel] [--build-only]

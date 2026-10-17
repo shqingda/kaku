@@ -18,6 +18,7 @@ set +a
 export EXPO_PUBLIC_KAKU_API_URL="${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev}"
 export KAKU_BUILD_PROFILE=
 if [[ "$CHANNEL" == release ]]; then export KAKU_BUILD_PROFILE=production; fi
+if [[ "$CHANNEL" == release ]]; then bash "$REPO_DIR/scripts/sign-android-release.sh" --check; fi
 export KAKU_UPDATE_CHANNEL=github
 export KAKU_OPTIMIZE_NATIVE=0
 if [[ "$CHANNEL" == release ]]; then export KAKU_OPTIMIZE_NATIVE=1; fi
@@ -29,7 +30,7 @@ elif [[ "$OPTIMIZATION" == --no-optimize ]]; then
   export KAKU_OPTIMIZE_NATIVE=0
   SUFFIX=-unoptimized
 fi
-# 本地不上传 sourcemap，保留运行时 Sentry 与现有签名。
+# 本地不上传 sourcemap，保留运行时 Sentry。
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 
 # 保留仓库声明的依赖版本；现有 scripts 已满足 Expo prebuild 要求。
@@ -41,5 +42,9 @@ pnpm exec expo prebuild --platform android --no-install --skip-dependency-update
 )
 mkdir -p dist-split
 APK="dist-split/kaku-${CHANNEL}${SUFFIX}.apk"
-cp android/app/build/outputs/apk/release/app-release.apk "$APK"
+if [[ "$CHANNEL" == release ]]; then
+  bash "$REPO_DIR/scripts/sign-android-release.sh" android/app/build/outputs/apk/release/app-release.apk "$APK"
+else
+  cp android/app/build/outputs/apk/release/app-release.apk "$APK"
+fi
 python3 "$REPO_DIR/scripts/report-apk-size.py" "$APK"

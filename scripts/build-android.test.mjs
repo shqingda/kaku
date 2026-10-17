@@ -9,7 +9,7 @@ function createBuildFixture() {
   const root = mkdtempSync(join(tmpdir(), 'kaku-build-'));
   const mobile = join(root, 'apps/mobile');
   for (const directory of ['scripts', 'bin', 'apps/mobile/android/app/build/outputs/apk/release']) mkdirSync(join(root, directory), { recursive: true });
-  for (const file of ['build-android.sh', 'build-split-apks.sh', 'report-apk-size.py']) cpSync(new URL(file, import.meta.url), join(root, 'scripts', file));
+  for (const file of ['build-android.sh', 'build-split-apks.sh', 'report-apk-size.py', 'sign-android-release.sh']) cpSync(new URL(file, import.meta.url), join(root, 'scripts', file));
   const manifest = JSON.stringify({ scripts: { ios: 'expo run:ios', android: 'expo run:android' }, dependencies: { react: '19' } });
   writeFileSync(join(mobile, 'package.json'), manifest);
   writeFileSync(join(mobile, 'app.config.js'), 'module.exports = { expo: { version: "1.2.3" } };');
@@ -29,6 +29,16 @@ fs.appendFileSync(process.env.KAKU_TEST_COMMAND_LOG, JSON.stringify({
   sentryUploadDisabled: process.env.SENTRY_DISABLE_AUTO_UPLOAD,
   apiUrl: process.env.EXPO_PUBLIC_KAKU_API_URL,
 }) + '\\n');
+if (command === 'apksigner') {
+  if (args[0] === 'sign') fs.copyFileSync(args.at(-1), args[args.indexOf('--out') + 1]);
+  if (args[0] === 'verify') {
+    const sdk = Number(args[args.indexOf('--min-sdk-version') + 1]);
+    const certificate = process.env.KAKU_TEST_BAD_CERT ? 'wrong' : sdk >= 33
+      ? '39ba0d1b81d5d64d9d086717415d07455c1521e4eea568289e949f713218e8b7'
+      : 'fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c';
+    console.log('Signer #1 certificate SHA-256 digest: ' + certificate);
+  }
+}
 if (command === 'git') {
   const operation = args[0] === '-C' ? args[2] : args[0];
   if (operation === 'diff') process.exit(1);
@@ -36,18 +46,21 @@ if (command === 'git') {
 }
 `;
   }
-  for (const command of ['git', 'gh', 'pnpm']) writeFileSync(join(root, 'bin', command), stub(command), { mode: 0o755 });
+  for (const command of ['git', 'gh', 'pnpm', 'apksigner', 'zipalign']) writeFileSync(join(root, 'bin', command), stub(command), { mode: 0o755 });
   writeFileSync(join(mobile, 'android/gradlew'), stub('gradlew'), { mode: 0o755 });
   writeFileSync(join(root, 'scripts/sync-changelog.mjs'), stub('sync-changelog').replace("const fs = require('node:fs');", "import fs from 'node:fs';"));
   const apk = join(mobile, 'android/app/build/outputs/apk/release/app-release.apk');
   const fixture = spawnSync('python3', ['-c', 'import sys,zipfile\nwith zipfile.ZipFile(sys.argv[1],"w") as z: z.writestr("classes.dex", b"test")', apk]);
   assert.equal(fixture.status, 0);
+  const signing = join(root, 'private-signing');
+  mkdirSync(signing);
+  for (const file of ['legacy-debug.keystore', 'release.p12', 'release-password.txt', 'rotation.lineage']) writeFileSync(join(signing, file), 'fixture');
   return {
     root, mobile, manifest,
     run(script, args, optimization = '0', extraEnv = {}) {
       writeFileSync(log, '');
       return spawnSync('bash', [join(root, 'scripts', script), ...args], {
-        env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, KAKU_TEST_COMMAND_LOG: log, KAKU_OPTIMIZE_NATIVE: optimization, ...extraEnv },
+        env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, KAKU_TEST_COMMAND_LOG: log, KAKU_OPTIMIZE_NATIVE: optimization, KAKU_SIGNING_DIR: signing, KAKU_APKSIGNER: join(root, 'bin/apksigner'), KAKU_ZIPALIGN: join(root, 'bin/zipalign'), ...extraEnv },
         encoding: 'utf8',
       });
     },
@@ -89,7 +102,7 @@ test('local release builds default to shrinking despite stale environment settin
       writeFileSync(join(fixture.mobile, '.env'), `KAKU_OPTIMIZE_NATIVE=${entry.flag}\n`);
       const result = fixture.run('build-android.sh', entry.args, entry.flag);
       assertBuild(fixture, result, entry);
-      assert.deepEqual(fixture.commands().map(entry => entry.command), ['pnpm', 'gradlew'], 'pure builds must not sync, commit, push or publish');
+      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)), 'pure builds must not sync, commit, push or publish');
     }
     const result = fixture.run('build-android.sh', ['debug', '--optimized']);
     assert.equal(result.status, 2, 'a debug package cannot be mislabeled as optimized');
@@ -106,7 +119,7 @@ test('legacy build-only uses release defaults and never reaches publishing tools
     for (const args of [['--build-only'], ['v1.2.3', 'release', '--build-only']]) {
       const result = fixture.run('build-split-apks.sh', args);
       assertBuild(fixture, result, { profile: 'production', optimization: '1', artifact: 'kaku-release.apk' });
-      assert.deepEqual(fixture.commands().map(entry => entry.command), ['pnpm', 'gradlew']);
+      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)));
     }
   } finally {
     fixture.cleanup();
@@ -184,5 +197,29 @@ test('local build keeps an explicitly selected isolated API target', () => {
     const result = fixture.run('build-android.sh', ['debug'], '0', { EXPO_PUBLIC_KAKU_API_URL: 'http://127.0.0.1:8787' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(fixture.commands().find(entry => entry.command === 'pnpm').apiUrl, 'http://127.0.0.1:8787');
+  } finally { fixture.cleanup(); }
+});
+
+test('release build fails before building or publishing when rotation credentials are missing', () => {
+  const fixture = createBuildFixture();
+  try {
+    const result = fixture.run('build-split-apks.sh', ['--build-only'], '0', {
+      KAKU_SIGNING_DIR: join(fixture.root, 'missing-signing-credentials'),
+    });
+    assert.notEqual(result.status, 0, 'release must never fall back to the debug signer');
+    assert.deepEqual(fixture.commands(), []);
+  } finally { fixture.cleanup(); }
+});
+
+test('wrong signing certificate cannot replace a previously verified artifact', () => {
+  const fixture = createBuildFixture();
+  try {
+    mkdirSync(join(fixture.mobile, 'dist-split'));
+    const artifact = join(fixture.mobile, 'dist-split/kaku-release.apk');
+    writeFileSync(artifact, 'previous-good-apk');
+    const result = fixture.run('build-android.sh', ['release'], '0', { KAKU_TEST_BAD_CERT: '1' });
+    assert.notEqual(result.status, 0);
+    assert.equal(readFileSync(artifact, 'utf8'), 'previous-good-apk');
+    assert.ok(fixture.commands().every(entry => !['git', 'gh'].includes(entry.command)));
   } finally { fixture.cleanup(); }
 });
