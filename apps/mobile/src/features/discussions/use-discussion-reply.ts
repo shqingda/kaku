@@ -1,7 +1,6 @@
 import { useAuthMutation } from '@/features/auth/use-auth-mutation';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 
 import {
   discussionReplyOps,
@@ -15,7 +14,7 @@ export type {
   DiscussionReplyTarget,
 } from './discussion-reply-target';
 
-export function useDiscussionReply(target: DiscussionReplyTarget) {
+export function useDiscussionReply(target: DiscussionReplyTarget, requestVerificationToken?: () => Promise<string>) {
   const queryClient = useQueryClient();
   const ops = discussionReplyOps(target);
   const queryKey = discussionReplyQueryKey(target);
@@ -25,8 +24,12 @@ export function useDiscussionReply(target: DiscussionReplyTarget) {
   }
 
   const create = useAuthMutation({
+    networkMode: 'always',
+    retry: false,
     mutationFn: async ({ content, replyTo }: CreateDiscussionReplyInput, request) => {
-      const turnstileToken = await requestBangumiTurnstileToken();
+      // Read-only/delete consumers do not mount a verification view.
+      if (!requestVerificationToken) throw new Error('请在回复编辑器中发布。');
+      const turnstileToken = await requestVerificationToken();
       return ops.create(request, target.id, {
         content,
         replyTo,

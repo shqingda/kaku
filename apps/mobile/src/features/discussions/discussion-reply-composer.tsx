@@ -1,3 +1,5 @@
+import { useInlineBangumiVerification } from '@/features/auth/use-inline-bangumi-verification';
+import { PublishProgress } from '@/features/shared/publish-progress';
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -78,7 +80,8 @@ function ReplyComposerContent({
     setContent,
     MAX_CONTENT_LENGTH,
   );
-  const { create: createReply, edit: editReply } = useDiscussionReply(target);
+  const { requestToken, verification, cancel } = useInlineBangumiVerification(visible && !editing);
+  const { create: createReply, edit: editReply } = useDiscussionReply(target, requestToken);
   const isEditing = editing != null;
   const pending = createReply.isPending || editReply.isPending;
   const hasUnsavedChanges = isEditing
@@ -178,13 +181,13 @@ function ReplyComposerContent({
           <Pressable
             accessibilityLabel={isEditing ? '保存回复' : '发送回复'}
             accessibilityRole="button"
-            accessibilityState={{ disabled: !canSend }}
+            accessibilityState={{ disabled: !canSend, busy: pending }}
             disabled={!canSend}
             hitSlop={HIT_SLOP}
             onPress={send}
             style={({ pressed }) => [
               styles.sendButton,
-              !canSend && styles.sendButtonDisabled,
+              !canSend && !pending && styles.sendButtonDisabled,
               pressed && canSend && styles.pressed,
             ]}
           >
@@ -241,10 +244,9 @@ function ReplyComposerContent({
 
           {!pending && !sent && draft.loaded ? <BangumiRichTextToolbar onInsert={insertText} /> : null}
 
+          {pending ? <PublishProgress cancel={cancel} saving={isEditing} /> : null}
+          {verification}
           <View style={styles.footer}>
-            <Text style={styles.hint}>
-              {isEditing ? '编辑会直接保存到 Bangumi' : '发送时完成一次 Bangumi 安全验证'}
-            </Text>
             <Text style={styles.count}>{content.length}/{MAX_CONTENT_LENGTH}</Text>
           </View>
           {!isEditing && draft.loaded && content && !sent && !pending ? (
@@ -331,7 +333,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     minHeight: MIN_TOUCH_SIZE,
   },
   hint: { flexShrink: 1, color: colors.muted, fontSize: TYPE.micro.fontSize },
