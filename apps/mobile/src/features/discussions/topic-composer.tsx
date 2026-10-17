@@ -1,3 +1,5 @@
+import { InlineVerificationError, useInlineBangumiVerification } from '@/features/auth/use-inline-bangumi-verification';
+import { PublishProgress } from '@/features/shared/publish-progress';
 import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef, useState, type ComponentProps, type SetStateAction } from 'react';
@@ -96,12 +98,15 @@ function TopicComposerContent({
     setContent,
     MAX_CONTENT_LENGTH,
   );
+  const { requestToken, verification, cancel } = useInlineBangumiVerification(visible);
   // 两个 mutation 都注册（hook 顺序稳定），提交时按目标类型选择。
   const createSubjectTopic = useCreateSubjectTopic(
     target.kind === 'subject' ? target.subjectId : 0,
+    requestToken,
   );
   const createGroupTopic = useCreateGroupTopic(
     target.kind === 'group' ? target.groupName : '',
+    requestToken,
   );
   const mutation =
     target.kind === 'subject' ? createSubjectTopic : createGroupTopic;
@@ -170,13 +175,13 @@ function TopicComposerContent({
           <Pressable
             accessibilityLabel="发布话题"
             accessibilityRole="button"
-            accessibilityState={{ disabled: !canPublish }}
+            accessibilityState={{ disabled: !canPublish, busy: mutation.isPending }}
             disabled={!canPublish}
             hitSlop={HIT_SLOP}
             onPress={submit}
             style={({ pressed }) => [
               styles.publishButton,
-              !canPublish && styles.publishButtonDisabled,
+              !canPublish && !mutation.isPending && styles.publishButtonDisabled,
               pressed && canPublish && styles.pressed,
             ]}
           >
@@ -248,15 +253,16 @@ function TopicComposerContent({
           }}><Text accessibilityRole="alert" style={styles.errorText}>{draft.error} · 重试</Text></Pressable>
         ) : null}
 
+        {mutation.isPending ? <PublishProgress cancel={cancel} /> : null}
+        {verification}
         <View style={styles.footer}>
-          <Text style={styles.hint}>发布时完成一次 Bangumi 安全验证</Text>
           <Text style={styles.count}>
             {content.length}/{MAX_CONTENT_LENGTH}
           </Text>
         </View>
         {mutation.error ? (
           <Text accessibilityRole="alert" style={styles.errorText}>
-            {userErrorMessage(mutation.error)}
+            {mutation.error instanceof InlineVerificationError ? mutation.error.message : userErrorMessage(mutation.error)}
           </Text>
         ) : null}
       </ScrollView>
@@ -323,7 +329,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     minHeight: MIN_TOUCH_SIZE,
   },
   hint: { flexShrink: 1, color: colors.muted, ...TYPE.micro },

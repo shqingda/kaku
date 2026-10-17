@@ -18,7 +18,18 @@ jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ session: { user: { id: mockUserId } } }),
   useAuthActions: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => mockUserId === userId }; } }),
 }));
-jest.mock('@/features/auth/bangumi-turnstile', () => ({ requestBangumiTurnstileToken: async () => 'test-token' }));
+let mockAutomaticVerification = true;
+jest.mock('react-native-webview', () => {
+  const { View } = require('react-native');
+  const { useEffect } = require('react');
+  return { WebView: (props: any) => {
+    useEffect(() => {
+      if (mockAutomaticVerification) props.onMessage({ nativeEvent: { url: props.source.uri, data: JSON.stringify({ type: 'token', token: 'test-token' }) } });
+    }, []);
+    return <View {...props} testID="verification-webview" />;
+  } };
+});
+
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('@/features/emoji-picker/bangumi-emoji-picker', () => ({ BangumiRichTextToolbar: () => null }));
 jest.mock('@/features/shared/app-sheet', () => {
@@ -37,7 +48,7 @@ function Page() {
   </ThemeProvider></QueryClientProvider>;
 }
 beforeEach(() => {
-  mockUserId = 1; mockStorage.clear(); mockRequest.mockReset(); mockCreated.mockClear();
+  mockAutomaticVerification = true; mockUserId = 1; mockStorage.clear(); mockRequest.mockReset(); mockCreated.mockClear();
   client = new QueryClient({ defaultOptions: { mutations: { retry: false, gcTime: Infinity }, queries: { gcTime: Infinity, retry: false } } });
 });
 afterEach(async () => { await cleanup(); client.clear(); });
@@ -152,4 +163,60 @@ test('discard confirmation cannot remove a topic draft after switching accounts'
   expect(screen.getByLabelText('话题内容').props.value).toBe('账号二内容');
   expect(mockCreated).not.toHaveBeenCalled();
   alerts.mockRestore();
+});
+
+
+test.each([
+  [{ kind: 'subject', subjectId: 99 }, '/me/subjects/99/topics'],
+  [{ kind: 'group', groupName: 'test-group' }, '/me/groups/test-group/topics'],
+] as const)('topic %j waits for inline verification then submits once', async (topicTarget, path) => {
+  mockAutomaticVerification = false;
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 123 })));
+  await render(<QueryClientProvider client={client}><ThemeProvider>
+    <TopicComposer target={topicTarget} visible onClose={() => {}} onCreated={mockCreated} />
+  </ThemeProvider></QueryClientProvider>);
+  await fireEvent.changeText(screen.getByLabelText('话题标题'), '测试标题');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '测试正文');
+  await fireEvent.press(screen.getByLabelText('发布话题'));
+  const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  expect(screen.getByText('正在发布…')).toBeTruthy();
+  expect(screen.queryByText('发布时完成一次 Bangumi 安全验证')).toBeNull();
+  expect(mockRequest).not.toHaveBeenCalled();
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'interactive' }) } }));
+  expect(screen.getByText('请完成下方安全验证')).toBeTruthy();
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'inline-token' }) } }));
+  await waitFor(() => expect(mockCreated).toHaveBeenCalledWith(123));
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+  expect(mockRequest).toHaveBeenCalledWith(path, expect.objectContaining({ body: JSON.stringify({ content: '测试正文', title: '测试标题', turnstileToken: 'inline-token' }) }));
+});
+
+test('cancelled topic verification retains title and body and ignores late tokens', async () => {
+  mockAutomaticVerification = false;
+  await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题标题'), '保留标题');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '保留正文');
+  await fireEvent.press(screen.getByLabelText('发布话题'));
+  const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  await fireEvent.press(screen.getByText('取消发布'));
+  await screen.findByText('已取消发布，内容没有发送。');
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockCreated).not.toHaveBeenCalled();
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '保留标题', content: '保留正文' });
+});
+
+test('account switch while checking a topic cannot publish the previous draft', async () => {
+  mockAutomaticVerification = false;
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('话题标题'), '旧账号标题');
+  await fireEvent.changeText(screen.getByLabelText('话题内容'), '旧账号正文');
+  await fireEvent.press(screen.getByLabelText('发布话题'));
+  const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockCreated).not.toHaveBeenCalled();
+  expect(JSON.parse(mockStorage.get(key)!)).toEqual({ title: '旧账号标题', content: '旧账号正文' });
+  expect(screen.getByLabelText('话题标题').props.value).toBe('');
 });

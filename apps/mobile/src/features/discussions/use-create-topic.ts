@@ -1,7 +1,6 @@
 import { useAuthMutation } from '@/features/auth/use-auth-mutation';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { requestBangumiTurnstileToken } from '@/features/auth/bangumi-turnstile';
 import {
   createGroupTopic,
   createSubjectTopic,
@@ -9,12 +8,14 @@ import {
 
 type CreateTopicInput = { content: string; title: string };
 
-export function useCreateSubjectTopic(subjectId: number) {
+export function useCreateSubjectTopic(subjectId: number, requestVerificationToken: () => Promise<string>) {
   const queryClient = useQueryClient();
 
   return useAuthMutation({
+    networkMode: 'always',
+    retry: false,
     mutationFn: async (input: CreateTopicInput, request) => {
-      const turnstileToken = await requestBangumiTurnstileToken();
+      const turnstileToken = await requestVerificationToken();
       return createSubjectTopic(request, {
         ...input,
         subjectId,
@@ -29,12 +30,14 @@ export function useCreateSubjectTopic(subjectId: number) {
   });
 }
 
-export function useCreateGroupTopic(groupName: string) {
+export function useCreateGroupTopic(groupName: string, requestVerificationToken: () => Promise<string>) {
   const queryClient = useQueryClient();
 
   return useAuthMutation({
+    networkMode: 'always',
+    retry: false,
     mutationFn: async (input: CreateTopicInput, request) => {
-      const turnstileToken = await requestBangumiTurnstileToken();
+      const turnstileToken = await requestVerificationToken();
       return createGroupTopic(request, {
         ...input,
         groupName,

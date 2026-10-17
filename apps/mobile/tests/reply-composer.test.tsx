@@ -192,3 +192,31 @@ test('cancel inline verification preserves the reply draft and ignores late succ
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('保留评论');
 });
+
+test('editing a reply saves directly without mounting verification', async () => {
+  mockAutomaticVerification = false;
+  mockRequest.mockResolvedValue(new Response('{}'));
+  const onEdited = jest.fn();
+  await render(<QueryClientProvider client={client}><ThemeProvider>
+    <DiscussionReplyComposer target={target} visible editing={{ postId: 12, content: '原回复' }} onClose={() => {}} onEdited={onEdited} />
+  </ThemeProvider></QueryClientProvider>);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '更新回复');
+  await fireEvent.press(screen.getByLabelText('保存回复'));
+  await waitFor(() => expect(onEdited).toHaveBeenCalledTimes(1));
+  expect(screen.queryByTestId('verification-webview', { includeHiddenElements: true })).toBeNull();
+  expect(JSON.parse(mockRequest.mock.calls[0][1].body)).toEqual({ content: '更新回复' });
+});
+
+test('switching account during verification preserves the old reply and cannot send it', async () => {
+  mockAutomaticVerification = false;
+  const view = await render(<Page />);
+  await fireEvent.changeText(screen.getByLabelText('回复内容'), '旧账号评论');
+  await fireEvent.press(screen.getByLabelText('发送回复'));
+  const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
+  mockUserId = 2;
+  await view.rerender(<Page />);
+  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('旧账号评论');
+  expect(screen.getByLabelText('回复内容').props.value).toBe('');
+});

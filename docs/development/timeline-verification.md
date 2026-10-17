@@ -1,7 +1,12 @@
-# 动态发布的应用内验证
+# 内容发布的应用内验证
 
-原生端的动态编辑器在点击发布后加载 Bangumi 官方 HTTPS 验证页，使用
-`react-native-webview` 接入 Turnstile。评论、主题和 Expo web 暂时保留原来的系统浏览器流程。
+原生端的发布编辑器在点击发布后加载 Bangumi 官方 HTTPS 验证页，使用
+`react-native-webview` 接入 Turnstile。Expo web 暂时保留原来的系统浏览器流程。
+
+已覆盖动态、条目/小组话题新建、条目/小组话题回复、剧集评论、日志/长评回复、
+人物评论和角色评论，包括回复已有评论。编辑回复仍直接保存，不额外增加验证。
+三个编辑器共用 `PublishProgress`，统一等待和取消入口。
+后端另有动态删除验证接口，但客户端尚无对应操作入口，不在本次发布迁移范围。
 
 ## 状态与约束
 
@@ -18,7 +23,7 @@
   发布 mutation 不排队等待联网，也不自动重试。草稿仍由原来的草稿机制管理。
 - 只允许官方验证页作为顶层页面；Cloudflare 和 `about:blank` / `about:srcdoc`
   仅用于子框架。消息只接受官方验证页面 URL、已知事件和最长 2048 字符的凭证。
-  不向 WebView 注入 OAuth 凭据或动态正文，不允许外部窗口和深链跳转。
+  不向 WebView 注入 OAuth 凭据或待发布正文，不允许外部窗口和深链跳转。
 
 ## 上游页面契约
 
@@ -44,5 +49,8 @@
   回调、来源检查和导航边界。
 - `tests/timeline-composer.test.tsx`：真实编辑器和 mutation 搭配模拟 WebView，覆盖
   自动完成、交互展示、取消、迟到回调、重新尝试、超时、账号变化和草稿保留。
+- `tests/reply-composer.test.tsx` 和 `tests/topic-composer.test.tsx`：六种评论目标、
+  两种话题目标均通过真实 hook/mutation 接入模拟 WebView，验证 token 传递、
+  人工交互展示、取消保留草稿和账号切换；编辑回复不挂载验证组件。
 - 模拟器需验证真实官方页面和原生 WebView。单元测试不能证明 Cloudflare
   一定自动通过；实际需要交互的频率取决于 Cloudflare 的风险判断。
