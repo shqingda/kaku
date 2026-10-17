@@ -86,6 +86,66 @@ bash scripts/build-split-apks.sh "" release
 - 本地不上传 source map，压缩堆栈定位能力受限。
 - 构建完成只证明可编译，发布前仍要核对签名、版本和权限；实际设备安装、运行及未验范围另行记录。
 
+## GitHub APK 上传固定方式
+
+下次本机发版优先复用 v1.1.21 成功方式：`curl --http2`，显式 SOCKS5
+`127.0.0.1:7890`，关闭 `Expect`，15 秒连接超时、900 秒总超时并显示上传进度。
+本次约 8 分钟传完 53.06 MB；没有输出响应不代表卡死，应看上传百分比。
+保留 FlClash / TUN 配置，清除代理环境变量，仅上传命令显式使用 SOCKS5。
+
+当前 `build-split-apks.sh` 仍使用 `gh release create` 合并上传。
+为避免重走慢连接，下次采用 `--build-only` 构建并按既有流程提交、推送，
+随后用下面步骤单独创建草稿和上传。已有验收 APK 时直接复用，不重新构建。
+
+```bash
+set -e # 任一步失败即停止，保留草稿
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+TAG=v1.1.22 # 改成实际版本；从仓库根目录执行
+# 新版本只创建草稿，不在这一步附加 APK。已存在草稿则跳过这条。
+gh release create "$TAG" --repo shqingda/kaku --draft --title "$TAG" \
+  --notes-file scripts/release-notes.md --target "$(git rev-parse HEAD)"
+export KAKU_RELEASE_TAG="$TAG"
+python3 - <<'UPLOAD'
+import hashlib, json, os, subprocess, tempfile
+from pathlib import Path
+
+tag = os.environ['KAKU_RELEASE_TAG']
+releases = json.loads(subprocess.check_output([
+    'gh', 'api', 'repos/shqingda/kaku/releases?per_page=100']))
+release = next(r for r in releases if r['tag_name'] == tag)
+apk = Path('apps/mobile/dist-split/kaku-release.apk')
+expected = 'sha256:' + hashlib.sha256(apk.read_bytes()).hexdigest()
+# 上传结果不明确时先检查已有资源，避免重复上传或覆盖。
+assets = [a for a in release['assets'] if a['name'] == apk.name]
+if not assets:
+    token = subprocess.check_output(['gh', 'auth', 'token'], text=True).strip()
+    url = release['upload_url'].split('{')[0] + '?name=' + apk.name
+    with tempfile.TemporaryDirectory(prefix='kaku-upload-') as directory:
+        result = Path(directory) / 'asset.json'
+        subprocess.run([
+            'curl', '--http2', '--proxy', 'socks5h://127.0.0.1:7890',
+            '--noproxy', '', '--connect-timeout', '15', '--max-time', '900',
+            '--fail-with-body', '--progress-bar', '--config', '-',
+            '-H', 'Content-Type: application/vnd.android.package-archive',
+            '-H', 'Expect:', '--data-binary', '@' + str(apk), url,
+            '-o', str(result),
+        ], input='header = "Authorization: Bearer ' + token + '"\n',
+            text=True, check=True)
+        assets = [json.loads(result.read_text())]
+asset = assets[0]
+if (len(assets) != 1 or asset['state'] != 'uploaded'
+        or asset['size'] != apk.stat().st_size or asset.get('digest') != expected):
+    raise SystemExit('远端文件与本地不一致，保留草稿，不发布')
+print('上传成功，大小与 SHA-256 一致')
+UPLOAD
+# 仅在上一步成功后执行。
+gh release edit "$TAG" --repo shqingda/kaku --draft=false --latest
+```
+
+令牌通过 stdin 传给 curl，不写入脚本、日志或进程参数。上传失败保留草稿，
+再次执行前先检查资源；不自动重试、不盲目 `--clobber`，也不发布缺少 APK 的版本。
+GitHub API / git push 继续使用清除代理环境变量的普通命令。
+
 ## 签名迁移内部候选包
 
 2026-10-17 已制作并实测构建号 6 的 Release 内部包。用户随后授权正式发版，v1.1.20 / 构建号 7 将同一签名策略接入正式本地入口，见 [发布记录](../test-records/2026-10-17-release-1.1.20.md)。密钥备份、首次覆盖、登录及本机设置保留证据见 [迁移记录](../test-records/2026-10-17-signing-migration.md)。草稿、完整历史和本次连续升级仍待验，不承诺所有设备或全部数据无损。

@@ -57,3 +57,11 @@ This repository is both a product and a learning project.
 Unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
 before `git push`, GitHub Release, EAS, or wrangler. Clash will hang those
 connections.
+
+For GitHub APK uploads, use the successful v1.1.21 procedure in
+`docs/deployment/release.md#github-apk-上传固定方式` first: curl HTTP/2,
+explicit `socks5h://127.0.0.1:7890`, no Expect header, 900-second timeout,
+and visible progress. Keep proxy environment variables unset; the explicit
+SOCKS proxy applies only to APK upload. Do not retry gh uploads or rebuild
+an already verified APK just because uploading is slow. Verify remote size
+and SHA-256 before publishing the draft.
