@@ -53,7 +53,7 @@
 
 2026-10-03 已复核角色／人物收藏、小组和删除动态的官方接口描述，见 [接口证据](docs/test-records/2026-10-03-remaining-work.md)。鉴权适用性和真实写入结果仍待验证；其余依赖沿用历史记录。后续记录日期、接口或依赖版本、请求条件和实际结果；确认仍受阻后再标记阻塞，恢复后补对应功能验收。
 
-- [ ] 直连推送上线验收：FCM 凭据已备份、通过 Google 不投递校验并保存至 Cloudflare 未部署版本；待部署 D1 新增列及新 Worker、更新客户端，用小米 13 Ultra 验证实际送达与点击。APNs 凭据因没有付费 Apple Developer 会员暂缓，保留实现。见 [原生推送指南](docs/deployment/native-push.md)。
+- [ ] 直连推送上线验收：FCM 凭据已备份并通过不投递校验，D1 新增列及新 Worker 已上线，v1.1.20 已接入正式签名轮换；待用小米 13 Ultra 验证连续覆盖、实际送达与点击。APNs 凭据因没有付费 Apple Developer 会员暂缓，保留实现。见 [原生推送指南](docs/deployment/native-push.md)。
 - [ ] Android 代理环境推送：复核 GMS / FCM 连通性与实际送达，验证历史 `mtalk.google.com:5228` 直连方案；按用户要求随 Android 实机验收暂缓。
 - [ ] 工具链依赖审计：2026-10-24 前复核 shell-quote 等 high / critical 项，按可达性和兼容性逐项升级；本次生产包未包含这些受影响依赖，暂缓依据见 [v1.1.20 发布记录](docs/test-records/2026-10-17-release-1.1.20.md#依赖审计)。
 - [ ] 角色/人物收藏：官方描述仍列有 PUT／DELETE；用专用账号验证 Kaku OAuth 凭据适用性、实际写入与读回，再决定是否恢复入口。

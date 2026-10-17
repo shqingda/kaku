@@ -38,3 +38,7 @@
 - `wrangler versions secret put` 成功生成未部署版本 `aaf5e180-2910-4f2d-a5c5-bb1381000c33`。显式读取该版本元数据，确认 FCM Secret 与既有四个 Secret 绑定均存在，值均隐藏。Wrangler 4.145.0 的 `versions secret list --latest-version` 因摘要缺少 bindings 报错，改用 `versions view <id> --json` 完成核对，没有升级依赖。
 - 写入前后对比 deployment：仍为 `5c2157d5-73ca-489a-90c6-b313c5cce767`，版本 `fea0c1e5-053d-4ac4-9c80-22eadfcd925a`、100% 流量，未切换线上。
 - 没有迁移线上 D1，没有安装或发布 APK。APNs 凭据因用户没有付费 Apple Developer 会员而明确暂缓；保留实现及待验项目。
+
+## 后续正式上线
+
+用户随后授权推送并发版，已将 FCM Secret 保留到新版 Worker、应用新增列迁移并切换后端，静态检查与未验范围见 [v1.1.20 发布记录](2026-10-17-release-1.1.20.md)。此前“未部署”等描述对应实现和凭据准备阶段。

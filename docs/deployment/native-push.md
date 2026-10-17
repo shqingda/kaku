@@ -2,15 +2,15 @@
 
 客户端保留 `expo-notifications`，用 `getDevicePushTokenAsync()` 获取原生设备 token；Kaku Worker 分别直连 Firebase FCM HTTP v1 和 Apple APNs，不再调用 Expo Push。EAS 云构建、本地 Expo CLI 与推送服务配置是不同的事，本地构建不需要 Expo 登录。
 
-当前代码已实现，尚未部署到生产，也未用真实服务端凭据验收通知送达。签名迁移与推送迁移分别验收；不要把当前本地构建生成的旧签名 APK 覆盖到已经换签的手机。
+2026-10-17 已部署 Android 直连 FCM 后端并接入 v1.1.20 正式构建，见 [发布记录](../test-records/2026-10-17-release-1.1.20.md)。真实设备送达仍未验；APNs 实现保留但凭据暂缓。正式构建使用同一签名轮换证明和递增构建号，旧产物不能用于已换签手机的降级。
 
 ## 配置进度（2026-10-17）
 
 - Firebase 项目与 HTTP v1 API 已确认正常；已创建专用账号 `kaku-fcm-sender@kaku-2f94c.iam.gserviceaccount.com`，只授予 FCM API Admin 角色。原有 `firebase-adminsdk-…` 账号和本人 Owner 身份未变更。
 - JSON 私钥保存在仓库外 `/Users/shqingda/.local/share/kaku-push/2026-10-17-fcm/service-account.json`；同目录 `README.txt` 记录恢复步骤与验证结果。目录权限 0700、文件 0600，没有将密钥放入 Git、聊天或 APK。另行安全备份到 Mac 之外仍需用户安排。
 - Google OAuth 认证 HTTP 200、FCM `validate_only` HTTP 200，证明该账号可认证并通过发送请求校验；未向任何手机或主题投递消息，不代表设备送达验收通过。
-- Cloudflare 已保存 `FCM_SERVICE_ACCOUNT_JSON`，未部署版本为 `aaf5e180-2910-4f2d-a5c5-bb1381000c33`，流量 0%。已有四个 Secret 绑定保留。该版本仅给原有线上代码增加凭据，不包含本地迁移实现，不能把它当作原生推送迁移上线包。
-- 线上仍为 `fea0c1e5-053d-4ac4-9c80-22eadfcd925a`、100% 流量；没有应用线上 D1 迁移、切换服务、安装或发布 APK。
+- 凭据准备阶段，Cloudflare 保存 `FCM_SERVICE_ACCOUNT_JSON` 的未部署版本为 `aaf5e180-2910-4f2d-a5c5-bb1381000c33`，流量 0%。已有四个 Secret 绑定保留。该版本仅给原有线上代码增加凭据，不包含本地迁移实现，不能把它当作原生推送迁移上线包。
+- 用户后续授权正式发版：D1 新增列迁移已应用，会话、推送设备、旧回执与上游凭据表的记录数量保持；新版 Worker `b7dd3864-1b5b-4818-a80d-549bd5dd3162` 已切到 100% 流量并保留 FCM Secret。健康 / 公开配置均 200，未认证的私有接口和 FCM 登记均 401。
 - 用户没有 Apple Developer 付费会员，也没有 iOS 实机，APNs 凭据暂缓；后端实现保留。Expo Push 代转 iOS 通知同样需要自有 Apple 推送凭据，本地通知与 Android FCM 不需要 Apple 会员。
 
 ## Firebase / FCM 配置
@@ -53,13 +53,13 @@ FCM/APNs 接受后只推进成功设备的游标；失败设备保留游标，�
 
 服务商接受不代表手机已显示；发送成功但数据库提交失败可能导致下次重复发送，不承诺严格恰好一次。通知内容仍遵守原有摘要策略，日志只记录用户 ID、服务商及受控错误类别，不输出私钥、JWT、token 或消息正文。
 
-## 启用顺序（尚未切换线上）
+## 启用顺序（Android 后端已上线）
 
-1. 准备并安全备份对应平台推送凭据，设置 Worker Secrets。当前 Android FCM 已准备，APNs 按用户决定暂缓；缺少 Apple 凭据时 iOS 登记仍明确报配置缺失。准备的 FCM Secret 只在未部署版本中，上传新代码后要复核绑定。
+1. 准备并安全备份对应平台推送凭据，设置 Worker Secrets。当前 Android FCM 已准备，APNs 按用户决定暂缓；缺少 Apple 凭据时 iOS 登记仍明确报配置缺失。FCM Secret 已在新版 Worker 的运行版本中核对。
 2. 审核并应用 D1 迁移 `0010_bumpy_true_believers.sql`，仅新增 provider / APNs 环境与 topic 列；旧设备默认 expo，原 token、账号与游标不清空。旧回执表保留，按原 24 小时保留期自然清理，不再请求 Expo receipts。
 3. 部署新 Worker。旧 Expo 设备不发送到 FCM/APNs，并记录需升级的指标；此时旧客户端需更新才能恢复登记。线上旧推送不会因为本地改动自动改变。
 4. 构建并内部安装新客户端，保持正确 APK 签名轮换和递增构建号；实测登记、前台/后台/冷启动、点击进入通知页、token 更新、关闭/重开、退出及撤销会话。当前设备不做退出、撤销会话等可能改变现有登录的测试。iOS 可按设备条件尝试 APNs sandbox；正式环境和真机行为留待 iPhone 验证。
-5. 复核成功后再决定公开发版。`EXPO_ACCESS_TOKEN` 在此代码中已不使用，生产 Secret 的删除应等新路径验收后单独进行；目前仅新增未部署版本的 FCM Secret，没有删除已有 Secret。
+5. 复核成功后再决定公开发版。`EXPO_ACCESS_TOKEN` 在此代码中已不使用，生产 Secret 的删除应等新路径验收后单独进行；新版运行版本已含 FCM Secret，没有删除已有 Secret。
 
 ## 官方依据
 
