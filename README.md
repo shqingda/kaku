@@ -28,7 +28,7 @@ Bangumi passwords stay on Bangumi. `client_secret` and OAuth tokens stay on the 
 
 ## Develop
 
-Node.js 26.5+, pnpm 11. iOS needs Xcode; Android needs SDK or a debuggable device.
+Node.js 26.12.1+, pnpm 12.14.0. iOS needs Xcode; Android needs SDK or a debuggable device.
 
 ```sh
 pnpm install

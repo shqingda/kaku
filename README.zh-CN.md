@@ -28,7 +28,7 @@ Bangumi 密码只在官方页处理。`client_secret` 与 OAuth token 留在服�
 
 ## 开发
 
-Node.js 26.5+、pnpm 11。iOS 要 Xcode；Android 要 SDK 或可调试真机。
+Node.js 26.12.1+、pnpm 12.14.0。iOS 要 Xcode；Android 要 SDK 或可调试真机。
 
 ```sh
 pnpm install

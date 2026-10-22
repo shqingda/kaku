@@ -12,7 +12,7 @@ Maestro 和 argent **不进 CI**。
 ## 1. 纯逻辑单元测试（node:test）
 
 - 位置：`apps/mobile/tests/*.test.mjs`（以及 `apps/api/tests/*.test.mjs`、
-  `packages/shared/tests/`）。直接 import TS 源码，依赖 Node 26.5 的原生
+  `packages/shared/tests/`）。直接 import TS 源码，依赖 Node 26.12.1 的原生
   类型剥离，因此**被测模块的整条导入链不能引 react / react-native / expo**。
 - 运行：`pnpm test`（全部 workspace）。
 - 覆盖率门禁：`pnpm --filter @kaku/mobile test:coverage`（92% 行），
