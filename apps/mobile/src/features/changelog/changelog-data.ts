@@ -10,6 +10,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.22',
+    date: '2026-10-24',
+    notes: [
+      '升级应用底层框架至 Expo SDK 58，配套更新 React Native 与原生组件。',
+      '更新数据请求与缓存依赖，修复部分状态更新问题。',
+      '修复多项构建与开发工具依赖安全问题，并补充签名校验回归测试。',
+    ],
+  },
+  {
     version: '1.1.21',
     date: '2026-10-18',
     notes: [
