@@ -1,3 +1,5 @@
+import { SPACING, TYPE } from '@/constants/design';
+import type { ComponentRef } from 'react';
 import { type ComponentProps, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -32,7 +34,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
   const { signOut } = useAuth();
   const notificationsQuery = useNotifications();
   const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
-  const triggerRef = useRef<View>(null);
+  const triggerRef = useRef<ComponentRef<typeof View>>(null);
   const [visible, setVisible] = useState(false);
   const reduceMotion = useReduceMotion();
   const [anchor, setAnchor] = useState({
@@ -347,14 +349,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 18,
     minWidth: 18,
-    paddingHorizontal: 3,
+    paddingHorizontal: SPACING.xs,
     position: 'absolute',
     right: 0,
     top: 0,
   },
   notificationBadgeText: {
     color: colors.surface,
-    fontSize: 9,
+    fontSize: TYPE.micro.fontSize,
     fontWeight: '800',
     lineHeight: 12,
   },
@@ -366,7 +368,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 16,
     elevation: 16,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
     position: 'absolute',
     shadowColor: '#000',
     shadowOffset: { height: 10, width: 0 },
@@ -377,8 +379,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   userRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   avatarLarge: {
     alignItems: 'center',
@@ -389,23 +391,23 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 36,
   },
-  userCopy: { flex: 1, marginLeft: 11, minWidth: 0 },
+  userCopy: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
   nickname: {
     color: colors.ink,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     fontWeight: '700',
   },
-  username: { color: colors.muted, fontSize: 12, marginTop: 3 },
+  username: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.xs },
   divider: {
     backgroundColor: colors.divider,
     height: StyleSheet.hairlineWidth,
-    marginVertical: 4,
+    marginVertical: SPACING.xs,
   },
   item: {
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 44,
-    paddingHorizontal: 14,
+    paddingHorizontal: SPACING.lg,
   },
   itemIcon: {
     alignItems: 'center',
@@ -420,20 +422,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 20,
     minWidth: 20,
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm,
   },
   menuBadgeText: {
     color: colors.accent,
-    fontSize: 10,
+    fontSize: TYPE.micro.fontSize,
     fontWeight: '800',
   },
   itemPressed: { backgroundColor: colors.surfaceSoft },
   itemText: {
     color: colors.ink,
     flex: 1,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     fontWeight: '500',
-    marginLeft: 10,
+    marginLeft: SPACING.md,
   },
   pressed: { opacity: 0.62 },
 });

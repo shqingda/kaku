@@ -141,7 +141,7 @@ function PublicUserCollectionsScreen() {
         ListFooterComponent={
           collections.items.length > 0 ? (
             <PagedListFooter {...collections.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>

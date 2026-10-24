@@ -29,16 +29,13 @@ beforeEach(() => {
 afterEach(() => { jest.useRealTimers(); });
 
 test('cold deep link resolves nested subject and episode parameters', async () => {
-  // SDK 57 attaches route helpers to the render promise; RNTL 14 renders asynchronously.
-  const routeState = renderRouter(routes, { initialUrl: '/subject/9/episode/3' });
-  await routeState;
+  const routeState = await renderRouter(routes, { initialUrl: '/subject/9/episode/3' });
   expect(screen.getByText('subject:9,episode:3')).toBeTruthy();
   expect(routeState.getPathname()).toBe('/subject/9/episode/3');
 });
 
 test('nested navigation preserves the subject on back', async () => {
-  const routeState = renderRouter(routes, { initialUrl: '/subject/9' });
-  await routeState;
+  const routeState = await renderRouter(routes, { initialUrl: '/subject/9' });
   await act(async () => { router.push('/subject/9/episode/3'); });
   expect(routeState.getPathname()).toBe('/subject/9/episode/3');
   await act(async () => { router.back(); });
@@ -46,8 +43,7 @@ test('nested navigation preserves the subject on back', async () => {
 });
 
 test('successful login dismisses to the requested page without retaining account', async () => {
-  const routeState = renderRouter(routes, { initialUrl: '/subject/9' });
-  await routeState;
+  const routeState = await renderRouter(routes, { initialUrl: '/subject/9' });
   rememberReturnTo('/subject/9');
   await act(async () => { router.push('/account'); });
   await fireEvent.press(screen.getByText('使用 Bangumi 登录'));
@@ -59,8 +55,7 @@ test('successful login dismisses to the requested page without retaining account
 test('cancelled login preserves the destination for retry', async () => {
   mockSignIn.mockResolvedValueOnce(false);
   rememberReturnTo('/subject/9/episode/3');
-  const routeState = renderRouter(routes, { initialUrl: '/account' });
-  await routeState;
+  const routeState = await renderRouter(routes, { initialUrl: '/account' });
   await fireEvent.press(screen.getByText('使用 Bangumi 登录'));
   expect(routeState.getPathname()).toBe('/account');
   await fireEvent.press(screen.getByText('使用 Bangumi 登录'));
@@ -68,8 +63,7 @@ test('cancelled login preserves the destination for retry', async () => {
 });
 
 test('invalid cold link offers a working return to home', async () => {
-  const routeState = renderRouter(routes, { initialUrl: '/missing/path' });
-  await routeState;
+  const routeState = await renderRouter(routes, { initialUrl: '/missing/path' });
   expect(screen.getByText('这个页面暂时找不到')).toBeTruthy();
   await fireEvent.press(screen.getByText('回到首页'));
   expect(routeState.getPathname()).toBe('/');

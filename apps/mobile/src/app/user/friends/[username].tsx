@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -80,7 +81,7 @@ export default function PublicUserFriendsScreen() {
         ListFooterComponent={
           friends.items.length > 0 ? (
             <PagedListFooter {...friends.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -115,19 +116,19 @@ export default function PublicUserFriendsScreen() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    paddingBottom: 44,
-    paddingHorizontal: 20,
+    paddingBottom: SPACING.xxl + SPACING.md,
+    paddingHorizontal: SPACING.xl,
   },
-  header: { paddingBottom: 18, paddingHorizontal: 4, paddingTop: 18 },
+  header: { paddingBottom: SPACING.lg, paddingHorizontal: SPACING.xs, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
 });

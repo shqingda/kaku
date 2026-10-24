@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
@@ -126,7 +127,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
           ListEmptyComponent={
-            review && replies.length === 0 ? <EmptyDiscussionReplies /> : null
+            review && replies.length === 0 ? <EmptyDiscussionReplies /> : undefined
           }
           ListHeaderComponent={
             <>
@@ -235,36 +236,36 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   list: { flex: 1 },
-  listContent: { padding: 20 },
+  listContent: { padding: SPACING.xl },
   reviewHeader: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.xl,
   },
   reviewTitle: {
     color: colors.ink,
-    fontSize: 22,
+    fontSize: TYPE.titleLarge.fontSize,
     fontWeight: '800',
     letterSpacing: -0.4,
     lineHeight: 30,
   },
-  reviewMetaRow: { flexDirection: 'row', marginTop: 8 },
-  reviewAuthor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  reviewMeta: { color: colors.subtle, fontSize: 12 },
+  reviewMetaRow: { flexDirection: 'row', marginTop: SPACING.sm },
+  reviewAuthor: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  reviewMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
   reviewBody: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: TYPE.body.fontSize,
     lineHeight: 25,
-    marginTop: 20,
+    marginTop: SPACING.xl,
   },
   replyHeading: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     color: colors.muted,
-    fontSize: 13,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
-    marginTop: 22,
-    paddingTop: 16,
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.lg,
   },
 });

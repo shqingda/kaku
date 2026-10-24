@@ -1,3 +1,5 @@
+import { SPACING, TYPE } from '@/constants/design';
+import type { ComponentRef } from 'react';
 import { useRef, useState, type ComponentProps } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -50,7 +52,7 @@ export default function ChannelScreen() {
   const queryClient = useQueryClient();
   const { type } = useLocalSearchParams<{ type?: string }>();
   // zoom 转场返回时系统可能改动滚动位置，聚焦时按记录值恢复（见 hook 注释）。
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const { handleScroll: rememberScrollOffset } =
     useRestoreScrollOnFocus(scrollRef);
   const [subjectType, setSubjectType] = useState<number>(() => getSubjectTypeFromSlug(type));
@@ -324,16 +326,16 @@ function SectionHeading({ meta, title }: { meta: string; title: string }) {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 52, paddingHorizontal: 20 },
-  hero: { paddingHorizontal: 4, paddingTop: 24 },
-  eyebrow: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1.1 },
-  title: { color: colors.ink, fontSize: 34, fontWeight: '800', letterSpacing: -1, marginTop: 7 },
-  subtitle: { color: colors.muted, fontSize: 14, marginTop: 8 },
-  typeTabs: { paddingBottom: 2, paddingTop: 22 },
-  sectionHeading: { paddingHorizontal: 4, paddingTop: 30 },
-  sectionTitle: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  sectionMeta: { color: colors.muted, fontSize: 12, marginTop: 5 },
-  hotList: { gap: 14, paddingRight: 20, paddingTop: 16 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  hero: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xl },
+  eyebrow: { color: colors.accent, fontSize: TYPE.micro.fontSize, fontWeight: '800', letterSpacing: 1.1 },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -1, marginTop: SPACING.sm },
+  subtitle: { color: colors.muted, fontSize: TYPE.body.fontSize, marginTop: SPACING.sm },
+  typeTabs: { paddingBottom: SPACING.xs, paddingTop: SPACING.xl },
+  sectionHeading: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xxl },
+  sectionTitle: { color: colors.ink, fontSize: TYPE.titleLarge.fontSize, fontWeight: '800', letterSpacing: -0.5 },
+  sectionMeta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.xs },
+  hotList: { gap: SPACING.lg, paddingRight: SPACING.xl, paddingTop: SPACING.lg },
   hotCard: { width: 126 },
   cover: {
     alignItems: 'center',
@@ -344,18 +346,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 126,
   },
-  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
-  cardTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
-  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 16 },
+  coverFallback: { color: colors.subtle, fontSize: TYPE.title.fontSize, fontWeight: '700' },
+  cardTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '700', lineHeight: 19, marginTop: SPACING.sm, minHeight: 40 },
+  cardMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.xs },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, paddingTop: SPACING.lg },
   action: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 18,
     flexBasis: '47%',
     flexGrow: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.lg,
   },
   actionCompact: { flexBasis: '30%' },
   actionIcon: {
@@ -366,10 +368,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  actionLabel: { color: colors.ink, fontSize: 13, fontWeight: '700', marginTop: 9 },
+  actionLabel: { color: colors.ink, fontSize: TYPE.caption.fontSize, fontWeight: '700', marginTop: SPACING.sm },
   rankingHeading: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
-  allAction: { paddingHorizontal: 4 },
-  rankingList: { backgroundColor: colors.surface, borderRadius: 22, marginTop: 16, overflow: 'hidden', paddingHorizontal: 16 },
-  stateSlot: { marginTop: 16 },
+  allAction: { paddingHorizontal: SPACING.xs },
+  rankingList: { backgroundColor: colors.surface, borderRadius: 22, marginTop: SPACING.lg, overflow: 'hidden', paddingHorizontal: SPACING.lg },
+  stateSlot: { marginTop: SPACING.lg },
   pressed: { opacity: 0.62 },
 });

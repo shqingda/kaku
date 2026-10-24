@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { forwardRef, useCallback, useState } from 'react';
 import {
   Pressable,
@@ -32,7 +33,7 @@ type PressableScaleProps = Omit<PressableProps, 'style'> & {
   style?: PressableScaleStyle;
 };
 
-export const PressableScale = forwardRef<View, PressableScaleProps>(
+export const PressableScale = forwardRef<ComponentRef<typeof View>, PressableScaleProps>(
   function PressableScale({ onPressIn, onPressOut, style, ...props }, ref) {
     const scale = useSharedValue(1);
     const reduceMotion = useReduceMotion();

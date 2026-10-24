@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -111,7 +112,7 @@ export default function PublicUserTimelineScreen() {
         ListFooterComponent={
           timeline.items.length > 0 ? (
             <PagedListFooter {...timeline.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -143,23 +144,23 @@ export default function PublicUserTimelineScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
   header: {
-    paddingBottom: 18,
-    paddingHorizontal: 4,
-    paddingTop: 24,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.xl,
   },
   title: {
     color: colors.ink,
-    fontSize: 30,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
-  subtitle: { color: colors.muted, fontSize: 13, marginTop: 7 },
+  subtitle: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   item: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 17,
+    paddingHorizontal: SPACING.lg,
   },
   firstItem: {
     borderTopLeftRadius: 22,

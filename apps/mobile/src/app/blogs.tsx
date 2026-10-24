@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
@@ -78,7 +79,7 @@ export default function GlobalBlogsScreen() {
         ListFooterComponent={
           blogs.items.length > 0 ? (
             <PagedListFooter {...blogs.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -196,25 +197,25 @@ const BlogRow = memo(function BlogRow({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  filters: { gap: 8, paddingTop: 20 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  filters: { gap: SPACING.sm, paddingTop: SPACING.xl },
   filter: {
     backgroundColor: colors.surface,
     borderRadius: 15,
     minHeight: 44,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
     justifyContent: 'center',
   },
   filterSelected: { backgroundColor: colors.ink },
-  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   filterTextSelected: { color: colors.surface },
-  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  row: { flexDirection: 'row', minHeight: 144, paddingVertical: 16 },
+  row: { flexDirection: 'row', minHeight: 144, paddingVertical: SPACING.lg },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   cover: {
     alignItems: 'center',
@@ -225,10 +226,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 76,
   },
-  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
-  rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
-  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  summary: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 9 },
+  coverFallback: { color: colors.subtle, fontSize: TYPE.title.fontSize, fontWeight: '700' },
+  rowMain: { flex: 1, marginLeft: SPACING.lg, minWidth: 0 },
+  rowTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800', lineHeight: 22 },
+  summary: { color: colors.muted, fontSize: TYPE.caption.fontSize, lineHeight: 18, marginTop: SPACING.sm },
+  rowMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

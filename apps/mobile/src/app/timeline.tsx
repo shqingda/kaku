@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import {
   FlatList,
@@ -78,7 +79,7 @@ export default function FriendTimelineScreen() {
         ListFooterComponent={
           timeline.items.length > 0 ? (
             <PagedListFooter {...timeline.footerProps} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <AppRefreshControl
@@ -125,10 +126,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    margin: 20,
+    margin: SPACING.xl,
     overflow: 'hidden',
-    paddingHorizontal: 18,
-    paddingBottom: 8,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.sm,
   },
   publishFabLayer: {
     alignItems: 'center',
@@ -145,15 +146,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 999,
     elevation: Platform.OS === 'android' ? 8 : 0,
     flexDirection: 'row',
-    gap: 6,
+    gap: SPACING.sm,
     justifyContent: 'center',
     minHeight: 44,
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
   },
-  publishFabText: { color: colors.surface, fontSize: 13, fontWeight: '700' },
+  publishFabText: { color: colors.surface, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

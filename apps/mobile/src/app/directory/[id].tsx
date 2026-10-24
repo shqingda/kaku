@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
@@ -253,7 +254,7 @@ export default function PublicIndexScreen() {
         ListFooterComponent={
           items.items.length > 0 ? (
             <PagedListFooter {...items.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -471,11 +472,11 @@ function getIndexItemHref(item: PublicIndexItem): Href | undefined {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 10, padding: 20, paddingBottom: 44 },
+  content: { gap: SPACING.md, padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
   headerCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    padding: 20,
+    padding: SPACING.xl,
   },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row' },
   overflowButton: {
@@ -484,65 +485,65 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: SPACING.sm,
     width: 32,
   },
   title: {
     color: colors.ink,
     flex: 1,
-    fontSize: 24,
+    fontSize: TYPE.titleLarge.fontSize,
     fontWeight: '800',
     letterSpacing: -0.5,
     lineHeight: 32,
   },
   author: {
     color: colors.accent,
-    fontSize: 13,
+    fontSize: TYPE.caption.fontSize,
     fontWeight: '700',
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   description: {
     color: colors.muted,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     lineHeight: 22,
-    marginTop: 16,
+    marginTop: SPACING.lg,
   },
-  stats: { color: colors.subtle, fontSize: 12, marginTop: 14 },
+  stats: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.lg },
   collectButton: {
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: colors.accentSoft,
     borderRadius: 15,
     flexDirection: 'row',
-    gap: 6,
+    gap: SPACING.sm,
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: SPACING.lg,
     minHeight: 44,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   collectedButton: { backgroundColor: colors.accent },
-  collectText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  collectText: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '800' },
   collectedText: { color: colors.surface },
   sectionTitle: {
     color: colors.ink,
-    fontSize: 19,
+    fontSize: TYPE.title.fontSize,
     fontWeight: '800',
   },
   sectionHeader: {
     alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingTop: 14,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.lg,
   },
-  sectionMeta: { color: colors.subtle, fontSize: 12 },
+  sectionMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
   subjectRow: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 92,
-    padding: 10,
+    padding: SPACING.md,
   },
   cover: {
     alignItems: 'center',
@@ -553,19 +554,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 51,
   },
-  coverFallback: { color: colors.subtle, fontSize: 14, fontWeight: '700' },
-  subjectMain: { flex: 1, marginLeft: 13 },
+  coverFallback: { color: colors.subtle, fontSize: TYPE.body.fontSize, fontWeight: '700' },
+  subjectMain: { flex: 1, marginLeft: SPACING.md },
   subjectTitle: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: TYPE.body.fontSize,
     fontWeight: '700',
     lineHeight: 21,
   },
   subjectMeta: {
     color: colors.muted,
-    fontSize: 12,
+    fontSize: TYPE.caption.fontSize,
     lineHeight: 18,
-    marginTop: 6,
+    marginTop: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
 });

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { ComponentRef, Dispatch, RefObject, SetStateAction } from 'react';
 import type { TextInput, TextInputSelectionChangeEvent } from 'react-native';
 
 import { insertAtSelection } from '@/features/rich-text/rich-text-input';
 
 export function useBangumiEmojiInsertion(
-  inputRef: RefObject<TextInput | null>,
+  inputRef: RefObject<ComponentRef<typeof TextInput> | null>,
   content: string,
   setContent: Dispatch<SetStateAction<string>>,
   maxLength: number,

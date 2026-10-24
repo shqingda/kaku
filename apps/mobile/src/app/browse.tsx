@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { BrowseSort } from '@/features/browse/model';
 import { useBrowseSubjects } from '@/features/browse/use-browse-subjects';
@@ -136,7 +136,7 @@ export default function BrowseScreen() {
         }
         ListFooterComponent={browse.items.length ? (
           <PagedListFooter {...browse.footerProps} />
-        ) : null}
+        ) : undefined}
         ListHeaderComponent={
           <View>
             <View style={styles.hero}>
@@ -268,28 +268,28 @@ const BrowseCard = memo(function BrowseCard({ item }: { item: DiscoverSubject })
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  gridRow: { gap: 14 },
-  hero: { paddingHorizontal: 4, paddingTop: 24 },
-  title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
-  subtitle: { color: colors.muted, fontSize: 14, marginTop: 7 },
-  typeTabs: { paddingBottom: 2, paddingTop: 20 },
-  sorts: { flexDirection: 'row', gap: 8, paddingTop: 12 },
-  sort: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 12, justifyContent: 'center', minHeight: 36, paddingHorizontal: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  gridRow: { gap: SPACING.lg },
+  hero: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xl },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
+  subtitle: { color: colors.muted, fontSize: TYPE.body.fontSize, marginTop: SPACING.sm },
+  typeTabs: { paddingBottom: SPACING.xs, paddingTop: SPACING.xl },
+  sorts: { flexDirection: 'row', gap: SPACING.sm, paddingTop: SPACING.md },
+  sort: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 12, justifyContent: 'center', minHeight: 36, paddingHorizontal: SPACING.lg },
   sortSelected: { backgroundColor: colors.accentSoft },
-  sortText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  sortText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   sortTextSelected: { color: colors.accent },
-  filterCard: { alignItems: 'center', backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: 14, paddingHorizontal: 13 },
-  filterError: { color: colors.accent, fontSize: 11, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
-  filterInput: { color: colors.ink, flex: 1, fontSize: 13, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: 7, paddingVertical: 0, textAlignVertical: 'center' },
+  filterCard: { alignItems: 'center', backgroundColor: colors.surface, borderCurve: 'continuous', borderRadius: 18, flexDirection: 'row', height: 56, marginTop: SPACING.lg, paddingHorizontal: SPACING.md },
+  filterError: { color: colors.accent, fontSize: TYPE.micro.fontSize, lineHeight: 17, marginTop: SPACING.sm, paddingHorizontal: SPACING.xs },
+  filterInput: { color: colors.ink, flex: 1, fontSize: TYPE.caption.fontSize, height: '100%', includeFontPadding: false, lineHeight: 20, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.none, textAlignVertical: 'center' },
   filterDivider: { backgroundColor: colors.divider, height: 24, width: StyleSheet.hairlineWidth },
-  applyButton: { alignItems: 'center', backgroundColor: colors.ink, borderRadius: 12, height: 36, justifyContent: 'center', paddingHorizontal: 14 },
-  applyText: { color: colors.surface, fontSize: 12, fontWeight: '800' },
-  resultTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginBottom: 15, marginTop: 28 },
-  card: { flex: 1, marginBottom: 22, maxWidth: '48%' },
+  applyButton: { alignItems: 'center', backgroundColor: colors.ink, borderRadius: 12, height: 36, justifyContent: 'center', paddingHorizontal: SPACING.lg },
+  applyText: { color: colors.surface, fontSize: TYPE.caption.fontSize, fontWeight: '800' },
+  resultTitle: { color: colors.ink, fontSize: TYPE.title.fontSize, fontWeight: '800', marginBottom: SPACING.lg, marginTop: SPACING.xxl },
+  card: { flex: 1, marginBottom: SPACING.xl, maxWidth: '48%' },
   cover: { alignItems: 'center', backgroundColor: colors.track, borderRadius: 18, height: 218, justifyContent: 'center', overflow: 'hidden', width: '100%' },
-  coverFallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
-  cardTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', lineHeight: 19, marginTop: 9, minHeight: 40 },
-  cardMeta: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  coverFallback: { color: colors.subtle, fontSize: TYPE.title.fontSize, fontWeight: '700' },
+  cardTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '700', lineHeight: 19, marginTop: SPACING.sm, minHeight: 40 },
+  cardMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.xs },
   pressed: { opacity: 0.62 },
 });

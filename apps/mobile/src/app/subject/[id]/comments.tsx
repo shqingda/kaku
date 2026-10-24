@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -91,7 +92,7 @@ export default function SubjectCommentsScreen() {
               <Text style={styles.stateTitle}>暂无吐槽</Text>
               <Text style={styles.stateText}>Bangumi 还没有收录相关吐槽。</Text>
             </View>
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -115,7 +116,7 @@ export default function SubjectCommentsScreen() {
         ListFooterComponent={
           comments.items.length > 0 ? (
             <PagedListFooter {...comments.footerProps} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <AppRefreshControl
@@ -135,38 +136,38 @@ export default function SubjectCommentsScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginTop: 12,
-    padding: 18,
+    marginTop: SPACING.md,
+    padding: SPACING.lg,
   },
-  firstCard: { marginTop: 0 },
+  firstCard: { marginTop: SPACING.none },
   commentHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  author: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-  body: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
-  footer: { color: colors.subtle, fontSize: 11, marginTop: 12 },
+  author: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '800' },
+  body: { color: colors.muted, fontSize: TYPE.body.fontSize, lineHeight: 22, marginTop: SPACING.md },
+  footer: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.md },
   pressed: { opacity: 0.6 },
-  state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  state: { alignItems: 'center', padding: SPACING.xxl },
+  stateTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
   stateText: {
     color: colors.muted,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     lineHeight: 21,
-    marginTop: 7,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });

@@ -93,7 +93,7 @@ export default function GroupScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyText}>该小组暂无公开话题。</Text>
             </View>
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -207,7 +207,7 @@ export default function GroupScreen() {
         ListFooterComponent={
           topics.items.length > 0 ? (
             <PagedListFooter {...topics.footerProps} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <AppRefreshControl

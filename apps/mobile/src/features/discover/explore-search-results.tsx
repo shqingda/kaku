@@ -105,7 +105,7 @@ export function ExploreSearchResults({
             onRetry={onLoadMore}
             total={total}
           />
-        ) : null
+        ) : undefined
       }
       ListHeaderComponent={
         <>

@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { InlineVerificationError, useInlineBangumiVerification } from '@/features/auth/use-inline-bangumi-verification';
 import { PublishProgress } from '@/features/shared/publish-progress';
 import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
@@ -73,7 +74,7 @@ function TopicComposerContent({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const contentInputRef = useRef<TextInput>(null);
+  const contentInputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const draft = useReplyDraft(draftKey, '', visible, '话题已发布');
   const parsed = readTopicDraft(draft.content);
   const { title, content } = parsed ?? { title: '', content: '' };

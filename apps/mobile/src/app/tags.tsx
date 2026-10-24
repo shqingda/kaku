@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -88,7 +89,7 @@ export default function TagsScreen() {
         }
         ListFooterComponent={tags.items.length ? (
           <PagedListFooter {...tags.footerProps} />
-        ) : null}
+        ) : undefined}
         ListHeaderComponent={
           <View>
             <View style={styles.hero}>
@@ -150,14 +151,14 @@ const TagCard = memo(function TagCard({ item, onPress, styles }: {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  row: { gap: 10 },
-  hero: { paddingHorizontal: 4, paddingTop: 24 },
-  title: { color: colors.ink, fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
-  subtitle: { color: colors.muted, fontSize: 14, marginTop: 7 },
-  tabs: { paddingBottom: 2, paddingTop: 20 },
-  search: { marginTop: 14 },
-  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginBottom: 14, marginTop: 28 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  row: { gap: SPACING.md },
+  hero: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xl },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
+  subtitle: { color: colors.muted, fontSize: TYPE.body.fontSize, marginTop: SPACING.sm },
+  tabs: { paddingBottom: SPACING.xs, paddingTop: SPACING.xl },
+  search: { marginTop: SPACING.lg },
+  sectionTitle: { color: colors.ink, fontSize: TYPE.title.fontSize, fontWeight: '800', marginBottom: SPACING.lg, marginTop: SPACING.xxl },
   tag: {
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -167,11 +168,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     height: 54,
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: SPACING.md,
     maxWidth: '49%',
-    paddingHorizontal: 15,
+    paddingHorizontal: SPACING.lg,
   },
-  tagName: { color: colors.ink, flex: 1, fontSize: 14, fontWeight: '700' },
-  tagCount: { color: colors.subtle, fontSize: 11, marginLeft: 8 },
+  tagName: { color: colors.ink, flex: 1, fontSize: TYPE.body.fontSize, fontWeight: '700' },
+  tagCount: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginLeft: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

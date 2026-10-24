@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -81,7 +82,7 @@ export default function SubjectIndexesScreen() {
               <Text style={styles.emptyTitle}>暂无相关目录</Text>
               <Text style={styles.emptyText}>该条目还没有被收录进公开目录。</Text>
             </View>
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -105,7 +106,7 @@ export default function SubjectIndexesScreen() {
         ListFooterComponent={
           indexes.items.length > 0 ? (
             <PagedListFooter {...indexes.footerProps} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <AppRefreshControl
@@ -125,34 +126,34 @@ export default function SubjectIndexesScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 10, padding: 20, paddingBottom: 44 },
-  header: { paddingBottom: 10, paddingTop: 2 },
+  content: { gap: SPACING.md, padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
+  header: { paddingBottom: SPACING.md, paddingTop: SPACING.xs },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 20,
-    padding: 18,
+    padding: SPACING.lg,
   },
   indexTitle: {
     color: colors.ink,
-    fontSize: 16,
+    fontSize: TYPE.heading.fontSize,
     fontWeight: '800',
     lineHeight: 23,
   },
-  indexMeta: { color: colors.subtle, fontSize: 12, marginTop: 9 },
+  indexMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
-  empty: { alignItems: 'center', padding: 32 },
-  emptyTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  empty: { alignItems: 'center', padding: SPACING.xxl },
+  emptyTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
   emptyText: {
     color: colors.muted,
-    fontSize: 13,
-    marginTop: 7,
+    fontSize: TYPE.caption.fontSize,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });

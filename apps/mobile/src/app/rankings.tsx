@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -91,7 +92,7 @@ export default function RankingsScreen() {
         ListFooterComponent={
           rankings.items.length > 0 ? (
             <PagedListFooter {...rankings.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -163,30 +164,30 @@ const RankingRow = memo(function RankingRow({
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    paddingBottom: 44,
-    paddingHorizontal: 20,
+    paddingBottom: SPACING.xxl + SPACING.md,
+    paddingHorizontal: SPACING.xl,
   },
   header: {
-    paddingBottom: 18,
-    paddingHorizontal: 4,
-    paddingTop: 24,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.xl,
   },
   title: {
     color: colors.ink,
-    fontSize: 30,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.8,
   },
   subtitle: {
     color: colors.muted,
-    fontSize: 13,
-    marginTop: 7,
+    fontSize: TYPE.caption.fontSize,
+    marginTop: SPACING.sm,
   },
-  subjectTypeTabs: { paddingBottom: 14 },
+  subjectTypeTabs: { paddingBottom: SPACING.lg },
   item: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 14,
+    paddingHorizontal: SPACING.lg,
   },
   firstItem: {
     borderTopLeftRadius: 22,

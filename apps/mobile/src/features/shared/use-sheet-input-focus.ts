@@ -1,9 +1,10 @@
+import type { ComponentRef } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { TextInput } from 'react-native';
 
 // Modal must be on screen and draft restoration must allow editing before focus.
 export function useSheetInputFocus(visible: boolean, editable: boolean) {
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [shown, setShown] = useState(false);
   const focused = useRef(false);
   useEffect(() => {

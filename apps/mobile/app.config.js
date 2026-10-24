@@ -79,7 +79,6 @@ module.exports = {
     },
     plugins: [
       ['expo-build-properties', {
-        ios: { enableSceneSupport: true },
         android: {
           minSdkVersion: 29,
           enableMinifyInReleaseBuilds: optimizeNative,

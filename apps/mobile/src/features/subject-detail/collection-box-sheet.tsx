@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { useRef } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -55,7 +56,7 @@ export function CollectionBoxSheet({
   const colors = useTheme();
   const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
-  const contentScrollRef = useRef<ScrollView>(null);
+  const contentScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const editor = useCollectionBoxForm({ item, visible, supportsProgress, onClose, onSave });
   const { form, patchForm, requestClose, save, addTag, subjectType } = editor;
   const { comment, isPrivate, status, tagDraft, tags } = form;

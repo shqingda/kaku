@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, usePathname } from 'expo-router';
@@ -101,7 +102,7 @@ export default function DirectoriesScreen() {
         ListFooterComponent={
           paged.items.length > 0 ? (
             <PagedListFooter {...paged.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -257,11 +258,11 @@ const IndexRow = memo(function IndexRow({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  filters: { flexDirection: 'row', gap: 8, paddingTop: 20 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  filters: { flexDirection: 'row', gap: SPACING.sm, paddingTop: SPACING.xl },
   filter: {
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -269,26 +270,26 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     minHeight: 44,
     minWidth: 72,
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   filterSelected: { backgroundColor: colors.ink },
-  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   filterTextSelected: { color: colors.surface },
   createButton: {
     alignItems: 'center',
     backgroundColor: colors.accent,
     borderRadius: 15,
     flexDirection: 'row',
-    gap: 7,
+    gap: SPACING.sm,
     justifyContent: 'center',
-    marginTop: 14,
+    marginTop: SPACING.lg,
     minHeight: 46,
   },
-  createButtonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
-  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
+  createButtonText: { color: colors.surface, fontSize: TYPE.body.fontSize, fontWeight: '800' },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  row: { flexDirection: 'row', minHeight: 130, paddingVertical: 17 },
+  row: { flexDirection: 'row', minHeight: 130, paddingVertical: SPACING.lg },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   avatar: {
     alignItems: 'center',
@@ -299,13 +300,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 48,
   },
-  avatarFallback: { color: colors.accent, fontSize: 17, fontWeight: '800' },
-  rowMain: { flex: 1, marginLeft: 14, minWidth: 0 },
-  titleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10 },
-  rowTitle: { color: colors.ink, flex: 1, fontSize: 16, fontWeight: '800', lineHeight: 22 },
-  countPill: { backgroundColor: colors.background, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
-  countText: { color: colors.muted, fontSize: 10, fontWeight: '700' },
-  description: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 8 },
+  avatarFallback: { color: colors.accent, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  rowMain: { flex: 1, marginLeft: SPACING.lg, minWidth: 0 },
+  titleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: SPACING.md },
+  rowTitle: { color: colors.ink, flex: 1, fontSize: TYPE.heading.fontSize, fontWeight: '800', lineHeight: 22 },
+  countPill: { backgroundColor: colors.background, borderRadius: 10, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs },
+  countText: { color: colors.muted, fontSize: TYPE.micro.fontSize, fontWeight: '700' },
+  description: { color: colors.muted, fontSize: TYPE.caption.fontSize, lineHeight: 18, marginTop: SPACING.sm },
+  rowMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

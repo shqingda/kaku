@@ -153,12 +153,12 @@ export function MyCollectionsScreen({
             />
           ) : notice.empty ? (
             <AppState text={notice.empty.text} title={notice.empty.title} />
-          ) : null
+          ) : undefined
         }
         ListFooterComponent={
           !scanning && results.length > 0 ? (
             <PagedListFooter {...list.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>

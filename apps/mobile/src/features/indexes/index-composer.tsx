@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { useSheetInputFocus } from '@/features/shared/use-sheet-input-focus';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -86,7 +87,7 @@ function IndexComposerContent({
   const conflict = Boolean(editing && draft.content && saved && !sameFields(saved, snapshot) && !sameFields(saved.base, snapshot));
   const { title, desc, isPrivate } = fields ?? EMPTY_INDEX;
   const sent = draft.phase === 'sent';
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const mounted = useRef(true);
   const submitting = useRef(false);
   const createdId = useRef<number | null>(null);

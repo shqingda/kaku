@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
@@ -9,7 +10,7 @@ import {
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -32,7 +33,7 @@ export function SubjectSearchField({
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   function clearInput() {
     onChangeText('');
@@ -97,18 +98,18 @@ const createStyles = (colors: ThemeColors) =>
       borderCurve: 'continuous',
       borderRadius: 15,
       flexDirection: 'row',
-      gap: 10,
+      gap: SPACING.md,
       minHeight: 50,
-      paddingHorizontal: 16,
+      paddingHorizontal: SPACING.lg,
     },
     searchInput: {
       color: colors.ink,
       flex: 1,
-      fontSize: 16,
+      fontSize: TYPE.heading.fontSize,
       minHeight: 24,
       includeFontPadding: false,
       lineHeight: 22,
-      paddingVertical: 0,
+      paddingVertical: SPACING.none,
       textAlignVertical: 'center',
       transform: [{ translateY: Platform.OS === 'ios' ? -1 : 0 }],
     },
@@ -116,7 +117,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       height: 32,
       justifyContent: 'center',
-      marginRight: -6,
+      marginRight: -SPACING.sm,
       width: 32,
     },
     clearButtonPressed: {

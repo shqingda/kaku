@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -123,7 +124,7 @@ export default function PeopleScreen() {
         ListFooterComponent={
           people.items.length > 0 ? (
             <PagedListFooter {...people.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -355,40 +356,40 @@ const PersonRow = memo(function PersonRow({ hasDivider, isFirst, isLast, item }:
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  searchField: { marginTop: 20 },
-  kindTabs: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl },
+  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  searchField: { marginTop: SPACING.xl },
+  kindTabs: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   kindTab: { flex: 1, minHeight: 44 },
-  filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
-  filterLabel: { color: colors.subtle, fontSize: 11, fontWeight: '700', width: 40 },
-  filterOptions: { gap: 8, paddingRight: 12 },
+  filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: SPACING.md },
+  filterLabel: { color: colors.subtle, fontSize: TYPE.micro.fontSize, fontWeight: '700', width: 40 },
+  filterOptions: { gap: SPACING.sm, paddingRight: SPACING.md },
   filter: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 14,
     justifyContent: 'center',
     minHeight: 44,
-    paddingHorizontal: 15,
+    paddingHorizontal: SPACING.lg,
   },
   filterSelected: { backgroundColor: colors.ink },
-  filterText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  filterText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   filterTextSelected: { color: colors.surface },
   searchSummary: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 48,
-    paddingHorizontal: 4,
+    paddingHorizontal: SPACING.xs,
   },
-  searchSummaryText: { color: colors.muted, flex: 1, fontSize: 13 },
-  clearSearch: { color: colors.accent, fontSize: 13, fontWeight: '700' },
-  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
+  searchSummaryText: { color: colors.muted, flex: 1, fontSize: TYPE.caption.fontSize },
+  clearSearch: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  row: { alignItems: 'center', flexDirection: 'row', minHeight: 98, paddingVertical: 12 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 98, paddingVertical: SPACING.md },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   avatar: {
     alignItems: 'center',
@@ -400,13 +401,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 58,
   },
-  avatarFallback: { color: colors.accent, fontSize: 18, fontWeight: '800' },
-  rowMain: { flex: 1, marginLeft: 13, minWidth: 0 },
-  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
-  categories: { color: colors.accentRich, fontSize: 12, fontWeight: '700', marginTop: 4 },
-  rowMeta: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 4 },
-  commentCount: { alignItems: 'center', flexDirection: 'row', gap: 4, marginTop: 6 },
-  commentText: { color: colors.subtle, fontSize: 11, fontWeight: '600' },
-  chevron: { marginLeft: 8 },
+  avatarFallback: { color: colors.accent, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  rowMain: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
+  rowTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '800', lineHeight: 21 },
+  categories: { color: colors.accentRich, fontSize: TYPE.caption.fontSize, fontWeight: '700', marginTop: SPACING.xs },
+  rowMeta: { color: colors.muted, fontSize: TYPE.caption.fontSize, lineHeight: 17, marginTop: SPACING.xs },
+  commentCount: { alignItems: 'center', flexDirection: 'row', gap: SPACING.xs, marginTop: SPACING.sm },
+  commentText: { color: colors.subtle, fontSize: TYPE.micro.fontSize, fontWeight: '600' },
+  chevron: { marginLeft: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

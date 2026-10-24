@@ -135,7 +135,7 @@ export default function GroupTopicScreen() {
           style={styles.list}
           initialNumToRender={8}
           keyExtractor={(reply) => reply.id}
-          ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : null}
+          ListEmptyComponent={topic ? <EmptyDiscussionReplies /> : undefined}
           ListHeaderComponent={
             <>
               {topic && topicQuery.isError ? (

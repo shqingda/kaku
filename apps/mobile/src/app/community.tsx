@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
@@ -81,12 +82,12 @@ export default function CommunityScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyText}>暂无公开话题。</Text>
             </View>
-          ) : null
+          ) : undefined
         }
         ListFooterComponent={
           topics.items.length > 0 ? (
             <PagedListFooter {...topics.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -221,27 +222,27 @@ const CommunityTopicRow = memo(function CommunityTopicRow({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
   sectionTitle: {
     color: colors.ink,
-    fontSize: 19,
+    fontSize: TYPE.title.fontSize,
     fontWeight: '800',
-    paddingBottom: 10,
-    paddingHorizontal: 4,
-    paddingTop: 20,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.xl,
   },
   topicHeader: {
     alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionMeta: { color: colors.subtle, fontSize: 12 },
-  groupList: { gap: 10, paddingBottom: 8, paddingTop: 2 },
+  sectionMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
+  groupList: { gap: SPACING.md, paddingBottom: SPACING.sm, paddingTop: SPACING.xs },
   groupCard: {
     backgroundColor: colors.surface,
     borderRadius: 19,
     minHeight: 138,
-    padding: 12,
+    padding: SPACING.md,
     width: 126,
   },
   groupIcon: {
@@ -253,19 +254,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 48,
   },
-  iconFallback: { color: colors.subtle, fontSize: 16, fontWeight: '800' },
+  iconFallback: { color: colors.subtle, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
   groupTitle: {
     color: colors.ink,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     fontWeight: '700',
     lineHeight: 19,
-    marginTop: 10,
+    marginTop: SPACING.md,
   },
-  groupMeta: { color: colors.subtle, fontSize: 11, marginTop: 6 },
+  groupMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.sm },
   topicList: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   firstTopicList: {
     borderTopLeftRadius: 22,
@@ -276,6 +277,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomRightRadius: 22,
   },
   pressed: { opacity: 0.62 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14 },
+  empty: { alignItems: 'center', padding: SPACING.xxl },
+  emptyText: { color: colors.muted, fontSize: TYPE.body.fontSize },
 });

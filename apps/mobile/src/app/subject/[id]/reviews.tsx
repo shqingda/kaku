@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -98,7 +99,7 @@ export default function SubjectReviewsScreen() {
           !reviewsQuery.isError &&
           reviews.items.length === 0 ? (
             <EmptyState />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <>
@@ -122,7 +123,7 @@ export default function SubjectReviewsScreen() {
         ListFooterComponent={
           reviews.items.length > 0 ? (
             <PagedListFooter {...reviews.footerProps} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <AppRefreshControl
@@ -154,45 +155,45 @@ function EmptyState() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginTop: 12,
-    padding: 18,
+    marginTop: SPACING.md,
+    padding: SPACING.lg,
   },
-  firstCard: { marginTop: 0 },
+  firstCard: { marginTop: SPACING.none },
   pressed: { opacity: 0.62, transform: [{ scale: 0.99 }] },
   reviewTitle: {
     color: colors.ink,
-    fontSize: 17,
+    fontSize: TYPE.heading.fontSize,
     fontWeight: '800',
     lineHeight: 23,
   },
-  body: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
+  body: { color: colors.muted, fontSize: TYPE.body.fontSize, lineHeight: 22, marginTop: SPACING.md },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: SPACING.md,
   },
-  footerText: { color: colors.subtle, flex: 1, fontSize: 11 },
-  replyCount: { color: colors.muted, fontSize: 11, fontWeight: '700' },
-  state: { alignItems: 'center', padding: 32 },
-  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  footerText: { color: colors.subtle, flex: 1, fontSize: TYPE.micro.fontSize },
+  replyCount: { color: colors.muted, fontSize: TYPE.micro.fontSize, fontWeight: '700' },
+  state: { alignItems: 'center', padding: SPACING.xxl },
+  stateTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
   stateText: {
     color: colors.muted,
-    fontSize: 14,
+    fontSize: TYPE.body.fontSize,
     lineHeight: 21,
-    marginTop: 7,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });

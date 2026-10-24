@@ -1,3 +1,4 @@
+import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -104,7 +105,7 @@ export default function PublicUserBlogsScreen() {
         ListFooterComponent={
           blogs.items.length > 0 ? (
             <PagedListFooter {...blogs.footerProps} />
-          ) : null
+          ) : undefined
         }
         ListHeaderComponent={
           <View style={styles.header}>
@@ -138,19 +139,19 @@ export default function PublicUserBlogsScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingHorizontal: 4, paddingTop: 18 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingHorizontal: SPACING.xs, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    fontSize: TYPE.display.fontSize,
     fontWeight: '800',
     letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
   item: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 17,
+    paddingHorizontal: SPACING.lg,
   },
   firstItem: {
     borderTopLeftRadius: 22,
