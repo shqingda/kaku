@@ -171,7 +171,8 @@ test('production profiles shrink by default and support an explicit diagnostic o
       const expected = profile === 'production' && flag !== '0';
       assert.equal(properties.android.enableMinifyInReleaseBuilds, expected, `R8: profile=${profile}, flag=${flag}`);
       assert.equal(properties.android.enableShrinkResourcesInReleaseBuilds, expected, `resources: profile=${profile}, flag=${flag}`);
-      assert.equal(properties.ios.enableSceneSupport, true);
+      // SDK 58 owns the scene lifecycle; the SDK 57 opt-in is now ignored.
+      assert.equal(properties.ios?.enableSceneSupport, undefined);
     }
   }
 });
