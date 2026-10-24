@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.21 提供 53.06 MB 正式包，使用分系统签名轮换并直连 FCM，构建及上传核验见 [发布记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.22 提供 44.48 MB 正式包，升级 Expo SDK 58 并保留分系统签名轮换与 FCM，构建及上传核验见 [发布记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 
@@ -92,6 +92,9 @@ bash scripts/build-split-apks.sh "" release
 `127.0.0.1:7890`，关闭 `Expect`，15 秒连接超时、900 秒总超时并显示上传进度。
 本次约 8 分钟传完 53.06 MB；没有输出响应不代表卡死，应看上传百分比。
 保留 FlClash / TUN 配置，清除代理环境变量，仅上传命令显式使用 SOCKS5。
+2026-10-24 的 v1.1.22 在 SOCKS5 上传到 100% 后发生连接重置；确认远端无资产、
+上传端点无显式代理可达后，改用 `--noproxy '*'` 的同一 HTTP/2 流程成功。
+此为经过检查后的备用路径，不自动重试、不改系统代理；仍须核对大小及摘要。
 
 当前 `build-split-apks.sh` 仍使用 `gh release create` 合并上传。
 为避免重走慢连接，下次采用 `--build-only` 构建并按既有流程提交、推送，
