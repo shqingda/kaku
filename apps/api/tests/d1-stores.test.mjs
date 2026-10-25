@@ -62,6 +62,13 @@ after(async () => {
   await miniflare?.dispose();
 });
 
+// Receipt writes stopped with native FCM/APNs. Seed pre-migration rows directly
+// to keep retention and session-cascade compatibility covered.
+async function seedLegacyReceipt(device, ticketId, createdAt) {
+  await database.prepare('INSERT INTO push_receipts (ticket_id, token, user_id, session_id, registration_id, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(ticketId, device.token, device.userId, device.sessionId, device.registrationId, createdAt).run();
+}
+
 test('search history store roundtrips items and upserts per user', async () => {
   assert.equal(await searchHistoryStore.get(42), null);
 
@@ -274,7 +281,7 @@ test('push device store upserts by token and lists distinct user ids', async () 
 });
 
 test('push device store advances last notification per device and deletes precisely', async () => {
-  await pushStore.commitDelivery({ createdAt: NOW, devices: [pushDevice('token-a')], lastNotificationId: 99, tickets: [] });
+  await pushStore.commitDelivery({ devices: [pushDevice('token-a')], lastNotificationId: 99 });
 
   for (const device of await pushStore.listByUser(42, NOW)) {
     assert.equal(device.lastNotificationId, device.token === 'token-a' ? 99 : null);
@@ -306,14 +313,13 @@ test('a session revoke cascades only its own push registration and receipts', as
   const kept = pushDevice('kept-device', 101, 'keep-this');
   const other = pushDevice('other-device', 102, 'other-owner');
   for (const item of [revoked, kept, other]) await pushStore.save(item);
-  await pushStore.commitDelivery({ createdAt: NOW - 16 * 60_000, devices: [revoked, kept, other], lastNotificationId: 12,
-    tickets: [revoked, kept, other].map((item) => ({ id: `ticket-${item.token}`, token: item.token })) });
+  for (const item of [revoked, kept, other]) await seedLegacyReceipt(item, `ticket-${item.token}`, NOW - 16 * 60_000);
   const authStore = createD1AuthStore(database);
   assert.equal(await authStore.deleteSessionById(102, 'revoke-this'), false);
   assert.equal(await authStore.deleteSessionById(101, 'revoke-this'), true);
   assert.deepEqual((await pushStore.listByUser(101, NOW)).map((item) => item.token), ['kept-device']);
   assert.deepEqual((await pushStore.listByUser(102, NOW)).map((item) => item.token), ['other-device']);
-  const receipts = await pushStore.listPendingReceipts(NOW);
+  const receipts = (await database.prepare('SELECT ticket_id AS ticketId FROM push_receipts').all()).results;
   assert.equal(receipts.some((item) => item.ticketId === 'ticket-revoked-device'), false);
   assert.equal(receipts.some((item) => item.ticketId === 'ticket-kept-device'), true);
   await seedPushSession('other-own-session', 101);
@@ -322,7 +328,7 @@ test('a session revoke cascades only its own push registration and receipts', as
   assert.equal((await pushStore.listByUser(101, NOW)).length, 1);
   await authStore.deleteAllSessions(101);
   assert.deepEqual(await pushStore.listByUser(101, NOW), []);
-  assert.equal((await pushStore.listPendingReceipts(NOW)).some((item) => item.userId === 101), false);
+  assert.equal((await database.prepare('SELECT COUNT(*) AS count FROM push_receipts WHERE user_id = ?').bind(101).first()).count, 0);
   assert.equal((await pushStore.listByUser(102, NOW)).length, 1);
 });
 
@@ -358,59 +364,53 @@ test('revocation cannot be undone by a registration request authenticated before
   assert.deepEqual(rows.results, []);
 });
 
-test('receipt persistence and cursor advancement roll back together if D1 rejects a receipt', async () => {
+test('cursor commits roll back every device if D1 rejects a later update, without writing receipts', async () => {
   await seedPushSession('atomic-session', 106);
   const snapshot = pushDevice('atomic-device', 106, 'atomic-session', { lastNotificationId: 10 });
   await pushStore.save(snapshot);
   const second = { ...snapshot, token: 'atomic-second-device', registrationId: 'atomic-second-registration' };
   await pushStore.save(second);
   // This trigger models a storage constraint failure in the real D1 batch.
-  await database.exec("CREATE TRIGGER reject_push_receipt BEFORE INSERT ON push_receipts WHEN NEW.ticket_id = 'reject-ticket' BEGIN SELECT RAISE(ABORT, 'receipt persistence rejected'); END");
-  await assert.rejects(pushStore.commitDelivery({ createdAt: NOW, devices: [snapshot, second], lastNotificationId: 12,
-    tickets: [{ id: 'rolled-back-ticket', token: snapshot.token }, { id: 'reject-ticket', token: second.token }] }), /receipt persistence rejected/);
+  await database.exec("CREATE TRIGGER reject_push_cursor BEFORE UPDATE OF last_notification_id ON push_devices WHEN NEW.token = 'atomic-second-device' BEGIN SELECT RAISE(ABORT, 'cursor persistence rejected'); END");
+  await assert.rejects(pushStore.commitDelivery({ devices: [snapshot, second], lastNotificationId: 12 }), /cursor persistence rejected/);
   assert.deepEqual((await pushStore.listByUser(106, NOW)).map((item) => item.lastNotificationId), [10, 10]);
-  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE ticket_id = ?').bind('rolled-back-ticket').all()).results, []);
-  await database.exec('DROP TRIGGER reject_push_receipt');
-  await pushStore.commitDelivery({ createdAt: NOW - 15 * 60_000, devices: [snapshot], lastNotificationId: 12,
-    tickets: [{ id: 'persisted-ticket', token: snapshot.token }] });
-  assert.equal((await pushStore.listByUser(106, NOW))[0].lastNotificationId, 12);
-  assert.equal((await pushStore.listPendingReceipts(NOW)).some((item) => item.ticketId === 'persisted-ticket'), true);
-  await pushStore.commitDelivery({ createdAt: NOW, devices: [snapshot], lastNotificationId: 11, tickets: [] });
-  assert.equal((await pushStore.listByUser(106, NOW))[0].lastNotificationId, 12);
+  await database.exec('DROP TRIGGER reject_push_cursor');
+  await pushStore.commitDelivery({ devices: [snapshot, second], lastNotificationId: 12 });
+  assert.deepEqual((await pushStore.listByUser(106, NOW)).map((item) => item.lastNotificationId), [12, 12]);
+  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE user_id = ?').bind(106).all()).results, []);
+  await pushStore.commitDelivery({ devices: [snapshot, second], lastNotificationId: 11 });
+  assert.deepEqual((await pushStore.listByUser(106, NOW)).map((item) => item.lastNotificationId), [12, 12]);
 });
 
-test('late receipt cleanup and cursor commits cannot modify a newer registration of the same token', async () => {
+test('late registration cleanup and cursor commits cannot modify a newer registration of the same token', async () => {
   await seedPushSession('old-registration-session', 107);
   await seedPushSession('new-registration-session', 107);
   const previous = pushDevice('rebound-device', 107, 'old-registration-session', { lastNotificationId: 10 });
   await pushStore.save(previous);
-  await pushStore.commitDelivery({ createdAt: NOW - 15 * 60_000, devices: [previous], lastNotificationId: 12,
-    tickets: [{ id: 'old-registration-ticket', token: previous.token }] });
+  await seedLegacyReceipt(previous, 'old-registration-ticket', NOW - 24 * 60 * 60_000);
   const replacement = { ...previous, sessionId: 'new-registration-session', registrationId: 'replacement', lastNotificationId: null };
   await pushStore.save(replacement);
   await pushStore.deleteByUserAndToken(107, previous.sessionId, previous.token);
-  await pushStore.deleteRegistration((await pushStore.listPendingReceipts(NOW)).find((item) => item.ticketId === 'old-registration-ticket'));
-  await pushStore.commitDelivery({ createdAt: NOW, devices: [previous], lastNotificationId: 99,
-    tickets: [{ id: 'late-acceptance-ticket', token: previous.token }] });
+  await pushStore.deleteRegistration(previous);
+  assert.equal(await pushStore.deleteExpiredReceipts(NOW), 1);
+  await pushStore.commitDelivery({ devices: [previous], lastNotificationId: 99 });
   assert.deepEqual(await pushStore.listByUser(107, NOW), [replacement]);
-  const staleReceipt = await database.prepare('SELECT * FROM push_receipts WHERE ticket_id = ?').bind('late-acceptance-ticket').all();
+  const staleReceipt = await database.prepare('SELECT * FROM push_receipts WHERE user_id = ?').bind(107).all();
   assert.deepEqual(staleReceipt.results, []);
 });
 
-test('receipt queries respect delay, retention and exact ticket deletion', async () => {
+test('legacy receipt cleanup deletes only rows at or beyond the 24-hour retention boundary', async () => {
   await seedPushSession('receipt-boundaries', 108);
   const snapshot = pushDevice('receipt-boundary-device', 108, 'receipt-boundaries');
   await pushStore.save(snapshot);
-  for (const [id, createdAt] of [['due', NOW - 15 * 60_000], ['later', NOW - 15 * 60_000 + 1], ['expired', NOW - 24 * 60 * 60_000]]) {
-    await pushStore.commitDelivery({ createdAt, devices: [snapshot], lastNotificationId: 12, tickets: [{ id: `boundary-${id}`, token: snapshot.token }] });
+  for (const [id, createdAt] of [['fresh', NOW], ['retained', NOW - 24 * 60 * 60_000 + 1], ['expired', NOW - 24 * 60 * 60_000], ['older', NOW - 24 * 60 * 60_000 - 1]]) {
+    await seedLegacyReceipt(snapshot, `boundary-${id}`, createdAt);
   }
-  const pending = (await pushStore.listPendingReceipts(NOW)).filter((item) => item.userId === 108);
-  assert.deepEqual(pending.map((item) => item.ticketId), ['boundary-due']);
-  await pushStore.deleteReceipts([]);
-  await pushStore.deleteReceipts(['boundary-due']);
-  assert.equal((await pushStore.listPendingReceipts(NOW)).some((item) => item.ticketId === 'boundary-due'), false);
-  assert.equal(await pushStore.deleteExpiredReceipts(NOW), 1);
-  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE user_id = ?').bind(108).all()).results, [{ ticket_id: 'boundary-later' }]);
+  assert.equal(await pushStore.deleteExpiredReceipts(NOW), 2);
+  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE user_id = ? ORDER BY ticket_id').bind(108).all()).results,
+    [{ ticket_id: 'boundary-fresh' }, { ticket_id: 'boundary-retained' }]);
+  assert.equal(await pushStore.deleteExpiredReceipts(NOW), 0);
+  assert.deepEqual(await pushStore.listByUser(108, NOW), [snapshot]);
 });
 
 test('the push session migration preserves legacy rows without assigning them to another device', async () => {
@@ -459,8 +459,7 @@ test('disconnecting credentials removes bound and legacy push data while preserv
   const other = pushDevice('disconnect-other-device', 110, 'disconnect-other');
   await pushStore.save(owned);
   await pushStore.save(other);
-  await pushStore.commitDelivery({ createdAt: NOW - 15 * 60_000, devices: [owned], lastNotificationId: 12,
-    tickets: [{ id: 'disconnect-ticket', token: owned.token }] });
+  await seedLegacyReceipt(owned, 'disconnect-ticket', NOW - 15 * 60_000);
   await database.prepare('INSERT INTO push_devices (token, platform, updated_at, user_id) VALUES (?, ?, ?, ?)')
     .bind('disconnect-legacy-device', 'ios', NOW, 109).run();
   await preferencesStore.save({ userId: 109, locale: 'zh-Hans', theme: 'dark', updatedAt: NOW });
@@ -481,37 +480,33 @@ test('a re-registration cannot roll back a cursor concurrently advanced after it
   await seedPushSession('registration-rebound', 111);
   const original = pushDevice('registration-cursor-device', 111, 'registration-cursor-race', { lastNotificationId: 10 });
   await pushStore.save(original);
-  await pushStore.commitDelivery({ createdAt: NOW, devices: [original], lastNotificationId: 12, tickets: [] });
+  await pushStore.commitDelivery({ devices: [original], lastNotificationId: 12 });
   await pushStore.save({ ...original, registrationId: 'registration-after-stale-read' });
   assert.equal((await pushStore.listByUser(111, NOW))[0].lastNotificationId, 12);
   await pushStore.save({ ...original, sessionId: 'registration-rebound', registrationId: 'different-session', lastNotificationId: 999 });
   assert.equal((await pushStore.listByUser(111, NOW))[0].lastNotificationId, null);
 });
 
-test('missing receipts yield their polling slot to tickets that have not yet been checked', async () => {
+test('legacy receipt cleanup retains unexpired rows regardless of their old polling state', async () => {
   await seedPushSession('receipt-fairness-session', 112);
   const snapshot = pushDevice('receipt-fairness-device', 112, 'receipt-fairness-session');
   await pushStore.save(snapshot);
-  await pushStore.commitDelivery({ createdAt: NOW - 20 * 60_000, devices: [snapshot], lastNotificationId: 12,
-    tickets: [{ id: 'fairness-first', token: snapshot.token }] });
-  await pushStore.commitDelivery({ createdAt: NOW - 16 * 60_000, devices: [snapshot], lastNotificationId: 13,
-    tickets: [{ id: 'fairness-second', token: snapshot.token }] });
-  // Isolate these two old tickets ahead of prior tests' already-checked tickets.
-  await database.prepare('UPDATE push_receipts SET last_checked_at = ? WHERE user_id != ?').bind(NOW, 112).run();
-  const first = await pushStore.listPendingReceipts(NOW, 1);
-  assert.equal(first[0].ticketId, 'fairness-first');
-  await pushStore.markReceiptChecks([first[0].ticketId], NOW);
-  const second = await pushStore.listPendingReceipts(NOW, 1);
-  assert.equal(second[0].ticketId, 'fairness-second');
+  await seedLegacyReceipt(snapshot, 'checked-legacy', NOW - 20 * 60_000);
+  await seedLegacyReceipt(snapshot, 'unchecked-legacy', NOW - 16 * 60_000);
+  await database.prepare('UPDATE push_receipts SET last_checked_at = ? WHERE ticket_id = ?').bind(NOW, 'checked-legacy').run();
+  assert.equal(await pushStore.deleteExpiredReceipts(NOW), 0);
+  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE user_id = ? ORDER BY ticket_id').bind(112).all()).results,
+    [{ ticket_id: 'checked-legacy' }, { ticket_id: 'unchecked-legacy' }]);
 });
 
-test('bulk receipt checks and retirement stay below the D1 one-hundred-parameter query limit', async () => {
+test('bulk legacy receipt cleanup stays below the D1 parameter limit and retains newer rows', async () => {
   await seedPushSession('bulk-receipts', 113);
   const snapshot = pushDevice('bulk-receipt-device', 113, 'bulk-receipts');
   await pushStore.save(snapshot);
   const ids = Array.from({ length: 101 }, (_, index) => `bulk-ticket-${index}`);
   await database.batch(ids.map((id) => database.prepare('INSERT INTO push_receipts (ticket_id, token, user_id, session_id, registration_id, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(id, snapshot.token, 113, snapshot.sessionId, snapshot.registrationId, NOW - 16 * 60_000)));
+    .bind(id, snapshot.token, 113, snapshot.sessionId, snapshot.registrationId, NOW - 24 * 60 * 60_000)));
+  await seedLegacyReceipt(snapshot, 'bulk-retained', NOW);
   const parameterCounts = [];
   const boundedDatabase = {
     prepare(sql) {
@@ -527,13 +522,10 @@ test('bulk receipt checks and retirement stay below the D1 one-hundred-parameter
     batch(statements) { return database.batch(statements); },
   };
   const boundedStore = createD1PushDeviceStore(boundedDatabase);
-  await boundedStore.markReceiptChecks([], NOW);
-  await boundedStore.markReceiptChecks(ids, NOW);
-  const marked = await database.prepare('SELECT COUNT(*) AS count FROM push_receipts WHERE user_id = ? AND last_checked_at = ?').bind(113, NOW).first();
-  assert.equal(marked.count, 101);
-  await boundedStore.deleteReceipts(ids);
-  assert.equal((await database.prepare('SELECT COUNT(*) AS count FROM push_receipts WHERE user_id = ?').bind(113).first()).count, 0);
-  assert.deepEqual(parameterCounts, [100, 3, 100, 1]);
+  assert.equal(await boundedStore.deleteExpiredReceipts(NOW), 101);
+  assert.deepEqual((await database.prepare('SELECT ticket_id FROM push_receipts WHERE user_id = ?').bind(113).all()).results, [{ ticket_id: 'bulk-retained' }]);
+  assert.ok(parameterCounts.length > 0);
+  assert.deepEqual(await pushStore.listByUser(113, NOW), [snapshot]);
 });
 
 test('native provider and APNs routing identity round-trip and reset cursors on environment changes', async () => {

@@ -64,8 +64,7 @@ export async function pollRegisteredPushUsers({
           fetcher: (input, init) => fetcher(input, { ...init, signal: AbortSignal.timeout(12_000) }),
         }),
         commitDelivery: (batch, lastNotificationId) => devices.commitDelivery({
-          // FCM/APNs acceptance is synchronous; no Expo receipt polling.
-          createdAt: currentTime(), devices: batch, lastNotificationId, tickets: [],
+          devices: batch, lastNotificationId,
         }),
         sendPush: async (tokens, payload) => {
           const delivery: PushResult = { failedTokens: [], invalidTokens: [], tickets: [] };

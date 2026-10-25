@@ -1,8 +1,7 @@
-import { and, asc, eq, gt, lte } from 'drizzle-orm';
+import { and, eq, gt, lte } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 
 import { bangumiCredentials, pushDevices, pushReceipts, sessions } from '../db/schema.ts';
-import type { PushAcceptance } from './model.ts';
 
 export type PushPlatform = 'android' | 'ios';
 
@@ -19,31 +18,17 @@ export type StoredPushDevice = {
   userId: number;
 };
 
-export type StoredPushReceipt = {
-  createdAt: number;
-  registrationId: string;
-  sessionId: string;
-  ticketId: string;
-  token: string;
-  userId: number;
-};
-
 export type PushDeliveryCommit = {
-  createdAt: number;
   devices: StoredPushDevice[];
   lastNotificationId: number;
-  tickets: PushAcceptance[];
 };
 
 export type PushDeviceStore = {
   commitDelivery: (input: PushDeliveryCommit) => Promise<void>;
   deleteByUserAndToken: (userId: number, sessionId: string, token: string) => Promise<void>;
   deleteExpiredReceipts: (now: number) => Promise<number>;
-  deleteReceipts: (ticketIds: string[]) => Promise<void>;
-  deleteRegistration: (snapshot: StoredPushDevice | StoredPushReceipt) => Promise<void>;
+  deleteRegistration: (snapshot: StoredPushDevice) => Promise<void>;
   listByUser: (userId: number, now: number) => Promise<StoredPushDevice[]>;
-  listPendingReceipts: (now: number, limit?: number) => Promise<StoredPushReceipt[]>;
-  markReceiptChecks: (ticketIds: string[], now: number) => Promise<void>;
   listUserIds: (now: number) => Promise<number[]>;
   save: (input: StoredPushDevice & { registrationId: string; sessionId: string }) => Promise<boolean>;
 };
@@ -122,53 +107,17 @@ export function createD1PushDeviceStore(database: D1Database): PushDeviceStore {
       return result.results.length > 0;
     },
 
-    async commitDelivery({ createdAt, devices, lastNotificationId, tickets }) {
+    async commitDelivery({ devices, lastNotificationId }) {
       const statements: D1PreparedStatement[] = [];
       for (const device of devices) {
         if (!device.sessionId || !device.registrationId) continue;
-        const ticket = tickets.find((item) => item.token === device.token);
-        if (ticket) {
-          statements.push(database.prepare(`
-            INSERT INTO push_receipts (ticket_id, token, user_id, session_id, registration_id, created_at)
-            SELECT ?, token, user_id, session_id, registration_id, ? FROM push_devices
-            WHERE token = ? AND user_id = ? AND session_id = ? AND registration_id = ?
-            ON CONFLICT(ticket_id) DO NOTHING
-          `).bind(ticket.id, createdAt, device.token, device.userId, device.sessionId, device.registrationId));
-        }
         statements.push(database.prepare(`
           UPDATE push_devices SET last_notification_id = MAX(COALESCE(last_notification_id, 0), ?)
           WHERE token = ? AND user_id = ? AND session_id = ? AND registration_id = ?
         `).bind(lastNotificationId, device.token, device.userId, device.sessionId, device.registrationId));
       }
-      // D1 batch is transactional: receipt persistence and cursor movement either
-      // both commit or both roll back. https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
-      if (statements.length > 0) await database.batch(statements);
-    },
-
-    async listPendingReceipts(now, limit = 1000) {
-      return db.select().from(pushReceipts)
-        .where(and(lte(pushReceipts.createdAt, now - 15 * 60_000), gt(pushReceipts.createdAt, now - 24 * 60 * 60_000)))
-        .orderBy(asc(pushReceipts.lastCheckedAt), asc(pushReceipts.createdAt)).limit(Math.min(limit, 1000));
-    },
-
-    async deleteReceipts(ticketIds) {
-      if (ticketIds.length === 0) return;
-      const statements: D1PreparedStatement[] = [];
-      // D1 permits at most 100 bound parameters per statement.
-      // https://developers.cloudflare.com/d1/platform/limits/#limits
-      for (let offset = 0; offset < ticketIds.length; offset += 100) {
-        const chunk = ticketIds.slice(offset, offset + 100);
-        statements.push(database.prepare(`DELETE FROM push_receipts WHERE ticket_id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk));
-      }
-      await database.batch(statements);
-    },
-
-    async markReceiptChecks(ticketIds, now) {
-      const statements: D1PreparedStatement[] = [];
-      for (let offset = 0; offset < ticketIds.length; offset += 99) {
-        const chunk = ticketIds.slice(offset, offset + 99);
-        statements.push(database.prepare(`UPDATE push_receipts SET last_checked_at = ? WHERE ticket_id IN (${chunk.map(() => '?').join(',')})`).bind(now, ...chunk));
-      }
+      // Commit every accepted device's cursor atomically; never advance only
+      // part of a batch if a later update fails.
       if (statements.length > 0) await database.batch(statements);
     },
 

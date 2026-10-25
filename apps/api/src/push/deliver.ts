@@ -1,6 +1,6 @@
 import type { NotificationList } from '../notifications/model.ts';
 
-import type { PushAcceptance, PushPayload, PushResult } from './model.ts';
+import type { PushPayload, PushResult } from './model.ts';
 import { composePushMessage } from './message.ts';
 import type { StoredPushDevice } from './store.ts';
 
@@ -14,7 +14,7 @@ export async function deliverPushForUser({
   devices: StoredPushDevice[];
   loadNotifications: () => Promise<NotificationList>;
   resolveDevices?: (snapshot: StoredPushDevice[]) => Promise<StoredPushDevice[]>;
-  commitDelivery: (devices: StoredPushDevice[], cursor: number, tickets: PushAcceptance[]) => Promise<void>;
+  commitDelivery: (devices: StoredPushDevice[], cursor: number) => Promise<void>;
   sendPush: (tokens: string[], payload: PushPayload) => Promise<PushResult>;
 }): Promise<{ failed: number; invalidTokens: string[]; primed: boolean; sent: number }> {
   if (devices.length === 0) return { failed: 0, invalidTokens: [], primed: false, sent: 0 };
@@ -46,10 +46,10 @@ export async function deliverPushForUser({
         invalidTokens.push(...result.invalidTokens);
         failed += result.failedTokens.length;
         const accepted = batch.filter((device) => result.tickets.some((ticket) => ticket.token === device.token));
-        await commitDelivery(accepted, maxSeenId, result.tickets);
+        await commitDelivery(accepted, maxSeenId);
         if (accepted.length > 0) sent += 1;
       } else if (cursor === null || maxSeenId > cursor) {
-        await commitDelivery(batch, maxSeenId, []);
+        await commitDelivery(batch, maxSeenId);
       }
     }
   }

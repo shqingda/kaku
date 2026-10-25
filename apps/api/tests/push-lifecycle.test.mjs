@@ -52,23 +52,10 @@ function createPushStore(initial = []) {
       const item = devices.find((entry) => entry.userId === userId && entry.token === token);
       if (item) item.lastNotificationId = cursor;
     },
-    async commitDelivery({ devices: delivered, lastNotificationId, tickets, createdAt }) {
+    async commitDelivery({ devices: delivered, lastNotificationId }) {
       for (const item of delivered) {
         const current = devices.find((entry) => entry.token === item.token && entry.registrationId === item.registrationId);
         if (current) current.lastNotificationId = lastNotificationId;
-      }
-      for (const ticket of tickets) {
-        const item = delivered.find((entry) => entry.token === ticket.token);
-        receipts.push({ ...item, createdAt, ticketId: ticket.id });
-      }
-    },
-    async listPendingReceipts(at) { return receipts.filter((item) => item.createdAt <= at - 15 * 60_000 && item.createdAt > at - 24 * 60 * 60_000).map((item) => ({ ...item })); },
-    async markReceiptChecks(ids, at) {
-      for (const receipt of receipts) if (ids.includes(receipt.ticketId)) receipt.lastCheckedAt = at;
-    },
-    async deleteReceipts(ids) {
-      for (let index = receipts.length - 1; index >= 0; index -= 1) {
-        if (ids.includes(receipts[index].ticketId)) receipts.splice(index, 1);
       }
     },
     async deleteExpiredReceipts(at) {
