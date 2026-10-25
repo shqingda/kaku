@@ -1,37 +1,10 @@
 import { z } from 'zod';
+import { friendTimelinePageSchema } from '@kaku/shared/timeline-contract';
 
 import type { FriendTimelinePage } from '@/features/timeline/model';
 import { KakuApiError, readErrorMessage } from './auth-client.ts';
 import { getFriendTimelinePath } from './timeline-pagination.ts';
 
-const timelineItemSchema = z.object({
-  blogId: z.number().int().positive().optional(),
-  blogTitle: z.string().optional(),
-  createdAt: z.number().int(),
-  entityId: z.number().int().positive().optional(),
-  entityKind: z.enum(['character', 'person']).optional(),
-  entityTitle: z.string().optional(),
-  id: z.number().int().positive(),
-  leadingText: z.string().optional(),
-  replies: z.number().int().nonnegative(),
-  subjectId: z.number().int().positive().optional(),
-  subjectTitle: z.string().optional(),
-  text: z.string(),
-  trailingText: z.string().optional(),
-  user: z.object({
-    avatarUrl: z.string().url().optional(),
-    nickname: z.string(),
-    username: z.string(),
-  }),
-  userMentions: z
-    .array(z.object({ nickname: z.string(), username: z.string() }))
-    .optional(),
-});
-
-const responseSchema = z.object({
-  items: z.array(timelineItemSchema),
-  nextUntil: z.number().int().positive().optional(),
-});
 const createdTimelineSchema = z.object({ id: z.number().int().positive() });
 
 export async function getFriendTimeline(
@@ -45,7 +18,7 @@ export async function getFriendTimeline(
     throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
-  return responseSchema.parse(await response.json());
+  return friendTimelinePageSchema.parse(await response.json());
 }
 
 export async function createTimelineSay(

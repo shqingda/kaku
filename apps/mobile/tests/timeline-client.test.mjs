@@ -51,6 +51,42 @@ test('getFriendTimeline sends the abort signal through', async () => {
   assert.equal(receivedSignal, controller.signal);
 });
 
+test('getFriendTimeline preserves optional content without adding defaults and strips unknown fields', async () => {
+  const minimal = { createdAt: 0, id: 1, replies: 0, text: '', user: { nickname: '', username: '' } };
+  const rich = {
+    ...item, blogId: 5, blogTitle: '日志', entityId: 7, entityKind: 'person', entityTitle: '人物',
+    subjectId: 9, subjectTitle: '条目',
+  };
+  const page = await getFriendTimeline(async () => Response.json({
+    items: [
+      { ...minimal, extra: 'ignored', user: { ...minimal.user, extra: 'ignored' } },
+      { ...rich, userMentions: rich.userMentions.map(mention => ({ ...mention, extra: 'ignored' })) },
+    ], extra: 'ignored',
+  }));
+
+  assert.deepEqual(page, { items: [minimal, rich] });
+  assert.equal('nextUntil' in page, false);
+  assert.equal('userMentions' in page.items[0], false);
+  assert.equal('avatarUrl' in page.items[0].user, false);
+});
+
+test('getFriendTimeline retains required fields, optional null rejection and cursor validation', async () => {
+  const malformed = [
+    { items: [item], nextUntil: 0 },
+    { items: [item], nextUntil: null },
+    { items: [item], nextUntil: 1.5 },
+    ...[
+      { id: 0 }, { createdAt: 1.5 }, { replies: -1 }, { text: undefined },
+      { blogId: null }, { entityKind: 'subject' }, { userMentions: null },
+      { user: { ...item.user, avatarUrl: null } },
+      { user: { ...item.user, avatarUrl: 'not-a-url' } },
+    ].map(invalid => ({ items: [{ ...item, ...invalid }] })),
+  ];
+  for (const [index, payload] of malformed.entries()) {
+    await assert.rejects(() => getFriendTimeline(async () => Response.json(payload)), { name: 'ZodError' }, `case ${index}`);
+  }
+});
+
 test('createTimelineSay posts the content and turnstile token', async () => {
   const calls = [];
   const request = async (path, init) => {

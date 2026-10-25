@@ -8,7 +8,8 @@
     "./auth-contract": "./src/auth-contract.ts",
     "./collections-contract": "./src/collections-contract.ts",
     "./notifications-contract": "./src/notifications-contract.ts",
-    "./push-contract": "./src/push-contract.ts"
+    "./push-contract": "./src/push-contract.ts",
+    "./timeline-contract": "./src/timeline-contract.ts"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
