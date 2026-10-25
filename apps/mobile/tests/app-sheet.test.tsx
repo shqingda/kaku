@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { useRef } from 'react';
 import { Text } from 'react-native';
 import * as Reanimated from 'react-native-reanimated';
@@ -12,6 +12,12 @@ const mockPanCallbacks: {
   onEnd?: (event: { translationY: number; velocityY: number }, success: boolean) => void;
   onUpdate?: (event: { translationY: number }) => void;
 } = {};
+let mockWindowHeight = 800;
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: 400, height: mockWindowHeight, scale: 1, fontScale: 1 }),
+}));
 
 jest.mock('@/lib/use-reduce-motion', () => ({
   useReduceMotion: jest.fn(() => false),
@@ -58,6 +64,7 @@ describe('AppSheet', () => {
 
   beforeEach(() => {
     mockUseReduceMotion.mockReturnValue(false);
+    mockWindowHeight = 800;
     delete mockPanCallbacks.onBegin;
     delete mockPanCallbacks.onStart;
     delete mockPanCallbacks.onEnd;
@@ -153,6 +160,125 @@ describe('AppSheet', () => {
 
     expect(screen.getByText('筛选选项')).toBeTruthy();
     expect(onEntered).toHaveBeenCalledTimes(2);
+  });
+
+  it('reopens a closing sheet from its current position and backdrop', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    const content = (visible: boolean) => (
+      <AppSheet onClose={jest.fn()} visible={visible}><Text>筛选选项</Text></AppSheet>
+    );
+    const screen = await render(content(true));
+    spring.mockImplementationOnce(() => 180);
+    await screen.rerender(content(false));
+    sharedValues[2].value = 0.6;
+    let resumedPosition: unknown;
+    let resumedBackdrop: unknown;
+    spring.mockImplementationOnce(() => {
+      resumedPosition = sharedValues[0].value;
+      resumedBackdrop = sharedValues[2].value;
+      return 90;
+    });
+
+    await screen.rerender(content(true));
+
+    expect(resumedPosition).toBe(180);
+    expect(resumedBackdrop).toBe(0.6);
+  });
+
+  it.each([false, true])('ignores an earlier close completion during a later close cycle (reduced motion: %s)', async (reduced) => {
+    mockUseReduceMotion.mockReturnValue(reduced);
+    const animate = reduced
+      ? jest.spyOn(Reanimated, 'withTiming')
+      : jest.spyOn(Reanimated, 'withSpring');
+    const content = (visible: boolean) => (
+      <AppSheet onClose={jest.fn()} visible={visible}><Text>筛选选项</Text></AppSheet>
+    );
+    const screen = await render(content(true));
+    let oldClose: ((finished?: boolean) => void) | undefined;
+    let currentClose: ((finished?: boolean) => void) | undefined;
+    animate.mockImplementationOnce((_target, _config, callback) => {
+      oldClose = callback;
+      return 180;
+    });
+    await screen.rerender(content(false));
+    await screen.rerender(content(true));
+    animate.mockImplementationOnce((_target, _config, callback) => {
+      currentClose = callback;
+      return 90;
+    });
+    await screen.rerender(content(false));
+
+    await act(() => oldClose?.(true));
+    expect(screen.queryByText('筛选选项')).not.toBeNull();
+
+    await act(() => currentClose?.(true));
+    expect(screen.queryByText('筛选选项')).toBeNull();
+  });
+
+  it('only completes entrance for the current opening cycle', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    const onEntered = jest.fn();
+    let oldEntrance: ((finished?: boolean) => void) | undefined;
+    let currentEntrance: ((finished?: boolean) => void) | undefined;
+    spring.mockImplementationOnce((_target, _config, callback) => {
+      oldEntrance = callback;
+      return 120;
+    });
+    const content = (visible: boolean) => (
+      <AppSheet onClose={jest.fn()} onEntered={onEntered} visible={visible}>
+        <Text>筛选选项</Text>
+      </AppSheet>
+    );
+    const screen = await render(content(true));
+    spring.mockImplementationOnce(() => 180);
+    await screen.rerender(content(false));
+    spring.mockImplementationOnce((_target, _config, callback) => {
+      currentEntrance = callback;
+      return 90;
+    });
+    await screen.rerender(content(true));
+
+    await act(() => oldEntrance?.(true));
+    expect(onEntered).not.toHaveBeenCalled();
+    await act(() => { currentEntrance?.(true); currentEntrance?.(true); });
+    expect(onEntered).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps its displayed position when the window changes size', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    const content = <AppSheet onClose={jest.fn()} visible><Text>筛选选项</Text></AppSheet>;
+    const screen = await render(content);
+    sharedValues[0].value = 120;
+    let resumedPosition: unknown;
+    spring.mockImplementationOnce(() => {
+      resumedPosition = sharedValues[0].value;
+      return 60;
+    });
+    mockWindowHeight = 900;
+
+    await screen.rerender(<AppSheet onClose={jest.fn()} visible><Text>筛选选项</Text></AppSheet>);
+
+    expect(resumedPosition).toBe(120);
+  });
+
+  it('settles when reduced motion is enabled and does not replay when it is disabled', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    const content = () => <AppSheet onClose={jest.fn()} visible><Text>筛选选项</Text></AppSheet>;
+    const screen = await render(content());
+    sharedValues[0].value = 120;
+    mockUseReduceMotion.mockReturnValue(true);
+    await screen.rerender(content());
+    expect(sharedValues[0].value).toBe(0);
+    let resumedPosition: unknown;
+    spring.mockImplementationOnce(() => {
+      resumedPosition = sharedValues[0].value;
+      return 0;
+    });
+    mockUseReduceMotion.mockReturnValue(false);
+
+    await screen.rerender(content());
+
+    expect(resumedPosition).toBe(0);
   });
 
   it('closes after a downward fling with the release velocity', async () => {
@@ -286,5 +412,49 @@ describe('AppSheet', () => {
       0, expect.objectContaining({ velocity: -1_000 }), expect.any(Function),
     );
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('ignores a queued dismissal completion after the user grabs the sheet again', async () => {
+    const onClose = jest.fn();
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    await render(<AppSheet onClose={onClose} visible><Text>筛选选项</Text></AppSheet>);
+    let oldDismiss: ((finished?: boolean) => void) | undefined;
+    spring.mockImplementationOnce((_target, _config, callback) => {
+      oldDismiss = callback;
+      return 120;
+    });
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onUpdate?.({ translationY: 400 });
+    mockPanCallbacks.onEnd?.({ translationY: 400, velocityY: 2000 }, true);
+    mockPanCallbacks.onStart?.({ translationY: -15 });
+    mockPanCallbacks.onEnd?.({ translationY: -15, velocityY: -1000 }, true);
+
+    await act(() => oldDismiss?.(true));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(sharedValues[0].value).toBe(0);
+  });
+
+  it('does not let a cancelled drag override the parent closing animation', async () => {
+    const spring = jest.spyOn(Reanimated, 'withSpring');
+    const content = (visible: boolean) => (
+      <AppSheet onClose={jest.fn()} visible={visible}><Text>筛选选项</Text></AppSheet>
+    );
+    const screen = await render(content(true));
+    mockPanCallbacks.onStart?.({ translationY: 15 });
+    mockPanCallbacks.onUpdate?.({ translationY: 80 });
+    let close: ((finished?: boolean) => void) | undefined;
+    spring.mockImplementationOnce((_target, _config, callback) => {
+      close = callback;
+      return 180;
+    });
+    await screen.rerender(content(false));
+
+    mockPanCallbacks.onUpdate?.({ translationY: 90 });
+    mockPanCallbacks.onEnd?.({ translationY: 90, velocityY: 0 }, false);
+
+    expect(sharedValues[0].value).toBe(180);
+    await act(() => close?.(true));
+    expect(screen.queryByText('筛选选项')).toBeNull();
   });
 });

@@ -59,88 +59,93 @@ export function AppSheet({
   const colors = useTheme();
   const reduceMotion = useReduceMotion();
   const translateY = useSharedValue(windowHeight);
-  const dragStart = useSharedValue({ offset: 0, translation: 0 });
+  const dragStart = useSharedValue({ offset: 0, translation: 0, version: 0 });
   const backdropOpacity = useSharedValue(0);
+  const transitionVersion = useSharedValue(0);
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(0);
   const mountedRef = useRef(mounted);
+  const visibleRef = useRef(visible);
+  const onCloseRef = useRef(onClose);
   const onEnteredRef = useRef(onEntered);
   const hasEnteredRef = useRef(false);
-  const finishEntering = useCallback(() => {
-    if (!hasEnteredRef.current) {
+  const finishEntering = useCallback((version: number) => {
+    if (version === transitionVersion.value && visibleRef.current && !hasEnteredRef.current) {
       hasEnteredRef.current = true;
       onEnteredRef.current?.();
     }
-  }, []);
+  }, [transitionVersion]);
+  const finishClosing = useCallback((version: number) => {
+    if (version !== transitionVersion.value || visibleRef.current) return;
+    mountedRef.current = false;
+    setMounted(false);
+  }, [transitionVersion]);
+  const finishDismiss = useCallback((version: number) => {
+    if (version === transitionVersion.value && visibleRef.current) onCloseRef.current();
+  }, [transitionVersion]);
 
   useEffect(() => {
-    mountedRef.current = mounted;
-  }, [mounted]);
-
-  useEffect(() => {
+    onCloseRef.current = onClose;
     onEnteredRef.current = onEntered;
-  }, [onEntered]);
+  }, [onClose, onEntered]);
 
-  // 打开：重置到展开位，再从屏幕下方以临界阻尼弹簧滑入。
+  // 只有完全卸载后才设置入场起点。重开或尺寸变化只改目标，沿当前值继续。
+  // 每次接管都会使旧回调失效，包括已经排队、稍后才到达 JS 的完成通知。
   useEffect(() => {
-    if (!visible) {
-      hasEnteredRef.current = false;
-      return;
+    visibleRef.current = visible;
+    const version = transitionVersion.value + 1;
+    transitionVersion.value = version;
+    if (!visible) hasEnteredRef.current = false;
+
+    if (visible) {
+      if (!mountedRef.current) {
+        translateY.value = windowHeight;
+        backdropOpacity.value = 0;
+        mountedRef.current = true;
+        setMounted(true);
+      }
+
+      if (reduceMotion) {
+        cancelAnimation(translateY);
+        translateY.value = 0;
+        backdropOpacity.value = withTiming(1, {
+          duration: 180,
+          easing: Easing.out(Easing.cubic),
+        }, (finished) => {
+          if (finished) runOnJS(finishEntering)(version);
+        });
+      } else {
+        translateY.value = withSpring(0, SHEET_ENTER_SPRING, (finished) => {
+          if (finished) runOnJS(finishEntering)(version);
+        });
+        backdropOpacity.value = withTiming(1, {
+          duration: 180,
+          easing: Easing.out(Easing.cubic),
+        });
+      }
+    } else if (mountedRef.current) {
+      if (reduceMotion) {
+        cancelAnimation(translateY);
+        backdropOpacity.value = withTiming(
+          0,
+          { duration: 180, easing: Easing.out(Easing.cubic) },
+          (finished) => {
+            if (finished) runOnJS(finishClosing)(version);
+          },
+        );
+      } else {
+        translateY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING, (finished) => {
+          if (finished) runOnJS(finishClosing)(version);
+        });
+        backdropOpacity.value = withTiming(0, {
+          duration: 160,
+          easing: Easing.out(Easing.cubic),
+        });
+      }
     }
 
-    translateY.value = windowHeight;
-    backdropOpacity.value = 0;
-
-    if (reduceMotion) {
-      translateY.value = 0;
-      backdropOpacity.value = withTiming(1, {
-        duration: 180,
-        easing: Easing.out(Easing.cubic),
-      }, (finished) => {
-        if (finished) runOnJS(finishEntering)();
-      });
-    } else {
-      translateY.value = withSpring(0, SHEET_ENTER_SPRING, (finished) => {
-        if (finished) runOnJS(finishEntering)();
-      });
-      backdropOpacity.value = withTiming(1, {
-        duration: 180,
-        easing: Easing.out(Easing.cubic),
-      });
-    }
-  }, [backdropOpacity, finishEntering, reduceMotion, translateY, visible, windowHeight]);
-
-  // 关闭：沿进入的同一条路径滑回屏幕下方（空间一致性）。
-  useEffect(() => {
-    if (visible || !mountedRef.current) {
-      return;
-    }
-
-    if (reduceMotion) {
-      backdropOpacity.value = withTiming(
-        0,
-        { duration: 180, easing: Easing.out(Easing.cubic) },
-        (finished) => {
-          if (finished) runOnJS(setMounted)(false);
-        },
-      );
-      return;
-    }
-
-    translateY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING, (finished) => {
-      if (finished) runOnJS(setMounted)(false);
-    });
-    backdropOpacity.value = withTiming(0, {
-      duration: 160,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [backdropOpacity, reduceMotion, translateY, visible, windowHeight]);
-
-  useEffect(() => {
-    if (visible && !mounted) {
-      setMounted(true);
-    }
-  }, [mounted, visible]);
+    return () => { transitionVersion.value += 1; };
+  }, [backdropOpacity, finishClosing, finishEntering, reduceMotion, transitionVersion, translateY, visible, windowHeight]);
 
   // 关闭阈值基于弹层自身高度而不是整屏高度：小弹层拖一小段即可关闭。
   const dismissDistance = Math.max(
@@ -149,13 +154,14 @@ export function AppSheet({
   );
 
   const pan = Gesture.Pan()
-    .enabled(!reduceMotion && swipeToDismissEnabled)
+    .enabled(visible && !reduceMotion && swipeToDismissEnabled)
     // 纵向位移超过阈值才激活，横向明显移动即判失败：
     // 标题行里的按钮保持可点，横向滑动不会误触发下拖。
     .activeOffsetY([-12, 12])
     .failOffsetX([-24, 24])
     .onStart((event) => {
       // 只有真正开始拖动才接管动画，轻点标题不会让入场或回弹停住。
+      transitionVersion.value += 1;
       cancelAnimation(translateY);
       const position = translateY.value;
       // 反解橡皮筋，避免再次抓住向上回弹的弹层时重复压缩当前位置。
@@ -163,9 +169,10 @@ export function AppSheet({
         ? (position * dismissDistance) /
           (RUBBERBAND_CONSTANT * Math.max(1, dismissDistance + position))
         : position;
-      dragStart.value = { offset, translation: event.translationY };
+      dragStart.value = { offset, translation: event.translationY, version: transitionVersion.value };
     })
     .onUpdate((event) => {
+      if (dragStart.value.version !== transitionVersion.value) return;
       const distance = dragStart.value.offset + event.translationY - dragStart.value.translation;
       if (distance < 0) {
         // 向上超出展开位：橡皮筋，逐渐抵抗而不是硬停。
@@ -179,6 +186,8 @@ export function AppSheet({
       }
     })
     .onEnd((event, success) => {
+      const version = dragStart.value.version;
+      if (version !== transitionVersion.value) return;
       const dismiss = success && translateY.value > 0 &&
         shouldDismissSheet(translateY.value, event.velocityY, dismissDistance);
       // 正常释放交接真实速度；被系统取消的拖动平稳归位，不意外关闭。
@@ -187,8 +196,8 @@ export function AppSheet({
         { ...SHEET_DISMISS_SPRING, velocity: success ? event.velocityY : 0 },
         (finished) => {
           if (!finished) return;
-          if (dismiss) runOnJS(onClose)();
-          else runOnJS(finishEntering)();
+          if (dismiss) runOnJS(finishDismiss)(version);
+          else runOnJS(finishEntering)(version);
         },
       );
     });
