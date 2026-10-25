@@ -6,12 +6,15 @@ let mockSession: { sessionId?: string; user: { id: number } } | null;
 const mockCaptureRequest = () => { const owner = mockSession!; return { identity: { userId: owner.user.id, sessionId: owner.sessionId ?? `session-${owner.user.id}`, authEpoch: 0 }, request: mockRequest, isCurrent: () => mockSession === owner }; };
 let mockEnabled = true;
 let mockReady = true;
+let mockLocalSaved = true;
+const mockCanSyncNow = () => mockReady && mockEnabled && mockLocalSaved;
 const mockRequest = jest.fn();
 jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ request: mockRequest, captureRequest: mockCaptureRequest, session: mockSession, isLoading: false }),
 }));
 jest.mock('@/features/preferences/preferences-provider', () => ({
-  usePreferences: () => ({ preferences: { syncEnabled: mockEnabled }, isReady: mockReady, cloudSyncAvailable: true }),
+  usePreferences: () => ({ preferences: { syncEnabled: mockEnabled }, isReady: mockReady, cloudSyncAvailable: true,
+    canSync: mockCanSyncNow(), canSyncNow: mockCanSyncNow }),
 }));
 const empty = { items: [], updatedAt: null };
 const options = {
@@ -32,9 +35,34 @@ beforeEach(() => {
   mockSession = { user: { id: 1 } };
   mockEnabled = true;
   mockReady = true;
+  mockLocalSaved = true;
   options.load.mockReset().mockResolvedValue(empty);
   options.save.mockReset().mockResolvedValue(undefined);
   mockRequest.mockReset().mockImplementation(async () => Response.json(empty));
+});
+
+test('local preference failure blocks history pulls and uploads even with an enabled switch', async () => {
+  mockLocalSaved = false;
+  const hook = await renderHook(() => useSyncedHistory(options));
+  await act(async () => { await hook.result.current.updateItems(() => ['local']); });
+  await act(async () => { await hook.result.current.retryCloudSync(); });
+  expect(hook.result.current.items).toEqual(['local']);
+  expect(mockRequest).not.toHaveBeenCalled();
+  mockLocalSaved = true;
+  await hook.rerender(undefined);
+  expect(mockRequest).toHaveBeenCalledWith('/me/search-history', expect.objectContaining({ method: 'PUT' }));
+});
+
+test('losing preference persistence invalidates pending history responses', async () => {
+  const pending = deferred<Response>();
+  mockRequest.mockReturnValueOnce(pending.promise);
+  const hook = await renderHook(() => useSyncedHistory(options));
+  const signal = mockRequest.mock.calls[0][1].signal;
+  mockLocalSaved = false;
+  await hook.rerender(undefined);
+  await act(async () => { pending.resolve(Response.json({ items: ['old cloud'], updatedAt: 500 })); });
+  expect(signal.aborted).toBe(true);
+  expect(hook.result.current.items).toEqual([]);
 });
 
 test('late account A pull cannot block or overwrite account B', async () => {

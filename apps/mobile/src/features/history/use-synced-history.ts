@@ -48,9 +48,9 @@ const WRITE_ERROR = '历史未能保存到本机，当前窗口的记录仍可�
 // an earlier session, including A → B → A; the storage keys themselves stay v2.
 export function useSyncedHistory<T>(options: HistoryOptions<T>) {
   const { authEpoch, captureRequest, session, isLoading } = useAuth();
-  const { preferences, isReady, cloudSyncAvailable } = usePreferences();
+  const { canSync, canSyncNow } = usePreferences();
   const userId = session?.user.id;
-  const enabled = isReady && cloudSyncAvailable && preferences.syncEnabled && !isLoading;
+  const enabled = canSync && !isLoading;
   const local = useMemo<LocalScope<T>>(() => ({
     userId, active: true, hydrated: false,
     record: { items: [], updatedAt: null }, pending: { items: [], updatedAt: null },
@@ -95,7 +95,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
   const enqueueCloud = useCallback((operation: (scope: CloudScope, current: () => boolean) => Promise<void>) => {
     const scope = cloudRef.current;
     if (!scope) return Promise.resolve();
-    const current = () => currentLocal(local) && enabledRef.current &&
+    const current = () => currentLocal(local) && enabledRef.current && canSyncNow() &&
       cloudRef.current === scope && scope.auth.isCurrent() && !scope.controller.signal.aborted && local.status === 'ready';
     scope.queue = scope.queue.then(async () => {
       await localQueues.current.get(local.userId);
@@ -111,7 +111,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       }
     });
     return scope.queue;
-  }, [currentLocal, local, options]);
+  }, [canSyncNow, currentLocal, local, options]);
 
   const push = useCallback(async (record: HistoryRecord<T>, revision: number, scope: CloudScope, current: () => boolean) => {
     if (!current() || !local.dirty || local.revision !== revision || local.record !== record) return;
@@ -187,7 +187,7 @@ export function useSyncedHistory<T>(options: HistoryOptions<T>) {
       scope.controller.abort();
       if (cloudRef.current === scope) cloudRef.current = null;
     };
-  }, [authEpoch, captureRequest, enabled, local, ready, session?.sessionId, userId]);
+  }, [authEpoch, canSyncNow, captureRequest, enabled, local, ready, session?.sessionId, userId]);
 
   const pullFromCloud = useCallback((force = false) => {
     const scope = cloudRef.current;

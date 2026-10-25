@@ -111,6 +111,10 @@ export default function SettingsScreen() {
   const {
     cloudError,
     cloudSyncAvailable,
+    canSync,
+    localStatus,
+    localError,
+    retryLocal,
     preferences,
     retryCloudSync,
     setSyncEnabled,
@@ -134,7 +138,7 @@ export default function SettingsScreen() {
       onRetry: () => void retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
-        enabled: preferences.syncEnabled,
+        enabled: canSync,
         error: cloudError,
         signedIn,
         syncing,
@@ -146,7 +150,7 @@ export default function SettingsScreen() {
       onRetry: () => void searchHistory.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
-        enabled: preferences.syncEnabled && searchHistory.localStatus === 'ready',
+        enabled: canSync && searchHistory.localStatus === 'ready',
         error: searchHistory.cloudError,
         signedIn,
         syncing: searchHistory.syncing,
@@ -158,7 +162,7 @@ export default function SettingsScreen() {
       onRetry: () => void recentSubjects.retryCloudSync(),
       status: getSyncStatus({
         available: cloudSyncAvailable,
-        enabled: preferences.syncEnabled && recentSubjects.localStatus === 'ready',
+        enabled: canSync && recentSubjects.localStatus === 'ready',
         error: recentSubjects.cloudError,
         signedIn,
         syncing: recentSubjects.syncing,
@@ -226,6 +230,24 @@ export default function SettingsScreen() {
           })}
         </View>
 
+        {localStatus === 'loading' ? (
+          <Text style={styles.rowDescription}>正在读取本机偏好，云同步暂未开启。</Text>
+        ) : localError ? (
+          <View style={styles.localNotice}>
+            <Text accessibilityRole="alert" style={styles.rowDescription}>{localError}</Text>
+            <Pressable
+              accessibilityLabel={localStatus === 'read-error' ? '重试读取本机偏好' : '重试保存本机偏好'}
+              accessibilityRole="button"
+              onPress={() => void retryLocal()}
+              style={({ pressed }) => [styles.statusRow, pressed && styles.pressed]}
+            >
+              <Text style={styles.rowAction}>{localStatus === 'read-error' ? '重试读取' : '重试保存'}</Text>
+            </Pressable>
+          </View>
+        ) : preferences.syncEnabled && cloudSyncAvailable && !canSync ? (
+          <Text style={styles.rowDescription}>正在保存本机偏好，云同步暂未开启。</Text>
+        ) : null}
+
         <Text style={styles.sectionTitle}>同步</Text>
         <View style={styles.group}>
           {session ? (
@@ -234,7 +256,7 @@ export default function SettingsScreen() {
                 <Text style={styles.rowTitle}>云同步</Text>
                 <Switch
                   accessibilityLabel="云同步"
-                  disabled={!cloudSyncAvailable}
+                  disabled={!cloudSyncAvailable && !preferences.syncEnabled}
                   ios_backgroundColor={colors.track}
                   onValueChange={(enabled) => {
                     playSelectionHaptic();
@@ -541,4 +563,5 @@ const createStyles = (colors: ThemeColors) =>
       lineHeight: TYPE.caption.lineHeight,
     },
     pressed: { opacity: 0.62 },
+    localNotice: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
   });

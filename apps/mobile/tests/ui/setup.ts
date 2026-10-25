@@ -3,9 +3,11 @@
 // 组件测试里用固定的默认偏好替身即可；需要其它偏好字段时在测试文件里覆盖。
 jest.mock('@/features/preferences/preferences-provider', () => {
   const { DEFAULT_APP_PREFERENCES } = require('@/features/preferences/preferences-model');
+  const canSyncNow = () => false;
+  const isCurrentSyncScope = () => true;
 
   return {
-    usePreferences: () => ({ preferences: DEFAULT_APP_PREFERENCES }),
+    usePreferences: () => ({ preferences: DEFAULT_APP_PREFERENCES, canSync: false, canSyncNow, isCurrentSyncScope, localStatus: 'ready', localError: null }),
   };
 });
 

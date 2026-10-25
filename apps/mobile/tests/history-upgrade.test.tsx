@@ -12,6 +12,7 @@ let mockFailWrite = false;
 let mockFailRead = false;
 let mockUserId = 1;
 let mockSync = true;
+const mockCanSyncNow = () => mockSync;
 jest.mock('expo-sqlite/kv-store', () => ({
   getItem: async (key: string) => {
     if (mockFailRead) throw new Error('storage unavailable');
@@ -27,7 +28,7 @@ jest.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => userId === mockUserId }; }, session: { user: { id: mockUserId } }, isLoading: false }),
 }));
 jest.mock('@/features/preferences/preferences-provider', () => ({
-  usePreferences: () => ({ preferences: { syncEnabled: mockSync }, isReady: true, cloudSyncAvailable: true }),
+  usePreferences: () => ({ preferences: { syncEnabled: mockSync }, isReady: true, cloudSyncAvailable: true, canSync: mockSync, canSyncNow: mockCanSyncNow }),
 }));
 function Providers({ children }: { children: ReactNode }) {
   return <SearchHistoryProvider><RecentSubjectsProvider>{children}</RecentSubjectsProvider></SearchHistoryProvider>;

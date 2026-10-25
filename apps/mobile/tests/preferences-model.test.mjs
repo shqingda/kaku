@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  DEFAULT_APP_PREFERENCES,
   mergePreferences,
   parseAppPreferences,
   resolveTheme,
@@ -12,24 +11,20 @@ function localPrefs(theme, updatedAt, syncEnabled = true) {
   return { theme, updatedAt, syncEnabled };
 }
 
-test('parseAppPreferences returns defaults for garbage input', () => {
-  assert.deepEqual(parseAppPreferences(null), DEFAULT_APP_PREFERENCES);
-  assert.deepEqual(parseAppPreferences(undefined), DEFAULT_APP_PREFERENCES);
-  assert.deepEqual(parseAppPreferences('dark'), DEFAULT_APP_PREFERENCES);
-  assert.deepEqual(parseAppPreferences({ theme: 'neon' }), {
-    theme: 'system',
-    updatedAt: null,
-    syncEnabled: true,
-  });
+test('parseAppPreferences rejects garbage instead of enabling sync with defaults', () => {
+  for (const value of [null, undefined, 'dark', [], {}, { theme: 'neon' },
+    { theme: 'dark', updatedAt: -1 }, { theme: 'dark', syncEnabled: 'false' }]) {
+    assert.throws(() => parseAppPreferences(value));
+  }
 });
 
-test('parseAppPreferences keeps valid values and drops bad timestamps', () => {
+test('parseAppPreferences keeps valid values and supports old records without timestamps', () => {
   assert.deepEqual(parseAppPreferences({ theme: 'dark', updatedAt: 12 }), {
     theme: 'dark',
     updatedAt: 12,
     syncEnabled: true,
   });
-  assert.deepEqual(parseAppPreferences({ theme: 'light', updatedAt: -1 }), {
+  assert.deepEqual(parseAppPreferences({ theme: 'light' }), {
     theme: 'light',
     updatedAt: null,
     syncEnabled: true,

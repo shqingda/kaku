@@ -9,20 +9,11 @@ import {
 const STORAGE_KEY = 'kaku-app-preferences';
 
 export async function loadAppPreferences(): Promise<AppPreferences> {
-  try {
-    const raw = await Storage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_APP_PREFERENCES;
-
-    return parseAppPreferences(JSON.parse(raw));
-  } catch {
-    return DEFAULT_APP_PREFERENCES;
-  }
+  const raw = await Storage.getItem(STORAGE_KEY);
+  if (raw === null) return DEFAULT_APP_PREFERENCES;
+  return parseAppPreferences(JSON.parse(raw));
 }
 
 export async function saveAppPreferences(preferences: AppPreferences) {
-  try {
-    await Storage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-  } catch {
-    // 偏好读取失败时回退默认值；写入失败不阻塞交互。
-  }
+  await Storage.setItem(STORAGE_KEY, JSON.stringify(preferences));
 }

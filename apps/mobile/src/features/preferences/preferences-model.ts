@@ -34,26 +34,20 @@ export const DEFAULT_APP_PREFERENCES: AppPreferences = {
 };
 
 export function parseAppPreferences(value: unknown): AppPreferences {
-  if (!value || typeof value !== 'object') {
-    return DEFAULT_APP_PREFERENCES;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('本机偏好格式不正确');
   }
 
   const candidate = value as Partial<AppPreferences>;
-  const theme = isThemePreference(candidate.theme)
-    ? candidate.theme
-    : DEFAULT_APP_PREFERENCES.theme;
-  const updatedAt =
-    typeof candidate.updatedAt === 'number' &&
-    Number.isFinite(candidate.updatedAt) &&
-    candidate.updatedAt > 0
-      ? candidate.updatedAt
-      : null;
-  const syncEnabled =
-    typeof candidate.syncEnabled === 'boolean'
-      ? candidate.syncEnabled
-      : DEFAULT_APP_PREFERENCES.syncEnabled;
-
-  return { theme, updatedAt, syncEnabled };
+  if (!isThemePreference(candidate.theme)
+    || (candidate.syncEnabled !== undefined && typeof candidate.syncEnabled !== 'boolean')
+    || (candidate.updatedAt !== undefined && candidate.updatedAt !== null
+      && (typeof candidate.updatedAt !== 'number' || !Number.isFinite(candidate.updatedAt) || candidate.updatedAt <= 0))) {
+    throw new Error('本机偏好格式不正确');
+  }
+  // Older records predate the timestamp and device-level sync switch.
+  return { theme: candidate.theme, updatedAt: candidate.updatedAt ?? null,
+    syncEnabled: candidate.syncEnabled ?? DEFAULT_APP_PREFERENCES.syncEnabled };
 }
 
 export function resolveTheme(

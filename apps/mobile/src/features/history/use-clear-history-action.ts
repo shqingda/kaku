@@ -13,10 +13,10 @@ type ClearTarget = {
 // The account menu and overview must describe the same deletion scope.
 export function useClearHistoryAction() {
   const { session } = useAuth();
-  const { preferences, cloudSyncAvailable } = usePreferences();
+  const { preferences, cloudSyncAvailable, canSync, canSyncNow, isCurrentSyncScope } = usePreferences();
   const userId = session?.user.id;
   const syncEnabled = preferences.syncEnabled;
-  const scope = useMemo(() => ({ userId, syncEnabled, cloudSyncAvailable }), [userId, syncEnabled, cloudSyncAvailable]);
+  const scope = useMemo(() => ({ userId, syncEnabled, cloudSyncAvailable, canSync }), [userId, syncEnabled, cloudSyncAvailable, canSync, isCurrentSyncScope]);
   const latestScope = useRef(scope);
   latestScope.current = scope;
   const busy = useRef<typeof scope | null>(null);
@@ -32,10 +32,11 @@ export function useClearHistoryAction() {
     const label = kind === 'search' ? '搜索历史' : '浏览历史';
     const effect = userId === undefined
       ? '只清除本机访客的记录。'
-      : syncEnabled && cloudSyncAvailable
+      : canSync
         ? '删除会同步到此账号的其他 Kaku 设备。'
         : '当前只清除本机此账号的记录；以后恢复云同步时，删除可能同步到其他设备。';
-    const current = () => mounted.current && latestScope.current === scope;
+    const current = () => mounted.current && latestScope.current === scope
+      && isCurrentSyncScope() && canSyncNow() === canSync;
     async function run() {
       if (!mounted.current || busy.current === scope) return;
       if (!current()) {
@@ -45,7 +46,7 @@ export function useClearHistoryAction() {
       busy.current = scope;
       try {
         await history.clearHistory();
-        if (current()) Alert.alert(`${label}已在本机清除`, userId !== undefined && syncEnabled && cloudSyncAvailable
+        if (current()) Alert.alert(`${label}已在本机清除`, userId !== undefined && canSync
           ? '云端处理状态可在“外观与同步”中查看，失败时可重试同步。' : effect);
       } catch {
         if (current()) Alert.alert('历史未能清除', '原记录仍保留，可以重试。', [

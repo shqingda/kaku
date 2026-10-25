@@ -7,6 +7,8 @@ let mockError: string | null = null;
 let mockSyncing = false;
 let mockSyncEnabled = true;
 let mockAvailable = true;
+let mockPreferenceStatus = 'ready';
+const mockLocalRetry = jest.fn();
 const mockRetry = jest.fn();
 const mockSearchRetry = jest.fn();
 const mockBrowseRetry = jest.fn();
@@ -16,12 +18,21 @@ let mockBrowseStatus: HistoryLocalStatus = 'ready';
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: mockSignedIn ? { user: { id: 1 } } : null }) }));
-jest.mock('@/features/preferences/preferences-provider', () => ({ usePreferences: () => ({ preferences: { theme: 'system', syncEnabled: mockSyncEnabled }, cloudError: mockError, cloudSyncAvailable: mockAvailable, syncing: mockSyncing, retryCloudSync: mockRetry, setTheme: jest.fn(), setSyncEnabled: jest.fn() }) }));
+jest.mock('@/features/preferences/preferences-provider', () => ({ usePreferences: () => ({ preferences: { theme: 'system', syncEnabled: mockSyncEnabled }, cloudError: mockError, cloudSyncAvailable: mockAvailable, syncing: mockSyncing, retryCloudSync: mockRetry, setTheme: jest.fn(), setSyncEnabled: jest.fn(), localStatus: mockPreferenceStatus, localError: mockPreferenceStatus.endsWith('error') ? '偏好未能保存到本机，云同步已暂停。' : null, retryLocal: mockLocalRetry, canSync: mockPreferenceStatus === 'ready' && mockSyncEnabled && mockAvailable }) }));
 jest.mock('@/features/history/recent-subjects-provider', () => ({ useRecentSubjects: () => ({ items: [], cloudError: null, syncing: false, localStatus: mockBrowseStatus, localError: '本机浏览历史读取失败', retryLocalHistory: mockBrowseRetry, isClearing: false }) }));
 jest.mock('@/features/search/search-history-provider', () => ({ useSearchHistory: () => ({ items: [], cloudError: null, syncing: false, localStatus: mockSearchStatus, localError: '本机搜索历史读取失败', retryLocalHistory: mockSearchRetry, isClearing: false }) }));
 jest.mock('@/features/push/use-push-registration', () => ({ usePushRegistration: () => ({ enabled: true, status: 'denied', setEnabled: jest.fn() }) }));
-beforeEach(() => { mockError = null; mockSyncing = false; mockSyncEnabled = true; mockAvailable = true; mockRetry.mockClear(); mockSignedIn = true; mockSearchStatus = 'ready'; mockBrowseStatus = 'ready'; mockSearchRetry.mockReset().mockResolvedValue(false); mockBrowseRetry.mockReset().mockResolvedValue(false); });
+beforeEach(() => { mockError = null; mockSyncing = false; mockSyncEnabled = true; mockAvailable = true; mockPreferenceStatus = 'ready'; mockLocalRetry.mockReset().mockResolvedValue(true); mockRetry.mockClear(); mockSignedIn = true; mockSearchStatus = 'ready'; mockBrowseStatus = 'ready'; mockSearchRetry.mockReset().mockResolvedValue(false); mockBrowseRetry.mockReset().mockResolvedValue(false); });
 afterEach(async () => { await cleanup(); jest.restoreAllMocks(); });
+test.each(['read-error', 'write-error'])('preference %s stays separate from cloud status and offers a local retry', async status => {
+  mockPreferenceStatus = status;
+  await render(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByText(/偏好未能保存到本机/)).toBeTruthy();
+  expect(screen.queryByText(/已同步/)).toBeNull();
+  await fireEvent.press(screen.getByLabelText(status === 'read-error' ? '重试读取本机偏好' : '重试保存本机偏好'));
+  expect(mockLocalRetry).toHaveBeenCalledTimes(1);
+  expect(mockRetry).not.toHaveBeenCalled();
+});
 test('denied permission opens system settings and an open failure can be retried', async () => {
   const open = jest.spyOn(Linking, 'openSettings').mockRejectedValueOnce(new Error('unavailable')).mockResolvedValue(undefined);
   await render(<ThemeProvider><SettingsScreen /></ThemeProvider>);
@@ -53,6 +64,11 @@ test('disabled or unavailable sync never reports success or an obsolete in-fligh
   await view.rerender(<ThemeProvider><SettingsScreen /></ThemeProvider>);
   expect(screen.getByText('外观 · 未同步')).toBeTruthy();
   expect(screen.getByText(/云同步暂不可用/)).toBeTruthy();
+});
+test('an unavailable cloud service still allows an enabled privacy switch to be turned off', async () => {
+  mockAvailable = false;
+  await render(<ThemeProvider><SettingsScreen /></ThemeProvider>);
+  expect(screen.getByLabelText('云同步').props.disabled).toBe(false);
 });
 test.each(['guest', 'sync-off'])('local history failure stays visible for %s and retries only its own store', async mode => {
   mockSignedIn = mode !== 'guest';
