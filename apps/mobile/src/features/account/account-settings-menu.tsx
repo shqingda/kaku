@@ -13,6 +13,7 @@ import { clearOfflineSubjectPack } from '@/features/catalog/offline-subject-pack
 import { queryPersister } from '@/lib/query-persister';
 import { useClearHistoryAction } from '@/features/history/use-clear-history-action';
 import { AppActionMenu } from '@/features/shared/app-action-menu';
+import { clearSavedImageFiles } from '@/features/shared/saved-image-files';
 
 import { useAppUpdate } from '@/features/app-update/update-provider';
 
@@ -43,6 +44,7 @@ export function AccountSettingsMenu() {
         clearOfflineSubjectPack(),
         Image.clearMemoryCache(),
         Image.clearDiskCache(),
+        clearSavedImageFiles(),
       ]);
       if (results.some((result) => result.status === 'rejected' || result.value === false)) {
         throw new Error('部分缓存未能清理');

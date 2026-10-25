@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
-import { Asset, requestPermissionsAsync } from 'expo-media-library';
+import { requestPermissionsAsync } from 'expo-media-library';
 import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
@@ -35,6 +34,7 @@ import {
   rubberband,
 } from '@/lib/motion';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
+import { saveImageToLibrary } from './saved-image-files';
 
 const MATERIALIZE_SPRING = { damping: 35, mass: 1, stiffness: 300 };
 const ZOOM_SPRING = { damping: 28, mass: 1, stiffness: 300 };
@@ -359,16 +359,7 @@ export function FullscreenImageViewer({
         return;
       }
 
-      const extension =
-        url.match(/\.(png|webp|jpe?g)(?:\?|$)/i)?.[1]?.toLowerCase() ??
-        'jpg';
-      const file = new File(
-        Paths.cache,
-        `kaku-image-${Date.now()}.${extension}`,
-      );
-      const downloaded = await File.downloadFileAsync(url, file);
-
-      await Asset.create(downloaded.uri);
+      await saveImageToLibrary(url);
       Alert.alert('已保存', '图片已保存到系统相册。');
     } catch {
       Alert.alert('图片保存失败', '图片服务暂时没有响应，请稍后重试。');
