@@ -12,10 +12,10 @@ function readHistory(): History {
   try { const data = JSON.parse(Storage.getItemSync(KEY) ?? '{}'); return data && typeof data === 'object' ? data : {}; } catch { return {}; }
 }
 type UpdateState = { status: 'idle' | 'checking' | 'latest' | 'available' | 'error'; release?: UpdateRelease; error?: string };
-const Context = createContext<{ state: UpdateState; check: (manual?: boolean) => Promise<void> } | null>(null);
+const Context = createContext<{ state: UpdateState; check: (manual?: boolean) => Promise<void>; clearApkCache: () => Promise<boolean> } | null>(null);
 export function AppUpdateProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<UpdateState>({ status: 'idle' });
-  const apk = useApkDownload();
+  const apk = useApkDownload(updateSupport === 'apk' ? installedVersion : undefined);
   const [downloadVisible, setDownloadVisible] = useState(false);
   const [selected, setSelected] = useState<UpdateRelease>();
   const busy = useRef(false);
@@ -85,7 +85,7 @@ export function AppUpdateProvider({ children }: PropsWithChildren) {
     if (apk.status === 'downloading') void apk.cancel();
     setDownloadVisible(false);
   }
-  return <Context.Provider value={{ state, check }}>
+  return <Context.Provider value={{ state, check, clearApkCache: apk.clearCache }}>
     {children}
     <UpdateDownloadSheet
       visible={downloadVisible}

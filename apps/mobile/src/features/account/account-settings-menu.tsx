@@ -45,6 +45,7 @@ export function AccountSettingsMenu() {
         Image.clearMemoryCache(),
         Image.clearDiskCache(),
         clearSavedImageFiles(),
+        update.clearApkCache(),
       ]);
       if (results.some((result) => result.status === 'rejected' || result.value === false)) {
         throw new Error('部分缓存未能清理');
@@ -63,7 +64,7 @@ export function AccountSettingsMenu() {
 
   function confirmClearLocalData() {
     Alert.alert('清理缓存？',
-      '将移除本机内容缓存、图片和自动离线包，之后需要联网重新读取。历史、草稿、偏好和登录会保留。', [
+      '将移除本机内容缓存、图片、自动离线包和闲置更新安装包，之后需要联网重新读取。正在下载或安装的包会保留；历史、草稿、偏好和登录会保留。', [
         { style: 'cancel', text: '取消' },
         { onPress: () => void clearLocalData(), text: '清理' },
       ]);

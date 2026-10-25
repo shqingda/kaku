@@ -5,8 +5,9 @@ import { AccountSettingsMenu } from '@/features/account/account-settings-menu';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
 const mockCheckUpdate = jest.fn();
+const mockClearApkCache = jest.fn();
 let mockCheckingUpdate = false;
-jest.mock('@/features/app-update/update-provider', () => ({ useAppUpdate: () => ({ state: { status: mockCheckingUpdate ? 'checking' : 'idle' }, check: mockCheckUpdate }) }));
+jest.mock('@/features/app-update/update-provider', () => ({ useAppUpdate: () => ({ state: { status: mockCheckingUpdate ? 'checking' : 'idle' }, check: mockCheckUpdate, clearApkCache: mockClearApkCache }) }));
 const mockSearch = jest.fn();
 const mockBrowse = jest.fn();
 const mockRemoveCache = jest.fn();
@@ -35,6 +36,7 @@ function Page() { return <QueryClientProvider client={client}><ThemeProvider><Ac
 function confirm() { return alerts.mock.calls.at(-1)![2].at(-1).onPress(); }
 beforeEach(() => {
   mockUserId = 1; mockSync = true; mockCheckUpdate.mockReset(); mockCheckingUpdate = false;
+  mockClearApkCache.mockReset().mockResolvedValue(true);
   for (const mock of [mockSearch, mockBrowse, mockRemoveCache, mockOffline, mockImageMemory, mockImageDisk, mockSavedImages]) mock.mockReset().mockResolvedValue(undefined);
   mockImageDisk.mockResolvedValue(true); mockImageMemory.mockResolvedValue(true);
   client = new QueryClient(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -52,6 +54,7 @@ test('cache clearing removes cached queries and images without clearing either h
   expect(client.getQueryData(['private'])).toBeUndefined();
   expect(mockOffline).toHaveBeenCalledTimes(1);
   expect(mockSavedImages).toHaveBeenCalledTimes(1);
+  expect(mockClearApkCache).toHaveBeenCalledTimes(1);
   expect(mockSearch).not.toHaveBeenCalled(); expect(mockBrowse).not.toHaveBeenCalled();
   expect(alerts).toHaveBeenLastCalledWith('缓存已清理', expect.stringContaining('草稿'));
 });
@@ -65,6 +68,18 @@ test.each(['false', 'reject'])('cache failure %s offers a retry', async (mode) =
   expect(alerts.mock.calls.at(-1)![0]).toBe('部分缓存未能清理');
   await act(async () => { await confirm(); });
   expect(mockImageDisk).toHaveBeenCalledTimes(2);
+  expect(alerts.mock.calls.at(-1)![0]).toBe('缓存已清理');
+});
+
+test('an APK currently in use makes cache clearing partial and can be retried later', async () => {
+  mockClearApkCache.mockResolvedValueOnce(false);
+  await render(<Page />);
+  await fireEvent.press(screen.getByLabelText('清理缓存'));
+  await act(async () => { await confirm(); });
+  expect(alerts.mock.calls.at(-1)![0]).toBe('部分缓存未能清理');
+
+  await act(async () => { await confirm(); });
+  expect(mockClearApkCache).toHaveBeenCalledTimes(2);
   expect(alerts.mock.calls.at(-1)![0]).toBe('缓存已清理');
 });
 

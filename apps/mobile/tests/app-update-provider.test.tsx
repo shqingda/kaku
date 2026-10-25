@@ -8,10 +8,15 @@ const mockRead = jest.fn((key: string) => mockStore.get(key) ?? null);
 jest.mock('expo-sqlite/kv-store', () => ({ getItemSync: (key: string) => mockRead(key), setItemSync: (key: string, value: string) => mockStore.set(key, value) }));
 jest.mock('@/features/app-update/update-client', () => ({ fetchLatestRelease: () => mockFetch(), installedVersion: '1.0.0', updateSupport: 'apk' }));
 const mockDownload = jest.fn();
-jest.mock('@/features/app-update/use-apk-download', () => ({ useApkDownload: () => ({ status: 'idle', download: mockDownload, progress: 0, error: '' }) }));
+const mockClearApkCache = jest.fn();
+const mockInstalledVersion = jest.fn();
+jest.mock('@/features/app-update/use-apk-download', () => ({ useApkDownload: (installed?: string) => {
+  mockInstalledVersion(installed);
+  return { status: 'idle', download: mockDownload, progress: 0, error: '', clearCache: mockClearApkCache };
+} }));
 jest.mock('@/features/app-update/update-download-sheet', () => ({ UpdateDownloadSheet: () => null }));
 let alerts: jest.SpyInstance;
-beforeEach(() => { mockStore.clear(); mockRead.mockClear(); mockFetch.mockReset(); mockDownload.mockReset(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+beforeEach(() => { mockStore.clear(); mockRead.mockClear(); mockFetch.mockReset(); mockDownload.mockReset(); mockClearApkCache.mockReset().mockResolvedValue(true); mockInstalledVersion.mockClear(); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
 afterEach(async () => { await cleanup(); alerts.mockRestore(); Object.defineProperty(globalThis, '__DEV__', { configurable: true, value: true }); });
 test('manual retry bypasses throttle, failures never become latest, requests deduplicate', async () => {
   const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
@@ -87,4 +92,12 @@ test('provider state changes read update history once per mount', async () => {
   await first.unmount();
   await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
   expect(mockRead).toHaveBeenCalledTimes(2);
+});
+
+test('uses the installed version for APK maintenance and exposes the same download owner for cache clearing', async () => {
+  const { result } = await renderHook(useAppUpdate, { wrapper: AppUpdateProvider });
+
+  expect(mockInstalledVersion).toHaveBeenCalledWith('1.0.0');
+  await act(async () => { expect(await result.current.clearApkCache()).toBe(true); });
+  expect(mockClearApkCache).toHaveBeenCalledTimes(1);
 });
