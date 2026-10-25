@@ -106,6 +106,10 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 ### 性能复测
 
+2026-10-25 起诊断页分别显示 JS 首布局、缓存恢复和首页首个有意义结果（内容/空态/错误/游客）；它们不包含原生进程启动时间。当前设备须重新建立三轮基线，可靠 profiler 不可用时保留待验，不复用旧设备数字推断收益。见 [本轮证据](../test-records/2026-10-25-reliability-slimming-performance.md)。
+
+工作区大小只读盘点：`node scripts/report-workspace-files.mjs`。输出逻辑字节而非可释放空间；固定白名单且不接受删除参数，排除 tutorial、签名/env、安装包和模拟器数据。
+
 先 `maestro test .maestro/kaku-reset-ios.yaml`，profiler 连上之后再
 `maestro test .maestro/kaku-profile-ios.yaml`。两段刻意分开，因为
 dev client 重载会断开 React profiler。基线数字见

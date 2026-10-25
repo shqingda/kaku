@@ -36,7 +36,7 @@ bash scripts/build-split-apks.sh --build-only
 
 纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及本轮启用 R8 时的 mapping（非裁剪构建不收录旧文件）。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
 
-整个目录沿用 `dist-split/` 的 Git 忽略规则，应与验收 APK 一起保留。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。当前历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；本轮工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。
+整个目录沿用 `dist-split/` 的 Git 忽略规则，应与验收 APK 一起保留。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。当前历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；本轮工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。实现与检查边界见 [本轮记录](../test-records/2026-10-25-reliability-slimming-performance.md)。
 
 ### macOS 代理下 Gradle 下载停滞
 
@@ -136,7 +136,8 @@ Expo SDK / CLI 仍用于原生工程生成和本地开发，不要求登录 Expo
 
 - `scripts/build-split-apks.sh` 为本地 GitHub APK 构建设置 `KAKU_UPDATE_CHANNEL=github`，并仅在此渠道申请 `REQUEST_INSTALL_PACKAGES`。从固定仓库的 latest release 读取正式版本，正式包只匹配 `kaku-release.apk`，debug 包只匹配 `kaku-debug.apk`。缺少匹配资源时显示失败，不拿其他渠道包顶替。
 - 用户确认后才开始下载，显示字节进度比例，可取消；进度弹层可取消下载，关闭弹层也会取消未完成下载。下载后检查 HTTP 状态和文件大小，再让用户打开系统安装器。系统负责安装权限、包签名和覆盖安装判断；返回应用不代表安装成功。网络失败、无法调用安装器可重试或改用网页。首版不承诺杀进程续传。
-- 增加了 `expo-intent-launcher` 原生依赖，新功能需重新构建客户端。旧开发客户端没有模块时显示网页下载入口，不崩溃。APK 放在缓存目录中的单一专用文件，下一次下载覆盖，不无限积累。
+- 增加了 `expo-intent-launcher` 原生依赖，新功能需重新构建客户端。旧开发客户端没有模块时显示网页下载入口，不崩溃。APK 放在缓存目录的单一专用文件 `kaku-update.apk`，完成下载后保存目标版本与文件大小；下一次下载替换该文件，取消或失败会清理未完成文件。
+- 安装器返回后保留 APK。后续启动读取原生安装版本，只有本机版本不低于记录目标、已有文件大小与记录一致时才自动清理文件和记录；未知旧文件或大小不符的文件不自动删除。账户页“清理缓存”可显式重试清理，活动下载、安装及清理共用文件占用保护，不互相打断。自动清理失败只记诊断，不影响正常启动；真实覆盖安装仍按 Android 实机事项验收。
 - 默认 `KAKU_UPDATE_CHANNEL=store`，不申请 APK 安装权限。Google Play 版本的专用更新接入尚未配置，不能把 GitHub 版本当作 Play 上架版本。
 - iOS 正式上架后设置 `KAKU_IOS_APP_STORE_ID`，可用 `KAKU_IOS_STORE_COUNTRY` 指定检查地区（默认 `cn`）。客户端查询 Apple 商店版本，验证 bundle ID 后才显示更新，并打开 App Store 安装；不下载 Android APK。未配置 ID 或当前地区未上架时明确说明，不声称已是最新版。TestFlight 测试包仍通过 TestFlight 更新，没有假造公开 beta 版本查询接口。
 - 原生安装版本取 `expo-application`，不会把 Metro 当前源码版本当成已经安装的整包版本。
