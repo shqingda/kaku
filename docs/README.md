@@ -30,6 +30,7 @@
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-10-25 可靠性与瘦身 | [实施顺序与保护边界](plans/2026-10-25-reliability-slimming-performance.md) | 当前状态统一在 [TODO](../TODO.md) 维护 |
 | 2026-10-17 原生推送 | [FCM / APNs 实施计划](plans/2026-10-17-direct-fcm.md) | [本地回归及真实送达待验](test-records/2026-10-17-native-push.md) |
 | 2026-10-17 Android 签名迁移 | Android 13+ 换签、Android 10–12L 兼容，设备验证暂缓 | [内部包、密钥备份及待验事项](test-records/2026-10-17-signing-migration.md) |
 | 2026-10-16 架构安全修复 | [Review 修复计划](plans/2026-10-16-architecture-review-fixes.md) | [并发、身份与投递回归](test-records/2026-10-16-architecture-review-fixes.md) |
