@@ -30,7 +30,13 @@ bash scripts/build-split-apks.sh --build-only
 | release + `--optimized` | `com.shqingda.kaku` | `kaku-release-optimized.apk` |
 | release + `--no-optimize` | `com.shqingda.kaku` | `kaku-release-unoptimized.apk` |
 
-纯构建只生成原生工程、打包和报告体积，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
+纯构建生成原生工程、打包、报告体积并归档本地产物记录，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
+
+### 发行产物与 source map
+
+纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及存在时的 R8 mapping。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
+
+整个目录沿用 `dist-split/` 的 Git 忽略规则，应与验收 APK 一起保留。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。当前历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；本轮工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。
 
 ### macOS 代理下 Gradle 下载停滞
 
@@ -78,7 +84,7 @@ v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求�
 
 - 正式包 Android 13+ 使用新证书及旧→新轮换证明；Android 10–12L 保留旧证书兼容。后续继续使用同一 lineage 并递增构建号，不能给已换签的安装回退到仅旧签名包。
 - 只构建 arm64-v8a，不支持 32 位机和 x86 模拟器；ABI 参数是 `-PreactNativeArchitectures=arm64-v8a`。
-- 本地不上传 source map，压缩堆栈定位能力受限。
+- 本地归档 source map 与产物对应关系，但不上传；真实 Sentry 堆栈还原仍待凭据和设备验收。
 - 构建完成只证明可编译，发布前仍要核对签名、版本和权限；实际设备安装、运行及未验范围另行记录。
 
 ## GitHub APK 上传固定方式

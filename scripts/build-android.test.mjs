@@ -9,7 +9,7 @@ function createBuildFixture() {
   const root = mkdtempSync(join(tmpdir(), 'kaku-build-'));
   const mobile = join(root, 'apps/mobile');
   for (const directory of ['scripts', 'bin', 'apps/mobile/android/app/build/outputs/apk/release']) mkdirSync(join(root, directory), { recursive: true });
-  for (const file of ['build-android.sh', 'build-split-apks.sh', 'report-apk-size.py', 'sign-android-release.sh']) cpSync(new URL(file, import.meta.url), join(root, 'scripts', file));
+  for (const file of ['build-android.sh', 'build-split-apks.sh', 'report-apk-size.py', 'sign-android-release.sh', 'record-android-artifact.py']) cpSync(new URL(file, import.meta.url), join(root, 'scripts', file));
   const manifest = JSON.stringify({ scripts: { ios: 'expo run:ios', android: 'expo run:android' }, dependencies: { react: '19' } });
   writeFileSync(join(mobile, 'package.json'), manifest);
   writeFileSync(join(mobile, 'app.config.js'), 'module.exports = { expo: { version: "1.2.3" } };');
@@ -102,7 +102,7 @@ test('local release builds default to shrinking despite stale environment settin
       writeFileSync(join(fixture.mobile, '.env'), `KAKU_OPTIMIZE_NATIVE=${entry.flag}\n`);
       const result = fixture.run('build-android.sh', entry.args, entry.flag);
       assertBuild(fixture, result, entry);
-      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)), 'pure builds must not sync, commit, push or publish');
+      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command) || (entry.command === 'git' && ['rev-parse', 'status'].includes(entry.args[2]))), 'pure builds must not sync, commit, push or publish');
     }
     const result = fixture.run('build-android.sh', ['debug', '--optimized']);
     assert.equal(result.status, 2, 'a debug package cannot be mislabeled as optimized');
@@ -119,7 +119,7 @@ test('legacy build-only uses release defaults and never reaches publishing tools
     for (const args of [['--build-only'], ['v1.2.3', 'release', '--build-only']]) {
       const result = fixture.run('build-split-apks.sh', args);
       assertBuild(fixture, result, { profile: 'production', optimization: '1', artifact: 'kaku-release.apk' });
-      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)));
+      assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command) || (entry.command === 'git' && ['rev-parse', 'status'].includes(entry.args[2]))));
     }
   } finally {
     fixture.cleanup();
@@ -131,7 +131,7 @@ test('legacy release arguments now build without changelog, Git or publishing si
   try {
     const result = fixture.run('build-split-apks.sh', ['v1.2.3', 'release']);
     assertBuild(fixture, result, { profile: 'production', optimization: '1', artifact: 'kaku-release.apk' });
-    assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)),
+    assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command) || (entry.command === 'git' && ['rev-parse', 'status'].includes(entry.args[2]))),
       'legacy entry must not sync, commit, push or publish');
   } finally { fixture.cleanup(); }
 });
@@ -205,6 +205,6 @@ test('wrong signing certificate cannot replace a previously verified artifact', 
     const result = fixture.run('build-android.sh', ['release'], '0', { KAKU_TEST_BAD_CERT: '1' });
     assert.notEqual(result.status, 0);
     assert.equal(readFileSync(artifact, 'utf8'), 'previous-good-apk');
-    assert.ok(fixture.commands().every(entry => !['git', 'gh'].includes(entry.command)));
+    assert.ok(fixture.commands().every(entry => entry.command !== 'gh' && (entry.command !== 'git' || ['rev-parse', 'status'].includes(entry.args[2]))));
   } finally { fixture.cleanup(); }
 });
