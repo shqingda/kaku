@@ -16,6 +16,7 @@ import {
   usePublicGroupTopics,
 } from '@/features/community/use-community';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionListStatus } from '@/features/discussions/discussion-list-status';
 import { TopicComposer } from '@/features/discussions/topic-composer';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -89,7 +90,7 @@ export default function GroupScreen() {
         data={topics.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          group && !topicsQuery.isPending && !topicsQuery.isError ? (
+          group && !topicsQuery.isPending && !topicsQuery.isError && !topicsQuery.isPaused ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>该小组暂无公开话题。</Text>
             </View>
@@ -187,19 +188,15 @@ export default function GroupScreen() {
                     <Text style={styles.newTopicText}>发话题</Text>
                   </Pressable>
                 </View>
-                {topics.items.length > 0 && topicsQuery.isError ? (
-                  <CachedDataNotice
-                    onRetry={() => void topicsQuery.refetch()}
-                  />
-                ) : (
-                  <DiscussionStatus
-                    errorText="小组话题加载失败，请检查网络后重试。"
-                    isError={topicsQuery.isError}
-                    isPending={topicsQuery.isPending}
-                    loadingText="正在读取小组话题…"
-                    onRetry={() => void topicsQuery.refetch()}
-                  />
-                )}
+                <DiscussionListStatus
+                  errorText="小组话题加载失败，请检查网络后重试。"
+                  hasItems={topics.items.length > 0}
+                  isError={topicsQuery.isError}
+                  isPaused={topicsQuery.isPaused}
+                  isPending={topicsQuery.isPending}
+                  loadingText="正在读取小组话题…"
+                  onRetry={() => void topicsQuery.refetch()}
+                />
               </>
             ) : null}
           </>

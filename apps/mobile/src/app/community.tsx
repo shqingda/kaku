@@ -17,6 +17,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import type { PublicGroupTopicSummary } from '@/features/community/model';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionListStatus } from '@/features/discussions/discussion-list-status';
 import {
   usePublicCommunity,
   usePublicCommunityTopics,
@@ -78,7 +79,7 @@ export default function CommunityScreen() {
         data={topics.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          !topicsQuery.isPending && !topicsQuery.isError ? (
+          !topicsQuery.isPending && !topicsQuery.isError && !topicsQuery.isPaused ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>暂无公开话题。</Text>
             </View>
@@ -158,17 +159,15 @@ export default function CommunityScreen() {
                 </Text>
               ) : null}
             </View>
-            {topics.items.length > 0 && topicsQuery.isError ? (
-              <CachedDataNotice onRetry={() => void topicsQuery.refetch()} />
-            ) : (
-              <DiscussionStatus
-                errorText="最新话题加载失败，请检查网络后重试。"
-                isError={topicsQuery.isError}
-                isPending={topicsQuery.isPending}
-                loadingText="正在读取最新话题…"
-                onRetry={() => void topicsQuery.refetch()}
-              />
-            )}
+            <DiscussionListStatus
+              errorText="最新话题加载失败，请检查网络后重试。"
+              hasItems={topics.items.length > 0}
+              isError={topicsQuery.isError}
+              isPaused={topicsQuery.isPaused}
+              isPending={topicsQuery.isPending}
+              loadingText="正在读取最新话题…"
+              onRetry={() => void topicsQuery.refetch()}
+            />
           </>
         }
         refreshControl={

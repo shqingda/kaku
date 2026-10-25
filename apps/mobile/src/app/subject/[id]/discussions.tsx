@@ -12,11 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE, MIN_TOUCH_SIZE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
-import { DiscussionStatus } from '@/features/discussions/discussion-status';
+import { DiscussionListStatus } from '@/features/discussions/discussion-list-status';
 import { TopicComposer } from '@/features/discussions/topic-composer';
 import { TopicList } from '@/features/discussions/topic-list';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
@@ -43,6 +44,8 @@ export default function SubjectDiscussionsScreen() {
     [discussionQuery.data],
   );
   const topicTotal = discussionQuery.data?.pages[0]?.total ?? 0;
+  const showTopics = subjectTopics.length > 0 ||
+    (!discussionQuery.isPending && !discussionQuery.isError && !discussionQuery.isPaused);
 
   function openTopicComposer() {
     if (session) {
@@ -132,8 +135,7 @@ export default function SubjectDiscussionsScreen() {
         scrollEventThrottle={160}
         showsVerticalScrollIndicator={false}
       >
-        {(subjectQuery.isError && subjectQuery.data) ||
-        (discussionQuery.isError && subjectTopics.length > 0) ? (
+        {subjectQuery.isError && subjectQuery.data ? (
           <CachedDataNotice
             onRetry={() =>
               void Promise.all([
@@ -151,7 +153,9 @@ export default function SubjectDiscussionsScreen() {
           <Text style={styles.subtitle}>
             {discussionQuery.data
               ? `Bangumi 共 ${topicTotal} 个话题`
-              : '正在从 Bangumi 读取话题'}
+              : discussionQuery.isPending && !discussionQuery.isPaused
+                ? '正在从 Bangumi 读取话题'
+                : '暂时无法读取话题'}
           </Text>
         </View>
         <Pressable
@@ -175,37 +179,38 @@ export default function SubjectDiscussionsScreen() {
           />
           <Text style={styles.newTopicText}>新建话题</Text>
         </Pressable>
-        <DiscussionStatus
-          isError={discussionQuery.isError && subjectTopics.length === 0}
+        <DiscussionListStatus
+          hasItems={subjectTopics.length > 0}
+          isError={discussionQuery.isError}
+          isPaused={discussionQuery.isPaused}
           isPending={discussionQuery.isPending}
           onRetry={() => void discussionQuery.refetch()}
+          rowHeight={112}
         />
-        <TopicList
-          emptyText={
-            discussionQuery.isError
-              ? '讨论加载失败，点击上方重试。'
-              : 'Bangumi 还没有关于这个条目的讨论。'
-          }
-          onOpenTopic={(topic) =>
-            router.push({
-              pathname: '/subject/[id]/topic/[topicId]',
-              params: { id: String(subjectId), topicId: topic.id },
-            })
-          }
-          topics={subjectTopics}
-          footer={
-            subjectTopics.length > 0 ? (
-              <PagedListFooter
-                hasNextPage={discussionQuery.hasNextPage}
-                isError={discussionQuery.isFetchNextPageError}
-                isFetching={discussionQuery.isFetchingNextPage}
-                loadedCount={subjectTopics.length}
-                onRetry={() => void discussionQuery.fetchNextPage()}
-                total={topicTotal}
-              />
-            ) : null
-          }
-        />
+        {showTopics ? (
+          <TopicList
+            emptyText="Bangumi 还没有关于这个条目的讨论。"
+            onOpenTopic={(topic) =>
+              router.push({
+                pathname: '/subject/[id]/topic/[topicId]',
+                params: { id: String(subjectId), topicId: topic.id },
+              })
+            }
+            topics={subjectTopics}
+            footer={
+              subjectTopics.length > 0 ? (
+                <PagedListFooter
+                  hasNextPage={discussionQuery.hasNextPage}
+                  isError={discussionQuery.isFetchNextPageError}
+                  isFetching={discussionQuery.isFetchingNextPage}
+                  loadedCount={subjectTopics.length}
+                  onRetry={() => void discussionQuery.fetchNextPage()}
+                  total={topicTotal}
+                />
+              ) : null
+            }
+          />
+        ) : null}
       </ScrollView>
       <TopicComposer
         onClose={() => setComposerVisible(false)}
@@ -225,42 +230,41 @@ export default function SubjectDiscussionsScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingBottom: 48 },
-  header: { marginBottom: 18, paddingHorizontal: 4, paddingTop: 4 },
-  eyebrow: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  content: { padding: SPACING.lg + SPACING.xs, paddingBottom: SPACING.xxl + SPACING.lg },
+  header: { marginBottom: SPACING.lg, paddingHorizontal: SPACING.xs, paddingTop: SPACING.xs },
+  eyebrow: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.6,
-    marginTop: 7,
+    marginTop: SPACING.sm,
   },
-  subtitle: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
+  subtitle: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
   newTopicButton: {
     alignItems: 'center',
     alignSelf: 'stretch',
     backgroundColor: colors.accent,
     borderRadius: 15,
     flexDirection: 'row',
-    gap: 7,
+    gap: SPACING.sm,
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: SPACING.lg,
     minHeight: 46,
   },
-  newTopicText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
-  errorState: { flex: 1, justifyContent: 'center', padding: 32 },
-  errorTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
-  errorText: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  newTopicText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
+  errorState: { flex: 1, justifyContent: 'center', padding: SPACING.xxl },
+  errorTitle: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '700' },
+  errorText: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
   errorRetry: {
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: colors.accent,
     borderRadius: 13,
     justifyContent: 'center',
-    marginTop: 18,
-    minHeight: 44,
-    paddingHorizontal: 20,
+    marginTop: SPACING.lg,
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg + SPACING.xs,
   },
-  errorRetryText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  errorRetryText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });
