@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build",
+    "build": "node ../../scripts/sync-web-icon.mjs && tsc -b && vite build",
     "deploy": "pnpm build && wrangler deploy",
-    "dev": "vite",
+    "dev": "node ../../scripts/sync-web-icon.mjs && vite",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false"
   },

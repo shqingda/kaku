@@ -6,6 +6,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+apps/web/public/kaku-icon.png
 *.log
 __pycache__/
 .env

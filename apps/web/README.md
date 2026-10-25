@@ -2,6 +2,9 @@
 
 Kaku 的产品官网与公开政策页面。
 
+品牌图标的唯一源文件是 `apps/mobile/assets/images/kaku-icon.png`。
+开发和构建命令会生成官网的 `public/kaku-icon.png`，保留 favicon、分享图和页面的原有 URL；生成副本不提交。
+
 ## 本地开发
 
 ```bash
