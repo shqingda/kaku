@@ -125,11 +125,7 @@ def make_ios_icons(channel: str) -> None:
     result = result.convert("RGB")
 
     # The owner chose the original icon artwork for both appearances.
-    for appearance in ("light", "dark"):
-        result.save(
-            OUTPUT / f"kaku-{channel}-{appearance}.png",
-            optimize=True,
-        )
+    result.save(OUTPUT / f"kaku-{channel}.png", optimize=True)
 
 
 def make_android_foreground(channel: str) -> None:

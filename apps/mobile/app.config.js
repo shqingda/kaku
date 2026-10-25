@@ -13,8 +13,7 @@ const apnsEnvironment = process.env.KAKU_APNS_ENVIRONMENT || (isProduction ? 'pr
 if (!['sandbox', 'production'].includes(apnsEnvironment)) throw new Error('KAKU_APNS_ENVIRONMENT 必须为 sandbox 或 production');
 const channel = isProduction ? 'production' : 'debug';
 const iconDirectory = './assets/images/app-icons';
-const lightIcon = `${iconDirectory}/kaku-${channel}-light.png`;
-const darkIcon = `${iconDirectory}/kaku-${channel}-dark.png`;
+const appIcon = `${iconDirectory}/kaku-${channel}.png`;
 const foregroundIcon = `${iconDirectory}/kaku-${channel}-foreground.png`;
 const monochromeIcon = `${iconDirectory}/kaku-${channel}-monochrome.png`;
 const sentryPlugin =
@@ -37,15 +36,15 @@ module.exports = {
     name: 'Kaku',
     version: '1.1.22',
     orientation: 'portrait',
-    icon: lightIcon,
+    icon: appIcon,
     scheme: 'kaku',
     userInterfaceStyle: 'automatic',
     ios: {
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
       entitlements: { 'aps-environment': apnsEnvironment === 'sandbox' ? 'development' : 'production' },
       icon: {
-        dark: darkIcon,
-        light: lightIcon,
+        dark: appIcon,
+        light: appIcon,
       },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
@@ -61,7 +60,7 @@ module.exports = {
         foregroundImage: foregroundIcon,
         monochromeImage: monochromeIcon,
       },
-      icon: lightIcon,
+      icon: appIcon,
       googleServicesFile: './google-services.json',
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
