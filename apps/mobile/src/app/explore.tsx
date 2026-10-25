@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type ComponentRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Keyboard, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -67,7 +67,7 @@ export default function ExploreScreen() {
     ref: overviewScrollRef,
     scrollToTop: scrollOverviewToTop,
     visible: overviewScrollVisible,
-  } = useScrollToTopButton();
+  } = useScrollToTopButton<ComponentRef<typeof ScrollView>>();
   const { handleScroll: rememberOverviewOffset } =
     useRestoreScrollOnFocus(overviewScrollRef);
   const calendarQuery = useBangumiCalendar(selectedSearchType === 2);

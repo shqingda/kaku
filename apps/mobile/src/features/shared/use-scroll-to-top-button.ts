@@ -2,12 +2,16 @@ import { useCallback, useRef, useState } from 'react';
 
 const SHOW_THRESHOLD = 720;
 
-export function useScrollToTopButton(externalRef?: { current: unknown }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const internalRef = useRef<any>(null);
+type ScrollTarget =
+  | { scrollToOffset: (options: { animated: boolean; offset: number }) => void }
+  | { scrollTo: (options: { animated: boolean; y: number }) => void };
+
+export function useScrollToTopButton<T extends ScrollTarget>(
+  externalRef?: { current: T | null },
+) {
+  const internalRef = useRef<T>(null);
   // 传进来的列表 ref 优先（讨论类页面已有 useReplyNavigation 持有的 ref）。
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ref = (externalRef ?? internalRef) as { current: any };
+  const ref = externalRef ?? internalRef;
   const [visible, setVisible] = useState(false);
   // 值未变化时直接跳过 setState，滚动事件不再触发多余渲染调度。
   const visibleRef = useRef(false);
@@ -40,7 +44,6 @@ export function useScrollToTopButton(externalRef?: { current: unknown }) {
     ref,
     handleScroll,
     scrollToTop,
-    setVisible,
     visible,
   };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Platform } from 'react-native';
+import { type FlatList, Platform } from 'react-native';
 import {
   type InfiniteData,
   type UseInfiniteQueryResult,
@@ -40,7 +40,7 @@ const LIST_TUNING = {
 // 屏幕仍然自己声明 renderItem / keyExtractor / ListHeaderComponent 等；
 // 需要覆盖调优参数时，在 {...listProps} 之后重新显式传入即可。
 export function usePagedList<TItem>(query: PagedQuery<TItem>) {
-  const listRef = useScrollToTopButton();
+  const listRef = useScrollToTopButton<FlatList<TItem>>();
   const {
     fetchNextPage,
     hasNextPage,

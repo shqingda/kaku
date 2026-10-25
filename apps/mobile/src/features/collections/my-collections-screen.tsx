@@ -73,7 +73,7 @@ export function MyCollectionsScreen({
     },
   );
   const { items, notice, query, scanning } = useMyCollections(preferences);
-  const list = usePagedList(query);
+  const list = usePagedList<PublicUserCollection>(query);
   const results = scanning ? items : list.items;
   const subjectTypeLabel = getSubjectTypeLabel(preferences.subjectType);
   const collectionStatusLabel = preferences.status

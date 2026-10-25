@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FlatList } from 'react-native';
 
 import type { DiscussionReply } from './model';
 
-// 单集评论页用 FlashList，其余讨论屏仍是 FlatList：两种列表的
-// scrollToIndex / scrollToOffset 签名兼容，ref 用 any（同
-// use-scroll-to-top-button），由各屏幕把 ref 接到自己的列表组件上。
-export function useReplyNavigation(replies: DiscussionReply[]) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const listRef = useRef<any>(null);
+type ReplyList = {
+  scrollToIndex: (options: {
+    animated: boolean;
+    index: number;
+    viewPosition: number;
+  }) => void | Promise<void>;
+  scrollToOffset: (options: { animated: boolean; offset: number }) => void;
+};
+
+// 大部分讨论屏用 FlatList，单集页保留 FlashList 的实例与异步滚动签名。
+export function useReplyNavigation<T extends ReplyList = FlatList<DiscussionReply>>(
+  replies: DiscussionReply[],
+) {
+  const listRef = useRef<T>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [highlightedReplyId, setHighlightedReplyId] = useState<string>();

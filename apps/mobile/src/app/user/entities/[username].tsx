@@ -17,7 +17,7 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
-import type { PublicUserEntityKind } from '@/features/users/model';
+import type { PublicUserEntityCollection, PublicUserEntityKind } from '@/features/users/model';
 import { PublicUserEntityCard } from '@/features/users/public-user-entity-card';
 import { usePublicUserEntities } from '@/features/users/use-public-user';
 
@@ -31,7 +31,7 @@ export default function PublicUserEntitiesScreen() {
   const styles = createStyles(colors);
   const { username } = useLocalSearchParams<{ username: string }>();
   const [kind, setKind] = useState<PublicUserEntityKind>('character');
-  const listRef = useScrollToTopButton();
+  const listRef = useScrollToTopButton<FlatList<PublicUserEntityCollection>>();
   const entitiesQuery = usePublicUserEntities(username, kind);
   const entities = entitiesQuery.data?.items ?? [];
 

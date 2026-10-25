@@ -2,7 +2,7 @@ import { EpisodeDetailsCard } from '@/features/discussions/episode-details-card'
 import { useEpisodeDiscussion } from '@/features/discussions/use-episode-discussion';
 import { useEpisodeDiscussionScroll } from '@/features/discussions/use-episode-discussion-scroll';
 import { userErrorMessage } from '@/lib/user-error-message';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import {
   Alert,
@@ -60,7 +60,7 @@ export default function EpisodeScreen() {
     id: catalogEpisode?.id ?? 0,
     kind: 'episode',
   });
-  const replyNavigation = useReplyNavigation(replies);
+  const replyNavigation = useReplyNavigation<FlashListRef<DiscussionReply>>(replies);
   const scroll = useEpisodeDiscussionScroll({
     canRestore: !hiddenDiscussion && Boolean(commentsQuery.data),
     episodeId: catalogEpisode?.id,
