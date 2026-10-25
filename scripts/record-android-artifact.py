@@ -15,7 +15,7 @@ def sha256(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def record_artifact(apk, build, version, commit, dirty):
+def record_artifact(apk, build, version, commit, dirty, r8_enabled=False):
     digest = sha256(apk)
     destination = apk.parent / f'{apk.stem}-{digest}.sources'
     if destination.exists():
@@ -29,7 +29,7 @@ def record_artifact(apk, build, version, commit, dirty):
     mapping = build / 'outputs/mapping/release/mapping.txt'
     manifest = {'version': version, 'commit': commit, 'dirty': dirty,
                 'apk': {'name': apk.name, 'sha256': digest, 'bytes': apk.stat().st_size},
-                'files': [], 'missing': []}
+                'files': [], 'missing': [], 'notApplicable': [] if r8_enabled else ['mapping.txt']}
     # Gradle emits this bundle and its composed Hermes map in the same task.
     # Do not pair maps from another build with an existing, verified APK.
     if bundle.is_file():
@@ -40,7 +40,10 @@ def record_artifact(apk, build, version, commit, dirty):
     with tempfile.TemporaryDirectory(prefix='.kaku-sources-', dir=apk.parent) as temp:
         output = Path(temp) / 'sources'
         output.mkdir()
-        for name, path in [('index.android.bundle', bundle), ('index.android.bundle.map', source_map), ('mapping.txt', mapping)]:
+        sources = [('index.android.bundle', bundle), ('index.android.bundle.map', source_map)]
+        if r8_enabled:
+            sources.append(('mapping.txt', mapping))
+        for name, path in sources:
             if not bundle.is_file() or not path.is_file():
                 manifest['missing'].append(name)
                 continue
@@ -56,13 +59,14 @@ def main():
     parser.add_argument('apk', type=Path)
     parser.add_argument('--build', type=Path, default=Path('android/app/build'))
     parser.add_argument('--version', required=True)
+    parser.add_argument('--r8', choices=['0', '1'], required=True)
     args = parser.parse_args()
     repository = Path(__file__).resolve().parent.parent
     def git(*arguments):
         return subprocess.check_output(['git', '-C', str(repository), *arguments], text=True).strip()
     try:
         destination, manifest = record_artifact(args.apk.resolve(), args.build.resolve(), args.version,
-                                               git('rev-parse', 'HEAD'), bool(git('status', '--porcelain')))
+                                               git('rev-parse', 'HEAD'), bool(git('status', '--porcelain')), args.r8 == '1')
     except (ValueError, OSError, KeyError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
         parser.exit(1, str(error) + '\n')
     print(f'本地产物记录：{destination}')

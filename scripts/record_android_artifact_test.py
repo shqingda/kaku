@@ -26,10 +26,15 @@ class ArtifactTests(unittest.TestCase):
             source_map = build / 'generated/sourcemaps/react/release/index.android.bundle.map'
             source_map.parent.mkdir(parents=True)
             source_map.write_text('{}')
+            stale_mapping = build / 'outputs/mapping/release/mapping.txt'
+            stale_mapping.parent.mkdir(parents=True)
+            stale_mapping.write_text('# stale optimized build')
             output, manifest = provenance.record_artifact(apk, build, '1.2.3', 'commit', False)
             self.assertEqual(json.loads((output / 'manifest.json').read_text()), manifest)
             self.assertEqual(manifest['apk']['sha256'], hashlib.sha256(original).hexdigest())
-            self.assertEqual(manifest['missing'], ['mapping.txt'])
+            self.assertEqual(manifest['missing'], [])
+            self.assertEqual(manifest['notApplicable'], ['mapping.txt'])
+            self.assertFalse((output / 'mapping.txt').exists())
             self.assertEqual((output / source_map.name).read_text(), '{}')
             self.assertEqual(provenance.record_artifact(apk, build, '1.2.3', 'commit', False), (output, manifest))
             other = root / 'other.apk'

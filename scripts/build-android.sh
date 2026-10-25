@@ -50,4 +50,4 @@ fi
 python3 "$REPO_DIR/scripts/report-apk-size.py" "$APK"
 
 APP_VERSION="$(node -p "require('./app.config.js').expo.version")"
-python3 "$REPO_DIR/scripts/record-android-artifact.py" "$APK" --version "$APP_VERSION"
+python3 "$REPO_DIR/scripts/record-android-artifact.py" "$APK" --version "$APP_VERSION" --r8 "$KAKU_OPTIMIZE_NATIVE"

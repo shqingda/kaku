@@ -34,7 +34,7 @@ bash scripts/build-split-apks.sh --build-only
 
 ### 发行产物与 source map
 
-纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及存在时的 R8 mapping。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
+纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及本轮启用 R8 时的 mapping（非裁剪构建不收录旧文件）。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
 
 整个目录沿用 `dist-split/` 的 Git 忽略规则，应与验收 APK 一起保留。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。当前历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；本轮工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。
 
