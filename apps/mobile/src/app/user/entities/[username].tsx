@@ -13,6 +13,7 @@ import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { UserGridSkeleton } from '@/features/users/user-grid-skeleton';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
@@ -47,8 +48,18 @@ export default function PublicUserEntitiesScreen() {
         key={kind}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
-          entitiesQuery.isPending ? (
-            <AppState text="正在读取公开收藏。" title="加载中" />
+          entitiesQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void entitiesQuery.refetch()}
+              text="恢复联网后将继续读取公开收藏。"
+              title="当前离线"
+            />
+          ) : entitiesQuery.isPending ? (
+            <UserGridSkeleton
+              accessibilityLabel="正在读取公开收藏。"
+              columns={2}
+              rowHeight={288}
+            />
           ) : entitiesQuery.isError ? (
             <AppState
               action={() => void entitiesQuery.refetch()}
@@ -95,7 +106,7 @@ export default function PublicUserEntitiesScreen() {
                 );
               })}
             </View>
-            {entities.length > 0 && entitiesQuery.isError ? (
+            {entities.length > 0 && (entitiesQuery.isError || entitiesQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void entitiesQuery.refetch()} />
             ) : null}
           </View>

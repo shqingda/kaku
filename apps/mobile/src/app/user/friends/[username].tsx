@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { UserGridSkeleton } from '@/features/users/user-grid-skeleton';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -66,8 +67,18 @@ export default function PublicUserFriendsScreen() {
         initialNumToRender={18}
         keyExtractor={(item) => item.username}
         ListEmptyComponent={
-          friendsQuery.isPending ? (
-            <AppState text="正在读取公开好友。" title="好友加载中" />
+          friendsQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void friendsQuery.refetch()}
+              text="恢复联网后将继续读取公开好友。"
+              title="当前离线"
+            />
+          ) : friendsQuery.isPending ? (
+            <UserGridSkeleton
+              accessibilityLabel="正在读取公开好友。"
+              columns={3}
+              rowHeight={112}
+            />
           ) : friendsQuery.isError ? (
             <AppState
               action={() => void friendsQuery.refetch()}
@@ -89,7 +100,7 @@ export default function PublicUserFriendsScreen() {
             <Text style={styles.meta}>
               @{username} · {friends.total ? `${friends.total} 位` : '读取中'}
             </Text>
-            {friends.items.length > 0 && friendsQuery.isError ? (
+            {friends.items.length > 0 && (friendsQuery.isError || friendsQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void friendsQuery.refetch()} />
             ) : null}
           </View>

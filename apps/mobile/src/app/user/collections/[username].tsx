@@ -19,6 +19,7 @@ import {
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppState } from '@/features/shared/app-state';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
@@ -120,10 +121,17 @@ function PublicUserCollectionsScreen() {
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          collectionsQuery.isPending ? (
+          collectionsQuery.fetchStatus === 'paused' ? (
             <AppState
-              text={`正在读取公开${subjectTypeLabel}收藏。`}
-              title="收藏加载中"
+              action={() => void collectionsQuery.refetch()}
+              text="恢复联网后将继续读取公开收藏。"
+              title="当前离线"
+            />
+          ) : collectionsQuery.isPending ? (
+            <SkeletonList
+              accessibilityLabel={`正在读取公开${subjectTypeLabel}收藏。`}
+              count={4}
+              rowHeight={104}
             />
           ) : collectionsQuery.isError ? (
             <AppState
@@ -173,7 +181,7 @@ function PublicUserCollectionsScreen() {
               selectedStatus={collectionStatus}
               subjectType={subjectType}
             />
-            {collections.items.length > 0 && collectionsQuery.isError ? (
+            {collections.items.length > 0 && (collectionsQuery.isError || collectionsQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void collectionsQuery.refetch()} />
             ) : null}
           </>

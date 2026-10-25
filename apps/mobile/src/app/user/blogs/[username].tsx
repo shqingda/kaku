@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -90,8 +91,18 @@ export default function PublicUserBlogsScreen() {
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          blogsQuery.isPending ? (
-            <AppState text="正在读取公开日志。" title="日志加载中" />
+          blogsQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void blogsQuery.refetch()}
+              text="恢复联网后将继续读取公开日志。"
+              title="当前离线"
+            />
+          ) : blogsQuery.isPending ? (
+            <SkeletonList
+              accessibilityLabel="正在读取公开日志。"
+              count={4}
+              rowHeight={96}
+            />
           ) : blogsQuery.isError ? (
             <AppState
               action={() => void blogsQuery.refetch()}
@@ -113,7 +124,7 @@ export default function PublicUserBlogsScreen() {
             <Text style={styles.meta}>
               @{username} · {total ? `${total} 篇` : '读取中'}
             </Text>
-            {blogs.items.length > 0 && blogsQuery.isError ? (
+            {blogs.items.length > 0 && (blogsQuery.isError || blogsQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
             ) : null}
           </View>

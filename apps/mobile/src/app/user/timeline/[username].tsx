@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { SkeletonList } from '@/features/shared/skeleton-list';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -94,8 +95,18 @@ export default function PublicUserTimelineScreen() {
         initialNumToRender={12}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          timelineQuery.isPending ? (
-            <AppState text="正在读取公开动态。" title="时间线加载中" />
+          timelineQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void timelineQuery.refetch()}
+              text="恢复联网后将继续读取公开动态。"
+              title="当前离线"
+            />
+          ) : timelineQuery.isPending ? (
+            <SkeletonList
+              accessibilityLabel="正在读取公开动态。"
+              count={4}
+              rowHeight={84}
+            />
           ) : timelineQuery.isError ? (
             <AppState
               action={() => void timelineQuery.refetch()}
@@ -118,7 +129,7 @@ export default function PublicUserTimelineScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>时间线</Text>
             <Text style={styles.subtitle}>@{username} 的公开动态</Text>
-            {timeline.items.length > 0 && timelineQuery.isError ? (
+            {timeline.items.length > 0 && (timelineQuery.isError || timelineQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
             ) : null}
           </View>
