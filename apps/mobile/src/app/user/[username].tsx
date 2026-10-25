@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -13,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -23,8 +22,12 @@ import { PublicUserBlogRow } from '@/features/users/public-user-blog-row';
 import { PublicUserCollectionRow } from '@/features/users/public-user-collection-row';
 import { PublicUserFriendCard } from '@/features/users/public-user-friend-card';
 import { PublicUserTimelineRow } from '@/features/users/public-user-timeline-row';
-import { FriendAction } from '@/features/users/friend-action';
-import { ProfileOverflow } from '@/features/users/profile-overflow';
+import { PublicUserProfileSummary } from '@/features/users/public-user-profile-summary';
+import {
+  ProfileSectionHeader,
+  ProfileSectionStatus,
+  profileSectionMeta,
+} from '@/features/users/public-user-profile-section';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { SectionAction } from '@/features/shared/section-action';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
@@ -113,7 +116,7 @@ export default function PublicUserScreen() {
           data={collections}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={
-            <SectionStatus
+            <ProfileSectionStatus
               emptyText={`该用户没有公开${collectionSubjectTypeLabel}收藏。`}
               isError={collectionsQuery.isError}
               isPending={collectionsQuery.isPending}
@@ -122,112 +125,38 @@ export default function PublicUserScreen() {
           }
           ListHeaderComponent={
             <>
-              <View style={styles.profile}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarFallback}>
-                    {user.nickname.slice(0, 1)}
-                  </Text>
-                  {user.avatarUrl ? (
-                    <Image
-                      contentFit="cover"
-                      source={user.avatarUrl}
-                      style={StyleSheet.absoluteFill}
-                      transition={120}
-                    />
-                  ) : null}
-                </View>
-                <View style={styles.profileMain}>
-                  <Text style={styles.nickname}>{user.nickname}</Text>
-                  <Text style={styles.username}>@{user.username}</Text>
-                  {user.sign ? (
-                    <Text numberOfLines={3} style={styles.sign}>
-                      {user.sign}
-                    </Text>
-                  ) : null}
-                </View>
-                {session && !isOwnProfile ? (
-                  <View style={styles.friendAction}>
-                    <FriendAction
-                      nickname={user.nickname}
-                      username={user.username}
-                    />
-                    <ProfileOverflow
-                      nickname={user.nickname}
-                      userId={user.id}
-                      username={user.username}
-                    />
-                  </View>
-                ) : null}
-              </View>
-              {SHOW_ENTITY_ENTRY ? (
-                <Pressable
-                  accessibilityLabel="查看角色与人物收藏"
-                  accessibilityRole="button"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/user/entities/[username]',
-                      params: { username: user.username },
-                    })
-                  }
-                  style={({ pressed }) => [
-                    styles.entityEntry,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <View style={styles.entityEntryIcon}>
-                    <SymbolView
-                      name={{
-                        android: 'favorite',
-                        ios: 'person.2.fill',
-                        web: 'favorite',
-                      }}
-                      size={19}
-                      tintColor={colors.accent}
-                      weight="semibold"
-                    />
-                  </View>
-                  <View style={styles.entityEntryMain}>
-                    <Text style={styles.entityEntryTitle}>角色与人物</Text>
-                    <Text style={styles.entityEntryHint}>查看公开收藏</Text>
-                  </View>
-                  <SymbolView
-                    name={{
-                      android: 'chevron_right',
-                      ios: 'chevron.right',
-                      web: 'chevron_right',
-                    }}
-                    size={13}
-                    tintColor={colors.subtle}
-                    weight="semibold"
+              <PublicUserProfileSummary
+                user={user}
+                showActions={Boolean(session && !isOwnProfile)}
+                onOpenEntities={SHOW_ENTITY_ENTRY ? () =>
+                  router.push({
+                    pathname: '/user/entities/[username]',
+                    params: { username: user.username },
+                  }) : undefined
+                }
+              />
+              <ProfileSectionHeader
+                title="好友"
+                meta={profileSectionMeta(
+                  friendsQuery.isPending,
+                  friendsQuery.isError,
+                  friends.length,
+                  friendsPage?.total,
+                )}
+                action={friendsQuery.hasNextPage ? (
+                  <SectionAction
+                    accessibilityHint="打开完整好友列表"
+                    label="查看全部"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/user/friends/[username]',
+                        params: { username: user.username },
+                      })
+                    }
+                    style={styles.sectionAction}
                   />
-                </Pressable>
-              ) : null}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>好友</Text>
-                <View style={styles.sectionRight}>
-                  <Text style={styles.sectionMeta}>
-                    {sectionMeta(
-                      friendsQuery.isPending,
-                      friendsQuery.isError,
-                      friends.length,
-                      friendsPage?.total,
-                    )}
-                  </Text>
-                  {friendsQuery.hasNextPage ? (
-                    <SectionAction
-                      accessibilityHint="打开完整好友列表"
-                      label="查看全部"
-                      onPress={() =>
-                        router.push({
-                          pathname: '/user/friends/[username]',
-                          params: { username: user.username },
-                        })
-                      }
-                      style={styles.sectionAction}
-                    />
-                  ) : null}
-                </View>
-              </View>
+                ) : null}
+              />
               {friends.length > 0 ? (
                 <ScrollView
                   contentContainerStyle={styles.friendList}
@@ -249,53 +178,47 @@ export default function PublicUserScreen() {
                   ))}
                 </ScrollView>
               ) : (
-                <SectionStatus
+                <ProfileSectionStatus
                   emptyText="暂无公开好友。"
                   isError={friendsQuery.isError}
                   isPending={friendsQuery.isPending}
                   onRetry={() => void friendsQuery.refetch()}
                 />
               )}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>时间线</Text>
-                <View style={styles.sectionRight}>
-                  {isOwnProfile ? (
-                    <Pressable
-                      accessibilityLabel="发布动态"
-                      accessibilityRole="button"
-                      hitSlop={HIT_SLOP}
-                      onPress={() => setComposerVisible(true)}
-                      style={({ pressed }) => [
-                        styles.timelinePublishButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <SymbolView
-                        name={{
-                          android: 'edit',
-                          ios: 'square.and.pencil',
-                          web: 'edit',
-                        }}
-                        size={15}
-                        tintColor={colors.ink}
-                        weight="semibold"
-                      />
-                      <Text style={styles.timelinePublishText}>发布</Text>
-                    </Pressable>
-                  ) : (
-                    <Text style={styles.sectionMeta}>
-                      {timelineQuery.isPending
-                        ? '读取中'
-                        : timelineQuery.isError
-                          ? '暂不可用'
-                          : `最近 ${timeline.length} 条`}
-                    </Text>
-                  )}
-                </View>
-              </View>
+              <ProfileSectionHeader
+                title="时间线"
+                meta={isOwnProfile ? undefined : (
+                  timelineQuery.isPending ? '读取中' :
+                  timelineQuery.isError ? '暂不可用' : `最近 ${timeline.length} 条`
+                )}
+                action={isOwnProfile ? (
+                  <Pressable
+                    accessibilityLabel="发布动态"
+                    accessibilityRole="button"
+                    hitSlop={HIT_SLOP}
+                    onPress={() => setComposerVisible(true)}
+                    style={({ pressed }) => [
+                      styles.timelinePublishButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <SymbolView
+                      name={{
+                        android: 'edit',
+                        ios: 'square.and.pencil',
+                        web: 'edit',
+                      }}
+                      size={15}
+                      tintColor={colors.ink}
+                      weight="semibold"
+                    />
+                    <Text style={styles.timelinePublishText}>发布</Text>
+                  </Pressable>
+                ) : null}
+              />
               <View style={styles.timelineList}>
                 {timeline.length === 0 ? (
-                  <SectionStatus
+                  <ProfileSectionStatus
                     emptyText="暂无公开动态。"
                     isError={timelineQuery.isError}
                     isPending={timelineQuery.isPending}
@@ -332,36 +255,32 @@ export default function PublicUserScreen() {
                   />
                 ) : null}
               </View>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>日志</Text>
-                <View style={styles.sectionRight}>
-                  <Text style={styles.sectionMeta}>
-                    {sectionMeta(
-                      blogsQuery.isPending,
-                      blogsQuery.isError,
-                      blogs.length,
-                      blogsPage?.total,
-                      '最近 ',
-                    )}
-                  </Text>
-                  {blogsQuery.hasNextPage ? (
-                    <SectionAction
-                      accessibilityHint="打开完整日志列表"
-                      label="查看全部"
-                      onPress={() =>
-                        router.push({
-                          pathname: '/user/blogs/[username]',
-                          params: { username: user.username },
-                        })
-                      }
-                      style={styles.sectionAction}
-                    />
-                  ) : null}
-                </View>
-              </View>
+              <ProfileSectionHeader
+                title="日志"
+                meta={profileSectionMeta(
+                  blogsQuery.isPending,
+                  blogsQuery.isError,
+                  blogs.length,
+                  blogsPage?.total,
+                  '最近 ',
+                )}
+                action={blogsQuery.hasNextPage ? (
+                  <SectionAction
+                    accessibilityHint="打开完整日志列表"
+                    label="查看全部"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/user/blogs/[username]',
+                        params: { username: user.username },
+                      })
+                    }
+                    style={styles.sectionAction}
+                  />
+                ) : null}
+              />
               <View style={styles.blogList}>
                 {blogs.length === 0 ? (
-                  <SectionStatus
+                  <ProfileSectionStatus
                     emptyText="暂无公开日志。"
                     isError={blogsQuery.isError}
                     isPending={blogsQuery.isPending}
@@ -382,37 +301,31 @@ export default function PublicUserScreen() {
                   />
                 ))}
               </View>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  {collectionSubjectTypeLabel}收藏
-                </Text>
-                <View style={styles.sectionRight}>
-                  <Text style={styles.sectionMeta}>
-                    {sectionMeta(
-                      collectionsQuery.isPending,
-                      collectionsQuery.isError,
-                      collections.length,
-                      collectionsPage?.total,
-                    )}
-                  </Text>
-                  {collectionsQuery.hasNextPage ? (
-                    <SectionAction
-                      accessibilityHint={`打开完整${collectionSubjectTypeLabel}收藏列表`}
-                      label="查看全部"
-                      onPress={() =>
-                        router.push({
-                          pathname: '/user/collections/[username]',
-                          params: {
-                            type: String(collectionSubjectType),
-                            username: user.username,
-                          },
-                        })
-                      }
-                      style={styles.sectionAction}
-                    />
-                  ) : null}
-                </View>
-              </View>
+              <ProfileSectionHeader
+                title={`${collectionSubjectTypeLabel}收藏`}
+                meta={profileSectionMeta(
+                  collectionsQuery.isPending,
+                  collectionsQuery.isError,
+                  collections.length,
+                  collectionsPage?.total,
+                )}
+                action={collectionsQuery.hasNextPage ? (
+                  <SectionAction
+                    accessibilityHint={`打开完整${collectionSubjectTypeLabel}收藏列表`}
+                    label="查看全部"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/user/collections/[username]',
+                        params: {
+                          type: String(collectionSubjectType),
+                          username: user.username,
+                        },
+                      })
+                    }
+                    style={styles.sectionAction}
+                  />
+                ) : null}
+              />
               <SubjectTypeTabs
                 contentContainerStyle={styles.collectionTypeTabs}
                 onChange={setCollectionSubjectType}
@@ -450,139 +363,22 @@ export default function PublicUserScreen() {
   );
 }
 
-function sectionMeta(
-  isPending: boolean,
-  isError: boolean,
-  count: number,
-  total?: number,
-  prefix = '',
-) {
-  if (isPending) {
-    return '读取中';
-  }
-
-  if (isError) {
-    return '暂不可用';
-  }
-
-  return `${prefix}${count} / ${total ?? count}`;
-}
-
-function SectionStatus({
-  emptyText,
-  isError,
-  isPending,
-  onRetry,
-}: {
-  emptyText: string;
-  isError: boolean;
-  isPending: boolean;
-  onRetry: () => void;
-}) {
-  const colors = useTheme();
-  const styles = createStyles(colors);
-
-  if (isPending) {
-    return <Text style={styles.inlineEmpty}>正在读取…</Text>;
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.inlineStatus}>
-        <Text style={styles.inlineEmpty}>这一部分暂时读取失败。</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onRetry}
-          style={({ pressed }) => [
-            styles.inlineRetry,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.inlineRetryText}>重试</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  return <Text style={styles.inlineEmpty}>{emptyText}</Text>;
-}
-
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 14, padding: 20, paddingBottom: 52 },
-  profile: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingBottom: 16,
-    paddingTop: 4,
+  content: {
+    gap: SPACING.lg,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xxl + SPACING.xl,
   },
-  avatar: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 38,
-    height: 76,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 76,
-  },
-  avatarFallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
-  profileMain: { flex: 1, marginLeft: 16 },
-  friendAction: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    gap: 8,
-    marginLeft: 10,
-    marginTop: 2,
-  },
-  nickname: {
-    color: colors.ink,
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  username: { color: colors.subtle, fontSize: 12, marginTop: 4 },
-  sign: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
-  entityEntry: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    flexDirection: 'row',
-    minHeight: 74,
-    paddingHorizontal: 16,
-  },
-  entityEntryIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.accentSoft,
-    borderRadius: 15,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  entityEntryMain: { flex: 1, marginLeft: 13 },
-  entityEntryTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-  entityEntryHint: { color: colors.subtle, fontSize: 12, marginTop: 4 },
-  sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 10,
-    paddingHorizontal: 4,
-    paddingTop: 24,
-  },
-  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
-  sectionMeta: { color: colors.subtle, fontSize: 12 },
-  sectionRight: { alignItems: 'center', flexDirection: 'row' },
   sectionAction: {
-    marginLeft: 10,
+    marginLeft: SPACING.md,
   },
-  friendList: { gap: 14, paddingBottom: 8 },
+  friendList: { gap: SPACING.lg, paddingBottom: SPACING.sm },
   timelineList: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
   timelinePublishButton: {
     alignItems: 'center',
@@ -590,63 +386,38 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 11,
     flexDirection: 'row',
-    gap: 5,
+    gap: SPACING.xs,
     height: 32,
     justifyContent: 'center',
-    paddingHorizontal: 11,
+    paddingHorizontal: SPACING.md,
   },
   timelinePublishText: {
     color: colors.ink,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: 17,
   },
   timelineAllButton: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     justifyContent: 'space-between',
     minHeight: 50,
-    paddingHorizontal: 2,
-  },
-  inlineEmpty: {
-    color: colors.muted,
-    fontSize: 13,
-    paddingHorizontal: 4,
-    paddingVertical: 18,
-  },
-  inlineStatus: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  inlineRetry: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  inlineRetryText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
+    paddingHorizontal: SPACING.xs / 2,
   },
   blogList: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 10,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  blogEmpty: { color: colors.muted, fontSize: 13, paddingVertical: 18 },
-  collectionTypeTabs: { paddingBottom: 10 },
+  collectionTypeTabs: { paddingBottom: SPACING.md },
   collectionCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 2,
+    marginBottom: SPACING.xs / 2,
     overflow: 'hidden',
-    paddingHorizontal: 10,
+    paddingHorizontal: SPACING.md,
   },
   pressed: { opacity: 0.62 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14 },
 });
