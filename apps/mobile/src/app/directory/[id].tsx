@@ -1,20 +1,15 @@
 import { SPACING, TYPE } from '@/constants/design';
 import { userErrorMessage } from '@/lib/user-error-message';
-import { memo, useCallback, useState } from 'react';
-import { Image } from 'expo-image';
+import { useCallback, useState } from 'react';
 import {
-  type Href,
-  Link,
   router,
   Stack,
   useLocalSearchParams,
   usePathname,
 } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import {
   Alert,
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -25,9 +20,10 @@ import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { playWarningHaptic } from '@/lib/haptics';
 import { useAuth } from '@/features/auth/auth-provider';
-import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { IndexComposer } from '@/features/indexes/index-composer';
+import { IndexDetailHeader } from '@/features/indexes/index-detail-header';
+import { PublicIndexItemRow } from '@/features/indexes/public-index-item-row';
 import {
   usePublicIndex,
   usePublicIndexItems,
@@ -48,82 +44,6 @@ import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
-
-// 目录条目行：按条目类型生成深链，可点击的条目用 AppleZoom 包住封面。
-const IndexItemRow = memo(function IndexItemRow({
-  item,
-  styles,
-}: {
-  item: PublicIndexItem;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  const colors = useTheme();
-  const href = getIndexItemHref(item);
-  const row = (
-    <Pressable
-      accessibilityHint={href ? '进入详情' : undefined}
-      accessibilityLabel={`打开${item.title}`}
-      accessibilityRole={href ? 'button' : undefined}
-      style={styles.subjectRow}
-    >
-      {href ? <Link.AppleZoom>
-        <View style={styles.cover}>
-          <Text style={styles.coverFallback}>
-            {item.title.slice(0, 1)}
-          </Text>
-          {item.coverUrl ? (
-            <Image
-              contentFit="cover"
-              recyclingKey={item.coverUrl}
-              source={item.coverUrl}
-              style={StyleSheet.absoluteFill}
-              transition={120}
-            />
-          ) : null}
-        </View>
-      </Link.AppleZoom> : (
-        <View style={styles.cover}>
-          <Text style={styles.coverFallback}>
-            {item.title.slice(0, 1)}
-          </Text>
-          {item.coverUrl ? (
-            <Image
-              contentFit="cover"
-              recyclingKey={item.coverUrl}
-              source={item.coverUrl}
-              style={StyleSheet.absoluteFill}
-              transition={120}
-            />
-          ) : null}
-        </View>
-      )}
-      <View style={styles.subjectMain}>
-        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.subjectTitle}>
-          {item.title}
-        </Text>
-        <Text maxFontSizeMultiplier={1.3} numberOfLines={2} style={styles.subjectMeta}>
-          {getIndexItemLabel(item)}
-          {item.kind === 'subject'
-            ? ` · ${item.score ? `${item.score.toFixed(1)} 分` : '暂无评分'}`
-            : ''}
-          {item.comment ? ` · ${item.comment}` : ''}
-        </Text>
-      </View>
-      <SymbolView
-        name={{
-          android: 'chevron_right',
-          ios: 'chevron.right',
-          web: 'chevron_right',
-        }}
-        size={14}
-        tintColor={colors.subtle}
-        weight="semibold"
-      />
-    </Pressable>
-  );
-
-  return href ? <Link asChild href={href}>{row}</Link> : row;
-});
 
 export default function PublicIndexScreen() {
   const colors = useTheme();
@@ -146,9 +66,9 @@ export default function PublicIndexScreen() {
     Boolean(session) && index?.authorUsername === session?.user.username;
   const renderItem = useCallback(
     ({ item }: { item: PublicIndexItem }) => (
-      <IndexItemRow item={item} styles={styles} />
+      <PublicIndexItemRow item={item} />
     ),
-    [styles],
+    [],
   );
 
   function openMenu() {
@@ -266,90 +186,19 @@ export default function PublicIndexScreen() {
               onRetry={() => void indexQuery.refetch()}
             />
             {index ? (
-              <View style={styles.headerCard}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.title}>{index.title}</Text>
-                  {isOwnIndex ? (
-                    <Pressable
-                      accessibilityLabel="更多目录操作"
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={openMenu}
-                      style={({ pressed }) => [
-                        styles.overflowButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <SymbolView
-                        name={{
-                          android: 'more_horiz',
-                          ios: 'ellipsis',
-                          web: 'more_horiz',
-                        }}
-                        size={17}
-                        tintColor={colors.muted}
-                        weight="semibold"
-                      />
-                    </Pressable>
-                  ) : null}
-                </View>
-                {index.authorUsername ? (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/user/[username]',
-                        params: { username: index.authorUsername! },
-                      })
-                    }
-                  >
-                    <Text style={styles.author}>{index.author}</Text>
-                  </Pressable>
-                ) : (
-                  <Text style={styles.author}>{index.author}</Text>
-                )}
-                {index.description ? (
-                  <Text style={styles.description}>{index.description}</Text>
-                ) : null}
-                <Text style={styles.stats}>
-                  {index.itemCount} 项 · {index.collects} 收藏 ·{' '}
-                  {index.replyCount} 回复
-                </Text>
-                <Pressable
-                  accessibilityLabel={
-                    collectionQuery.data ? '取消收藏目录' : '收藏目录'
-                  }
-                  accessibilityRole="button"
-                  accessibilityState={{ busy: setCollection.isPending }}
-                  disabled={setCollection.isPending}
-                  onPress={toggleCollection}
-                  style={({ pressed }) => [
-                    styles.collectButton,
-                    collectionQuery.data && styles.collectedButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <SymbolView
-                    name={
-                      collectionQuery.data
-                        ? { android: 'star', ios: 'star.fill', web: 'star' }
-                        : { android: 'star_outline', ios: 'star', web: 'star_outline' }
-                    }
-                    size={14}
-                    tintColor={
-                      collectionQuery.data ? colors.surface : colors.accent
-                    }
-                    weight="semibold"
-                  />
-                  <Text
-                    style={[
-                      styles.collectText,
-                      collectionQuery.data && styles.collectedText,
-                    ]}
-                  >
-                    {collectionQuery.data ? '已收藏' : '收藏目录'}
-                  </Text>
-                </Pressable>
-              </View>
+              <IndexDetailHeader
+                index={index}
+                collected={Boolean(collectionQuery.data)}
+                collectionPending={setCollection.isPending}
+                onOpenMenu={isOwnIndex ? openMenu : undefined}
+                onOpenAuthor={index.authorUsername ? () =>
+                  router.push({
+                    pathname: '/user/[username]',
+                    params: { username: index.authorUsername! },
+                  }) : undefined
+                }
+                onToggleCollection={toggleCollection}
+              />
             ) : null}
             {index ? (
               <View style={styles.sectionHeader}>
@@ -417,113 +266,9 @@ export default function PublicIndexScreen() {
   );
 }
 
-function getIndexItemLabel(item: PublicIndexItem) {
-  if (item.kind === 'subject' && item.type) {
-    return getSubjectTypeLabel(item.type);
-  }
-  return {
-    blog: '日志',
-    character: '角色',
-    episode: '章节',
-    groupTopic: '小组话题',
-    person: '人物',
-    subject: '条目',
-    subjectTopic: '条目话题',
-  }[item.kind];
-}
-
-function getIndexItemHref(item: PublicIndexItem): Href | undefined {
-  switch (item.kind) {
-    case 'subject':
-      return { pathname: '/subject/[id]', params: { id: String(item.id) } };
-    case 'character':
-      return { pathname: '/character/[id]', params: { id: String(item.id) } };
-    case 'person':
-      return { pathname: '/person/[id]', params: { id: String(item.id) } };
-    case 'blog':
-      return { pathname: '/blog/[id]', params: { id: String(item.id) } };
-    case 'groupTopic':
-      return {
-        pathname: '/group/topic/[id]',
-        params: { id: String(item.id) },
-      };
-    case 'episode':
-      return item.parentId && item.episodeNumber
-        ? {
-            pathname: '/subject/[id]/episode/[episodeNumber]',
-            params: {
-              episodeNumber: String(item.episodeNumber),
-              id: String(item.parentId),
-            },
-          }
-        : undefined;
-    case 'subjectTopic':
-      return item.parentId
-        ? {
-            pathname: '/subject/[id]/topic/[topicId]',
-            params: {
-              id: String(item.parentId),
-              topicId: String(item.id),
-            },
-          }
-        : undefined;
-  }
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { gap: SPACING.md, padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
-  headerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    padding: SPACING.xl,
-  },
-  titleRow: { alignItems: 'flex-start', flexDirection: 'row' },
-  overflowButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    marginLeft: SPACING.sm,
-    width: 32,
-  },
-  title: {
-    color: colors.ink,
-    flex: 1,
-    fontSize: TYPE.titleLarge.fontSize,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 32,
-  },
-  author: {
-    color: colors.accent,
-    fontSize: TYPE.caption.fontSize,
-    fontWeight: '700',
-    marginTop: SPACING.sm,
-  },
-  description: {
-    color: colors.muted,
-    fontSize: TYPE.body.fontSize,
-    lineHeight: 22,
-    marginTop: SPACING.lg,
-  },
-  stats: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.lg },
-  collectButton: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: colors.accentSoft,
-    borderRadius: 15,
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
-    minHeight: 44,
-    paddingHorizontal: SPACING.lg,
-  },
-  collectedButton: { backgroundColor: colors.accent },
-  collectText: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '800' },
-  collectedText: { color: colors.surface },
   sectionTitle: {
     color: colors.ink,
     fontSize: TYPE.title.fontSize,
@@ -537,36 +282,4 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: SPACING.lg,
   },
   sectionMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
-  subjectRow: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    flexDirection: 'row',
-    minHeight: 92,
-    padding: SPACING.md,
-  },
-  cover: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 11,
-    height: 72,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 51,
-  },
-  coverFallback: { color: colors.subtle, fontSize: TYPE.body.fontSize, fontWeight: '700' },
-  subjectMain: { flex: 1, marginLeft: SPACING.md },
-  subjectTitle: {
-    color: colors.ink,
-    fontSize: TYPE.body.fontSize,
-    fontWeight: '700',
-    lineHeight: 21,
-  },
-  subjectMeta: {
-    color: colors.muted,
-    fontSize: TYPE.caption.fontSize,
-    lineHeight: 18,
-    marginTop: SPACING.sm,
-  },
-  pressed: { opacity: 0.62 },
 });
