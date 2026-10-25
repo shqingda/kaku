@@ -1,3 +1,4 @@
+import { startupTiming } from '@/lib/startup-timing';
 import { useEffect, useState } from 'react';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -62,9 +63,10 @@ export default function RootLayout() {
 
   return (
     <AppErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView onLayout={startupTiming.markFirstLayout} style={{ flex: 1 }}>
         <PersistQueryClientProvider
           client={queryClient}
+          onSuccess={startupTiming.markCacheRestored}
           persistOptions={{
             buster: QUERY_CACHE_BUSTER,
             dehydrateOptions: {

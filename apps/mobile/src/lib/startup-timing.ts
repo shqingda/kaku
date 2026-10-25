@@ -1,17 +1,26 @@
-// 轻量首屏计时：记录 JS 启动到首页首次渲染的耗时，供诊断页查看。
-// 不引入额外依赖，后续可接 Sentry 或自建指标上报。
-export const appStartTime = globalThis.performance?.now?.() ?? Date.now();
+// JS module origin, not native process launch. Device profiling measures the latter.
+type HomeState = 'content' | 'empty' | 'error' | 'guest';
+type StartupSnapshot = {
+  firstLayoutMs?: number;
+  cacheRestoredMs?: number;
+  homeReadyMs?: number;
+  homeState?: HomeState;
+};
 
-let firstContentTime: number | undefined;
-
-export function markFirstContent() {
-  if (firstContentTime === undefined) {
-    firstContentTime = globalThis.performance?.now?.() ?? Date.now();
-  }
+export function createStartupTiming(now = () => globalThis.performance?.now?.() ?? Date.now()) {
+  const origin = now();
+  const timings: StartupSnapshot = {};
+  const elapsed = () => Math.round(now() - origin);
+  return {
+    markFirstLayout() { timings.firstLayoutMs ??= elapsed(); },
+    markCacheRestored() { timings.cacheRestoredMs ??= elapsed(); },
+    markHomeReady(state: HomeState) {
+      if (timings.homeReadyMs !== undefined) return;
+      timings.homeReadyMs = elapsed();
+      timings.homeState = state;
+    },
+    snapshot: (): StartupSnapshot => ({ ...timings }),
+  };
 }
 
-export function getFirstContentDelayMs() {
-  return firstContentTime === undefined
-    ? undefined
-    : Math.round(firstContentTime - appStartTime);
-}
+export const startupTiming = createStartupTiming();

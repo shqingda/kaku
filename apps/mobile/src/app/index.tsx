@@ -40,7 +40,7 @@ import {
   prefetchPublicUserCollections,
   usePublicUserCollections,
 } from '@/features/users/use-public-user';
-import { markFirstContent } from '@/lib/startup-timing';
+import { startupTiming } from '@/lib/startup-timing';
 
 export default function HomeScreen() {
   const colors = useTheme();
@@ -76,12 +76,19 @@ function HomeContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const username = session?.user.username ?? '';
 
-  // 首屏指标：记录首页首次布局的时间点。
-  useLayoutEffect(() => {
-    markFirstContent();
-  }, []);
   const selectedQuery = usePublicUserCollections(username, selectedTrackingType, 'doing');
   const timelineQuery = useFriendTimeline();
+  // The first tracking section is usable only after account restoration and its
+  // query settle. Cached content is usable even while a refresh is running.
+  useLayoutEffect(() => {
+    if (isAuthLoading) return;
+    if (!session) { startupTiming.markHomeReady('guest'); return; }
+    if (selectedQuery.data) {
+      startupTiming.markHomeReady(selectedQuery.data.pages[0]?.items.length ? 'content' : 'empty');
+    } else if (selectedQuery.isError) {
+      startupTiming.markHomeReady('error');
+    }
+  }, [isAuthLoading, session, selectedQuery.data, selectedQuery.isError]);
   const isRefreshing =
     Boolean(session) &&
     [selectedQuery, timelineQuery].some(

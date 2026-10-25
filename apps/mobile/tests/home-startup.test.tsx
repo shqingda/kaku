@@ -13,7 +13,9 @@ import type { FriendTimelineItem } from '@/features/timeline/model';
 import type { HomeMediaSection } from '@/features/home/home-media-section';
 import { getPublicUserCollections } from '@/infrastructure/bangumi/users/provider';
 import { queryKeys } from '@/lib/query-keys';
+import { startupTiming } from '@/lib/startup-timing';
 
+jest.mock('@/lib/startup-timing', () => ({ startupTiming: { markHomeReady: jest.fn() } }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), prefetch: jest.fn() } }));
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: mockSession, isLoading: false }) }));
 jest.mock('@/features/preferences/view-preferences', () => ({ readHomeTrackingType: () => 2, saveHomeTrackingType: jest.fn() }));
@@ -64,7 +66,7 @@ afterAll(() => refreshControlSpy.mockRestore());
 
 beforeEach(() => {
   jest.clearAllMocks();
-  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 0, gcTime: Infinity } } });
   mockSession = { user: { id: 1, username: 'tester', nickname: 'Tester' } } as AuthSession;
   mockTimeline = {
     data: { pages: [{ items: [] }] },
@@ -91,6 +93,7 @@ test('guest startup leaves discovery requests until a discovery entry is pressed
   await renderHome();
 
   expect(screen.getByText('从记录开始')).toBeTruthy();
+  expect(startupTiming.markHomeReady).toHaveBeenCalledWith('guest');
   expect(getPublicUserCollections).not.toHaveBeenCalled();
   expect(router.prefetch).not.toHaveBeenCalled();
   for (const prefetch of [prefetchChannel, prefetchCommunity, prefetchExplore, prefetchRankings]) {
@@ -107,6 +110,7 @@ test('switching tracking types observes only the selected cache and refreshes on
   await renderHome();
   await waitFor(() => expect(screen.getByText('已保存的类型 2')).toBeTruthy());
   expect(getPublicUserCollections).toHaveBeenCalledTimes(1);
+  expect(startupTiming.markHomeReady).toHaveBeenCalledWith('content');
   expect(router.prefetch).not.toHaveBeenCalled();
 
   await fireEvent(screen.getByLabelText('切换类型 1'), 'pressIn');
@@ -155,4 +159,20 @@ test('a failed timeline without cached posts remains an explicit retry state', a
   expect(screen.queryByText('还没有好友动态')).toBeNull();
   await fireEvent.press(screen.getByText('暂时没有加载出来，点此重试'));
   expect(mockTimeline.refetch).toHaveBeenCalledTimes(1);
+});
+
+
+test('home readiness waits for collections instead of equating initial layout with usable content', async () => {
+  let finish!: (value: Awaited<ReturnType<typeof getPublicUserCollections>>) => void;
+  jest.mocked(getPublicUserCollections).mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  await renderHome();
+  expect(startupTiming.markHomeReady).not.toHaveBeenCalled();
+  finish({ items: [], total: 0 });
+  await waitFor(() => expect(startupTiming.markHomeReady).toHaveBeenCalledWith('empty'));
+});
+
+test('home readiness records explicit failure separately from guest and content', async () => {
+  jest.mocked(getPublicUserCollections).mockRejectedValue(new Error('offline'));
+  await renderHome();
+  await waitFor(() => expect(startupTiming.markHomeReady).toHaveBeenCalledWith('error'));
 });

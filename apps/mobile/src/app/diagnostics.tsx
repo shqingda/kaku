@@ -15,10 +15,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
-import { getFirstContentDelayMs } from '@/lib/startup-timing';
+import { startupTiming } from '@/lib/startup-timing';
 import Sentry from '@/lib/sentry';
 import {
   clearDiagnosticRecords,
@@ -53,6 +54,7 @@ export default function DiagnosticsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string>();
+  const timing = startupTiming.snapshot();
   const isSentryEnabled = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN);
 
   const loadRecords = useCallback(async () => {
@@ -138,12 +140,20 @@ export default function DiagnosticsScreen() {
           </View>
 
           <View style={styles.timingCard}>
-            <Text style={styles.timingLabel}>本次启动到首页首屏</Text>
-            <Text style={styles.timingValue}>
-              {getFirstContentDelayMs() === undefined
-                ? '未记录（首页尚未打开）'
-                : `${getFirstContentDelayMs()} ms`}
-            </Text>
+            <Text style={styles.timingLabel}>本次 JS 启动分段计时</Text>
+            <Text style={styles.sentryState}>不包含原生进程启动；首页指首个收藏区或访客引导可用。</Text>
+            {([
+              ['JS 首布局', timing.firstLayoutMs],
+              ['缓存恢复结束', timing.cacheRestoredMs],
+              ['首页可用状态', timing.homeReadyMs],
+            ] as const).map(([label, value]) => (
+              <Text key={label} style={styles.timingValue}>
+                {label}：{value === undefined ? '未记录' : `${value} ms`}
+              </Text>
+            ))}
+            {timing.homeState ? <Text style={styles.sentryState}>
+              首页状态：{{ content: '内容', empty: '空态', error: '错误', guest: '访客引导' }[timing.homeState]}
+            </Text> : null}
           </View>
 
           {__DEV__ ? (
@@ -263,18 +273,18 @@ const createStyles = (colors: ThemeColors) =>
     centerState: {
       alignItems: 'center',
       flex: 1,
-      gap: 12,
+      gap: SPACING.md,
       justifyContent: 'center',
     },
-    stateText: { color: colors.muted, fontSize: 14 },
-    content: { padding: 20, paddingBottom: 44 },
+    stateText: { color: colors.muted, ...TYPE.body },
+    content: { padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
     introCard: {
       alignItems: 'flex-start',
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 22,
       flexDirection: 'row',
-      padding: 18,
+      padding: SPACING.lg,
     },
     introIcon: {
       alignItems: 'center',
@@ -285,77 +295,76 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'center',
       width: 44,
     },
-    introCopy: { flex: 1, marginLeft: 14 },
-    introTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-    introText: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 5 },
+    introCopy: { flex: 1, marginLeft: SPACING.lg },
+    introTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
+    introText: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
     emptyCard: {
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 22,
-      marginTop: 14,
-      padding: 32,
+      marginTop: SPACING.lg,
+      padding: SPACING.xxl,
     },
-    emptyTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-    emptyText: { color: colors.muted, fontSize: 13, marginTop: 7 },
+    emptyTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
+    emptyText: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
     timingCard: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 22,
-      marginTop: 14,
-      padding: 18,
+      marginTop: SPACING.lg,
+      padding: SPACING.lg,
     },
-    timingLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-    timingValue: { color: colors.ink, fontSize: 22, fontWeight: '800', marginTop: 6 },
+    timingLabel: { color: colors.muted, ...TYPE.micro, fontWeight: '700' },
+    timingValue: { color: colors.ink, ...TYPE.body, fontWeight: '800', marginTop: SPACING.sm },
     sentryCard: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 22,
-      marginTop: 14,
-      padding: 18,
+      marginTop: SPACING.lg,
+      padding: SPACING.lg,
     },
-    sentryState: { color: colors.muted, fontSize: 13, marginTop: 4 },
+    sentryState: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
     sentryButton: {
       alignItems: 'center',
       alignSelf: 'flex-start',
       backgroundColor: colors.accentSoft,
       borderRadius: 12,
       justifyContent: 'center',
-      marginTop: 12,
+      marginTop: SPACING.md,
       minHeight: 40,
-      paddingHorizontal: 14,
+      paddingHorizontal: SPACING.lg,
     },
-    sentryButtonText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+    sentryButtonText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
     headingRow: {
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 10,
-      marginTop: 26,
-      paddingHorizontal: 4,
+      marginBottom: SPACING.md,
+      marginTop: SPACING.xl,
+      paddingHorizontal: SPACING.xs,
     },
-    heading: { color: colors.ink, fontSize: 18, fontWeight: '800' },
-    count: { color: colors.subtle, fontSize: 12, fontWeight: '600' },
+    heading: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
+    count: { color: colors.subtle, ...TYPE.micro, fontWeight: '600' },
     recordCard: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 20,
-      marginBottom: 10,
-      padding: 18,
+      marginBottom: SPACING.md,
+      padding: SPACING.lg,
     },
     recordHeader: { alignItems: 'center', flexDirection: 'row' },
-    recordName: { color: colors.ink, flex: 1, fontSize: 15, fontWeight: '800' },
-    recordTime: { color: colors.subtle, fontSize: 10, marginLeft: 12 },
-    recordMessage: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 9 },
+    recordName: { color: colors.ink, flex: 1, ...TYPE.body, fontWeight: '800' },
+    recordTime: { color: colors.subtle, ...TYPE.micro, marginLeft: SPACING.md },
+    recordMessage: { color: colors.ink, ...TYPE.body, marginTop: SPACING.sm },
     recordDetails: {
       color: colors.muted,
       fontFamily: Platform.select({ android: 'monospace', ios: 'Courier' }),
-      fontSize: 10,
-      lineHeight: 15,
-      marginTop: 12,
+      ...TYPE.micro,
+      marginTop: SPACING.md,
     },
-    expandLabel: { color: colors.accent, fontSize: 12, fontWeight: '700', marginTop: 12 },
-    actions: { gap: 10, marginTop: 14 },
+    expandLabel: { color: colors.accent, ...TYPE.micro, fontWeight: '700', marginTop: SPACING.md },
+    actions: { gap: SPACING.md, marginTop: SPACING.lg },
     primaryButton: {
       alignItems: 'center',
       backgroundColor: colors.accent,
@@ -366,7 +375,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     primaryButtonText: {
       color: colors.surface,
-      fontSize: 15,
+      ...TYPE.body,
       fontWeight: '800',
     },
     clearButton: {
@@ -377,6 +386,6 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'center',
       minHeight: 52,
     },
-    clearButtonText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
+    clearButtonText: { color: colors.accent, ...TYPE.body, fontWeight: '700' },
     pressed: { opacity: 0.62 },
   });
