@@ -85,6 +85,11 @@ test('image preview dismisses after a short downward drag', () => {
   );
 });
 
+test('an upward reversal can keep an image open beyond the distance threshold', () => {
+  assert.equal(shouldDismissImage(200, -1000, 800), false);
+  assert.equal(shouldDismissImage(200, -50, 800), true);
+});
+
 test('image scale stays 1:1 inside the supported range', () => {
   assert.equal(resistedScale(1), 1);
   assert.equal(resistedScale(2.5), 2.5);

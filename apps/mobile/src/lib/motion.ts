@@ -69,9 +69,9 @@ export function shouldDismissImage(
     return translationY > 80;
   }
   const distance = windowHeight * IMAGE_DISMISS_HEIGHT_RATIO;
-  const projected = translationY + project(Math.max(velocity, 0));
+  // 反向上甩可以把落点拉回阈值内；已拖过阈值也仍能反悔。
+  const projected = translationY + project(velocity);
   return (
-    translationY > distance ||
     projected > distance ||
     velocity > MIN_IMAGE_DISMISS_VELOCITY
   );

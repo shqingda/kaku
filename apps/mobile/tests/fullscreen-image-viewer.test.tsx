@@ -156,6 +156,19 @@ it.each([false, true])('returns a cancelled downward drag without closing (reduc
   expect(imageTransform()[1].translateY).toBe(0);
 });
 
+it.each([false, true])('keeps an image open when a long drag reverses upward (reduced motion: %s)', async (reduced) => {
+  jest.mocked(useReduceMotion).mockReturnValue(reduced);
+  const onClose = jest.fn();
+  await showImage(onClose);
+  mockGestures.pan.callbacks.onStart({ translationX: 0, translationY: 12 });
+  mockGestures.pan.callbacks.onUpdate({ translationX: 0, translationY: 400 });
+  mockGestures.pan.callbacks.onUpdate({ translationX: 0, translationY: 212 });
+  mockGestures.pan.callbacks.onEnd({ translationY: 212, velocityY: -1000 }, true);
+
+  expect(onClose).not.toHaveBeenCalled();
+  expect(imageTransform()[1].translateY).toBe(0);
+});
+
 it('continues an interrupted return and uses its displayed displacement on release', async () => {
   const onClose = jest.fn();
   const cancel = jest.spyOn(Reanimated, 'cancelAnimation');
