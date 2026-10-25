@@ -17,10 +17,11 @@ import {
   bangumiUserCharacterCollectionsSchema,
   bangumiUserPersonCollectionsSchema,
   type BangumiEpisodeResponse,
-} from './schemas';
-import { createBangumiRequester } from '../transport/http-client';
+} from './schemas.ts';
+import { createBangumiRequester } from '../transport/http-client.ts';
 
 const PAGE_SIZE = 100;
+const EPISODE_PAGE_CONCURRENCY = 3;
 const SEARCH_PAGE_SIZE = 30;
 
 const requestJson = createBangumiRequester({
@@ -231,7 +232,16 @@ export async function getBangumiEpisodes(
   subjectId: number,
   signal?: AbortSignal,
 ): Promise<BangumiEpisodeResponse[]> {
+  const checkAborted = () => {
+    if (signal?.aborted) {
+      const error = new Error('The request was aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+  };
+  checkAborted();
   const firstPage = await getEpisodePage(subjectId, 0, signal);
+  checkAborted();
 
   if (firstPage.total <= firstPage.data.length) {
     return firstPage.data;
@@ -241,14 +251,32 @@ export async function getBangumiEpisodes(
     { length: Math.ceil(firstPage.total / PAGE_SIZE) - 1 },
     (_, index) => (index + 1) * PAGE_SIZE,
   );
-  const remainingPages = await Promise.all(
-    remainingOffsets.map((offset) =>
-      getEpisodePage(subjectId, offset, signal),
-    ),
-  );
+  const remainingPages: BangumiEpisodeResponse[][] = new Array(remainingOffsets.length);
+  let nextPageIndex = 0;
+  let failed = false;
+
+  async function fetchRemainingPages() {
+    try {
+      while (!failed && nextPageIndex < remainingOffsets.length) {
+        checkAborted();
+        const index = nextPageIndex++;
+        const page = await getEpisodePage(subjectId, remainingOffsets[index], signal);
+        remainingPages[index] = page.data;
+      }
+    } catch (error) {
+      failed = true;
+      throw error;
+    }
+  }
+
+  await Promise.all(Array.from(
+    { length: Math.min(EPISODE_PAGE_CONCURRENCY, remainingOffsets.length) },
+    fetchRemainingPages,
+  ));
+  checkAborted();
 
   return [
     ...firstPage.data,
-    ...remainingPages.flatMap((page) => page.data),
+    ...remainingPages.flat(),
   ];
 }
