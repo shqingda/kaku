@@ -64,7 +64,7 @@ test('public rankings return a small provider-neutral page', async () => {
   });
 
   const cachedResponse = await app.request(
-    '/public/rankings?type=2&offset=24',
+    '/public/rankings?offset=24&ignored=not-part-of-the-key&type=2',
   );
   assert.equal(cachedResponse.status, 200);
   assert.equal(cachedResponse.headers.get('X-Kaku-Cache'), 'HIT');
@@ -137,4 +137,37 @@ test('public rankings reject unsupported types without calling Bangumi', async (
     error: 'invalid_ranking_query',
     message: '排行榜类型或分页位置无效。',
   });
+});
+
+for (const operation of ['match', 'put']) {
+  test(`public rankings survive a cache ${operation} failure`, async (t) => {
+    t.mock.method(console, 'warn', () => {});
+    t.mock.method(console, 'error', () => {});
+    const rankingCache = { async match() {}, async put() {} };
+    rankingCache[operation] = async () => { throw new Error('cache unavailable'); };
+    const response = await createApp({
+      rankingCache,
+      fetcher: async () => Response.json({ data: [], total: 0 }),
+    }).request('/public/rankings?type=2&offset=0');
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('X-Kaku-Cache'), 'MISS');
+    assert.deepEqual(await response.json(), { items: [] });
+  });
+}
+
+test('public rankings keep upstream failure status and headers when cache reads fail', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  const response = await createApp({
+    rankingCache: {
+      async match() { throw new Error('cache unavailable'); },
+      async put() { assert.fail('upstream failures must not be cached'); },
+    },
+    fetcher: async () => new Response(null, { status: 503 }),
+  }).request('/public/rankings?type=2&offset=0');
+
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('X-Kaku-Cache'), null);
+  assert.equal(response.headers.get('Cache-Control'), null);
+  assert.equal((await response.json()).error, 'bangumi_ranking_unavailable');
 });

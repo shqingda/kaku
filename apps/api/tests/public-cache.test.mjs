@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { setImmediate } from 'node:timers/promises';
 
 import {
   getPublicCache,
@@ -144,4 +145,92 @@ test('servePublicCached passes through when no cache is available', async () => 
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('X-Kaku-Cache'), 'MISS');
   assert.deepEqual(await response.json(), { fresh: true });
+});
+
+for (const operation of ['match', 'put']) {
+  test(`servePublicCached preserves upstream success when cache ${operation} fails`, async (t) => {
+    const warnings = t.mock.method(console, 'warn', () => {});
+    const cache = createMemoryCache();
+    cache[operation] = async () => { throw new Error('secret upstream url and credentials'); };
+
+    const response = await servePublicCached(createContext(CONTEXT_URL), cache, async () =>
+      new Response('fresh payload', { status: 203, headers: { 'Cache-Control': 'public, max-age=300' } }));
+
+    assert.equal(response.status, 203);
+    assert.equal(response.headers.get('X-Kaku-Cache'), 'MISS');
+    assert.equal(response.headers.get('Cache-Control'), 'public, max-age=300');
+    assert.equal(await response.text(), 'fresh payload');
+    assert.deepEqual(warnings.mock.calls.map(call => call.arguments), [
+      [operation === 'match' ? 'public_cache_read_failed' : 'public_cache_write_failed'],
+    ]);
+  });
+}
+
+test('servePublicCached hands a slow write to waitUntil before returning its response', async () => {
+  const gate = Promise.withResolvers();
+  const tasks = [];
+  const cache = createMemoryCache();
+  const put = cache.put;
+  cache.put = async (...args) => { await gate.promise; await put(...args); };
+  const context = { ...createContext(CONTEXT_URL), executionCtx: { waitUntil(task) { tasks.push(task); } } };
+  const pendingResponse = servePublicCached(context, cache, async () => Response.json({ fresh: true }));
+
+  try {
+    const result = await Promise.race([pendingResponse, setImmediate().then(() => 'still waiting for cache')]);
+    assert.notEqual(result, 'still waiting for cache');
+    assert.equal(tasks.length, 1);
+    assert.equal(cache.putRequests.length, 0);
+    assert.deepEqual(await result.json(), { fresh: true });
+  } finally {
+    gate.resolve();
+    await pendingResponse;
+    await Promise.all(tasks);
+  }
+  assert.deepEqual(await (await cache.match(new Request(CONTEXT_URL))).json(), { fresh: true });
+});
+
+test('servePublicCached catches background write failures in the retained task', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  const tasks = [];
+  const context = { ...createContext(CONTEXT_URL), executionCtx: { waitUntil(task) { tasks.push(task); } } };
+  const response = await servePublicCached(context, {
+    async match() {},
+    put() { throw new Error('cache write unavailable'); },
+  }, async () => Response.json({ fresh: true }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { fresh: true });
+  assert.equal(tasks.length, 1);
+  await Promise.all(tasks);
+});
+
+test('servePublicCached awaits writes when the host has no execution context', async () => {
+  const gate = Promise.withResolvers();
+  let stored = false;
+  const context = {
+    ...createContext(CONTEXT_URL),
+    get executionCtx() { throw new Error('This context has no ExecutionContext'); },
+  };
+  const pendingResponse = servePublicCached(context, {
+    async match() {},
+    async put() { await gate.promise; stored = true; },
+  }, async () => Response.json({ fresh: true }));
+
+  try {
+    assert.equal(await Promise.race([pendingResponse, setImmediate().then(() => 'pending')]), 'pending');
+    assert.equal(stored, false);
+  } finally {
+    gate.resolve();
+    await pendingResponse;
+  }
+  assert.equal(stored, true);
+});
+
+test('servePublicCached does not replace an upstream exception with a cache read failure', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  const upstreamError = new Error('upstream unavailable');
+  await assert.rejects(servePublicCached(createContext(CONTEXT_URL), {
+    async match() { throw new Error('cache unavailable'); },
+    async put() { assert.fail('upstream failures must not be cached'); },
+  }, async () => { throw upstreamError; }), error => error === upstreamError);
 });

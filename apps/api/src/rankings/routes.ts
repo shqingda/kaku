@@ -5,7 +5,7 @@ import type { Env } from '../env.ts';
 import {
   getPublicCache,
   type PublicCache,
-  withCacheStatus,
+  servePublicCached,
 } from '../public-cache.ts';
 import {
   BangumiRankingError,
@@ -50,27 +50,20 @@ export function registerRankingRoutes(
     cacheUrl.searchParams.set('type', String(subjectType));
     cacheUrl.searchParams.set('offset', String(offset));
     const cacheKey = new Request(cacheUrl, { method: 'GET' });
-    const cachedResponse = await cache?.match(cacheKey);
-
-    if (cachedResponse) {
-      return withCacheStatus(cachedResponse, 'HIT');
-    }
-
     try {
-      const page = await getBangumiRankedSubjects({
-        fetcher,
-        offset,
-        subjectType,
-      });
+      return await servePublicCached(context, cache, async () => {
+        const page = await getBangumiRankedSubjects({
+          fetcher,
+          offset,
+          subjectType,
+        });
 
-      context.header(
-        'Cache-Control',
-        'public, max-age=300, stale-while-revalidate=1800',
-      );
-      const response = context.json(page);
-
-      await cache?.put(cacheKey, response.clone());
-      return withCacheStatus(response, 'MISS');
+        context.header(
+          'Cache-Control',
+          'public, max-age=300, stale-while-revalidate=1800',
+        );
+        return context.json(page);
+      }, cacheKey);
     } catch (error) {
       if (error instanceof BangumiRankingError) {
         return context.json(
