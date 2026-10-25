@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./auth-contract": "./src/auth-contract.ts",
     "./collections-contract": "./src/collections-contract.ts",
+    "./notifications-contract": "./src/notifications-contract.ts",
     "./push-contract": "./src/push-contract.ts"
   },
   "scripts": {

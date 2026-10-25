@@ -1,56 +1,7 @@
-import { z } from 'zod';
+import { notificationListSchema } from '@kaku/shared/notifications-contract';
 
 import type { NotificationList } from '@/features/notifications/model';
 import { KakuApiError, readErrorMessage } from './auth-client.ts';
-
-const targetSchema = z.discriminatedUnion('kind', [
-  z.object({
-    id: z.number().int().positive(),
-    kind: z.literal('group-topic'),
-    replyId: z.number().int().positive().optional(),
-  }),
-  z.object({
-    id: z.number().int().positive(),
-    kind: z.literal('subject-topic'),
-    replyId: z.number().int().positive().optional(),
-  }),
-  z.object({
-    id: z.number().int().positive(),
-    kind: z.literal('character'),
-    replyId: z.number().int().positive().optional(),
-  }),
-  z.object({
-    id: z.number().int().positive(),
-    kind: z.literal('person'),
-    replyId: z.number().int().positive().optional(),
-  }),
-  z.object({
-    id: z.number().int().positive(),
-    kind: z.literal('blog'),
-    replyId: z.number().int().positive().optional(),
-  }),
-  z.object({ kind: z.literal('user'), username: z.string() }),
-]);
-
-const responseSchema = z.object({
-  items: z.array(
-    z.object({
-      action: z.string(),
-      createdAt: z.number().int(),
-      id: z.number().int().positive(),
-      sender: z.object({
-        avatarUrl: z.string().url().optional(),
-        nickname: z.string(),
-        username: z.string(),
-      }),
-      target: targetSchema.optional(),
-      title: z.string(),
-      unread: z.boolean(),
-    }),
-  ),
-  total: z.number().int().nonnegative(),
-  unreadCount: z.number().int().nonnegative(),
-});
 
 export async function getNotifications(
   request: (path: string, init?: RequestInit) => Promise<Response>,
@@ -62,7 +13,7 @@ export async function getNotifications(
     throw new KakuApiError(await readErrorMessage(response), response.status);
   }
 
-  return responseSchema.parse(await response.json());
+  return notificationListSchema.parse(await response.json());
 }
 
 export async function markNotificationsRead(
