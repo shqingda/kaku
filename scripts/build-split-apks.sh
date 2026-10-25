@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 本地构建单一 arm64-v8a APK 并发布到 GitHub Release。
+# 兼容旧参数的纯构建入口，不提交、不推送、不上传或发布。
 # 不消耗 EAS 云端构建额度。正式包使用已登记的签名轮换证明。
 #
 # 用法：
@@ -22,8 +22,6 @@ if (( ${#POSITIONAL[@]} )); then set -- "${POSITIONAL[@]}"; else set --; fi
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MOBILE_DIR="$REPO_DIR/apps/mobile"
-OUT_DIR="$MOBILE_DIR/dist-split"
-NOTES_FILE="$REPO_DIR/scripts/release-notes.md"
 
 cd "$MOBILE_DIR"
 
@@ -52,35 +50,7 @@ case "${CHANNEL}" in
 esac
 
 if [[ "$TAG" != "v$VERSION" ]]; then echo "tag 必须是 v$VERSION" >&2; exit 2; fi
-if [[ "$BUILD_ONLY" == true ]]; then
-  exec bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"
+if [[ "$BUILD_ONLY" != true ]]; then
+  echo "兼容入口仅构建；日志准备、上传和发布请按 docs/deployment/release.md 分步执行。"
 fi
-APK_NAME="kaku-${CHANNEL}.apk"
-# Direct APK distribution may download updates; store builds must not request this permission.
-export KAKU_UPDATE_CHANNEL=github
-
-if [[ ! -s "${NOTES_FILE}" ]]; then
-  echo "缺少发版说明 ${NOTES_FILE}，请先按 ReSource 格式写好再构建。" >&2
-  exit 1
-fi
-
-echo "==> 同步 App 内更新日志（从 ${NOTES_FILE} 写入 changelog-data.ts）"
-node "${REPO_DIR}/scripts/sync-changelog.mjs"
-if ! git -C "${REPO_DIR}" diff --quiet -- apps/mobile/src/features/changelog/changelog-data.ts; then
-  git -C "${REPO_DIR}" add apps/mobile/src/features/changelog/changelog-data.ts
-  git -C "${REPO_DIR}" commit -m "chore(release): sync in-app changelog for ${TAG}"
-fi
-
-bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"
-
-echo "==> 推送 origin/main（Release tag 必须落在已上传的提交上）"
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-git -C "${REPO_DIR}" push origin HEAD:main
-
-echo "==> 发布 tag=${TAG} asset=${APK_NAME}"
-gh release create "${TAG}" "${OUT_DIR}/${APK_NAME}" --repo shqingda/kaku \
-  --title "${TAG}" \
-  --notes-file "${NOTES_FILE}" \
-  --target "$(git -C "${REPO_DIR}" rev-parse HEAD)"
-
-echo "==> 完成: https://github.com/shqingda/kaku/releases/tag/${TAG}"
+exec bash "${REPO_DIR}/scripts/build-android.sh" "$CHANNEL"

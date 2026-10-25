@@ -126,30 +126,14 @@ test('legacy build-only uses release defaults and never reaches publishing tools
   }
 });
 
-test('release publishing accepts shrinking and uploads the standard APK name', () => {
+test('legacy release arguments now build without changelog, Git or publishing side effects', () => {
   const fixture = createBuildFixture();
   try {
-    for (const flag of ['0', '1']) {
-      writeFileSync(join(fixture.mobile, '.env'), `KAKU_OPTIMIZE_NATIVE=${flag}\n`);
-      const result = fixture.run('build-split-apks.sh', ['v1.2.3', 'release'], flag);
-      assertBuild(fixture, result, { profile: 'production', optimization: '1', artifact: 'kaku-release.apk' });
-      const commands = fixture.commands();
-      assert.equal(commands[0].command, 'sync-changelog');
-      const gitOperations = commands.filter(entry => entry.command === 'git').map(entry => entry.args.slice(2));
-      assert.deepEqual(gitOperations.map(args => args[0]), ['diff', 'add', 'commit', 'push', 'rev-parse']);
-      assert.deepEqual(gitOperations.find(args => args[0] === 'push'), ['push', 'origin', 'HEAD:main']);
-      const upload = commands.find(entry => entry.command === 'gh');
-      assert.deepEqual(upload.args, [
-        'release', 'create', 'v1.2.3', join(fixture.mobile, 'dist-split/kaku-release.apk'),
-        '--repo', 'shqingda/kaku', '--title', 'v1.2.3',
-        '--notes-file', join(fixture.root, 'scripts/release-notes.md'),
-        '--target', '0123456789abcdef0123456789abcdef01234567',
-      ]);
-      assert.ok(commands.findIndex(entry => entry.command === 'gradlew') < commands.findIndex(entry => entry.command === 'git' && entry.args[2] === 'push'));
-    }
-  } finally {
-    fixture.cleanup();
-  }
+    const result = fixture.run('build-split-apks.sh', ['v1.2.3', 'release']);
+    assertBuild(fixture, result, { profile: 'production', optimization: '1', artifact: 'kaku-release.apk' });
+    assert.ok(fixture.commands().every(entry => ['pnpm', 'gradlew', 'apksigner', 'zipalign'].includes(entry.command)),
+      'legacy entry must not sync, commit, push or publish');
+  } finally { fixture.cleanup(); }
 });
 
 function readConfig(profile, flag, extraEnv = {}) {

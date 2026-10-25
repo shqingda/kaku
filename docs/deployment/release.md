@@ -65,21 +65,16 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
-## 本地构建并发布 GitHub Release
+## 分步准备与发布 GitHub Release
 
-这是会提交日志、推送并发布的显式入口。执行前需要用户明确授权推送/发版、`gh` 登录和正确的发布分支。
+准备、构建、上传和发布分别执行。推送和发布仍需要用户明确授权；构建和上传脚本不会隐式提交、推送或发布。
 
-1. 修改 Expo 配置的版本，编写 `scripts/release-notes.md`，检查完整差异并通过回归。
-2. 卸载代理环境变量，运行发布入口：
+1. 修改 Expo 配置的版本，编写 `scripts/release-notes.md`。
+2. 显式运行 `node scripts/sync-changelog.mjs` 准备 App 内日志；检查完整差异并通过回归后提交。已有版本不覆盖手改内容，安装提示不收入 App 内日志。
+3. 运行 `pnpm build:android`，核对签名、版本、权限和回归结果。已有验收 APK 时直接复用，不重新构建。
+4. 获得推送授权后，将对应提交推到目标分支；按下节创建草稿、上传和核验。发布是最后一个独立步骤。
 
-```bash
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-bash scripts/build-split-apks.sh                 # tag 自动取 v<app 版本>
-# 或省略 tag 并显式指定包名渠道
-bash scripts/build-split-apks.sh "" release
-```
-
-脚本先同步 App 内更新日志（已有版本不覆盖手改内容，缺失时写入并提交），再调用纯构建，执行 `git push origin HEAD:main`，最后创建 GitHub Release 并上传 APK。发版说明中的安装提示不会收入 App 内更新日志。
+兼容入口 `bash scripts/build-split-apks.sh [tag] [release|debug] [--build-only]` 仍校验渠道及标签，但现在只调用纯构建并提示分步流程；省略标签时取当前 App 版本。
 
 - 正式包 Android 13+ 使用新证书及旧→新轮换证明；Android 10–12L 保留旧证书兼容。后续继续使用同一 lineage 并递增构建号，不能给已换签的安装回退到仅旧签名包。
 - 只构建 arm64-v8a，不支持 32 位机和 x86 模拟器；ABI 参数是 `-PreactNativeArchitectures=arm64-v8a`。
@@ -96,9 +91,9 @@ bash scripts/build-split-apks.sh "" release
 上传端点无显式代理可达后，改用 `--noproxy '*'` 的同一 HTTP/2 流程成功。
 此为经过检查后的备用路径，不自动重试、不改系统代理；仍须核对大小及摘要。
 
-当前 `build-split-apks.sh` 仍使用 `gh release create` 合并上传。
-为避免重走慢连接，下次采用 `--build-only` 构建并按既有流程提交、推送，
-随后用下面步骤单独创建草稿和上传。已有验收 APK 时直接复用，不重新构建。
+上传脚本只接受固定仓库的已有草稿与已验证 APK，先检查远端同名资源。
+已有资源的大小和 SHA-256 相符时直接结束；不一致时停止，不覆盖。
+上传超时也先重新查询资源确认结果，不自动重试或重新构建。
 
 ```bash
 set -e # 任一步失败即停止，保留草稿
@@ -107,41 +102,9 @@ TAG=v1.1.22 # 改成实际版本；从仓库根目录执行
 # 新版本只创建草稿，不在这一步附加 APK。已存在草稿则跳过这条。
 gh release create "$TAG" --repo shqingda/kaku --draft --title "$TAG" \
   --notes-file scripts/release-notes.md --target "$(git rev-parse HEAD)"
-export KAKU_RELEASE_TAG="$TAG"
-python3 - <<'UPLOAD'
-import hashlib, json, os, subprocess, tempfile
-from pathlib import Path
-
-tag = os.environ['KAKU_RELEASE_TAG']
-releases = json.loads(subprocess.check_output([
-    'gh', 'api', 'repos/shqingda/kaku/releases?per_page=100']))
-release = next(r for r in releases if r['tag_name'] == tag)
-apk = Path('apps/mobile/dist-split/kaku-release.apk')
-expected = 'sha256:' + hashlib.sha256(apk.read_bytes()).hexdigest()
-# 上传结果不明确时先检查已有资源，避免重复上传或覆盖。
-assets = [a for a in release['assets'] if a['name'] == apk.name]
-if not assets:
-    token = subprocess.check_output(['gh', 'auth', 'token'], text=True).strip()
-    url = release['upload_url'].split('{')[0] + '?name=' + apk.name
-    with tempfile.TemporaryDirectory(prefix='kaku-upload-') as directory:
-        result = Path(directory) / 'asset.json'
-        subprocess.run([
-            'curl', '--http2', '--proxy', 'socks5h://127.0.0.1:7890',
-            '--noproxy', '', '--connect-timeout', '15', '--max-time', '900',
-            '--fail-with-body', '--progress-bar', '--config', '-',
-            '-H', 'Content-Type: application/vnd.android.package-archive',
-            '-H', 'Expect:', '--data-binary', '@' + str(apk), url,
-            '-o', str(result),
-        ], input='header = "Authorization: Bearer ' + token + '"\n',
-            text=True, check=True)
-        assets = [json.loads(result.read_text())]
-asset = assets[0]
-if (len(assets) != 1 or asset['state'] != 'uploaded'
-        or asset['size'] != apk.stat().st_size or asset.get('digest') != expected):
-    raise SystemExit('远端文件与本地不一致，保留草稿，不发布')
-print('上传成功，大小与 SHA-256 一致')
-UPLOAD
-# 仅在上一步成功后执行。
+python3 scripts/upload-github-apk.py "$TAG"
+# 独立 debug 包：加 --apk apps/mobile/dist-split/kaku-debug.apk
+# 仅在上一步成功、对应提交及设备验收确认、用户明确授权发布后执行。
 gh release edit "$TAG" --repo shqingda/kaku --draft=false --latest
 ```
 
