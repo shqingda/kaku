@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-10-25。Android GitHub 包 [v1.1.22](https://github.com/shqingda/kaku/releases/tag/v1.1.22) 已发布，44,480,063 字节；Expo SDK 58，单 arm64、R8 与资源裁剪已启用。未上架 App Store / Google Play。[发布证据](docs/test-records/2026-10-24-release-1.1.22.md)。
+> 更新：2026-10-26。Android GitHub 包 [v1.1.23](https://github.com/shqingda/kaku/releases/tag/v1.1.23) 已发布，44,521,023 字节；Expo SDK 58，单 arm64、R8 与资源裁剪已启用；API Worker 同日部署（`357a479f`）。本版未经 Android 真机验证。未上架 App Store / Google Play。[发布证据](docs/test-records/2026-10-26-release-1.1.23.md)。
 
 ## 当前工作入口
 

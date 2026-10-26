@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.22 提供 44.48 MB 正式包，升级 Expo SDK 58 并保留分系统签名轮换与 FCM，构建及上传核验见 [发布记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 纯本地构建
 
