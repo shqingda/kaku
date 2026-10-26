@@ -41,7 +41,7 @@ def check_asset(assets, apk, digest):
     return True
 
 
-def upload_apk(tag, apk):
+def upload_apk(tag, apk, direct=False):
     if apk.name not in ('kaku-release.apk', 'kaku-debug.apk') or not apk.is_file():
         raise ValueError('需要已验证的 kaku-release.apk 或 kaku-debug.apk')
     if not re.fullmatch(r'v\d+\.\d+\.\d+', tag):
@@ -68,8 +68,11 @@ def upload_apk(tag, apk):
         raise RuntimeError('GitHub 凭据格式无效')
     with tempfile.TemporaryDirectory(prefix='kaku-upload-') as directory:
         result = Path(directory) / 'asset.json'
+        # Locally the upload goes through the Clash SOCKS port (see release.md);
+        # GitHub Actions runners reach GitHub directly.
+        proxy = ['--noproxy', '*'] if direct else ['--proxy', 'socks5h://127.0.0.1:7890', '--noproxy', '']
         completed = subprocess.run([
-            'curl', '--http2', '--proxy', 'socks5h://127.0.0.1:7890', '--noproxy', '',
+            'curl', '--http2', *proxy,
             '--connect-timeout', '15', '--max-time', '900', '--fail-with-body', '--progress-bar',
             '--config', '-', '-H', 'Content-Type: application/vnd.android.package-archive',
             '-H', 'Expect:', '--data-binary', '@' + str(apk),
@@ -86,9 +89,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('tag')
     parser.add_argument('--apk', type=Path, default=Path('apps/mobile/dist-split/kaku-release.apk'))
+    parser.add_argument('--direct', action='store_true', help='connect without the local SOCKS proxy (CI)')
     args = parser.parse_args()
     try:
-        upload_apk(args.tag, args.apk.resolve())
+        upload_apk(args.tag, args.apk.resolve(), direct=args.direct)
     except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError, KeyError) as error:
         parser.exit(1, str(error) + '\n')
     print('远端大小与 SHA-256 一致；草稿保持未发布。')

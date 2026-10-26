@@ -2,7 +2,39 @@
 
 先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
-## 纯本地构建
+## GitHub Actions 构建（默认）
+
+从 v1.1.24 起，正式包默认由 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py --direct` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
+
+- 只接受尚不存在或仍是草稿的版本；同名 Release 已发布时直接失败，提示先提升版本号。
+- 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37`、`build-tools;36.0.0`、`ndk;27.1.12297006`。
+- 签名文件只在 `android-release` Environment 下可用，运行时还原到 `$RUNNER_TEMP/kaku-signing`（权限 600），结束时无论成败都删除。来自 fork 的 PR 拿不到这些 Secrets。
+
+### 一次性配置（仓库所有者执行）
+
+1. 仓库 Settings → Environments 新建 `android-release`，在 *Required reviewers* 填自己：每次运行需要你批准后才能取得签名密钥。建议同时把 *Deployment branches* 限制为 `main`。
+2. 在该 Environment 下添加 4 个 Secrets（内容来自本机签名目录，命令在本机终端执行，不要粘贴到聊天或 issue）：
+
+```bash
+DIR="$HOME/.local/share/kaku-signing/2026-10-17-rotation"
+base64 -i "$DIR/legacy-debug.keystore" | gh secret set KAKU_SIGNING_LEGACY_KEYSTORE_B64 --env android-release --repo shqingda/kaku
+base64 -i "$DIR/release.p12" | gh secret set KAKU_SIGNING_RELEASE_P12_B64 --env android-release --repo shqingda/kaku
+gh secret set KAKU_SIGNING_RELEASE_PASSWORD --env android-release --repo shqingda/kaku < "$DIR/release-password.txt"
+base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_B64 --env android-release --repo shqingda/kaku
+```
+
+3. GitHub 账号开启两步验证：密钥离开本机后，安全性取决于账号保护。本机签名目录仍是唯一的原始备份，继续按 [迁移记录](../test-records/2026-10-17-signing-migration.md) 保留异地加密备份。
+
+### CI 发版步骤
+
+1. 本地修改版本、写 `scripts/release-notes.md`、运行 `node scripts/sync-changelog.mjs`，检查差异后提交并推送（需要用户授权推送）。
+2. Actions 页运行 **Android release**，在审批提示中批准。
+3. 下载构建附件或草稿中的 APK，核对版本、签名与权限；需要时装到手机验证。
+4. 在草稿页点击发布并设为 latest，或执行 `gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest`。
+
+本地构建保留为备用路径：CI 不可用、需要排查构建问题，或需要诊断对照包时使用下文流程。
+
+## 纯本地构建（备用）
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
@@ -71,7 +103,7 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
-## 分步准备与发布 GitHub Release
+## 分步准备与发布 GitHub Release（本地备用）
 
 准备、构建、上传和发布分别执行。推送和发布仍需要用户明确授权；构建和上传脚本不会隐式提交、推送或发布。
 

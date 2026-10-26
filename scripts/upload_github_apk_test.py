@@ -62,6 +62,16 @@ class UploadTests(unittest.TestCase):
                 self.assertNotIn('test-token', ' '.join(args))
                 self.assertNotIn('HTTPS_PROXY', run.call_args.kwargs['env'])
 
+    def test_direct_upload_skips_the_local_proxy(self):
+        with patch.object(upload, 'github_json', side_effect=[[self.release], [], [self.asset]]), \
+                patch.object(upload.subprocess, 'check_output', return_value='test-token'), \
+                patch.object(upload.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
+            upload.upload_apk('v1.2.3', self.apk, direct=True)
+            args = run.call_args.args[0]
+            self.assertNotIn('--proxy', args)
+            self.assertEqual(args[args.index('--noproxy') + 1], '*')
+            self.assertEqual(args[args.index('--max-time') + 1], '900')
+
     def test_unconfirmed_upload_stops_without_retry_or_rebuild(self):
         with patch.object(upload, 'github_json', side_effect=[[self.release], [], []]), \
                 patch.object(upload.subprocess, 'check_output', return_value='test-token'), \

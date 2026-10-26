@@ -1,0 +1,121 @@
+name: Android release
+
+# 手动触发：在 Actions 页选择分支（默认 main）运行。版本号取 app.config.js，
+# 构建、签名、上传到同名 GitHub Release 草稿；发布仍由人工在草稿页确认。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # 在仓库 Settings → Environments 为 android-release 设置审批人，签名密钥只在审批后可用。
+    environment: android-release
+    env:
+      EXPO_PUBLIC_KAKU_API_URL: https://kaku-api.shqingda.workers.dev
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+          cache: pnpm
+
+      - name: Install Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      # 与本机一致：React Native 0.88 的 NDK / compileSdk，签名脚本固定使用 build-tools 36.0.0。
+      - name: Install Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-37" "build-tools;36.0.0" "ndk;27.1.12297006"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check and test
+        run: |
+          pnpm typecheck
+          pnpm test
+
+      - name: Read release tag
+        id: version
+        run: echo "tag=v$(node -p "require('./apps/mobile/app.config.js').expo.version")" >> "$GITHUB_OUTPUT"
+
+      # 只接受尚不存在或仍是草稿的版本，绝不改动已发布的 Release。
+      - name: Check release state
+        run: |
+          state="$(gh release view "${{ steps.version.outputs.tag }}" --json isDraft --jq .isDraft 2>/dev/null || echo missing)"
+          if [[ "$state" == false ]]; then
+            echo "${{ steps.version.outputs.tag }} 已发布；请先提升 app.config.js 的版本号。" >&2
+            exit 1
+          fi
+
+      - name: Restore signing files
+        env:
+          LEGACY_KEYSTORE_B64: ${{ secrets.KAKU_SIGNING_LEGACY_KEYSTORE_B64 }}
+          RELEASE_P12_B64: ${{ secrets.KAKU_SIGNING_RELEASE_P12_B64 }}
+          RELEASE_PASSWORD: ${{ secrets.KAKU_SIGNING_RELEASE_PASSWORD }}
+          ROTATION_LINEAGE_B64: ${{ secrets.KAKU_SIGNING_ROTATION_LINEAGE_B64 }}
+        run: |
+          umask 077
+          KAKU_SIGNING_DIR="$RUNNER_TEMP/kaku-signing"
+          echo "KAKU_SIGNING_DIR=$KAKU_SIGNING_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$KAKU_SIGNING_DIR"
+          printf '%s' "$LEGACY_KEYSTORE_B64" | base64 --decode > "$KAKU_SIGNING_DIR/legacy-debug.keystore"
+          printf '%s' "$RELEASE_P12_B64" | base64 --decode > "$KAKU_SIGNING_DIR/release.p12"
+          printf '%s' "$RELEASE_PASSWORD" > "$KAKU_SIGNING_DIR/release-password.txt"
+          printf '%s' "$ROTATION_LINEAGE_B64" | base64 --decode > "$KAKU_SIGNING_DIR/rotation.lineage"
+          bash scripts/sign-android-release.sh --check
+
+      # 与本地发版同一入口：prebuild、Gradle、签名证书分段校验、体积报告与产物记录。
+      - name: Build and sign APK
+        run: bash scripts/build-android.sh release
+
+      - name: Keep build record
+        uses: actions/upload-artifact@v5
+        with:
+          name: kaku-${{ steps.version.outputs.tag }}-${{ github.sha }}
+          path: |
+            apps/mobile/dist-split/kaku-release.apk
+            apps/mobile/dist-split/*.sources/
+          retention-days: 90
+
+      - name: Create draft release
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --draft --title "$tag" \
+              --notes-file scripts/release-notes.md --target "$GITHUB_SHA"
+          fi
+
+      # 远端已有同名资源时只核对大小和 SHA-256，不一致即停止，不覆盖。
+      - name: Upload APK to draft
+        run: python3 scripts/upload-github-apk.py "${{ steps.version.outputs.tag }}" --direct
+
+      - name: Remove signing files
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/kaku-signing"
