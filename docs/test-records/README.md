@@ -6,6 +6,7 @@
 
 | 日期 | 记录 | 主要用途 |
 | --- | --- | --- |
+| 2026-10-26 | [P1 开发模式基线](2026-10-26-p1-baseline-dev.md) | 三轮重启 JS 分阶段计时与 footprint，仅供同条件对比 |
 | 2026-10-26 | [兼容缺口复核](2026-10-26-compat-gaps.md) | 移动端 Web 打包与渲染修复、Web 存储上游问题、Sentry Router 与 quick-actions 警告 |
 | 2026-10-26 | [依赖安全复核](2026-10-26-dependency-recheck.md) | node-forge 上游状态、drizzle-kit 间接 esbuild 定向 override |
 | 2026-10-25 | [可靠性、瘦身与性能改进](2026-10-25-reliability-slimming-performance.md) | 偏好与缓存容错、文件生命周期、资源/结构精简、并发上限及采样边界 |
