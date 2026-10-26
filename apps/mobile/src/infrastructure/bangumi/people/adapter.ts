@@ -8,6 +8,7 @@ import type {
   BangumiEntityRelationsResponse,
   BangumiEntitySubjectsResponse,
 } from '../api-v0/schemas.ts';
+import { toResizedImage } from '../images.ts';
 
 const CAREER_LABELS = {
   actor: '演员',
@@ -89,17 +90,6 @@ function groupRelatedPeers(
   return [...peers.values()];
 }
 
-// This endpoint only returns the original cover, which can be 4096 px and decodes
-// to ~45 MB; list rows are 68 pt tall, so ask Bangumi's resizer for 200 px.
-const BANGUMI_PIC_PREFIX = 'https://lain.bgm.tv/pic/';
-
-function toCoverThumbnail(url?: string | null) {
-  if (!url) return undefined;
-  return url.startsWith(BANGUMI_PIC_PREFIX)
-    ? `https://lain.bgm.tv/r/200/pic/${url.slice(BANGUMI_PIC_PREFIX.length)}`
-    : url;
-}
-
 export function mapBangumiEntityDetail(
   detail: BangumiEntityDetailResponse,
   subjects: BangumiEntitySubjectsResponse,
@@ -127,7 +117,7 @@ export function mapBangumiEntityDetail(
     name: detail.name,
     relatedPeers: groupRelatedPeers(peers),
     relatedSubjects: subjects.map((subject) => ({
-      coverUrl: toCoverThumbnail(subject.image),
+      coverUrl: toResizedImage(subject.image, 200),
       id: subject.id,
       relation: subject.staff,
       title: subject.name_cn.trim() || subject.name,

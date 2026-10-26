@@ -32,6 +32,6 @@ export function readQueryArray<T>(data: unknown): T[] {
   return Array.isArray(data) ? data as T[] : [];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }

@@ -2,6 +2,8 @@
 // https://github.com/maho0x/bangumi-status）。入口域名会整站 302 到
 // bgm-status.ry.mk，直接请求最终地址省一次跳转。
 // 本模块保持与 React Native 无关，便于 node:test 直接单测。
+import { isRecord } from '../../lib/query-data.ts';
+
 export const BANGUMI_STATUS_ENDPOINT = 'https://bgm-status.ry.mk/api/status';
 
 export type ServiceLevel = 'ok' | 'degraded' | 'down' | 'unknown';
@@ -40,10 +42,6 @@ function toLevel(value: unknown): ServiceLevel {
   return value === 'ok' || value === 'degraded' || value === 'down'
     ? value
     : 'unknown';
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function averageProbeLatency(value: unknown): number | null {

@@ -6,14 +6,11 @@ import type {
   BangumiCalendarResponse,
   BangumiSubjectSearchResponse,
 } from '../api-v0/schemas.ts';
+import { secureImage } from '../images.ts';
 
 type PublicSubject =
   | BangumiCalendarResponse[number]['items'][number]
   | BangumiSubjectSearchResponse['data'][number];
-
-function secureImage(url?: string) {
-  return url?.replace(/^http:/, 'https:');
-}
 
 export function toDiscoverSubject(
   subject: PublicSubject,

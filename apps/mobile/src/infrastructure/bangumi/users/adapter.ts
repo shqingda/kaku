@@ -22,6 +22,7 @@ import type {
   BangumiUserCollectionsResponse,
   BangumiUserPersonCollectionsResponse,
 } from '../api-v0/schemas.ts';
+import { secureImage } from '../images.ts';
 
 const COLLECTION_STATUS: Record<number, CollectionStatus> = {
   1: 'wish',
@@ -47,10 +48,6 @@ const TIMELINE_COLLECTION_VERBS: Record<number, string> = {
   13: '搁置了',
   14: '抛弃了',
 };
-
-function secureImage(url?: string) {
-  return url?.replace(/^http:/, 'https:');
-}
 
 function toPublicUserCollection(
   collection: BangumiUserCollectionsResponse['data'][number],
