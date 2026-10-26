@@ -1,28 +1,21 @@
-import { EpisodeDetailsCard } from '@/features/discussions/episode-details-card';
 import { useEpisodeDiscussion } from '@/features/discussions/use-episode-discussion';
 import { useEpisodeDiscussionScroll } from '@/features/discussions/use-episode-discussion-scroll';
 import { userErrorMessage } from '@/lib/user-error-message';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { router, Stack, useLocalSearchParams, usePathname } from 'expo-router';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
-import { CatalogStatusBanner } from '@/features/catalog/catalog-status-banner';
 import { DiscussionReplyBar, DISCUSSION_REPLY_BAR_RESERVE } from '@/features/discussions/discussion-reply-bar';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
-import { DiscussionStatus } from '@/features/discussions/discussion-status';
-import { EpisodeScrollActionButton } from '@/features/discussions/episode-scroll-action-button';
+import { EpisodeDiscussionHeader, EpisodeEmptyDiscussion } from '@/features/discussions/episode-discussion-header';
+import { episodeProgressUpdate } from '@/features/discussions/episode-progress';
+import { EpisodeScreenState } from '@/features/discussions/episode-screen-state';
+import { EpisodeScrollButtons } from '@/features/discussions/episode-scroll-buttons';
 import type { DiscussionReply } from '@/features/discussions/model';
 import { ReplyListItem } from '@/features/discussions/reply-list-item';
 import { useDiscussionReply } from '@/features/discussions/use-discussion-reply';
@@ -30,8 +23,6 @@ import { useReplyComposer } from '@/features/discussions/use-reply-composer';
 import { useReplyNavigation } from '@/features/discussions/use-reply-navigation';
 import { playEpisodeToggleHaptic, playSelectionHaptic, playWarningHaptic } from '@/lib/haptics';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
-import { CachedDataNotice } from '@/features/shared/cached-data-notice';
-import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -104,66 +95,38 @@ export default function EpisodeScreen() {
     return <InvalidRouteState message="这个章节链接缺少有效编号。" />;
   }
 
+  const screenTitle = `第 ${episodeNumber} ${isTrack ? '曲' : '集'}`;
+  const itemNoun = isTrack ? '曲目' : '章节';
+
   if (catalogQuery.isPending) {
     return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen
-          options={{ title: `第 ${episodeNumber} ${isTrack ? '曲' : '集'}` }}
-        />
-        <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>
-            正在读取{isTrack ? '曲目' : '章节'}
-          </Text>
-          <Text style={styles.errorText}>
-            正在从 Bangumi 获取{isTrack ? '曲目' : '章节'}资料。
-          </Text>
-        </View>
-      </SafeAreaView>
+      <EpisodeScreenState
+        screenTitle={screenTitle}
+        text={`正在从 Bangumi 获取${itemNoun}资料。`}
+        title={`正在读取${itemNoun}`}
+      />
     );
   }
 
   if (catalogQuery.isError && !catalogSubject) {
     return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen
-          options={{ title: `第 ${episodeNumber} ${isTrack ? '曲' : '集'}` }}
-        />
-        <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>
-            {isTrack ? '曲目' : '章节'}资料读取失败
-          </Text>
-          <Text style={styles.errorText}>请检查网络后重试。</Text>
-          <Pressable
-            accessibilityLabel={`重新读取${isTrack ? '曲目' : '章节'}资料`}
-            accessibilityRole="button"
-            onPress={() => void catalogQuery.refetch()}
-            style={({ pressed }) => [
-              styles.errorRetry,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.errorRetryText}>重试</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      <EpisodeScreenState
+        onRetry={() => void catalogQuery.refetch()}
+        retryLabel={`重新读取${itemNoun}资料`}
+        screenTitle={screenTitle}
+        text="请检查网络后重试。"
+        title={`${itemNoun}资料读取失败`}
+      />
     );
   }
 
   if (!isValidEpisode) {
     return (
-      <SafeAreaView edges={['bottom']} style={styles.screen}>
-        <Stack.Screen
-          options={{ title: isTrack ? '曲目不存在' : '章节不存在' }}
-        />
-        <View style={styles.errorState}>
-          <Text style={styles.errorTitle}>
-            没有找到这一{isTrack ? '曲' : '集'}
-          </Text>
-          <Text style={styles.errorText}>
-            {isTrack ? '曲目' : '集数'}可能已经变化，请返回条目详情页。
-          </Text>
-        </View>
-      </SafeAreaView>
+      <EpisodeScreenState
+        screenTitle={isTrack ? '曲目不存在' : '章节不存在'}
+        text={`${isTrack ? '曲目' : '集数'}可能已经变化，请返回条目详情页。`}
+        title={`没有找到这一${isTrack ? '曲' : '集'}`}
+      />
     );
   }
 
@@ -202,18 +165,10 @@ export default function EpisodeScreen() {
       Alert.alert('章节尚未就绪', '请先刷新章节资料后再标记进度。');
       return;
     }
-    const currentStatus = personalCollection?.collectionStatus;
-
     try {
-      // 只在状态真正变化时携带 collectionStatus：Bangumi v0 API 对
-      // 携带 type 的每次 PUT 都会生成一条时间线事件，无变化的保存应当
-      // 保持安静（与官网行为一致）。
-      const nextStatus =
-        !currentStatus || currentStatus === 'wish' ? 'doing' : currentStatus;
-      await saveCollection.mutateAsync({
-        ...(nextStatus !== currentStatus ? { collectionStatus: nextStatus } : {}),
-        episodeChanges: [{ episodeId: catalogEpisode.id, watched: !isWatched }],
-      });
+      await saveCollection.mutateAsync(
+        episodeProgressUpdate(personalCollection?.collectionStatus, catalogEpisode.id, !isWatched),
+      );
       playEpisodeToggleHaptic(isWatched);
     } catch (error) {
       Alert.alert(
@@ -282,69 +237,44 @@ export default function EpisodeScreen() {
           ListEmptyComponent={
             hiddenDiscussion || commentsQuery.isPending ||
             (commentsQuery.isError && !commentsQuery.data) ? null : (
-              <View style={styles.emptyDiscussion}>
-                <Text style={styles.emptyTitle}>
-                  还没有人讨论这一{isTrack ? '曲' : '集'}
-                </Text>
-                <Text style={styles.emptyText}>
-                  Bangumi 暂无本{isTrack ? '曲' : '集'}评论。
-                </Text>
-              </View>
+              <EpisodeEmptyDiscussion isTrack={isTrack} />
             )
           }
           ListHeaderComponent={
-            <>
-              <EpisodeDetailsCard
-                episode={catalogEpisode}
-                episodeNumber={episodeNumber}
-                subjectTitle={subjectTitle}
-                isTrack={isTrack}
-                tracksWatchProgress={tracksWatchProgress}
-                isWatched={isWatched}
-                isSaving={saveCollection.isPending}
-                previousEpisode={previousEpisode}
-                nextEpisode={nextEpisode}
-                openEpisode={openEpisode}
-                onToggleProgress={() => void toggleRemoteProgress()}
-              />
-              <CatalogStatusBanner
-                fromOfflinePack={catalogQuery.data?.offlineSource === 'pack'}
-                isError={catalogQuery.isError}
-                isPending={catalogQuery.isPending}
-                isRefreshing={catalogQuery.isFetching && !catalogQuery.isPending}
-                onRetry={() => void catalogQuery.refetch()}
-              />
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  本{isTrack ? '曲' : '集'}讨论
-                </Text>
-                <Text style={styles.remoteReplyCount}>
-                  Bangumi {catalogEpisode?.discussionCount ?? replies.length}
-                </Text>
-              </View>
-              {hiddenDiscussion ? (
-                <View style={styles.emptyDiscussion}>
-                  <Text style={styles.emptyTitle}>讨论已折叠</Text>
-                  <Text style={styles.emptyText}>防剧透已开启。当前章节尚未标记已看，或观看进度未知；从通知进入也需手动展开。</Text>
-                  <Pressable accessibilityRole="button" onPress={revealDiscussion} style={styles.spoilerButton}>
-                    <Text style={styles.spoilerAction}>仅本次展开讨论</Text>
-                  </Pressable>
-                </View>
-              ) : commentsQuery.data && commentsQuery.isError ? (
-                <CachedDataNotice
-                  onRetry={() => void commentsQuery.refetch()}
-                />
-              ) : (
-                <DiscussionStatus
-                  isError={commentsQuery.isError}
-                  isPending={
-                    catalogQuery.isPending ||
-                    Boolean(catalogEpisode && commentsQuery.isPending)
-                  }
-                  onRetry={() => void commentsQuery.refetch()}
-                />
-              )}
-            </>
+            <EpisodeDiscussionHeader
+              catalog={{
+                hasData: Boolean(catalogQuery.data),
+                isError: catalogQuery.isError,
+                isFetching: catalogQuery.isFetching,
+                isPending: catalogQuery.isPending,
+                refetch: () => void catalogQuery.refetch(),
+              }}
+              comments={{
+                hasData: Boolean(commentsQuery.data),
+                isError: commentsQuery.isError,
+                isFetching: commentsQuery.isFetching,
+                isPending: commentsQuery.isPending,
+                refetch: () => void commentsQuery.refetch(),
+              }}
+              details={{
+                episode: catalogEpisode,
+                episodeNumber,
+                isSaving: saveCollection.isPending,
+                isTrack,
+                isWatched,
+                nextEpisode,
+                onToggleProgress: () => void toggleRemoteProgress(),
+                openEpisode,
+                previousEpisode,
+                subjectTitle,
+                tracksWatchProgress,
+              }}
+              discussionCount={catalogEpisode?.discussionCount ?? replies.length}
+              fromOfflinePack={catalogQuery.data?.offlineSource === 'pack'}
+              hiddenDiscussion={hiddenDiscussion}
+              isTrack={isTrack}
+              onRevealDiscussion={revealDiscussion}
+            />
           }
           renderItem={({ index, item }) => (
             <ReplyListItem
@@ -378,50 +308,22 @@ export default function EpisodeScreen() {
           />
         ) : null}
       {catalogEpisode ? (
-        <>
-          <DiscussionReplyComposer
-            {...composer.sheetProps}
-            target={{ id: catalogEpisode.id, kind: 'episode' }}
-          />
-        </>
-      ) : null}
-      {Platform.OS === 'android' ? (
-        <EpisodeScrollActionButton
-          action={scroll.scrollAction}
-          bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-          onBottom={scroll.jumpToLatest}
-          onTop={scroll.scrollToTop}
+        <DiscussionReplyComposer
+          {...composer.sheetProps}
+          target={{ id: catalogEpisode.id, kind: 'episode' }}
         />
-      ) : (
-        <>
-          <ScrollToTopButton
-            accessibilityHint="滚动到本集评论顶部"
-            accessibilityLabel="回到顶部"
-            bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-            onPress={scroll.scrollToTop}
-            visible={scroll.scrollAction === 'top'}
-          />
-          <ScrollToTopButton
-            accessibilityHint="滚动到本集最新一条回复"
-            accessibilityLabel="跳到最新回复"
-            bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
-            icon={{
-              android: 'arrow_downward',
-              ios: 'arrow.down',
-              web: 'arrow_downward',
-            }}
-            onPress={scroll.jumpToLatest}
-            visible={scroll.scrollAction === 'bottom'}
-          />
-        </>
-      )}
+      ) : null}
+      <EpisodeScrollButtons
+        action={scroll.scrollAction}
+        bottom={DISCUSSION_REPLY_BAR_RESERVE - SPACING.sm}
+        onBottom={scroll.jumpToLatest}
+        onTop={scroll.scrollToTop}
+      />
     </SafeAreaView>
   );
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  spoilerButton: { minHeight: MIN_TOUCH_SIZE, justifyContent: 'center', marginTop: SPACING.md },
-  spoilerAction: { ...TYPE.body, color: colors.accent },
   screen: { flex: 1, backgroundColor: colors.background },
   list: { flex: 1 },
   content: { padding: SPACING.lg + SPACING.xs },
@@ -431,38 +333,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   headerTitleText: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
-  sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
-    marginTop: SPACING.xl,
-    paddingHorizontal: SPACING.xs,
-  },
-  sectionTitle: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
-  remoteReplyCount: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
-  emptyDiscussion: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: SPACING.xl + SPACING.xs,
-  },
-  emptyTitle: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
-  emptyText: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
-  errorState: { flex: 1, justifyContent: 'center', padding: SPACING.xxl },
-  errorTitle: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '700' },
-  errorText: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
-  errorRetry: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
-    borderRadius: 13,
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
-    minHeight: MIN_TOUCH_SIZE,
-    paddingHorizontal: SPACING.lg + SPACING.xs,
-  },
-  errorRetryText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
-
   pressed: { opacity: 0.62 },
 });
