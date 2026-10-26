@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// 比较同设备、同运行模式、固定 Maestro 路径的三轮 React profiler 测量中位数。
+// 比较同设备、同运行模式、固定路径的三轮测量中位数；只接受毫秒指标，内存另行记录。
+// 默认基线来自 2026-10-26 Release 冷启动诊断页计时（docs/test-records/2026-10-26-p1-baseline-release.md）。
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-const defaultBaseline = JSON.parse(readFileSync(new URL('./baselines/ios-2026-09-04.json', import.meta.url), 'utf8'));
+const defaultBaseline = JSON.parse(readFileSync(new URL('./baselines/ios-2026-10-26-release.json', import.meta.url), 'utf8'));
 
 export function checkPerformance(report, baseline = defaultBaseline) {
   for (const key of ['device', 'os', 'mode', 'flow']) {

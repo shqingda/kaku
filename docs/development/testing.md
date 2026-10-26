@@ -116,7 +116,7 @@ dev client 重载会断开 React profiler。基线数字见
 `docs/test-records/2026-09-04-ios-ui-profiler.md`。
 
 构建与测量脚本运行 `pnpm test:tooling`，覆盖纯构建的发布副作用隔离、APK 分类统计和性能阈值。
-性能工具支持 `node scripts/check-performance.mjs report.json baseline.json`；省略第二个参数仍读取 2026-09-04 基线。基线必须包含 device、os、mode、flow、budgetRatio 和 metrics（各指标毫秒值）；报告中的每个指标需要三轮正数采样。同环境才比较，首页数据只能来自实际采集，不能补写推测值。
+性能工具支持 `node scripts/check-performance.mjs report.json baseline.json`；省略第二个参数时读取 2026-10-26 Release 冷启动基线（`scripts/baselines/ios-2026-10-26-release.json`，诊断页三项 JS 计时）；旧的 2026-09-04 profiler 基线保留作历史对照。基线必须包含 device、os、mode、flow、budgetRatio 和 metrics（各指标毫秒值）；报告中的每个指标需要三轮正数采样。同环境才比较，首页数据只能来自实际采集，不能补写推测值。
 
 ## 4. UI 交互验收（argent 会话）
 

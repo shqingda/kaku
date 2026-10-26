@@ -1,0 +1,12 @@
+{
+  "device": "iPhone 18 Pro",
+  "os": "iOS 27.0",
+  "mode": "release",
+  "flow": "cold-launch-diagnostics",
+  "budgetRatio": 1.25,
+  "metrics": {
+    "firstLayoutMs": 79,
+    "cacheRestoredMs": 93,
+    "homeReadyMs": 127
+  }
+}
