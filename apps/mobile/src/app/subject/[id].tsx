@@ -122,7 +122,7 @@ export default function SubjectScreen() {
     if (!catalogSubject) return;
 
     rememberRecentSubject({
-      coverUrl: catalogSubject.coverUrl,
+      coverUrl: catalogSubject.thumbnailUrl ?? catalogSubject.coverUrl,
       id: catalogSubject.id,
       title: catalogSubject.title,
       type: catalogSubject.type,
@@ -293,7 +293,12 @@ export default function SubjectScreen() {
         scrollEventThrottle={48}
         showsVerticalScrollIndicator={false}
       >
-        <SubjectHero coverUrl={coverUrl} title={title} year={year} />
+        <SubjectHero
+          coverUrl={coverUrl}
+          thumbnailUrl={catalogSubject.thumbnailUrl}
+          title={title}
+          year={year}
+        />
         <View style={styles.heroSpacing} />
 
         <CatalogStatusBanner

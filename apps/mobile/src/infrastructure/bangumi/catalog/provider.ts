@@ -98,6 +98,7 @@ function toCatalogSubject(
       subject.meta_tags?.slice(0, 5) ??
       subject.tags?.slice(0, 5).map((tag) => tag.name) ??
       [],
+    thumbnailUrl: subject.images?.medium ?? subject.images?.large ?? subject.images?.common,
     title: preferChineseName(subject.name_cn, subject.name),
     totalEpisodes: subject.eps || episodes.length || subject.total_episodes,
     type: subject.type,

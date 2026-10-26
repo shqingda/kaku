@@ -20,6 +20,7 @@ export type CatalogSubject = {
     onHold: number;
     wish: number;
   };
+  // Original cover for the fullscreen viewer; thumbnailUrl is sized for the hero.
   coverUrl?: string;
   details: {
     edition?: string;
@@ -44,6 +45,7 @@ export type CatalogSubject = {
   releaseDate?: string;
   summary: string;
   tags: string[];
+  thumbnailUrl?: string;
   title: string;
   totalEpisodes: number;
   type: number;

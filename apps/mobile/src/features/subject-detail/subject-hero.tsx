@@ -3,16 +3,19 @@ import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { FullscreenImageViewer } from '@/features/shared/fullscreen-image-viewer';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export function SubjectHero({
   coverUrl,
+  thumbnailUrl,
   title,
   year,
 }: {
   coverUrl?: string;
+  thumbnailUrl?: string;
   title: string;
   year?: number;
 }) {
@@ -40,7 +43,7 @@ export function SubjectHero({
                 {coverUrl ? (
                   <Image
                     contentFit="cover"
-                    source={coverUrl}
+                    source={thumbnailUrl ?? coverUrl}
                     style={StyleSheet.absoluteFill}
                     transition={180}
                   />
@@ -66,7 +69,7 @@ export function SubjectHero({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  hero: { alignItems: 'center', paddingTop: 8 },
+  hero: { alignItems: 'center', paddingTop: SPACING.sm },
   coverFrame: { borderCurve: 'continuous', borderRadius: 24 },
   cover: {
     alignItems: 'center',
@@ -79,14 +82,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 170,
   },
   pressed: { opacity: 0.78 },
-  coverFallback: { color: colors.subtle, fontSize: 30, fontWeight: '700' },
-  year: { color: colors.accent, fontSize: 13, fontWeight: '700', marginTop: 22 },
+  coverFallback: { ...TYPE.display, color: colors.subtle, fontWeight: '700' },
+  year: { ...TYPE.caption, color: colors.accent, fontWeight: '700', marginTop: SPACING.xl },
   title: {
+    ...TYPE.display,
     color: colors.ink,
-    fontSize: 28,
     fontWeight: '800',
-    letterSpacing: -0.7,
-    marginTop: 7,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });
