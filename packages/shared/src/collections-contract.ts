@@ -24,7 +24,6 @@ export const personalCollectionUpdateSchema = z.object({
 });
 
 export type PersonalCollectionUpdate = z.infer<typeof personalCollectionUpdateSchema>;
-export type EpisodeProgressChange = NonNullable<PersonalCollectionUpdate['episodeChanges']>[number];
 
 export const personalCollectionSchema = z.object({
   collectionStatus: z.enum(COLLECTION_STATUSES),

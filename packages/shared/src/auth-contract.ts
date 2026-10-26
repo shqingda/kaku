@@ -32,6 +32,5 @@ export const authSessionSchema = z.object({
   }),
 });
 
-export type HandoffStartQuery = z.infer<typeof handoffStartQuerySchema>;
 export type HandoffSessionRequest = z.infer<typeof handoffSessionRequestSchema>;
 export type AuthSessionResponse = z.infer<typeof authSessionSchema>;
