@@ -86,8 +86,8 @@ R、S、P4 与 O1 的代码已分片实施；相关检查与最终整合检查�
 ## 本轮不做与已知兼容边界
 
 - iOS / Android Widgets、离线写队列、单条搜索历史操作和主动抓取告警均为后续候选，不随本轮恢复。Widget 若重启评估须以当前 SDK 58 为准。
-- 移动端 Web 的 `wa-sqlite.wasm` 解析失败保持已知兼容缺口；产品目标仍为 iOS/Android，独立官网正常。见 [SDK 58 记录](docs/test-records/2026-10-24-expo-58.md)。
-- Sentry 可选 Router 路径、quick-actions TypeScript peer 警告仍需兼容性跟踪；不通过忽略规则掩盖。
+- 移动端 Web：`wa-sqlite.wasm` 解析与静态渲染已于 2026-10-26 修复，导出成功；本机存储仍因上游 expo-sqlite 58.0.14 的 OPFS 文件名问题不可用（显式失败可重试）。产品目标仍为 iOS/Android，独立官网正常。见 [兼容缺口复核](docs/test-records/2026-10-26-compat-gaps.md)。
+- Sentry 可选 Router 路径（上游 getsentry/sentry-react-native#6901，8.32 仍未修，只影响路由名附加）、quick-actions TypeScript peer 警告（6.0.2 仍为最新）继续跟踪；不通过忽略规则掩盖。
 
 ### 明确不做
 

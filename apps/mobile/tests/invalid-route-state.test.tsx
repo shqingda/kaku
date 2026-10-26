@@ -3,13 +3,19 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 
+const mockNavigation = { canGoBack: jest.fn(() => false) };
+
 jest.mock('expo-router', () => ({
   router: {
     back: jest.fn(),
-    canGoBack: jest.fn(() => false),
+    // 真实的命令式 router 在首帧完成前会抛错；渲染期间不能调用它。
+    canGoBack: jest.fn(() => {
+      throw new Error('The imperative router is unavailable before the first render has finished.');
+    }),
     replace: jest.fn(),
   },
   Stack: { Screen: () => null },
+  useNavigation: () => mockNavigation,
 }));
 
 jest.mock('react-native-safe-area-context', () => {
@@ -29,7 +35,7 @@ const mockRouter = jest.mocked(router);
 describe('InvalidRouteState', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRouter.canGoBack.mockReturnValue(false);
+    mockNavigation.canGoBack.mockReturnValue(false);
   });
 
   it('renders the default title and message', async () => {
@@ -73,7 +79,7 @@ describe('InvalidRouteState', () => {
   });
 
   it('offers going back when history is available', async () => {
-    mockRouter.canGoBack.mockReturnValue(true);
+    mockNavigation.canGoBack.mockReturnValue(true);
     const screen = await render(
       <ThemeProvider>
         <InvalidRouteState />

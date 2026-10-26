@@ -1,7 +1,8 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, useNavigation } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -14,6 +15,8 @@ export function InvalidRouteState({
 }) {
   const colors = useTheme();
   const styles = createStyles(colors);
+  // 渲染期间只能问导航上下文；命令式 router 在首帧完成前（含 Web 静态渲染）会抛错。
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -25,7 +28,7 @@ export function InvalidRouteState({
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
         <View style={styles.actions}>
-          {router.canGoBack() ? (
+          {navigation.canGoBack() ? (
             <Pressable
               accessibilityRole="button"
               accessibilityHint="返回上一个页面"
@@ -62,7 +65,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       flex: 1,
       justifyContent: 'center',
-      padding: 32,
+      padding: SPACING.xxl,
     },
     mark: {
       alignItems: 'center',
@@ -72,40 +75,38 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'center',
       width: 72,
     },
-    markText: { color: colors.accent, fontSize: 30, fontWeight: '800' },
+    markText: { ...TYPE.display, color: colors.accent, fontWeight: '800' },
     title: {
+      ...TYPE.titleLarge,
       color: colors.ink,
-      fontSize: 25,
       fontWeight: '800',
-      letterSpacing: -0.5,
-      marginTop: 24,
+      marginTop: SPACING.xl,
     },
     message: {
+      ...TYPE.body,
       color: colors.muted,
-      fontSize: 15,
-      lineHeight: 23,
-      marginTop: 10,
+      marginTop: SPACING.md,
       maxWidth: 310,
       textAlign: 'center',
     },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 28 },
+    actions: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.xl },
     primaryButton: {
       alignItems: 'center',
       backgroundColor: colors.ink,
       borderRadius: 16,
       justifyContent: 'center',
       minHeight: 48,
-      paddingHorizontal: 22,
+      paddingHorizontal: SPACING.xl,
     },
-    primaryButtonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+    primaryButtonText: { ...TYPE.body, color: colors.surface, fontWeight: '800' },
     secondaryButton: {
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: 16,
       justifyContent: 'center',
       minHeight: 48,
-      paddingHorizontal: 22,
+      paddingHorizontal: SPACING.xl,
     },
-    secondaryButtonText: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+    secondaryButtonText: { ...TYPE.body, color: colors.ink, fontWeight: '800' },
     pressed: { opacity: 0.62, transform: [{ scale: 0.98 }] },
   });
