@@ -8,7 +8,7 @@
 
 - 只接受尚不存在或仍是草稿的版本；同名 Release 已发布时直接失败，提示先提升版本号。
 - 运行时勾选 **build_only**：只构建、签名并保存附件，跳过版本检查、草稿和上传，用于试跑或与本地包比对。
-- 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37`、`build-tools;36.0.0`、`ndk;27.1.12297006`。
+- 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37.0`、`build-tools;36.0.0`、`ndk;27.1.12297006`。
 - 签名文件只在 `android-release` Environment 下可用，运行时还原到 `$RUNNER_TEMP/kaku-signing`（权限 600），结束时无论成败都删除。来自 fork 的 PR 拿不到这些 Secrets。
 
 ### 一次性配置（仓库所有者执行）
