@@ -89,7 +89,7 @@ jobs:
           ROTATION_LINEAGE_B64: ${{ secrets.KAKU_SIGNING_ROTATION_LINEAGE_B64 }}
         run: |
           umask 077
-          KAKU_SIGNING_DIR="$RUNNER_TEMP/kaku-signing"
+          export KAKU_SIGNING_DIR="$RUNNER_TEMP/kaku-signing"
           echo "KAKU_SIGNING_DIR=$KAKU_SIGNING_DIR" >> "$GITHUB_ENV"
           mkdir -p "$KAKU_SIGNING_DIR"
           printf '%s' "$LEGACY_KEYSTORE_B64" | base64 --decode > "$KAKU_SIGNING_DIR/legacy-debug.keystore"
