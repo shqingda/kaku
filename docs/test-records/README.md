@@ -6,6 +6,7 @@
 
 | 日期 | 记录 | 主要用途 |
 | --- | --- | --- |
+| 2026-10-26 | [依赖安全复核](2026-10-26-dependency-recheck.md) | node-forge 上游状态、drizzle-kit 间接 esbuild 定向 override |
 | 2026-10-25 | [可靠性、瘦身与性能改进](2026-10-25-reliability-slimming-performance.md) | 偏好与缓存容错、文件生命周期、资源/结构精简、并发上限及采样边界 |
 | 2026-10-24 | [v1.1.22 发布验收](2026-10-24-release-1.1.22.md) | SDK 58 正式 APK、签名与分发核验 |
 | 2026-10-24 | [依赖补丁与安全修复](2026-10-24-dependency-security.md) | Query、测试库、Vite 与间接依赖漏洞处理 |

@@ -70,7 +70,7 @@ R、S、P4 与 O1 的代码已分片实施；相关检查与最终整合检查�
 
 - [ ] 直连推送上线验收：FCM 凭据已备份并通过不投递校验，D1 新增列及新 Worker 已上线，v1.1.20 已接入正式签名轮换；待用小米 13 Ultra 验证连续覆盖、实际送达与点击。APNs 凭据因没有付费 Apple Developer 会员暂缓，保留实现。见 [原生推送指南](docs/deployment/native-push.md)。
 - [ ] Android 代理环境推送：复核 GMS / FCM 连通性与实际送达，验证历史 `mtalk.google.com:5228` 直连方案；按用户要求随 Android 实机验收暂缓。
-- [ ] 工具链依赖跟进：shell-quote 等已于 2026-10-24 修复；保留 2026-10-31 的 node-forge 官方修复/本地补丁复核点及 drizzle-kit 间接 esbuild moderate 跟进。记录时原始 audit 仍为 1 high / 1 moderate，不以补丁宣称版本扫描清零；见 [安全修复记录](docs/test-records/2026-10-24-dependency-security.md)。
+- [ ] 工具链依赖跟进：shell-quote 等已于 2026-10-24 修复；drizzle-kit 间接 esbuild moderate 已于 2026-10-26 用定向 override 消除。保留 2026-10-31 的 node-forge 官方修复/本地补丁复核点（10-26 复核上游仍无发布、#1152 未合并）。原始 audit 现为 1 high / 0 moderate，不以补丁宣称版本扫描清零；见 [安全修复记录](docs/test-records/2026-10-24-dependency-security.md)、[复核记录](docs/test-records/2026-10-26-dependency-recheck.md)。
 - [ ] 角色/人物收藏：官方描述仍列有 PUT／DELETE；用专用账号验证 Kaku OAuth 凭据适用性、实际写入与读回，再决定是否恢复入口。
 - [ ] 加入/退出小组：本次官方描述未找到适用的公开写操作；继续跟踪接口支持，不据此接入网页写入。
 - [ ] 删除自己的动态：官方描述仍列有 DELETE；用专用测试账号和可删除的测试动态复核已有实现，记录是否仍返回 5xx，以及成功后的列表刷新。
