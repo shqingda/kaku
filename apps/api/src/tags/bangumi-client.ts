@@ -1,9 +1,8 @@
-import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { BANGUMI_USER_AGENT, BANGUMI_WEB_URL } from '../bangumi-request.ts';
 import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicTagPage } from './model.ts';
+import { MAX_HTML_BYTES, decodeEntities, readBoundedHtml } from '../bangumi-html.ts';
 
-const BANGUMI_WEB_URL = 'https://bgm.tv';
-const MAX_HTML_BYTES = 1_000_000;
 
 const SUBJECT_TYPE_SLUGS: Record<number, string> = {
   1: 'book',
@@ -23,42 +22,6 @@ export class BangumiTagListError extends Error {
   }
 }
 
-function decodeHtml(value: string) {
-  return value
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([\da-f]+);/gi, (_, code: string) =>
-      String.fromCodePoint(Number.parseInt(code, 16)))
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .trim();
-}
-
-async function readBoundedHtml(response: Response) {
-  if (!response.body) return '';
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  const chunks: string[] = [];
-  let byteLength = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    byteLength += value.byteLength;
-    if (byteLength > MAX_HTML_BYTES) {
-      await reader.cancel();
-      throw new BangumiTagListError(502, 'Bangumi 标签页面过大。');
-    }
-    chunks.push(decoder.decode(value, { stream: true }));
-  }
-  chunks.push(decoder.decode());
-  return chunks.join('');
-}
-
 export function parseBangumiTagPage(html: string, page: number): PublicTagPage {
   const listStart = html.indexOf('<div id="tagList">');
   const listEnd = html.indexOf('<hr class="board"', listStart);
@@ -71,7 +34,7 @@ export function parseBangumiTagPage(html: string, page: number): PublicTagPage {
     ),
   ].map((match) => ({
     count: Number(match[2]),
-    name: decodeHtml(match[1]),
+    name: decodeEntities(match[1]).trim(),
   }));
   const totalPagesMatch = html.match(
     /<span class="p_edge">\((?:&nbsp;|\s)*\d+(?:&nbsp;|\s)*\/(?:&nbsp;|\s)*(\d+)(?:&nbsp;|\s)*\)<\/span>/,
@@ -123,7 +86,11 @@ export async function getBangumiTags({
     throw new BangumiTagListError(502, 'Bangumi 标签页面过大。');
   }
 
-  const result = parseBangumiTagPage(await readBoundedHtml(response), page);
+  const html = await readBoundedHtml(
+    response,
+    () => new BangumiTagListError(502, 'Bangumi 标签页面过大。'),
+  );
+  const result = parseBangumiTagPage(html, page);
   if (result.items.length === 0 && page === 1) {
     reportHtmlParseFailure({ page, parser: 'tags', url });
     throw new BangumiTagListError(502, 'Bangumi 标签页面结构已变化。');

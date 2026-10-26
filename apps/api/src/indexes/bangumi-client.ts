@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
 import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicIndexPage } from './model.ts';
+import { htmlToText, secureUrl, toBangumiUnixTime } from '../bangumi-html.ts';
 
 const BANGUMI_INDEX_URL = 'https://bgm.tv/index/browser';
 const BANGUMI_API_URL = 'https://api.bgm.tv';
@@ -274,32 +275,6 @@ export async function setBangumiIndexCollection({
   return shouldCollect;
 }
 
-function decodeHtml(value: string) {
-  return value
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&#(\d+);/g, (_, code: string) =>
-      String.fromCodePoint(Number(code)),
-    )
-    .replace(/&#x([\da-f]+);/gi, (_, code: string) =>
-      String.fromCodePoint(Number.parseInt(code, 16)),
-    )
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function secureUrl(value?: string) {
-  if (!value) return undefined;
-  if (value.startsWith('//')) return `https:${value}`;
-  return value.replace(/^http:/, 'https:');
-}
-
 function parseBangumiTime(segment: string) {
   const matches = [
     ...segment.matchAll(
@@ -307,12 +282,7 @@ function parseBangumiTime(segment: string) {
     ),
   ];
   const match = matches.at(-1);
-  if (!match) return 0;
-
-  const [, year, month, day, hour, minute] = match.map(Number);
-  return Math.floor(
-    Date.UTC(year, month - 1, day, hour - 8, minute) / 1000,
-  );
+  return match ? toBangumiUnixTime(match) : 0;
 }
 
 export function parseBangumiIndexPage(
@@ -349,13 +319,13 @@ export function parseBangumiIndexPage(
       .reduce((total, match) => total + Number(match[1]), 0);
 
     return [{
-      author: decodeHtml(authorMatch[2]),
+      author: htmlToText(authorMatch[2]),
       authorAvatarUrl: secureUrl(avatarMatch?.[1]),
-      authorUsername: decodeHtml(authorMatch[1]),
-      description: decodeHtml(descriptionMatch?.[1] ?? ''),
+      authorUsername: htmlToText(authorMatch[1]),
+      description: htmlToText(descriptionMatch?.[1] ?? ''),
       id: Number(titleMatch[1]),
       itemCount,
-      title: decodeHtml(titleMatch[2]),
+      title: htmlToText(titleMatch[2]),
       updatedAt: parseBangumiTime(segment),
     }];
   });

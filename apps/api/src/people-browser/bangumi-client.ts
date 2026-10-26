@@ -1,13 +1,12 @@
-import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { BANGUMI_USER_AGENT, BANGUMI_WEB_URL } from '../bangumi-request.ts';
 import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type {
   PublicPeoplePage,
   PublicPersonKind,
   PublicPersonSummary,
 } from './model.ts';
+import { MAX_HTML_BYTES, htmlToText, readBoundedHtml, secureUrl } from '../bangumi-html.ts';
 
-const BANGUMI_WEB_URL = 'https://bgm.tv';
-const MAX_HTML_BYTES = 1_000_000;
 
 export type PeopleSort = 'collects' | 'comment' | 'dateline' | 'title';
 
@@ -21,53 +20,11 @@ export class BangumiPeopleListError extends Error {
   }
 }
 
-function decodeHtml(value: string) {
-  return value
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&#(\d+);/g, (_, code: string) =>
-      String.fromCodePoint(Number(code)),
-    )
-    .replace(/&#x([\da-f]+);/gi, (_, code: string) =>
-      String.fromCodePoint(Number.parseInt(code, 16)),
-    )
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function secureUrl(value?: string) {
-  if (!value || value.startsWith('/img/info_only')) return undefined;
-  if (value.startsWith('//')) return `https:${value}`;
-  if (value.startsWith('/')) return `${BANGUMI_WEB_URL}${value}`;
-  return value.replace(/^http:/, 'https:');
-}
-
-async function readBoundedHtml(response: Response) {
-  if (!response.body) return '';
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  const chunks: string[] = [];
-  let byteLength = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    byteLength += value.byteLength;
-    if (byteLength > MAX_HTML_BYTES) {
-      await reader.cancel();
-      throw new BangumiPeopleListError(502, 'Bangumi 人物页面过大。');
-    }
-    chunks.push(decoder.decode(value, { stream: true }));
-  }
-  chunks.push(decoder.decode());
-  return chunks.join('');
+// Person pages use a placeholder for missing photos and site-relative paths.
+function toPersonImageUrl(value?: string) {
+  if (value?.startsWith('/img/info_only')) return undefined;
+  if (value?.startsWith('/') && !value.startsWith('//')) return `${BANGUMI_WEB_URL}${value}`;
+  return secureUrl(value);
 }
 
 export function parseBangumiPeoplePage(
@@ -102,17 +59,17 @@ export function parseBangumiPeoplePage(
     );
     const categories = [
       ...segment.matchAll(/<span class="badge_job">([\s\S]*?)<\/span>/g),
-    ].map((match) => decodeHtml(match[1]));
+    ].map((match) => htmlToText(match[1]));
 
     items.push({
       categories,
       commentCount: Number(commentMatch?.[1] ?? 0),
       id,
-      imageUrl: secureUrl(imageMatch?.[1]),
+      imageUrl: toPersonImageUrl(imageMatch?.[1]),
       kind,
-      metadata: decodeHtml(metadataMatch?.[1] ?? '')
+      metadata: htmlToText(metadataMatch?.[1] ?? '')
         .replace(/^\s*\/\s*/, ''),
-      name: decodeHtml(nameMatch[1]),
+      name: htmlToText(nameMatch[1]),
     });
   }
 
@@ -174,7 +131,10 @@ export async function getBangumiPeople({
     throw new BangumiPeopleListError(502, 'Bangumi 人物页面过大。');
   }
 
-  const html = await readBoundedHtml(response);
+  const html = await readBoundedHtml(
+    response,
+    () => new BangumiPeopleListError(502, 'Bangumi 人物页面过大。'),
+  );
 
   const result = parseBangumiPeoplePage(html, page);
   if (result.items.length === 0 && page === 1) {

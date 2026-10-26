@@ -1,8 +1,8 @@
-import { BANGUMI_USER_AGENT } from '../bangumi-request.ts';
+import { BANGUMI_USER_AGENT, BANGUMI_WEB_URL } from '../bangumi-request.ts';
 import { reportHtmlParseFailure } from '../html-parser-monitor.ts';
 import type { PublicBlogPage } from './model.ts';
+import { htmlToText, parseBangumiTime, secureUrl } from '../bangumi-html.ts';
 
-const BANGUMI_WEB_URL = 'https://bgm.tv';
 const MAX_HTML_LENGTH = 1_000_000;
 
 const BLOG_PATHS = {
@@ -24,44 +24,6 @@ export class BangumiBlogListError extends Error {
     this.name = 'BangumiBlogListError';
     this.status = status;
   }
-}
-
-function decodeHtml(value: string) {
-  return value
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&#(\d+);/g, (_, code: string) =>
-      String.fromCodePoint(Number(code)),
-    )
-    .replace(/&#x([\da-f]+);/gi, (_, code: string) =>
-      String.fromCodePoint(Number.parseInt(code, 16)),
-    )
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function secureUrl(value?: string) {
-  if (!value) return undefined;
-  if (value.startsWith('//')) return `https:${value}`;
-  return value.replace(/^http:/, 'https:');
-}
-
-function parseBangumiTime(segment: string) {
-  const match = segment.match(
-    /(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})/,
-  );
-  if (!match) return 0;
-
-  const [, year, month, day, hour, minute] = match.map(Number);
-  return Math.floor(
-    Date.UTC(year, month - 1, day, hour - 8, minute) / 1000,
-  );
 }
 
 export function parseBangumiBlogPage(html: string, page: number): PublicBlogPage {
@@ -89,13 +51,13 @@ export function parseBangumiBlogPage(html: string, page: number): PublicBlogPage
     const replyMatch = segment.match(/>(\d+)\s*回复<\/a>/);
 
     return [{
-      author: decodeHtml(authorMatch[2]),
-      authorUsername: decodeHtml(authorMatch[1]),
+      author: htmlToText(authorMatch[2]),
+      authorUsername: htmlToText(authorMatch[1]),
       coverUrl: secureUrl(coverMatch?.[1]),
       id: Number(titleMatch[1]),
       replyCount: Number(replyMatch?.[1] ?? 0),
-      summary: decodeHtml(summaryMatch?.[1] ?? ''),
-      title: decodeHtml(titleMatch[2]),
+      summary: htmlToText(summaryMatch?.[1] ?? ''),
+      title: htmlToText(titleMatch[2]),
       updatedAt: parseBangumiTime(segment),
     }];
   });
