@@ -2,8 +2,14 @@ name: Android release
 
 # 手动触发：在 Actions 页选择分支（默认 main）运行。版本号取 app.config.js，
 # 构建、签名、上传到同名 GitHub Release 草稿；发布仍由人工在草稿页确认。
+# 勾选 build_only 时只构建签名并保存附件，不检查版本、不建草稿、不上传，用于试跑或比对。
 on:
   workflow_dispatch:
+    inputs:
+      build_only:
+        description: 仅构建签名并保存附件（不建草稿、不上传）
+        type: boolean
+        default: false
 
 concurrency:
   group: android-release
@@ -67,6 +73,7 @@ jobs:
 
       # 只接受尚不存在或仍是草稿的版本，绝不改动已发布的 Release。
       - name: Check release state
+        if: ${{ !inputs.build_only }}
         run: |
           state="$(gh release view "${{ steps.version.outputs.tag }}" --json isDraft --jq .isDraft 2>/dev/null || echo missing)"
           if [[ "$state" == false ]]; then
@@ -105,6 +112,7 @@ jobs:
           retention-days: 90
 
       - name: Create draft release
+        if: ${{ !inputs.build_only }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
           if ! gh release view "$tag" > /dev/null 2>&1; then
@@ -114,6 +122,7 @@ jobs:
 
       # 远端已有同名资源时只核对大小和 SHA-256，不一致即停止，不覆盖。
       - name: Upload APK to draft
+        if: ${{ !inputs.build_only }}
         run: python3 scripts/upload-github-apk.py "${{ steps.version.outputs.tag }}" --direct
 
       - name: Remove signing files
