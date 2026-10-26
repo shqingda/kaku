@@ -107,7 +107,7 @@ export function EntityDetailScreen({
                         <Image
                           contentFit="cover"
                           contentPosition="top"
-                          source={data.imageUrl}
+                          source={data.thumbnailUrl ?? data.imageUrl}
                           style={StyleSheet.absoluteFill}
                           transition={140}
                         />

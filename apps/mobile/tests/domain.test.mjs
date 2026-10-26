@@ -168,6 +168,44 @@ test('Bangumi people adapter groups repeated roles by person or character', () =
   ]);
 });
 
+test('Bangumi entity detail keeps the original image for fullscreen only', () => {
+  const images = {
+    grid: 'https://lain.bgm.tv/pic/crt/g/1.jpg',
+    large: 'https://lain.bgm.tv/pic/crt/l/1.jpg',
+    medium: 'https://lain.bgm.tv/r/400/pic/crt/l/1.jpg',
+    small: 'https://lain.bgm.tv/r/100/pic/crt/l/1.jpg',
+  };
+  const detail = { id: 1, images, name: '测试角色', summary: '', type: 1 };
+  const mapped = mapBangumiEntityDetail(detail, [], [], 'character');
+
+  assert.equal(mapped.imageUrl, images.large);
+  assert.equal(mapped.thumbnailUrl, images.medium);
+
+  const onlyLarge = mapBangumiEntityDetail(
+    { ...detail, images: { large: images.large } },
+    [],
+    [],
+    'character',
+  );
+  assert.equal(onlyLarge.thumbnailUrl, images.large);
+});
+
+test('Bangumi entity related subjects use resized covers instead of originals', () => {
+  const detail = { id: 1, name: '测试角色', summary: '', type: 1 };
+  const subject = { id: 10, name: 'Work', name_cn: '', staff: '主角', type: 2 };
+  const mapped = mapBangumiEntityDetail(detail, [
+    { ...subject, image: 'https://lain.bgm.tv/pic/cover/l/92/97/975_GFGYI.jpg' },
+    { ...subject, id: 11, image: 'https://example.com/cover.jpg' },
+    { ...subject, id: 12, image: '' },
+  ], [], 'character');
+
+  assert.deepEqual(mapped.relatedSubjects.map((item) => item.coverUrl), [
+    'https://lain.bgm.tv/r/200/pic/cover/l/92/97/975_GFGYI.jpg',
+    'https://example.com/cover.jpg',
+    undefined,
+  ]);
+});
+
 test('Bangumi subject characters prefer localized Chinese names', () => {
   const characters = [
     {
