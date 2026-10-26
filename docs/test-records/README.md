@@ -6,6 +6,7 @@
 
 | 日期 | 记录 | 主要用途 |
 | --- | --- | --- |
+| 2026-10-26 | [P3 查看器关闭态内存](2026-10-26-p3-viewer-memory.md) | 按需初始化实验：收益未超出波动，已回退 |
 | 2026-10-26 | [P1 开发模式基线](2026-10-26-p1-baseline-dev.md) | 三轮重启 JS 分阶段计时与 footprint，仅供同条件对比 |
 | 2026-10-26 | [兼容缺口复核](2026-10-26-compat-gaps.md) | 移动端 Web 打包与渲染修复、Web 存储上游问题、Sentry Router 与 quick-actions 警告 |
 | 2026-10-26 | [依赖安全复核](2026-10-26-dependency-recheck.md) | node-forge 上游状态、drizzle-kit 间接 esbuild 定向 override |
