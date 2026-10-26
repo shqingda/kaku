@@ -12,7 +12,7 @@ export function useExploreStyles() {
   return { colors, styles };
 }
 
-export const createExploreStyles = (colors: ThemeColors) =>
+const createExploreStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
     body: { backgroundColor: colors.background, flex: 1 },

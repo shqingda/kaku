@@ -20,7 +20,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function subjectIndexesQueryOptions(subjectId: number) {
+function subjectIndexesQueryOptions(subjectId: number) {
   return infiniteQueryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage: PublicIndexPage) => lastPage.nextOffset,

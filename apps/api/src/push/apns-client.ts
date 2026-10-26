@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { PushPayload, SendResult } from './model.ts';
 import { signProviderJwt } from './provider-jwt.ts';
 
-export type ApnsCredentials = { keyId: string; teamId: string; privateKey: string };
+type ApnsCredentials = { keyId: string; teamId: string; privateKey: string };
 const credentialsSchema = z.object({ keyId: z.string().regex(/^[A-Z0-9]{10}$/), teamId: z.string().regex(/^[A-Z0-9]{10}$/), privateKey: z.string().min(1) });
 const failureSchema = z.object({ reason: z.string(), timestamp: z.number().optional() });
 

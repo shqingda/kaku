@@ -1,6 +1,6 @@
 import type { BangumiContentBlock } from '@/lib/bangumi-content';
 
-export type ReplyReference = {
+type ReplyReference = {
   replyId: string;
   author: string;
   body?: string;

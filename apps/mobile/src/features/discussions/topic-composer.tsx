@@ -32,7 +32,7 @@ import { useCreateGroupTopic, useCreateSubjectTopic } from './use-create-topic';
 const MAX_TITLE_LENGTH = 120;
 const MAX_CONTENT_LENGTH = 5000;
 
-export type TopicComposerTarget =
+type TopicComposerTarget =
   | { groupName: string; kind: 'group' }
   | { kind: 'subject'; subjectId: number };
 

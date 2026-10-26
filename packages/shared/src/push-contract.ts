@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Tokens are opaque; cap length and reject legacy envelopes, whitespace and paths.
-export const nativePushTokenSchema = z.string().min(20).max(4096).regex(/^[A-Za-z0-9_:\-]+$/);
+const nativePushTokenSchema = z.string().min(20).max(4096).regex(/^[A-Za-z0-9_:\-]+$/);
 export const pushTokenSchema = z.union([
   nativePushTokenSchema,
   z.string().max(4096).regex(/^(ExponentPushToken|ExpoPushToken)\[[^\]\s]+\]$/),

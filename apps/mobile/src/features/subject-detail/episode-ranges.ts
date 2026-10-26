@@ -1,4 +1,4 @@
-export const EPISODES_PER_RANGE = 50;
+const EPISODES_PER_RANGE = 50;
 
 export function createEpisodeRanges(
   totalEpisodes: number,

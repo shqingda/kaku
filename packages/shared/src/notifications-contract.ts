@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const notificationTargetSchema = z.discriminatedUnion('kind', [
+const notificationTargetSchema = z.discriminatedUnion('kind', [
   z.object({
     id: z.number().int().positive(),
     kind: z.literal('group-topic'),
@@ -29,7 +29,7 @@ export const notificationTargetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('user'), username: z.string() }),
 ]);
 
-export const userNotificationSchema = z.object({
+const userNotificationSchema = z.object({
   action: z.string(),
   createdAt: z.number().int(),
   id: z.number().int().positive(),

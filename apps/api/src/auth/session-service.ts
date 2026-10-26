@@ -7,7 +7,7 @@ import type {
   AuthStore,
 } from './store.ts';
 
-export type SessionAuthentication = AuthenticatedSession & {
+type SessionAuthentication = AuthenticatedSession & {
   tokenHash: string;
 };
 

@@ -18,7 +18,7 @@ import { useReduceMotion } from '@/lib/use-reduce-motion';
 // 按压反馈发生在 pointer-down（apple-design：响应是手感的地基）。
 // 弹簧从当前值出发、随时可中断；按住保持缩小，松开弹回。
 // 只用于主要可点卡片：普通列表行继续用静态 opacity 反馈即可。
-export const PRESS_SCALE = 0.97;
+const PRESS_SCALE = 0.97;
 const PRESS_SCALE_SPRING = { damping: 30, mass: 1, stiffness: 420 } as const;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

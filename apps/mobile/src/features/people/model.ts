@@ -11,7 +11,7 @@ export type EntityRelatedSubject = {
   type: number;
 };
 
-export type EntityAppearance = {
+type EntityAppearance = {
   relation: string;
   subjectId: number;
   subjectTitle: string;

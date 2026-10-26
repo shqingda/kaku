@@ -20,10 +20,10 @@ const storedConfigSchema = z.object({
   revision: z.number().int().nonnegative(),
 });
 
-export type PublicConfig = z.infer<typeof storedConfigSchema>;
+type PublicConfig = z.infer<typeof storedConfigSchema>;
 type ConfigStore = Pick<KVNamespace, 'get'>;
 
-export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
+const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   features: { preferenceCloudSync: true },
   notice: null,
   revision: 0,

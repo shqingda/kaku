@@ -1,4 +1,4 @@
-export type TextSelection = { end: number; start: number };
+type TextSelection = { end: number; start: number };
 
 export function insertAtSelection(
   content: string,

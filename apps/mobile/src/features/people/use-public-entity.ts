@@ -13,7 +13,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function characterQueryOptions(characterId: number) {
+function characterQueryOptions(characterId: number) {
   return queryOptions({
     enabled: Number.isInteger(characterId) && characterId > 0,
     meta: PUBLIC_QUERY_META,
@@ -24,7 +24,7 @@ export function characterQueryOptions(characterId: number) {
   });
 }
 
-export function personQueryOptions(personId: number) {
+function personQueryOptions(personId: number) {
   return queryOptions({
     enabled: Number.isInteger(personId) && personId > 0,
     meta: PUBLIC_QUERY_META,

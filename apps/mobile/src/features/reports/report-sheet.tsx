@@ -19,7 +19,7 @@ import { playSuccessHaptic } from '@/lib/haptics';
 
 import { useCreateReport } from './use-create-report';
 
-export const REPORT_REASON_OPTIONS = [
+const REPORT_REASON_OPTIONS = [
   { label: '辱骂或人身攻击', value: 1 },
   { label: '垃圾信息', value: 2 },
   { label: '政治敏感内容', value: 3 },

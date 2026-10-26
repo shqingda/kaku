@@ -32,7 +32,7 @@ function describePushRegistrationError(error: unknown) {
   );
 }
 
-export type PushStatus =
+type PushStatus =
   | 'denied'
   | 'failed'
   | 'off'

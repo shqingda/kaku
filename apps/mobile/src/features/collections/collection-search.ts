@@ -93,7 +93,7 @@ export function listItemFromPersonalCollection(
   };
 }
 
-export type MyCollectionEmpty = {
+type MyCollectionEmpty = {
   kind: 'offline' | 'loading' | 'error' | 'no-match';
   text: string;
   title: string;

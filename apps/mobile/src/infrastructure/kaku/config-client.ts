@@ -12,7 +12,7 @@ const publicConfigSchema = z.object({
   source: z.enum(['default', 'kv']),
 });
 
-export type PublicConfigResponse = z.infer<typeof publicConfigSchema>;
+type PublicConfigResponse = z.infer<typeof publicConfigSchema>;
 
 export async function getPublicConfig(
   signal?: AbortSignal,

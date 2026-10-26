@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const loginRequestIdSchema = z.uuid();
 export const codeVerifierSchema = z.string().min(43).max(128).regex(/^[A-Za-z0-9._~-]+$/);
-export const codeChallengeSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+const codeChallengeSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 
 export const handoffStartQuerySchema = z.object({
   app_redirect_uri: z.literal('kaku://auth/callback').optional(),

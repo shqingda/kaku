@@ -8,11 +8,11 @@ export type PackedSubject = {
   subject: CatalogSubject;
 };
 
-export type OfflineSubjectPack = {
+type OfflineSubjectPack = {
   items: PackedSubject[];
 };
 
-export function stripOfflineSource(subject: CatalogSubject): CatalogSubject {
+function stripOfflineSource(subject: CatalogSubject): CatalogSubject {
   const { offlineSource: _ignored, ...rest } = subject;
   return rest;
 }

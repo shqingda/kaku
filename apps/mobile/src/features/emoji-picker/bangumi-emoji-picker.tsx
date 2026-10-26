@@ -30,7 +30,7 @@ const GRID_COLUMNS = 6;
 
 // 多列网格 + 分组 Tab 的 Bangumi 表情选择器。参考 Stage1st 第三方客户端的
 // 插入表情面板：点击“表情”后从输入框下方自然展开，可切换分类并在网格中浏览。
-export function BangumiEmojiPicker({
+function BangumiEmojiPicker({
   onSelect,
 }: {
   onSelect: (sticker: string) => void;

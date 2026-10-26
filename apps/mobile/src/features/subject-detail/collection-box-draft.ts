@@ -70,7 +70,7 @@ export function collectionBoxBaselineFromItem(
   };
 }
 
-export type CollectionBoxSession = {
+type CollectionBoxSession = {
   baseline: CollectionBoxDraft;
   form: CollectionBoxForm;
   source: WatchingItem;
@@ -153,7 +153,7 @@ export function collectionBoxDraftFromForm(
   };
 }
 
-export type CollectionBoxCapabilities = {
+type CollectionBoxCapabilities = {
   supportsWatchProgress: boolean;
   supportsReadingProgress: boolean;
 };

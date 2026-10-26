@@ -90,7 +90,7 @@ export class BangumiApiError extends Error {
   }
 }
 
-export type BangumiEntityKind = 'character' | 'person';
+type BangumiEntityKind = 'character' | 'person';
 
 function headers(accessToken: string, hasBody = false) {
   return {

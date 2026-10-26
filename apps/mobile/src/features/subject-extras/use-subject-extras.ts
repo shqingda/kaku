@@ -13,7 +13,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function subjectCharactersQueryOptions(subjectId: number) {
+function subjectCharactersQueryOptions(subjectId: number) {
   return queryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     meta: PUBLIC_QUERY_META,
@@ -24,7 +24,7 @@ export function subjectCharactersQueryOptions(subjectId: number) {
   });
 }
 
-export function subjectRelationsQueryOptions(subjectId: number) {
+function subjectRelationsQueryOptions(subjectId: number) {
   return queryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     meta: PUBLIC_QUERY_META,

@@ -35,7 +35,7 @@ export const zoomSourceScrollProps =
       }
     : {};
 
-export function useFrozenHeaderHeight() {
+function useFrozenHeaderHeight() {
   const insets = useSafeAreaInsets();
   const fallback = insets.top + FALLBACK_BAR_HEIGHT;
   const live = useHeaderHeight();

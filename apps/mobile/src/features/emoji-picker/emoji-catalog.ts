@@ -3,12 +3,12 @@ import {
   getBangumiEmojiUrl,
 } from '../../lib/bangumi-emoji.ts';
 
-export type PickerEmoji = {
+type PickerEmoji = {
   sticker: string;
   url: string;
 };
 
-export type EmojiCategory = {
+type EmojiCategory = {
   key: string;
   label: string;
   items: PickerEmoji[];

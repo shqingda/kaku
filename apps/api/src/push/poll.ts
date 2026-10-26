@@ -8,7 +8,7 @@ import { isNativePushDevice, nativePushSender, type SendDevice } from './native-
 import type { PushResult } from './model.ts';
 import { createD1PushDeviceStore, type PushDeviceStore, type StoredPushDevice } from './store.ts';
 
-export type PushPollResult = {
+type PushPollResult = {
   expiredReceipts: number;
   failedReceipts: number;
   legacyDevices: number;

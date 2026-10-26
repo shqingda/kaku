@@ -20,7 +20,7 @@ import {
 } from '../../infrastructure/kaku/discussions-client.ts';
 import { queryKeys } from '../../lib/query-keys.ts';
 
-export type DiscussionReplyKind =
+type DiscussionReplyKind =
   | 'character'
   | 'episode'
   | 'group-topic'

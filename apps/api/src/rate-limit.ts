@@ -4,13 +4,13 @@ import type { PublicCache } from './public-cache.ts';
 
 // Public reads use best-effort edge throttling. Authentication and writes use
 // D1's atomic counter so concurrent Worker instances share one budget.
-export const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 export const PUBLIC_REQUEST_LIMIT = 180;
 export const WRITE_REQUEST_LIMIT = 40;
 
 const RATE_LIMIT_CACHE_ORIGIN = 'https://rate-limit.kaku.internal';
 
-export type RateLimitResult = {
+type RateLimitResult = {
   allowed: boolean;
   limit: number;
   remaining: number;

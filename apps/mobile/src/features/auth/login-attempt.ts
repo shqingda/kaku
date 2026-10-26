@@ -1,7 +1,7 @@
 import { codeVerifierSchema, loginRequestIdSchema } from '@kaku/shared/auth-contract';
 import { z } from 'zod';
 
-export const LOGIN_ATTEMPT_TTL_MS = 5 * 60 * 1000;
+const LOGIN_ATTEMPT_TTL_MS = 5 * 60 * 1000;
 const pendingLoginSchema = z.object({
   codeVerifier: codeVerifierSchema,
   createdAt: z.number().int().nonnegative(),

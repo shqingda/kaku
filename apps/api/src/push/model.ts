@@ -1,6 +1,6 @@
 export type PushPayload = { body: string; title: string; unreadCount: number };
 // Acceptance by FCM/APNs is not proof of delivery to the phone.
-export type PushAcceptance = { id: string; token: string };
+type PushAcceptance = { id: string; token: string };
 export type PushResult = {
   failedTokens: { error: string; token: string }[];
   invalidTokens: string[];

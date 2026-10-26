@@ -16,7 +16,7 @@ const SUBJECT_TYPE_SLUGS = {
   real: 6,
 } as const;
 
-export type SubjectTypeSlug = keyof typeof SUBJECT_TYPE_SLUGS;
+type SubjectTypeSlug = keyof typeof SUBJECT_TYPE_SLUGS;
 
 export function getSubjectTypeFromSlug(slug?: string) {
   return SUBJECT_TYPE_SLUGS[slug as SubjectTypeSlug] ?? 2;

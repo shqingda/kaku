@@ -2,7 +2,7 @@ import type { PersistedClient } from '@tanstack/react-query-persist-client';
 
 import { QUERY_CACHE_MAX_AGE, shouldPersistPublicQuery } from './query-persistence.ts';
 
-export const QUERY_SNAPSHOT_MAX_QUERIES = 100;
+const QUERY_SNAPSHOT_MAX_QUERIES = 100;
 export const QUERY_SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
 const MAX_PAGES = 2;
 

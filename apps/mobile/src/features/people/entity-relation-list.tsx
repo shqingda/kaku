@@ -19,7 +19,7 @@ import type {
   PublicEntityDetail,
 } from './model';
 
-export type EntityListItem =
+type EntityListItem =
   | { id: string; kind: 'empty'; text: string }
   | { id: string; kind: 'peer'; peer: EntityRelatedPeer }
   | { count: number; id: string; kind: 'section'; title: string }

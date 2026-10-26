@@ -24,7 +24,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function communityQueryOptions() {
+function communityQueryOptions() {
   return queryOptions({
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => getPublicCommunity(signal),
@@ -34,7 +34,7 @@ export function communityQueryOptions() {
   });
 }
 
-export function communityTopicsQueryOptions() {
+function communityTopicsQueryOptions() {
   return infiniteQueryOptions({
     getNextPageParam: (lastPage: PublicGroupTopicPage) => lastPage.nextOffset,
     initialPageParam: 0,

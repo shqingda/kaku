@@ -1,4 +1,4 @@
-export type BangumiHtmlParser =
+type BangumiHtmlParser =
   | 'blogs'
   | 'indexes'
   | 'people'

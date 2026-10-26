@@ -14,7 +14,7 @@ import Animated, {
 // 松手后的回弹/停驻由 ReanimatedSwipeable 的弹簧物理接管（继承手势速度）。
 // 点按动作时先收起面板再执行，保持"操作发生在面板上"的空间关系。
 // 读屏用户不走滑动手势：各行既有的替代路径（点按已读、编辑按钮）仍然保留。
-export type SwipeAction = {
+type SwipeAction = {
   backgroundColor: string;
   foreground: string;
   id: string;

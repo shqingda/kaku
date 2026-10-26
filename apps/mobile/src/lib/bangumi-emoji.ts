@@ -30,7 +30,7 @@ const EMOJI_REGEX = new RegExp(
   'g',
 );
 
-export type BangumiEmojiSegment =
+type BangumiEmojiSegment =
   | { type: 'emoji'; value: string }
   | { type: 'text'; value: string };
 

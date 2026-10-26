@@ -1,4 +1,4 @@
-export type PublicBlog = {
+type PublicBlog = {
   author: string;
   authorUsername: string;
   coverUrl?: string;

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const friendTimelineItemSchema = z.object({
+const friendTimelineItemSchema = z.object({
   blogId: z.number().int().positive().optional(),
   blogTitle: z.string().optional(),
   createdAt: z.number().int(),

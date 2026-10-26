@@ -7,7 +7,7 @@ export const installedVersion = Application.nativeApplicationVersion ?? Constant
 const config = Constants.expoConfig?.extra?.appUpdate;
 export const updateSupport = Platform.OS === 'android' && config?.channel === 'github'
   ? 'apk' : Platform.OS === 'ios' && /^\d+$/.test(config?.iosAppStoreId ?? '') ? 'app-store' : 'unconfigured';
-export const unavailableMessage = Platform.OS === 'ios'
+const unavailableMessage = Platform.OS === 'ios'
   ? 'iOS 更新渠道尚未配置，请通过当前分发方式（TestFlight 或 App Store）查看更新。'
   : '当前安装渠道尚未配置版本检查，请通过原安装渠道查看更新。';
 

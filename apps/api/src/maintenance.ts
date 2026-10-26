@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1';
 
 import { authHandoffs, oauthTransactions, rateLimitBuckets, sessions } from './db/schema.ts';
 
-export type CleanupResult = {
+type CleanupResult = {
   deletedAuthHandoffs: number;
   deletedOAuthTransactions: number;
   deletedSessions: number;

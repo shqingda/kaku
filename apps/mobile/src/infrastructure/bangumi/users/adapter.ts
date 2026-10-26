@@ -52,7 +52,7 @@ function secureImage(url?: string) {
   return url?.replace(/^http:/, 'https:');
 }
 
-export function toPublicUserCollection(
+function toPublicUserCollection(
   collection: BangumiUserCollectionsResponse['data'][number],
   subjectType: number,
 ): PublicUserCollection {
@@ -91,7 +91,7 @@ export function toPublicUserCollectionPage(
   };
 }
 
-export function toPublicUserBlog(
+function toPublicUserBlog(
   blog: BangumiUserBlogs['data'][number],
 ): PublicUserBlog {
   return {
@@ -117,7 +117,7 @@ export function toPublicUserBlogPage(
   };
 }
 
-export function toPublicUserFriend(
+function toPublicUserFriend(
   friend: BangumiUserFriends['data'][number],
 ): PublicUserFriend {
   return {
@@ -183,7 +183,7 @@ export function toPublicUserEntityCollectionPage(
   };
 }
 
-export function toPublicTimelineItem(
+function toPublicTimelineItem(
   item: BangumiUserTimeline[number],
 ): PublicTimelineItem {
   const firstSubject = item.memo.subject?.[0];

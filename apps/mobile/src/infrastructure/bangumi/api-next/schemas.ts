@@ -27,7 +27,7 @@ export const bangumiDiscussionReplySchema: z.ZodType<BangumiDiscussionReply> =
     }),
   );
 
-export const bangumiSubjectTopicSummarySchema = z.object({
+const bangumiSubjectTopicSummarySchema = z.object({
   createdAt: z.number(),
   creator: bangumiUserSchema.optional(),
   creatorID: z.number(),

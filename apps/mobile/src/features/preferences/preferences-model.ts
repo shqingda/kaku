@@ -64,7 +64,7 @@ export function resolveTheme(
   return systemScheme === 'dark' ? 'dark' : 'light';
 }
 
-export type MergeResult = {
+type MergeResult = {
   applied: AppPreferences;
   pushToCloud: boolean;
 };

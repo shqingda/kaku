@@ -10,7 +10,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function subjectStaffQueryOptions(subjectId: number) {
+function subjectStaffQueryOptions(subjectId: number) {
   return queryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     meta: PUBLIC_QUERY_META,

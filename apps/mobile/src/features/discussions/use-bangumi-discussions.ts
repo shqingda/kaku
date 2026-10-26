@@ -24,7 +24,7 @@ import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
 import type { DiscussionTopicPage } from './model';
 
-export function subjectTopicsQueryOptions(subjectId: number, limit = 20) {
+function subjectTopicsQueryOptions(subjectId: number, limit = 20) {
   return infiniteQueryOptions({
     enabled: Number.isInteger(subjectId) && subjectId > 0,
     getNextPageParam: (lastPage: DiscussionTopicPage) => lastPage.nextOffset,

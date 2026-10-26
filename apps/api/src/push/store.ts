@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1';
 
 import { bangumiCredentials, pushDevices, pushReceipts, sessions } from '../db/schema.ts';
 
-export type PushPlatform = 'android' | 'ios';
+type PushPlatform = 'android' | 'ios';
 
 export type StoredPushDevice = {
   provider?: 'fcm' | 'apns' | 'expo';
@@ -18,7 +18,7 @@ export type StoredPushDevice = {
   userId: number;
 };
 
-export type PushDeliveryCommit = {
+type PushDeliveryCommit = {
   devices: StoredPushDevice[];
   lastNotificationId: number;
 };

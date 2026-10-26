@@ -30,7 +30,7 @@ function isDiagnosticRecord(value: unknown): value is DiagnosticRecord {
   );
 }
 
-export function parseDiagnosticRecords(value: string | null): DiagnosticRecord[] {
+function parseDiagnosticRecords(value: string | null): DiagnosticRecord[] {
   if (!value) return [];
 
   try {

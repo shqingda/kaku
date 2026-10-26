@@ -228,7 +228,7 @@ export const bangumiSubjectSchema = z.object({
   type: z.number(),
 });
 
-export const bangumiEpisodeSchema = z.object({
+const bangumiEpisodeSchema = z.object({
   airdate: z.string().optional(),
   comment: z.number(),
   desc: z.string(),

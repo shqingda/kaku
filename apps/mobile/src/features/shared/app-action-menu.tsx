@@ -8,7 +8,7 @@ import type { ThemeColors } from '@/constants/theme';
 import { AppSheet } from '@/features/shared/app-sheet';
 import { useTheme } from '@/features/theme/theme-provider';
 
-export type AppActionMenuItem = {
+type AppActionMenuItem = {
   id: string;
   label: string;
   onPress: () => void;

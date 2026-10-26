@@ -11,7 +11,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { shouldRetryBangumiQuery } from '@/lib/query-retry';
 
-export function channelQueryOptions(subjectType: number) {
+function channelQueryOptions(subjectType: number) {
   return queryOptions({
     meta: PUBLIC_QUERY_META,
     queryFn: ({ signal }) => getChannelSubjects(subjectType, signal),

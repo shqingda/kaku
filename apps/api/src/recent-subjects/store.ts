@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1';
 
 import { userRecentSubjects } from '../db/schema.ts';
 
-export type StoredRecentSubject = {
+type StoredRecentSubject = {
   coverUrl?: string;
   id: number;
   title: string;
@@ -11,7 +11,7 @@ export type StoredRecentSubject = {
   viewedAt: number;
 };
 
-export type StoredRecentSubjects = {
+type StoredRecentSubjects = {
   items: StoredRecentSubject[];
   updatedAt: number;
   userId: number;

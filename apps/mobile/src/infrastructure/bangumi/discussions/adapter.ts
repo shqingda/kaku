@@ -133,7 +133,7 @@ function topicAuthor(topic: BangumiSubjectTopicSummary) {
   );
 }
 
-export function mapBangumiTopicSummary(
+function mapBangumiTopicSummary(
   topic: BangumiSubjectTopicSummary,
 ): DiscussionTopic {
   return {

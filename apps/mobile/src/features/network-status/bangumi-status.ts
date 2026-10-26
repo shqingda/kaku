@@ -6,20 +6,20 @@ export const BANGUMI_STATUS_ENDPOINT = 'https://bgm-status.ry.mk/api/status';
 
 export type ServiceLevel = 'ok' | 'degraded' | 'down' | 'unknown';
 
-export type StatusDay = {
+type StatusDay = {
   day: string;
   level: ServiceLevel;
   uptime: number | null;
 };
 
-export type ComponentIncident = {
+type ComponentIncident = {
   startedAt: number;
   endedAt: number | null;
   level: ServiceLevel;
   durationS: number;
 };
 
-export type ComponentStatus = {
+type ComponentStatus = {
   domain: string;
   label: string;
   level: ServiceLevel;
@@ -134,7 +134,7 @@ export async function fetchBangumiStatus(
 
 // ---- 本机连通性探测 ----
 
-export type ConnectivityTarget = {
+type ConnectivityTarget = {
   id: string;
   name: string;
   host: string;
@@ -149,7 +149,7 @@ export const CONNECTIVITY_TARGETS: ConnectivityTarget[] = [
   { id: 'next', name: '新版 API', host: 'next.bgm.tv', url: 'https://next.bgm.tv/' },
 ];
 
-export type ProbeState = 'ok' | 'slow' | 'failed';
+type ProbeState = 'ok' | 'slow' | 'failed';
 
 export type ProbeResult = {
   state: ProbeState;

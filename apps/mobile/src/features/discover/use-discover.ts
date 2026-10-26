@@ -32,7 +32,7 @@ async function fetchRankedSubjects(
   }
 }
 
-export function calendarQueryOptions(enabled = true) {
+function calendarQueryOptions(enabled = true) {
   return queryOptions({
     enabled,
     meta: PUBLIC_QUERY_META,
@@ -43,7 +43,7 @@ export function calendarQueryOptions(enabled = true) {
   });
 }
 
-export function rankedSubjectsQueryOptions(subjectType = 2) {
+function rankedSubjectsQueryOptions(subjectType = 2) {
   return infiniteQueryOptions({
     getNextPageParam: (lastPage: DiscoverSubjectPage) => lastPage.nextOffset,
     initialPageParam: 0,

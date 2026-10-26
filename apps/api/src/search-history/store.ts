@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1';
 
 import { userSearchHistory } from '../db/schema.ts';
 
-export type StoredSearchHistory = {
+type StoredSearchHistory = {
   items: string[];
   updatedAt: number;
   userId: number;

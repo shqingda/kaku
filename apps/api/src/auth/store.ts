@@ -24,7 +24,7 @@ export type AuthenticatedSession = {
   userId: number;
 };
 
-export type AuthSessionSummary = {
+type AuthSessionSummary = {
   createdAt: number;
   deviceName: string;
   expiresAt: number;
@@ -32,7 +32,7 @@ export type AuthSessionSummary = {
   sessionId: string;
 };
 
-export type StoredBangumiCredential = {
+type StoredBangumiCredential = {
   connectionId: string;
   refreshOperationId: string | null;
   refreshLeaseExpiresAt: number | null;
