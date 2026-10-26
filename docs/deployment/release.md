@@ -33,6 +33,8 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 3. 下载构建附件或草稿中的 APK，核对版本、签名与权限；需要时装到手机验证。
 4. 在草稿页点击发布并设为 latest，或执行 `gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest`。
 
+2026-10-27 首次 `build_only` 试跑（运行 40374580613，提交 `b8b0742`）与本地 v1.1.23 包比对：大小同为 44,521,023 字节，versionCode 10 / 1.1.23、仅 arm64，API 29 与 API 33 签名证书摘要一致，权限清单相同。
+
 本地构建保留为备用路径：CI 不可用、需要排查构建问题，或需要诊断对照包时使用下文流程。
 
 ## 纯本地构建（备用）
