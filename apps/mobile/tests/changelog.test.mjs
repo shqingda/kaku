@@ -17,7 +17,7 @@ const require = createRequire(import.meta.url);
 const APP_VERSION = require('../app.config.js').expo.version;
 
 test('changelog data stays well-formed, newest first, and matches the app version', () => {
-  assert.ok(CHANGELOG.length >= 2);
+  assert.ok(CHANGELOG.length >= 1);
 
   const versions = CHANGELOG.map((entry) => entry.version);
   assert.equal(new Set(versions).size, versions.length, '版本号不应重复');

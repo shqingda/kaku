@@ -1,0 +1,22 @@
+appId: com.shqingda.kaku.debug
+name: Changelog current release expands and reopens
+---
+- runFlow:
+    file: reset-home.yaml
+- runFlow:
+    file: open-account.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      text: "更新日志"
+- tapOn: "更新日志"
+- assertVisible: "更新日志"
+- assertVisible: "更新日志改为只显示当前版本。"
+- tapOn: "版本 1.1.24，收起更新内容"
+- tapOn: "版本 1.1.24，展开更新内容"
+- assertVisible: "更新日志改为只显示当前版本。"
+- takeScreenshot: changelog-current-expanded
+- tapOn: "版本 1.1.24，收起更新内容"
+- tapOn: "版本 1.1.24，展开更新内容"
+- assertVisible: "更新日志改为只显示当前版本。"
+- takeScreenshot: changelog-current-reopened

@@ -81,7 +81,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 冒烟步骤 `kaku-smoke-steps.yaml` 一次走完前 4 项（首页、账户、更新日志、
 网络诊断）。其余每项一个 yaml。`changelog-checks.yaml` 只被冒烟步骤嵌套，
-钉死一条仍存在的更新日志文案（现在是 1.1.1）；删掉那条 changelog 之后才
+钉死一条仍存在的更新日志文案（现在是 1.1.24）；删掉那条 changelog 之后才
 需要改选择器。
 
 | 流程 | 覆盖 |

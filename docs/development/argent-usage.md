@@ -100,7 +100,7 @@ debug 包跑会找不到 App。Android 全量入口还没有实跑。
    RN 容器设了 `accessibilityLabel` 后 iOS 无障碍树只暴露容器；展开卡片的
    `text` 是 `'expanded'`；`assertVisible` 不支持 `timeout`，长等待用
    `extendedWaitUntil`；管道跑 Maestro 要 `set -o pipefail`。
-   `changelog-checks.yaml` 钉死某一条更新日志文案，发新版后若那条被删才需要改。
+   `changelog-checks.yaml` 钉死当前版本的更新日志文案，发新版后若那条被删才需要改。
 4. **Argent 0.24 已知限制**（2026-09-04 实测）：部分页面 `describe` 仍可读树，
    但 `gesture-tap` / swipe 未送达 App。连续两次同一坐标失败就停，改用
    Maestro 或重新 `describe`，不要死戳。

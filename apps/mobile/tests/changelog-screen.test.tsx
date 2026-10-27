@@ -34,21 +34,21 @@ describe('ChangelogScreen', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it.each([false, true])('reveals v1.1.14 after measuring while collapsed (reduced motion: %s)', async (reduced) => {
+  it.each([false, true])('measures, collapses, and reopens the current release (reduced motion: %s)', async (reduced) => {
     jest.mocked(useReduceMotion).mockReturnValue(reduced);
     const screen = await render(<ThemeProvider><ChangelogScreen /></ThemeProvider>);
-    const note = screen.getByText('Android 安装包启用 R8 代码压缩与资源裁剪，进一步减小下载体积。');
+    const note = screen.getByText('更新日志改为只显示当前版本。');
     const measurement = note.parent!.parent!;
     const clip = measurement.parent!;
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
     // The measured content must not share the clipping container's height constraint.
     expect(StyleSheet.flatten(measurement.props.style)).toMatchObject({ position: 'absolute', left: 0, right: 0, top: 0 });
     await fireEvent(measurement, 'layout', { nativeEvent: { layout: { height: 64, width: 320, x: 0, y: 0 } } });
-    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.14，展开更新内容' }));
     expect(StyleSheet.flatten(clip.props.style)).toMatchObject({ height: 64, opacity: 1 });
-    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.14，收起更新内容' }));
+    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.24，收起更新内容' }));
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
-    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.14，展开更新内容' }));
+    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.24，展开更新内容' }));
     expect(StyleSheet.flatten(clip.props.style).height).toBe(64);
+    expect(screen.getAllByRole('button', { name: /^版本 / })).toHaveLength(1);
   });
 });

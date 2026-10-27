@@ -5,17 +5,9 @@ appId: placeholder
 ---
 - assertVisible: "更新日志"
 - takeScreenshot: changelog
-# 先收起默认展开的最新版本；最大辅助字号下长说明可能占很多屏。
-- tapOn: "版本 .*，收起更新内容"
-- scrollUntilVisible:
-    element:
-      text: "版本 1.1.1，展开更新内容"
-    direction: DOWN
-- tapOn: "版本 1.1.1，展开更新内容"
-- scrollUntilVisible:
-    element:
-      text: "长按图标的快捷方式现在显示各自的功能图标：日历、搜索、排行、筛选"
-    direction: DOWN
-- assertVisible: "长按图标的快捷方式现在显示各自的功能图标：日历、搜索、排行、筛选"
+- assertVisible: "更新日志改为只显示当前版本。"
+- tapOn: "版本 1.1.24，收起更新内容"
+- tapOn: "版本 1.1.24，展开更新内容"
+- assertVisible: "更新日志改为只显示当前版本。"
 - takeScreenshot: changelog-expanded
 - tapOn: "返回"
