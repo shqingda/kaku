@@ -52,12 +52,12 @@ jobs:
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      # 与本机一致：React Native 0.88 的 NDK / compileSdk，签名脚本固定使用 build-tools 36.0.0。
+      # 与本机一致：React Native 0.88 的 NDK / compileSdk，签名脚本固定使用 build-tools 37.0.0。
       - name: Install Android SDK packages
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            "platforms;android-37.0" "build-tools;36.0.0" "ndk;27.1.12297006"
+            "platforms;android-37.0" "build-tools;37.0.0" "ndk;27.1.12297006"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

@@ -2,7 +2,7 @@
 # Android 13+ 正式证书轮换；Android 10–12L 保留旧证书。私钥始终位于仓库外。
 set -euo pipefail
 SIGNING_DIR="${KAKU_SIGNING_DIR:-$HOME/.local/share/kaku-signing/2026-10-17-rotation}"
-BUILD_TOOLS="${ANDROID_HOME:-$HOME/Library/Android/sdk}/build-tools/36.0.0"
+BUILD_TOOLS="${ANDROID_HOME:-$HOME/Library/Android/sdk}/build-tools/37.0.0"
 APKSIGNER="${KAKU_APKSIGNER:-$BUILD_TOOLS/apksigner}"
 ZIPALIGN="${KAKU_ZIPALIGN:-$BUILD_TOOLS/zipalign}"
 for file in legacy-debug.keystore release.p12 release-password.txt rotation.lineage; do
@@ -12,7 +12,7 @@ for file in legacy-debug.keystore release.p12 release-password.txt rotation.line
   fi
 done
 if [[ ! -x "$APKSIGNER" || ! -x "$ZIPALIGN" ]]; then
-  echo "需要 Android build-tools 36.0.0（apksigner / zipalign）。" >&2
+  echo "需要 Android build-tools 37.0.0（apksigner / zipalign）。" >&2
   exit 1
 fi
 if [[ "${1:-}" == --check && $# == 1 ]]; then exit 0; fi

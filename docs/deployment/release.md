@@ -8,7 +8,7 @@
 
 - 只接受尚不存在或仍是草稿的版本；同名 Release 已发布时直接失败，提示先提升版本号。
 - 运行时勾选 **build_only**：只构建、签名并保存附件，跳过版本检查、草稿和上传，用于试跑或与本地包比对。
-- 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37.0`、`build-tools;36.0.0`、`ndk;27.1.12297006`。
+- 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37.0`、`build-tools;37.0.0`、`ndk;27.1.12297006`。
 - 签名文件只在 `android-release` Environment 下可用，运行时还原到 `$RUNNER_TEMP/kaku-signing`（权限 600），结束时无论成败都删除。来自 fork 的 PR 拿不到这些 Secrets。
 
 ### 一次性配置（仓库所有者执行）
@@ -41,7 +41,7 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
-从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 36.0.0 及仓库外签名目录，默认 `$HOME/.local/share/kaku-signing/2026-10-17-rotation/`，可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
+从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 37.0.0 及仓库外签名目录，默认 `$HOME/.local/share/kaku-signing/2026-10-17-rotation/`，可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
 
 构建、签名和发布不需要连接手机。手机用于额外验证覆盖、数据保留和真实通知送达；未连接时在发布记录中保留未验范围。
 
