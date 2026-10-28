@@ -50,6 +50,9 @@ describe('ChangelogScreen', () => {
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
     await fireEvent.press(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，展开更新内容` }));
     expect(StyleSheet.flatten(clip.props.style).height).toBe(64);
-    expect(screen.getAllByRole('button', { name: /^版本 / })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^版本 / })).toHaveLength(CHANGELOG.length);
+    const previous = screen.getByRole('button', { name: '版本 1.1.24，展开更新内容' });
+    await fireEvent.press(previous);
+    expect(screen.getByRole('button', { name: '版本 1.1.24，收起更新内容' })).toBeTruthy();
   });
 });

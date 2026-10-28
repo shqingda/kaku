@@ -24,7 +24,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '1.1.24',
     date: '2026-10-28',
     notes: [
-      '更新日志改为只显示当前版本。',
+      '整理更新日志，清理此前杂乱的旧版记录，从本版开始保留后续版本记录。',
     ],
   },
 ];

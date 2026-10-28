@@ -75,3 +75,5 @@ and visible progress. Keep proxy environment variables unset; the explicit
 SOCKS proxy applies only to APK upload. Do not retry gh uploads or rebuild
 an already verified APK just because uploading is slow. Verify remote size
 and SHA-256 before publishing the draft.
+
+- 更新日志从 v1.1.24 起持续累积保留；此前旧记录是一次性清理。发新版不得删除或隐藏 v1.1.24 及之后的历史版本，最新默认展开、旧版可折叠。
