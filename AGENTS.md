@@ -37,6 +37,9 @@ This repository is both a product and a learning project.
   User-authorized exception: `pnpm dev:sim` may run `serve-sim repair-input`
   when DeviceHub input shadowing is detected. This restarts backboardd / SpringBoard
   and reopens Kaku without clearing data; do not change other service settings.
+- Login reminder (2026-10-28): the user revoked other device sessions, including
+  iOS. On the next iOS simulator launch, remind the user to sign in again before
+  testing authenticated flows; let the user perform the login.
 - When the user says “打开 Kaku 模拟器”, run `pnpm dev:sim`, then open or reuse
   `http://localhost:3200/` in Codex's in-app browser and verify a real click.
   See `docs/development/ios-simulator.md` for lifecycle and troubleshooting.

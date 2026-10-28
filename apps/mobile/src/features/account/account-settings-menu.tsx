@@ -1,4 +1,4 @@
-// 「设置与本地」菜单组：外观与同步、清理缓存、诊断与网络诊断。
+// 「设置与本地」菜单组：外观与同步、清理缓存与网络诊断。
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -78,14 +78,6 @@ export function AccountSettingsMenu() {
         />
         <AccountMenuRow
           colors={colors}
-          description="查看自动保存的条目及保存时间"
-          hasDivider
-          icon={{ android: 'download', ios: 'arrow.down.circle', web: 'download' }}
-          label="离线内容"
-          onPress={() => router.push('/offline-content')}
-        />
-        <AccountMenuRow
-          colors={colors}
           description={cacheError ? '部分缓存未能清理，点击重试' : '内容、图片与自动离线包，保留历史和草稿'}
           hasDivider
           icon={{
@@ -97,18 +89,6 @@ export function AccountSettingsMenu() {
           loading={isClearingLocalData}
           showChevron={false}
           onPress={() => void clearLocalData()}
-        />
-        <AccountMenuRow
-          colors={colors}
-          description="查看仅保存在本机的错误记录"
-          hasDivider
-          icon={{
-            android: 'troubleshoot',
-            ios: 'waveform.path.ecg',
-            web: 'troubleshoot',
-          }}
-          label="诊断信息"
-          onPress={() => router.push('/diagnostics')}
         />
         <AccountMenuRow
           colors={colors}

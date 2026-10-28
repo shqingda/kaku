@@ -101,3 +101,9 @@ test('update row checks directly and shows busy state without navigating', async
   expect(screen.getByLabelText('检查更新').props.accessibilityState.busy).toBe(true);
   expect(screen.getByLabelText('检查更新').props.accessibilityState.disabled).toBe(true);
 });
+
+test('consumer settings omit offline and diagnostic management screens', async () => {
+  await render(<Page />);
+  expect(screen.queryByText('离线内容')).toBeNull();
+  expect(screen.queryByText('诊断信息')).toBeNull();
+});

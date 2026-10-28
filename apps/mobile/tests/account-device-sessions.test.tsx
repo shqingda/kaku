@@ -4,15 +4,16 @@ import { AccountDeviceSessionsCard } from '@/features/account/account-device-ses
 const mockSingle = jest.fn();
 const mockOthers = jest.fn();
 let mockAccount = 1;
+let mockSessions = [{ sessionId: 'other', deviceName: 'Android 设备', lastUsedAt: 1, current: false }];
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: { user: { id: mockAccount } } }) }));
 jest.mock('@/features/theme/theme-provider', () => ({ useTheme: () => ({}) }));
 jest.mock('@/features/auth/use-device-sessions', () => ({
-  useDeviceSessions: () => ({ data: [{ sessionId: 'other', deviceName: 'Android 设备', lastUsedAt: 1, current: false }] }),
+  useDeviceSessions: () => ({ data: mockSessions }),
   useRevokeDeviceSession: () => ({ mutateAsync: mockSingle }),
   useRevokeOtherDeviceSessions: () => ({ mutateAsync: mockOthers }),
 }));
 let alerts: jest.SpyInstance;
-beforeEach(() => { mockAccount = 1; mockSingle.mockReset().mockResolvedValue(undefined); mockOthers.mockReset().mockResolvedValue(undefined); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+beforeEach(() => { mockAccount = 1; mockSessions = [{ sessionId: 'other', deviceName: 'Android 设备', lastUsedAt: 1, current: false }]; mockSingle.mockReset().mockResolvedValue(undefined); mockOthers.mockReset().mockResolvedValue(undefined); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
 afterEach(async () => { await cleanup(); alerts.mockRestore(); });
 const confirm = () => alerts.mock.calls.at(-1)![2][1].onPress();
 test('single and bulk actions only revoke after confirmation', async () => {
@@ -46,4 +47,17 @@ test('failed revoke is visible and can be tried again', async () => {
   await fireEvent.press(screen.getByLabelText('退出Android 设备'));
   await act(confirm);
   expect(mockSingle).toHaveBeenCalledTimes(2);
+});
+
+test('more than three sessions collapse with the current device always visible', async () => {
+  mockSessions = Array.from({ length: 5 }, (_, i) => ({ sessionId: String(i), deviceName: `设备${i}`, lastUsedAt: i, current: i === 4 }));
+  await render(<AccountDeviceSessionsCard />);
+  expect(screen.getByText('设备4')).toBeTruthy();
+  expect(screen.queryByText('设备2')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: '展开全部 5 台设备' }));
+  expect(screen.getByText('设备2')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: '收起设备列表' }));
+  expect(screen.queryByText('设备2')).toBeNull();
+  expect(mockSingle).not.toHaveBeenCalled();
+  expect(mockOthers).not.toHaveBeenCalled();
 });

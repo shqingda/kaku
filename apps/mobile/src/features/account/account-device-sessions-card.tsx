@@ -1,7 +1,7 @@
 // 登录设备卡片：设备会话列表、退出单台设备与退出其他设备。
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { ThemeColors } from '@/constants/theme';
@@ -25,6 +25,9 @@ export function AccountDeviceSessionsCard() {
   const colors = useTheme();
   const styles = createStyles(colors);
   const sessionsQuery = useDeviceSessions();
+  const [expanded, setExpanded] = useState(false);
+  const devices = [...(sessionsQuery.data ?? [])].sort((a, b) => Number(b.current) - Number(a.current));
+  const visibleDevices = expanded ? devices : devices.slice(0, 3);
   const revokeSession = useRevokeDeviceSession();
   const revokeOtherSessions = useRevokeOtherDeviceSessions();
   const otherSessionCount =
@@ -94,7 +97,7 @@ export function AccountDeviceSessionsCard() {
           <Text style={styles.sessionError}>设备读取失败，点此重试</Text>
         </Pressable>
       ) : (
-        sessionsQuery.data?.map((deviceSession, index) => (
+        visibleDevices.map((deviceSession, index) => (
           <View
             key={deviceSession.sessionId}
             style={[
@@ -130,6 +133,16 @@ export function AccountDeviceSessionsCard() {
           </View>
         ))
       )}
+      {!sessionsQuery.isError && devices.length > 3 ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={() => setExpanded(value => !value)}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <Text style={styles.revokeSessionText}>{expanded ? '收起设备列表' : `展开全部 ${devices.length} 台设备`}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
