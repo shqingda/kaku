@@ -17,6 +17,13 @@ This repository is both a product and a learning project.
 - Prefer code the owner can explain in an interview over clever abstractions.
 - Keep the product provider-neutral. Bangumi is an adapter, not the domain model.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.
+- Android physical-device testing and verification default to a locally built release
+  APK (`pnpm build:android`). Send the APK or provide its absolute path, then wait
+  for the user to install it before device testing. Report build checks separately
+  from device verification. To conserve GitHub Actions usage, run Android CI builds
+  only when the user has explicitly confirmed release intent; routine testing,
+  verification, or a local build failure does not authorize a CI build, including
+  `build_only`. See `docs/development/testing.md` and `docs/deployment/release.md`.
 - Local iOS testing must reuse the existing iPhone 18 Pro (iOS 27.0), UDID
   `498E27B7-5192-48CE-9B13-F4A27F10F806`. List devices before use; if it is
   missing, report the blocker instead of creating or cloning another simulator.

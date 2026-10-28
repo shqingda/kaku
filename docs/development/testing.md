@@ -9,6 +9,16 @@ expo-doctor、全 workspace 类型检查、`pnpm test`、API 75% / 移动端 92%
 跑 HTML 解析回归（`pnpm --filter @kaku/api test:html-parsers`）。
 Maestro 和 argent **不进 CI**。
 
+## Android 实机测试约定
+
+自 2026-10-28 起，日常 Android 实机测试、问题复现和改动验证默认使用本地编译的 release APK，以节省 GitHub Actions 构建用量：
+
+1. 在仓库根目录运行 `pnpm build:android`，构建方法与签名要求见[构建与发版指南](../deployment/release.md)。
+2. 构建成功后，将 APK 交给用户，或提供实际产物的绝对路径；默认产物为 `apps/mobile/dist-split/kaku-release.apk`。同时说明对应版本、改动和待验证项目。
+3. 等用户安装完成后再开展实机验证。构建与签名检查通过不等于实机测试通过；尚未安装或未完成的验证应明确记为待验。
+
+只有用户明确确定要发版时，才运行 GitHub Actions 的 Android 构建（包括 `build_only`）。普通的“测试一下”“验证一下”不代表发版授权；本地构建失败时先排查并报告阻塞，不自动转用 CI 构建。此约定针对 Android 安装包构建，现有常规 CI 质量检查保持原有规则。
+
 ## 1. 纯逻辑单元测试（node:test）
 
 - 位置：`apps/mobile/tests/*.test.mjs`（以及 `apps/api/tests/*.test.mjs`、

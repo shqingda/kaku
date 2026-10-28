@@ -2,12 +2,16 @@
 
 先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
-## GitHub Actions 构建（默认）
+## 构建入口约定
 
-从 v1.1.24 起，正式包默认由 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py --direct` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
+自 2026-10-28 起，Android 日常实机测试和验证默认本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
+
+## GitHub Actions 构建（仅确定发版时）
+
+用户明确确定要发版后，可使用 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py --direct` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
 
 - 只接受尚不存在或仍是草稿的版本；同名 Release 已发布时直接失败，提示先提升版本号。
-- 运行时勾选 **build_only**：只构建、签名并保存附件，跳过版本检查、草稿和上传，用于试跑或与本地包比对。
+- 运行时勾选 **build_only**：只构建、签名并保存附件，跳过版本检查、草稿和上传，仅用于已确定发版流程中的构建验证或与本地包比对，不用于日常实机测试。
 - 运行环境与本机一致：JDK 17、Node 26.12.1、pnpm 12.14.0，SDK `platforms;android-37.0`、`build-tools;37.0.0`、`ndk;27.1.12297006`。
 - 签名文件只在 `android-release` Environment 下可用，运行时还原到 `$RUNNER_TEMP/kaku-signing`（权限 600），结束时无论成败都删除。来自 fork 的 PR 拿不到这些 Secrets。
 
@@ -35,9 +39,9 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 
 2026-10-27 首次 `build_only` 试跑（运行 40374580613，提交 `b8b0742`）与本地 v1.1.23 包比对：大小同为 44,521,023 字节，versionCode 10 / 1.1.23、仅 arm64，API 29 与 API 33 签名证书摘要一致，权限清单相同。
 
-本地构建保留为备用路径：CI 不可用、需要排查构建问题，或需要诊断对照包时使用下文流程。
+本地构建是日常实机测试的默认路径，也可用于正式发版、排查构建问题或生成诊断对照包。已有验收 APK 时优先复用，避免重复构建。
 
-## 纯本地构建（备用）
+## 纯本地构建（实机测试默认）
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
