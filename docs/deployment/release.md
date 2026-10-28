@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。当前发布版本 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。本轮 v1.1.25 提供 44.54 MB 正式包，包含账户页整理、独立设备管理和缓存清理反馈，详见 [发布记录](../test-records/2026-10-29-release-1.1.25.md)。此前 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
 
 ## 构建入口约定
 
@@ -173,7 +173,7 @@ Expo SDK / CLI 仍用于原生工程生成和本地开发，不要求登录 Expo
 
 ## 应用内检查更新
 
-账户 → 设置与本地 → 点击“检查更新”直接检查，右侧显示加载转圈，不跳转页面。手动检查无新版提示“已是最新版”，有新版直接询问是否下载；自动检查无新版或失败均不弹框。正式客户端启动或回到前台时自动检查，最多每 24 小时一次。同一版本自动提醒后 7 天内不再提示；新版本可再次提示。检查失败也遵守自动冷却，手动重试不受限制。开发模式不自动弹更新提醒。
+账户 → 关于 → 点击“检查更新”直接检查，右侧显示加载转圈，不跳转页面。手动检查无新版提示“已是最新版”，有新版直接询问是否下载；自动检查无新版或失败均不弹框。正式客户端启动或回到前台时自动检查，最多每 24 小时一次。同一版本自动提醒后 7 天内不再提示；新版本可再次提示。检查失败也遵守自动冷却，手动重试不受限制。开发模式不自动弹更新提醒。
 
 - `scripts/build-split-apks.sh` 为本地 GitHub APK 构建设置 `KAKU_UPDATE_CHANNEL=github`，并仅在此渠道申请 `REQUEST_INSTALL_PACKAGES`。从固定仓库的 latest release 读取正式版本，正式包只匹配 `kaku-release.apk`，debug 包只匹配 `kaku-debug.apk`。缺少匹配资源时显示失败，不拿其他渠道包顶替。
 - 用户确认后才开始下载，显示字节进度比例，可取消；进度弹层可取消下载，关闭弹层也会取消未完成下载。下载后检查 HTTP 状态和文件大小，再让用户打开系统安装器。系统负责安装权限、包签名和覆盖安装判断；返回应用不代表安装成功。网络失败、无法调用安装器可重试或改用网页。首版不承诺杀进程续传。
