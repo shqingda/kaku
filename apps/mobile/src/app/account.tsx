@@ -33,6 +33,7 @@ export default function AccountScreen() {
           <>
             <AccountProfileCard />
             <AccountContentMenu username={session.user.username} />
+            <AccountDeviceSessionsCard />
           </>
         ) : (
           <AccountSignInPanel />
@@ -40,7 +41,6 @@ export default function AccountScreen() {
         {!isLoading ? (
           <AccountSettingsMenu />
         ) : null}
-        {!isLoading && session ? <AccountDeviceSessionsCard /> : null}
         {!isLoading && session ? <AccountSignOutActions /> : null}
       </ScrollView>
     </SafeAreaView>

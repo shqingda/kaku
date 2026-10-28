@@ -1,5 +1,5 @@
 // 账户页共用的菜单行：图标 + 标题/描述 + 可选角标或加载指示。
-import { type ComponentProps } from 'react';
+import { type ComponentProps, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
@@ -15,6 +15,8 @@ export function AccountMenuRow({
   label,
   loading = false,
   showChevron = true,
+  trailing,
+  statusText,
   onPress,
 }: {
   badge?: number;
@@ -25,6 +27,8 @@ export function AccountMenuRow({
   label: string;
   loading?: boolean;
   showChevron?: boolean;
+  trailing?: ReactNode;
+  statusText?: string;
   onPress: () => void;
 }) {
   const styles = createStyles(colors);
@@ -33,6 +37,7 @@ export function AccountMenuRow({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityValue={statusText ? { text: statusText } : undefined}
       accessibilityState={{ busy: loading, disabled: loading }}
       disabled={loading}
       onPress={onPress}
@@ -59,7 +64,7 @@ export function AccountMenuRow({
           <Text style={styles.menuBadgeText}>{badge > 99 ? '99+' : badge}</Text>
         </View>
       ) : null}
-      {loading ? (
+      {trailing ?? (loading ? (
         <ActivityIndicator color={colors.accent} size="small" />
       ) : showChevron ? (
         <SymbolView
@@ -71,7 +76,7 @@ export function AccountMenuRow({
           size={14}
           tintColor={colors.subtle}
         />
-      ) : null}
+      ) : null)}
     </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AccountSettingsMenu } from '@/features/account/account-settings-menu';
 import { ThemeProvider } from '@/features/theme/theme-provider';
@@ -106,4 +106,35 @@ test('consumer settings omit offline and diagnostic management screens', async (
   await render(<Page />);
   expect(screen.queryByText('离线内容')).toBeNull();
   expect(screen.queryByText('诊断信息')).toBeNull();
+});
+
+
+test('cache feedback stays busy, prevents duplicate clearing, then resets after success', async () => {
+  jest.useFakeTimers();
+  try {
+    let finish!: () => void;
+    mockImageDisk.mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve; }));
+    await render(<Page />);
+    expect(screen.getByLabelText('清理缓存').props.accessibilityValue?.text).toBeUndefined();
+    await fireEvent.press(screen.getByLabelText('清理缓存'));
+    expect(screen.getByLabelText('清理缓存').props.accessibilityValue.text).toBe('正在清理');
+    expect(screen.getByLabelText('清理缓存').props.accessibilityState.disabled).toBe(true);
+    await fireEvent.press(screen.getByLabelText('清理缓存'));
+    expect(mockImageDisk).toHaveBeenCalledTimes(1);
+    await act(async () => { finish(); });
+    expect(screen.getByLabelText('清理缓存').props.accessibilityValue.text).toBe('清理成功');
+    expect(screen.getByText('缓存已清理，历史和草稿已保留')).toBeTruthy();
+    await act(async () => { jest.advanceTimersByTime(2400); });
+    expect(screen.getByLabelText('清理缓存').props.accessibilityValue?.text).toBeUndefined();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('about is available with general settings and has no duplicate changelog entry', async () => {
+  await render(<Page />);
+  expect(screen.getByText('通用设置')).toBeTruthy();
+  expect(screen.getByText('帮助与关于')).toBeTruthy();
+  expect(screen.getByLabelText('关于 Kaku')).toBeTruthy();
+  expect(screen.queryByLabelText('更新日志')).toBeNull();
 });

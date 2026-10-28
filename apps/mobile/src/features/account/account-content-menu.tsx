@@ -1,4 +1,4 @@
-// 「内容与互动」菜单组：我的动态、日志、通知、关于与更新日志。
+// 个人内容入口：通知、动态与日志。
 import { useMemo } from 'react';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -14,11 +14,24 @@ export function AccountContentMenu({ username }: { username: string }) {
 
   return (
     <>
-      <Text style={styles.menuSectionTitle}>内容与互动</Text>
+      <Text style={styles.menuSectionTitle}>我的内容</Text>
       <View style={styles.menuGroup}>
         <AccountMenuRow
           colors={colors}
+          badge={notificationsQuery.data?.unreadCount}
+          description="回复、好友与修订消息"
+          icon={{
+            android: 'notifications',
+            ios: 'bell',
+            web: 'notifications',
+          }}
+          label="通知"
+          onPress={() => router.push('/notifications')}
+        />
+        <AccountMenuRow
+          colors={colors}
           description="收藏与进度变化"
+          hasDivider
           icon={{
             android: 'history',
             ios: 'clock.arrow.circlepath',
@@ -48,43 +61,6 @@ export function AccountContentMenu({ username }: { username: string }) {
               params: { username },
             })
           }
-        />
-        <AccountMenuRow
-          colors={colors}
-          badge={notificationsQuery.data?.unreadCount}
-          description="回复、好友与修订消息"
-          hasDivider
-          icon={{
-            android: 'notifications',
-            ios: 'bell',
-            web: 'notifications',
-          }}
-          label="通知"
-          onPress={() => router.push('/notifications')}
-        />
-        <AccountMenuRow
-          colors={colors}
-          description="版本、帮助与隐私"
-          hasDivider
-          icon={{
-            android: 'info',
-            ios: 'info.circle',
-            web: 'info',
-          }}
-          label="关于 Kaku"
-          onPress={() => router.push('/about')}
-        />
-        <AccountMenuRow
-          colors={colors}
-          description="每个版本的新变化"
-          hasDivider
-          icon={{
-            android: 'receipt_long',
-            ios: 'list.bullet.rectangle',
-            web: 'receipt_long',
-          }}
-          label="更新日志"
-          onPress={() => router.push('/changelog')}
         />
       </View>
     </>
