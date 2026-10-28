@@ -48,7 +48,6 @@ type AuthActionsValue = {
   captureRequest: () => AuthRequestScope;
   clearError: () => void;
   completeSignIn: (callbackUrl: string) => Promise<void>;
-  disconnectBangumi: () => Promise<void>;
   request: (path: string, init?: RequestInit) => Promise<Response>;
   signIn: () => Promise<boolean>;
   signOut: () => Promise<void>;
@@ -373,21 +372,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [captureRequest, clearSession]);
 
-  const disconnectBangumi = useCallback(async () => {
-    const scope = captureRequest();
-    try {
-      await unregisterPushDevice(scope.request);
-    } catch {
-      // An unavailable push service must not prevent revoking the connection.
-    }
-    if (!scope.isCurrent()) throw new AuthSessionChangedError();
-    const response = await scope.request('/auth/connection', { method: 'DELETE' });
-    if (!response.ok) throw new Error('无法断开 Bangumi，请稍后重试。');
-    if (!scope.isCurrent()) throw new AuthSessionChangedError();
-    setError(undefined);
-    await clearSession();
-  }, [captureRequest, clearSession]);
-
   const clearError = useCallback(() => setError(undefined), []);
 
   const sessionValue = useMemo(
@@ -400,12 +384,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       captureRequest,
       clearError,
       completeSignIn,
-      disconnectBangumi,
       request,
       signIn,
       signOut,
     }),
-    [captureRequest, clearError, completeSignIn, disconnectBangumi, request, signIn, signOut],
+    [captureRequest, clearError, completeSignIn, request, signIn, signOut],
   );
 
   return (

@@ -206,7 +206,7 @@ test('captured identity survives token rotation but not a same-account replaceme
 });
 
 
-test.each(['signOut', 'disconnectBangumi'] as const)('an old %s cannot revoke or clear a replacement login', async (action) => {
+test.each(['signOut'] as const)('an old %s cannot revoke or clear a replacement login', async (action) => {
   const hook = await renderHook(useAuth, { wrapper: AuthProvider });
   const pending = deferred<void>();
   jest.mocked(unregisterPushDevice).mockReturnValueOnce(pending.promise);
