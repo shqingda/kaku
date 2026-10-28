@@ -14,7 +14,7 @@ export function AccountContentMenu({ username }: { username: string }) {
 
   return (
     <>
-      <Text style={styles.menuSectionTitle}>我的内容</Text>
+      <Text style={styles.menuSectionTitle}>我的</Text>
       <View style={styles.menuGroup}>
         <AccountMenuRow
           colors={colors}

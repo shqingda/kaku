@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { AccountMenuRow, createMenuGroupStyles } from './account-menu-row';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useTheme } from '@/features/theme/theme-provider';
 import { clearOfflineSubjectPack } from '@/features/catalog/offline-subject-pack';
 import { queryPersister } from '@/lib/query-persister';
@@ -16,6 +17,7 @@ import { CacheClearIndicator, type CacheClearStatus } from './cache-clear-indica
 import { useAppUpdate } from '@/features/app-update/update-provider';
 
 export function AccountSettingsMenu() {
+  const { session } = useAuth();
   const update = useAppUpdate();
   const checkOnOpen = useRef(update.check);
   useEffect(() => { void checkOnOpen.current(false); }, []);
@@ -58,11 +60,21 @@ export function AccountSettingsMenu() {
 
   return (
     <>
-      <Text style={styles.menuSectionTitle}>通用设置</Text>
+      <Text style={styles.menuSectionTitle}>设置</Text>
       <View style={styles.menuGroup}>
+        {session ? (
+          <AccountMenuRow
+            colors={colors}
+            description="查看和管理已登录的设备"
+            icon={{ android: 'devices', ios: 'desktopcomputer', web: 'devices' }}
+            label="登录设备"
+            onPress={() => router.push('/devices')}
+          />
+        ) : null}
         <AccountMenuRow
           colors={colors}
           description="深色、浅色与云端同步"
+          hasDivider={Boolean(session)}
           icon={{
             android: 'cloud',
             ios: 'icloud',
@@ -88,7 +100,7 @@ export function AccountSettingsMenu() {
           onPress={() => void clearLocalData()}
         />
       </View>
-      <Text style={styles.menuSectionTitle}>帮助与关于</Text>
+      <Text style={styles.menuSectionTitle}>关于</Text>
       <View style={styles.menuGroup}>
         <AccountMenuRow
           colors={colors}

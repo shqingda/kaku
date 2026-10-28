@@ -1,7 +1,7 @@
 // 登录设备卡片：设备会话列表、退出单台设备与退出其他设备。
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { ThemeColors } from '@/constants/theme';
@@ -25,9 +25,7 @@ export function AccountDeviceSessionsCard() {
   const colors = useTheme();
   const styles = createStyles(colors);
   const sessionsQuery = useDeviceSessions();
-  const [expanded, setExpanded] = useState(false);
   const devices = [...(sessionsQuery.data ?? [])].sort((a, b) => Number(b.current) - Number(a.current));
-  const visibleDevices = expanded ? devices : devices.slice(0, 3);
   const revokeSession = useRevokeDeviceSession();
   const revokeOtherSessions = useRevokeOtherDeviceSessions();
   const otherSessionCount =
@@ -88,7 +86,11 @@ export function AccountDeviceSessionsCard() {
           ) : null}
         </View>
       </View>
-      {sessionsQuery.isError ? (
+      {sessionsQuery.fetchStatus === 'paused' ? (
+        <Text style={styles.sessionMessage}>当前离线，联网后继续读取设备</Text>
+      ) : sessionsQuery.isPending ? (
+        <Text style={styles.sessionMessage}>正在读取登录设备</Text>
+      ) : sessionsQuery.isError ? (
         <Pressable
           accessibilityRole="button"
           onPress={() => void sessionsQuery.refetch()}
@@ -96,8 +98,10 @@ export function AccountDeviceSessionsCard() {
         >
           <Text style={styles.sessionError}>设备读取失败，点此重试</Text>
         </Pressable>
+      ) : devices.length === 0 ? (
+        <Text style={styles.sessionMessage}>暂无登录设备</Text>
       ) : (
-        visibleDevices.map((deviceSession, index) => (
+        devices.map((deviceSession, index) => (
           <View
             key={deviceSession.sessionId}
             style={[
@@ -133,16 +137,6 @@ export function AccountDeviceSessionsCard() {
           </View>
         ))
       )}
-      {!sessionsQuery.isError && devices.length > 3 ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
-          onPress={() => setExpanded(value => !value)}
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-        >
-          <Text style={styles.revokeSessionText}>{expanded ? '收起设备列表' : `展开全部 ${devices.length} 台设备`}</Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -151,7 +145,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   sessionsCard: {
     backgroundColor: colors.surface,
     borderRadius: 20,
-    marginTop: SPACING.lg,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
   },
@@ -170,7 +163,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: SPACING.md,
   },
   revokeOtherText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
-  sessionMessage: { paddingTop: SPACING.lg },
+  sessionMessage: { paddingTop: SPACING.lg, color: colors.muted, ...TYPE.caption },
   sessionError: { color: colors.accent, ...TYPE.caption },
   sessionRow: {
     alignItems: 'center',

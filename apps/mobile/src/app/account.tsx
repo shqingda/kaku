@@ -6,7 +6,6 @@ import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { AccountContentMenu } from '@/features/account/account-content-menu';
-import { AccountDeviceSessionsCard } from '@/features/account/account-device-sessions-card';
 import { AccountProfileCard } from '@/features/account/account-profile-card';
 import { AccountSettingsMenu } from '@/features/account/account-settings-menu';
 import { AccountSignInPanel } from '@/features/account/account-sign-in-panel';
@@ -33,7 +32,6 @@ export default function AccountScreen() {
           <>
             <AccountProfileCard />
             <AccountContentMenu username={session.user.username} />
-            <AccountDeviceSessionsCard />
           </>
         ) : (
           <AccountSignInPanel />

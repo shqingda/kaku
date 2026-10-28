@@ -99,6 +99,7 @@ export default function RootLayout() {
 const TITLED_SCREENS = [
   ['timeline', '好友动态'],
   ['account', '账户'],
+  ['devices', '登录设备'],
   ['settings', '外观与同步'],
   ['about', '关于 Kaku'],
   ['changelog', '更新日志'],

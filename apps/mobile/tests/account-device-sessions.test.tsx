@@ -49,15 +49,12 @@ test('failed revoke is visible and can be tried again', async () => {
   expect(mockSingle).toHaveBeenCalledTimes(2);
 });
 
-test('more than three sessions collapse with the current device always visible', async () => {
-  mockSessions = Array.from({ length: 5 }, (_, i) => ({ sessionId: String(i), deviceName: `设备${i}`, lastUsedAt: i, current: i === 4 }));
+test('device page lists every device without a collapsed section', async () => {
+  mockSessions = Array.from({ length: 12 }, (_, i) => ({ sessionId: String(i), deviceName: `设备${i}`, lastUsedAt: i, current: i === 11 }));
   await render(<AccountDeviceSessionsCard />);
-  expect(screen.getByText('设备4')).toBeTruthy();
-  expect(screen.queryByText('设备2')).toBeNull();
-  await fireEvent.press(screen.getByRole('button', { name: '展开全部 5 台设备' }));
-  expect(screen.getByText('设备2')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: '收起设备列表' }));
-  expect(screen.queryByText('设备2')).toBeNull();
+  for (const device of mockSessions) expect(screen.getByText(device.deviceName)).toBeTruthy();
+  expect(screen.getByText('当前设备')).toBeTruthy();
+  expect(screen.queryByText(/展开全部|收起设备列表/)).toBeNull();
   expect(mockSingle).not.toHaveBeenCalled();
   expect(mockOthers).not.toHaveBeenCalled();
 });

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Alert } from 'react-native';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -133,8 +134,15 @@ test('cache feedback stays busy, prevents duplicate clearing, then resets after 
 
 test('about is available with general settings and has no duplicate changelog entry', async () => {
   await render(<Page />);
-  expect(screen.getByText('通用设置')).toBeTruthy();
-  expect(screen.getByText('帮助与关于')).toBeTruthy();
+  expect(screen.getByText('设置')).toBeTruthy();
+  expect(screen.getByText('关于')).toBeTruthy();
   expect(screen.getByLabelText('关于 Kaku')).toBeTruthy();
   expect(screen.queryByLabelText('更新日志')).toBeNull();
+});
+
+
+test('device management opens its own page from settings', async () => {
+  await render(<Page />);
+  await fireEvent.press(screen.getByLabelText('登录设备'));
+  expect(router.push).toHaveBeenCalledWith('/devices');
 });
