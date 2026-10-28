@@ -32,42 +32,8 @@ jobs:
           node-version: 26.12.1
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check Expo dependency compatibility
-        run: pnpm --filter @kaku/mobile exec expo install --check
-
-      - name: Run Expo project diagnostics
-        working-directory: apps/mobile
-        run: pnpm dlx expo-doctor
-
-      - name: Type-check workspace
-        run: pnpm typecheck
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Check build and measurement tools
-        run: pnpm test:tooling
-
-      - name: Check API test coverage
-        run: pnpm --filter @kaku/api test:coverage
-
-      - name: Check mobile test coverage
-        run: pnpm --filter @kaku/mobile test:coverage
-
-      - name: Run mobile component tests
-        run: pnpm --filter @kaku/mobile test:ui
-
-      - name: Bundle iOS app
-        run: pnpm --filter @kaku/mobile exec expo export --platform ios --output-dir /tmp/kaku-ios
-
-      - name: Bundle Android app
-        run: pnpm --filter @kaku/mobile exec expo export --platform android --output-dir /tmp/kaku-android
-
-      - name: Build website
-        run: pnpm build:web
+      - name: Run shared verification
+        run: pnpm ci:check verify
 
   scrape-regression:
     name: HTML scrape regression
@@ -89,8 +55,5 @@ jobs:
           node-version: 26.12.1
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run HTML parser regression tests
-        run: pnpm --filter @kaku/api test:html-parsers
+      - name: Run shared HTML parser regression
+        run: pnpm ci:check html

@@ -4,7 +4,7 @@
 
 ## 构建入口约定
 
-自 2026-10-28 起，Android 日常实机测试和验证默认本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
+自 2026-10-28 起，Android 日常实机测试和验证默认先运行 `pnpm ci:check`，通过后本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
 
 ## GitHub Actions 构建（仅确定发版时）
 
@@ -50,6 +50,8 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 构建、签名和发布不需要连接手机。手机用于额外验证覆盖、数据保留和真实通知送达；未连接时在发布记录中保留未验范围。
 
 ```bash
+# 构建／预构建前先跑完整本地 CI 预检，失败则先修复
+pnpm ci:check
 # 默认 GitHub 渠道、正式包名，单一 arm64-v8a APK，启用 R8 与资源裁剪
 pnpm build:android
 # 使用 debug 包名和图标；仍是可独立运行的 Release 构建，不依赖 Metro
