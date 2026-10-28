@@ -50,7 +50,7 @@ export default function ExploreScreen() {
   const [searchMode, setSearchMode] = useState<ExploreSearchMode>('subject');
   const searchHistory = useSearchHistory();
   const recentHistory = useRecentSubjects();
-  const confirmClearHistory = useClearHistoryAction();
+  const clearHistory = useClearHistoryAction();
   const {
     addSearch,
     items: recentSearches,
@@ -202,13 +202,13 @@ export default function ExploreScreen() {
                 <RecentSearches
                   items={recentSearches}
                   history={searchHistory}
-                  onClear={() => confirmClearHistory('search', searchHistory)}
+                  onClear={() => clearHistory(searchHistory)}
                   onSelect={selectRecentSearch}
                 />
                 <RecentSubjectsSection
                   items={recentSubjects}
                   history={recentHistory}
-                  onClear={() => confirmClearHistory('browse', recentHistory)}
+                  onClear={() => clearHistory(recentHistory)}
                 />
               </>
             ) : null}

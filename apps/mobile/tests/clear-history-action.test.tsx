@@ -12,72 +12,51 @@ jest.mock('@/features/preferences/preferences-provider', () => ({ usePreferences
 const clear = jest.fn();
 const target = { clearHistory: clear, localStatus: 'ready' as const, isClearing: false };
 let alerts: jest.SpyInstance;
-function confirm() { return alerts.mock.calls.at(-1)![2].at(-1).onPress(); }
 beforeEach(() => { mockUser = 1; mockSync = true; mockAvailable = true; mockLocalSaved = true; clear.mockReset().mockResolvedValue(undefined); alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
 afterEach(() => alerts.mockRestore());
 
-test.each(['search', 'browse'] as const)('%s clear is inert before confirmation and failure offers direct retry', async kind => {
+test.each(['guest', 'sync-on', 'sync-off'] as const)('%s clears immediately without confirmation or result alerts, including failure', async mode => {
+  mockUser = mode === 'guest' ? undefined : 1;
+  mockSync = mode === 'sync-on';
   clear.mockRejectedValueOnce(new Error('disk'));
   const hook = await renderHook(useClearHistoryAction);
-  await act(() => { hook.result.current(kind, target); });
-  expect(alerts.mock.calls.at(-1)![1]).toContain('其他 Kaku 设备');
-  expect(clear).not.toHaveBeenCalled();
-  expect(alerts.mock.calls.at(-1)![2][0]).toEqual({ text: '取消', style: 'cancel' });
-  await act(async () => { await confirm(); });
-  expect(alerts.mock.calls.at(-1)![0]).toBe('历史未能清除');
-  await act(async () => { await confirm(); });
+  await act(async () => { await hook.result.current(target); });
+  expect(clear).toHaveBeenCalledTimes(1);
+  expect(alerts).not.toHaveBeenCalled();
+  await act(async () => { await hook.result.current(target); });
   expect(clear).toHaveBeenCalledTimes(2);
-  expect(alerts.mock.calls.at(-1)![0]).toContain('已在本机清除');
+  expect(alerts).not.toHaveBeenCalled();
 });
 
-test.each(['account', 'sync', 'availability', 'local-save', 'roundtrip'] as const)('%s changes invalidate old confirmations', async change => {
+test.each(['account', 'sync', 'availability', 'local-save', 'roundtrip'] as const)('%s changes invalidate stale actions', async change => {
   const hook = await renderHook(useClearHistoryAction);
-  await act(() => { hook.result.current('search', target); });
-  const old = alerts.mock.calls.at(-1)![2].at(-1).onPress;
+  const old = hook.result.current;
   if (change === 'account' || change === 'roundtrip') mockUser = 2;
   if (change === 'sync') mockSync = false;
   if (change === 'availability') mockAvailable = false;
   if (change === 'local-save') mockLocalSaved = false;
   await hook.rerender(undefined);
   if (change === 'roundtrip') { mockUser = 1; await hook.rerender(undefined); }
-  await act(async () => { await old(); });
+  await act(async () => { await old(target); });
   expect(clear).not.toHaveBeenCalled();
-  expect(alerts.mock.calls.at(-1)![0]).toBe('账号或同步设置已变化');
+  expect(alerts).not.toHaveBeenCalled();
 });
 
-test('unconfirmed preference persistence describes local deletion even when the switch is on', async () => {
-  mockLocalSaved = false;
-  const hook = await renderHook(useClearHistoryAction);
-  await act(() => { hook.result.current('search', target); });
-  expect(alerts.mock.calls.at(-1)![1]).toContain('当前只清除本机此账号');
-  await act(async () => { await confirm(); });
-  expect(alerts.mock.calls.at(-1)![1]).toContain('以后恢复云同步');
-});
-
-test('a pending clear ignores duplicate confirmation and no longer reports after unmount', async () => {
+test('a pending clear ignores duplicate presses', async () => {
   let resolve!: () => void;
   clear.mockReturnValueOnce(new Promise<void>(done => { resolve = done; }));
   const hook = await renderHook(useClearHistoryAction);
-  await act(() => { hook.result.current('browse', target); });
-  const yes = alerts.mock.calls.at(-1)![2].at(-1).onPress;
   let pending!: Promise<void>;
-  await act(async () => { pending = yes(); await yes(); });
+  await act(async () => { pending = hook.result.current(target); await hook.result.current(target); });
   expect(clear).toHaveBeenCalledTimes(1);
   await hook.unmount();
   await act(async () => { resolve(); await pending; });
-  expect(alerts).toHaveBeenCalledTimes(1);
+  expect(alerts).not.toHaveBeenCalled();
 });
 
-test('guest and sync-off scopes describe local effects, and unreadable history cannot be cleared', async () => {
-  mockUser = undefined;
+test.each(['loading', 'read-error'] as const)('%s history cannot be cleared', async localStatus => {
   const hook = await renderHook(useClearHistoryAction);
-  await act(() => { hook.result.current('search', target); });
-  expect(alerts.mock.calls.at(-1)![1]).toContain('本机访客');
-  mockUser = 1; mockSync = false;
-  await hook.rerender(undefined);
-  await act(() => { hook.result.current('search', target); });
-  expect(alerts.mock.calls.at(-1)![1]).toContain('当前只清除本机此账号');
-  await act(() => { hook.result.current('search', { ...target, localStatus: 'read-error' }); });
-  expect(alerts.mock.calls.at(-1)![0]).toBe('请先恢复历史记录');
+  await act(async () => { await hook.result.current({ ...target, localStatus }); });
   expect(clear).not.toHaveBeenCalled();
+  expect(alerts).not.toHaveBeenCalled();
 });

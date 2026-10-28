@@ -60,7 +60,7 @@ iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧
 
 访客历史专项 `.maestro/history-guest-ios.yaml` 会生成并清除本机历史，
 因此本机默认跳过；只有用户另行明确授权可丢弃的测试环境时才可运行。
-它验证重启恢复、取消、两个清除入口、另一类历史保留及清除后再次新增，
+它验证重启恢复、综合页直接清除且无结果弹窗、另一类历史保留及清除后再次新增，
 不会加入通用全量入口。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
 
 回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。

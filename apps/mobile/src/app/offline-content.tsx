@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { router, Stack, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
@@ -15,6 +15,7 @@ export default function OfflineContentScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
+  const [removeError, setRemoveError] = useState<number | null>(null);
   const busy = useRef(false);
   const active = useRef(false);
   const reload = useCallback(async () => {
@@ -35,13 +36,12 @@ export default function OfflineContentScreen() {
     if (busy.current) return;
     busy.current = true;
     setRemoving(id);
+    setRemoveError(null);
     try {
       await removeOfflineSubject(id);
       if (active.current) setItems(previous => previous.filter(item => item.subject.id !== id));
     } catch {
-      if (active.current) Alert.alert('没有移除', '本机存储操作失败，请重试。', [
-        { text: '取消', style: 'cancel' }, { text: '重试', onPress: () => void remove(id) },
-      ]);
+      if (active.current) setRemoveError(id);
     } finally {
       busy.current = false;
       if (active.current) setRemoving(null);
@@ -61,9 +61,7 @@ export default function OfflineContentScreen() {
           <Text style={styles.meta}>本机保存：{new Date(item.savedAt).toLocaleString()}</Text>
           <Text style={styles.meta}>有效至：{new Date(item.savedAt + OFFLINE_SUBJECT_PACK_TTL_MS).toLocaleDateString()}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={`移除离线副本：${item.subject.title}`} accessibilityState={{ disabled: removing !== null, busy: removing === item.subject.id }} disabled={removing !== null} style={styles.remove} onPress={() => Alert.alert('移除离线副本？', `移除“${item.subject.title}”的自动离线资料，收藏和历史不受影响。`, [
-          { text: '取消', style: 'cancel' }, { text: '移除', style: 'destructive', onPress: () => void remove(item.subject.id) },
-        ])}><Text style={styles.action}>{removing === item.subject.id ? '正在移除…' : '移除离线副本'}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={`移除离线副本：${item.subject.title}`} accessibilityState={{ disabled: removing !== null, busy: removing === item.subject.id }} disabled={removing !== null} style={({ pressed }) => [styles.remove, pressed && styles.pressed]} onPress={() => void remove(item.subject.id)}><Text style={styles.action}>{removing === item.subject.id ? '正在移除…' : removeError === item.subject.id ? '移除失败，点击重试' : '移除离线副本'}</Text></Pressable>
       </View>)}
     </ScrollView>
   </SafeAreaView>;

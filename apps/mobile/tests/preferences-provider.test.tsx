@@ -55,7 +55,7 @@ test('closing and reopening sync in one batch rebuilds the live cloud scope', as
   }));
 });
 
-test('a same-batch privacy round trip invalidates history responses and old clear confirmations', async () => {
+test('a same-batch privacy round trip invalidates history responses and stale clear actions', async () => {
   const empty = { items: [] as string[], updatedAt: null };
   const pending = deferred<Response>();
   let firstHistoryRequest = true;
@@ -75,14 +75,13 @@ test('a same-batch privacy round trip invalidates history responses and old clea
     const hook = await renderHook(() => ({ preferences: usePreferences(), history: useSyncedHistory(options),
       confirm: useClearHistoryAction(),
     }), { wrapper: PreferencesProvider });
-    await act(() => { hook.result.current.confirm('search', { clearHistory, localStatus: 'ready', isClearing: false }); });
-    const confirm = alerts.mock.calls.at(-1)![2]!.at(-1)!.onPress!;
+    const confirm = hook.result.current.confirm;
     await act(async () => {
       hook.result.current.preferences.setSyncEnabled(false);
       hook.result.current.preferences.setSyncEnabled(true);
       await hook.result.current.preferences.retryLocal();
       pending.resolve(Response.json({ items: ['obsolete'], updatedAt: 500 }));
-      await confirm();
+      await confirm({ clearHistory, localStatus: 'ready', isClearing: false });
     });
     expect(clearHistory).not.toHaveBeenCalled();
     expect(options.save).not.toHaveBeenCalledWith({ items: ['obsolete'], updatedAt: 500 }, 1);
@@ -90,23 +89,21 @@ test('a same-batch privacy round trip invalidates history responses and old clea
   } finally { alerts.mockRestore(); }
 });
 
-test('opening sync invalidates an existing local-only clear confirmation before React renders', async () => {
+test('opening sync invalidates a stale local-only clear action before React renders', async () => {
   jest.mocked(loadAppPreferences).mockResolvedValueOnce({ ...initial, syncEnabled: false });
   const alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const clearHistory = jest.fn(async () => {});
   try {
     const hook = await renderHook(() => ({ preferences: usePreferences(), confirm: useClearHistoryAction() }),
       { wrapper: PreferencesProvider });
-    await act(() => { hook.result.current.confirm('search', { clearHistory, localStatus: 'ready', isClearing: false }); });
-    expect(alerts.mock.calls.at(-1)![1]).toContain('当前只清除本机此账号');
-    const oldConfirm = alerts.mock.calls.at(-1)![2]!.at(-1)!.onPress!;
+    const oldConfirm = hook.result.current.confirm;
     await act(async () => {
       hook.result.current.preferences.setSyncEnabled(true);
       await hook.result.current.preferences.retryLocal();
-      await oldConfirm();
+      await oldConfirm({ clearHistory, localStatus: 'ready', isClearing: false });
     });
     expect(clearHistory).not.toHaveBeenCalled();
-    expect(alerts.mock.calls.at(-1)![0]).toBe('账号或同步设置已变化');
+    expect(alerts).not.toHaveBeenCalled();
   } finally { alerts.mockRestore(); }
 });
 

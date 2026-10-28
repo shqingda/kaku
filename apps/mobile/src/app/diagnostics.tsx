@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Constants from 'expo-constants';
 import { Stack, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -54,6 +54,9 @@ export default function DiagnosticsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string>();
+  const [clearError, setClearError] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const clearBusy = useRef(false);
   const timing = startupTiming.snapshot();
   const isSentryEnabled = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN);
 
@@ -82,22 +85,21 @@ export default function DiagnosticsScreen() {
     }
   }
 
-  function confirmClearRecords() {
-    Alert.alert('清空诊断信息？', '此操作不会影响登录、收藏或缓存。', [
-      { style: 'cancel', text: '取消' },
-      {
-        onPress: () => {
-          void clearDiagnosticRecords()
-            .then(() => {
-              setRecords([]);
-              setExpandedRecordId(undefined);
-            })
-            .catch(() => Alert.alert('暂时无法清空', '请稍后重试。'));
-        },
-        style: 'destructive',
-        text: '清空',
-      },
-    ]);
+  async function clearRecords() {
+    if (clearBusy.current) return;
+    clearBusy.current = true;
+    setIsClearing(true);
+    setClearError(false);
+    try {
+      await clearDiagnosticRecords();
+      setRecords([]);
+      setExpandedRecordId(undefined);
+    } catch {
+      setClearError(true);
+    } finally {
+      clearBusy.current = false;
+      setIsClearing(false);
+    }
   }
 
   return (
@@ -250,13 +252,15 @@ export default function DiagnosticsScreen() {
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  onPress={confirmClearRecords}
+                  onPress={() => void clearRecords()}
+                  disabled={isClearing}
+                  accessibilityState={{ busy: isClearing, disabled: isClearing }}
                   style={({ pressed }) => [
                     styles.clearButton,
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.clearButtonText}>清空记录</Text>
+                  <Text style={styles.clearButtonText}>{isClearing ? '正在清空…' : clearError ? '清空失败，点击重试' : '清空记录'}</Text>
                 </Pressable>
               </View>
             </>

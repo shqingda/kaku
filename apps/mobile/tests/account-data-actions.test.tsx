@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AccountSettingsMenu } from '@/features/account/account-settings-menu';
 import { ThemeProvider } from '@/features/theme/theme-provider';
@@ -35,7 +35,6 @@ jest.mock('@/features/shared/app-action-menu', () => {
 let client: QueryClient;
 let alerts: jest.SpyInstance;
 function Page() { return <QueryClientProvider client={client}><ThemeProvider><AccountSettingsMenu /></ThemeProvider></QueryClientProvider>; }
-function confirm() { return alerts.mock.calls.at(-1)![2].at(-1).onPress(); }
 beforeEach(() => {
   mockUserId = 1; mockSync = true; mockCheckUpdate.mockReset(); mockCheckingUpdate = false;
   mockClearApkCache.mockReset().mockResolvedValue(true);
@@ -50,15 +49,13 @@ test('cache clearing removes cached queries and images without clearing either h
   client.setQueryData(['private'], 'cached');
   await render(<Page />);
   await fireEvent.press(screen.getByLabelText('清理缓存'));
-  expect(mockRemoveCache).not.toHaveBeenCalled();
-  await act(async () => { await confirm(); });
   expect(mockRemoveCache).toHaveBeenCalledTimes(1);
   expect(client.getQueryData(['private'])).toBeUndefined();
   expect(mockOffline).toHaveBeenCalledTimes(1);
   expect(mockSavedImages).toHaveBeenCalledTimes(1);
   expect(mockClearApkCache).toHaveBeenCalledTimes(1);
   expect(mockSearch).not.toHaveBeenCalled(); expect(mockBrowse).not.toHaveBeenCalled();
-  expect(alerts).toHaveBeenLastCalledWith('缓存已清理', expect.stringContaining('草稿'));
+  expect(alerts).not.toHaveBeenCalled();
 });
 
 test.each(['false', 'reject'])('cache failure %s offers a retry', async (mode) => {
@@ -66,40 +63,32 @@ test.each(['false', 'reject'])('cache failure %s offers a retry', async (mode) =
   else mockImageDisk.mockRejectedValueOnce(new Error('disk'));
   await render(<Page />);
   await fireEvent.press(screen.getByLabelText('清理缓存'));
-  await act(async () => { await confirm(); });
-  expect(alerts.mock.calls.at(-1)![0]).toBe('部分缓存未能清理');
-  await act(async () => { await confirm(); });
+  expect(screen.getByText('部分缓存未能清理，点击重试')).toBeTruthy();
+  expect(alerts).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByLabelText('清理缓存'));
   expect(mockImageDisk).toHaveBeenCalledTimes(2);
-  expect(alerts.mock.calls.at(-1)![0]).toBe('缓存已清理');
+  expect(screen.queryByText('部分缓存未能清理，点击重试')).toBeNull();
+  expect(alerts).not.toHaveBeenCalled();
 });
 
 test('an APK currently in use makes cache clearing partial and can be retried later', async () => {
   mockClearApkCache.mockResolvedValueOnce(false);
   await render(<Page />);
   await fireEvent.press(screen.getByLabelText('清理缓存'));
-  await act(async () => { await confirm(); });
-  expect(alerts.mock.calls.at(-1)![0]).toBe('部分缓存未能清理');
+  expect(screen.getByText('部分缓存未能清理，点击重试')).toBeTruthy();
+  expect(alerts).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByLabelText('清理缓存'));
 
-  await act(async () => { await confirm(); });
   expect(mockClearApkCache).toHaveBeenCalledTimes(2);
-  expect(alerts.mock.calls.at(-1)![0]).toBe('缓存已清理');
+  expect(screen.queryByText('部分缓存未能清理，点击重试')).toBeNull();
+  expect(alerts).not.toHaveBeenCalled();
 });
 
-test('history actions are separate, cancellation is inert, and changed account invalidates confirmation', async () => {
-  const view = await render(<Page />);
-  await fireEvent.press(screen.getByLabelText('管理历史记录'));
-  await fireEvent.press(screen.getByText('清除搜索历史'));
-  expect(alerts.mock.calls.at(-1)![1]).toContain('其他 Kaku 设备');
-  expect(mockSearch).not.toHaveBeenCalled();
-  const staleConfirm = alerts.mock.calls.at(-1)![2].at(-1).onPress;
-  mockUserId = 2; await view.rerender(<Page />);
-  await act(async () => { await staleConfirm(); });
-  expect(mockSearch).not.toHaveBeenCalled();
-  mockSync = false; await view.rerender(<Page />);
-  await fireEvent.press(screen.getByText('清除搜索历史'));
-  expect(alerts.mock.calls.at(-1)![1]).toContain('当前只清除本机');
-  await act(async () => { await confirm(); });
-  expect(mockSearch).toHaveBeenCalledTimes(1); expect(mockBrowse).not.toHaveBeenCalled();
+test('settings no longer duplicates overview history actions', async () => {
+  await render(<Page />);
+  expect(screen.queryByLabelText('管理历史记录')).toBeNull();
+  expect(screen.queryByText('清除搜索历史')).toBeNull();
+  expect(screen.queryByText('清除浏览历史')).toBeNull();
 });
 
 test('update row checks directly and shows busy state without navigating', async () => {
@@ -111,21 +100,4 @@ test('update row checks directly and shows busy state without navigating', async
   await view.rerender(<Page />);
   expect(screen.getByLabelText('检查更新').props.accessibilityState.busy).toBe(true);
   expect(screen.getByLabelText('检查更新').props.accessibilityState.disabled).toBe(true);
-});
-
-test.each(['search', 'browse'])('failed %s history clear never reports success and can be retried', async (kind) => {
-  const clear = kind === 'search' ? mockSearch : mockBrowse;
-  const label = kind === 'search' ? '搜索历史' : '浏览历史';
-  clear.mockRejectedValueOnce(new Error('disk full'));
-  await render(<Page />);
-  await fireEvent.press(screen.getByLabelText('管理历史记录'));
-  await fireEvent.press(screen.getByText(`清除${label}`));
-  await act(async () => { await confirm(); });
-  expect(alerts).toHaveBeenLastCalledWith('历史未能清除', expect.any(String), expect.any(Array));
-  expect(alerts.mock.calls.some(([title]) => title === `${label}已在本机清除`)).toBe(false);
-
-  await fireEvent.press(screen.getByText(`清除${label}`));
-  await act(async () => { await confirm(); });
-  expect(clear).toHaveBeenCalledTimes(2);
-  expect(alerts).toHaveBeenLastCalledWith(`${label}已在本机清除`, expect.any(String));
 });

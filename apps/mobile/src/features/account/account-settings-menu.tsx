@@ -2,17 +2,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
-import { useRecentSubjects } from '@/features/history/recent-subjects-provider';
-import { useSearchHistory } from '@/features/search/search-history-provider';
 import { AccountMenuRow, createMenuGroupStyles } from './account-menu-row';
 import { useTheme } from '@/features/theme/theme-provider';
 import { clearOfflineSubjectPack } from '@/features/catalog/offline-subject-pack';
 import { queryPersister } from '@/lib/query-persister';
-import { useClearHistoryAction } from '@/features/history/use-clear-history-action';
-import { AppActionMenu } from '@/features/shared/app-action-menu';
 import { clearSavedImageFiles } from '@/features/shared/saved-image-files';
 
 import { useAppUpdate } from '@/features/app-update/update-provider';
@@ -25,17 +21,14 @@ export function AccountSettingsMenu() {
   const styles = useMemo(() => createMenuGroupStyles(colors), [colors]);
   const [isClearingLocalData, setIsClearingLocalData] = useState(false);
   const queryClient = useQueryClient();
-  const recentSubjects = useRecentSubjects();
-  const searchHistory = useSearchHistory();
-  const confirmClearHistory = useClearHistoryAction();
-  const [historyMenuOpen, setHistoryMenuOpen] = useState(false);
-  const clearingHistory = recentSubjects.isClearing || searchHistory.isClearing;
+  const [cacheError, setCacheError] = useState(false);
   const cacheBusy = useRef(false);
 
   async function clearLocalData() {
     if (cacheBusy.current) return;
     cacheBusy.current = true;
     setIsClearingLocalData(true);
+    setCacheError(false);
     try {
       await queryClient.cancelQueries({ predicate: (query) => query.meta?.persist === true });
       queryClient.removeQueries({ predicate: (query) => query.meta?.persist === true });
@@ -50,24 +43,12 @@ export function AccountSettingsMenu() {
       if (results.some((result) => result.status === 'rejected' || result.value === false)) {
         throw new Error('部分缓存未能清理');
       }
-      Alert.alert('缓存已清理', '内容和图片可重新读取；历史、草稿、偏好和登录已保留。');
     } catch {
-      Alert.alert('部分缓存未能清理', '可以重试，不影响继续使用。', [
-        { text: '关闭', style: 'cancel' },
-        { text: '重试', onPress: () => void clearLocalData() },
-      ]);
+      setCacheError(true);
     } finally {
       cacheBusy.current = false;
       setIsClearingLocalData(false);
     }
-  }
-
-  function confirmClearLocalData() {
-    Alert.alert('清理缓存？',
-      '将移除本机内容缓存、图片、自动离线包和闲置更新安装包，之后需要联网重新读取。正在下载或安装的包会保留；历史、草稿、偏好和登录会保留。', [
-        { style: 'cancel', text: '取消' },
-        { onPress: () => void clearLocalData(), text: '清理' },
-      ]);
   }
 
   return (
@@ -105,7 +86,7 @@ export function AccountSettingsMenu() {
         />
         <AccountMenuRow
           colors={colors}
-          description="内容、图片与自动离线包，保留历史和草稿"
+          description={cacheError ? '部分缓存未能清理，点击重试' : '内容、图片与自动离线包，保留历史和草稿'}
           hasDivider
           icon={{
             android: 'delete_sweep',
@@ -114,16 +95,8 @@ export function AccountSettingsMenu() {
           }}
           label="清理缓存"
           loading={isClearingLocalData}
-          onPress={confirmClearLocalData}
-        />
-        <AccountMenuRow
-          colors={colors}
-          description="分别清除搜索或浏览记录"
-          hasDivider
-          icon={{ android: 'history', ios: 'clock.arrow.circlepath', web: 'history' }}
-          label="管理历史记录"
-          loading={clearingHistory}
-          onPress={() => setHistoryMenuOpen(true)}
+          showChevron={false}
+          onPress={() => void clearLocalData()}
         />
         <AccountMenuRow
           colors={colors}
@@ -150,15 +123,6 @@ export function AccountSettingsMenu() {
           onPress={() => router.push('/network-status')}
         />
       </View>
-      <AppActionMenu
-        title="管理历史记录"
-        visible={historyMenuOpen}
-        onClose={() => setHistoryMenuOpen(false)}
-        actions={[
-          { id: 'search', label: '清除搜索历史', symbol: { ios: 'magnifyingglass', android: 'search', web: 'search' }, onPress: () => confirmClearHistory('search', searchHistory) },
-          { id: 'browse', label: '清除浏览历史', symbol: { ios: 'clock', android: 'history', web: 'history' }, onPress: () => confirmClearHistory('browse', recentSubjects) },
-        ]}
-      />
     </>
   );
 }
