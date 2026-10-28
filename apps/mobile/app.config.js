@@ -34,7 +34,7 @@ const sentryPlugin =
 module.exports = {
   expo: {
     name: 'Kaku',
-    version: '1.1.24',
+    version: '1.1.25',
     orientation: 'portrait',
     icon: appIcon,
     scheme: 'kaku',
@@ -54,7 +54,7 @@ module.exports = {
       supportsTablet: false,
     },
     android: {
-      versionCode: 11,
+      versionCode: 12,
       adaptiveIcon: {
         backgroundColor: '#DA6E80',
         foregroundImage: foregroundIcon,

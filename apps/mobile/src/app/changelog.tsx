@@ -45,7 +45,7 @@ export default function ChangelogScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {CHANGELOG.map((entry, index) => (
+        {CHANGELOG.slice(0, 1).map((entry, index) => (
           <VersionCard
             colors={colors}
             entry={entry}

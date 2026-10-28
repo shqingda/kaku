@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import * as Reanimated from 'react-native-reanimated';
 
+import { CHANGELOG } from '@/features/changelog/changelog-data';
 import ChangelogScreen from '@/app/changelog';
 import { ThemeProvider } from '@/features/theme/theme-provider';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
@@ -37,7 +38,7 @@ describe('ChangelogScreen', () => {
   it.each([false, true])('measures, collapses, and reopens the current release (reduced motion: %s)', async (reduced) => {
     jest.mocked(useReduceMotion).mockReturnValue(reduced);
     const screen = await render(<ThemeProvider><ChangelogScreen /></ThemeProvider>);
-    const note = screen.getByText('更新日志改为只显示当前版本。');
+    const note = screen.getByText(CHANGELOG[0]!.notes[0]!);
     const measurement = note.parent!.parent!;
     const clip = measurement.parent!;
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
@@ -45,9 +46,9 @@ describe('ChangelogScreen', () => {
     expect(StyleSheet.flatten(measurement.props.style)).toMatchObject({ position: 'absolute', left: 0, right: 0, top: 0 });
     await fireEvent(measurement, 'layout', { nativeEvent: { layout: { height: 64, width: 320, x: 0, y: 0 } } });
     expect(StyleSheet.flatten(clip.props.style)).toMatchObject({ height: 64, opacity: 1 });
-    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.24，收起更新内容' }));
+    await fireEvent.press(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，收起更新内容` }));
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
-    await fireEvent.press(screen.getByRole('button', { name: '版本 1.1.24，展开更新内容' }));
+    await fireEvent.press(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，展开更新内容` }));
     expect(StyleSheet.flatten(clip.props.style).height).toBe(64);
     expect(screen.getAllByRole('button', { name: /^版本 / })).toHaveLength(1);
   });
