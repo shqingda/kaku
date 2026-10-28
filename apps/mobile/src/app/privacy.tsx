@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -20,7 +21,7 @@ const sections = [
   ],
   [
     '会话与设备',
-    'Kaku 会记录当前登录设备，以便你在账户页查看并撤销其他设备会话。撤销会话或断开 Bangumi 后，Kaku 会删除对应的授权凭据与所有会话。',
+    'Kaku 会记录设备型号、登录与最近使用时间，并使用应用范围设备标识的摘要识别同一账号下的重复登录；不上传原始系统设备标识，也不将其用于广告追踪。退出当前设备只撤销本机会话；退出所有设备并解除连接会删除全部 Kaku 会话及服务器保存的 Bangumi 凭据。',
   ],
   [
     '基础设施与缓存',
@@ -28,7 +29,7 @@ const sections = [
   ],
   [
     '你的控制权',
-    '你可以在 App 内断开 Bangumi（删除全部凭据与会话）、退出当前设备或撤销其他设备会话、清除本地界面错误记录。我们不出售个人数据，也不将收藏与兴趣用于第三方广告画像。',
+    '你可以在 App 内退出当前设备、撤销其他设备会话，或退出所有设备并解除连接。我们不出售个人数据，也不将收藏与兴趣用于第三方广告画像。',
   ],
 ] as const;
 
@@ -47,7 +48,7 @@ export default function PrivacyScreen() {
           <Text style={styles.intro}>
             Kaku 只处理提供产品功能所必需的数据。下面的说明试图准确描述数据如何流动、存储在哪里，以及你如何撤回访问。
           </Text>
-          <Text style={styles.updated}>最后更新：2026 年 8 月 18 日</Text>
+          <Text style={styles.updated}>最后更新：2026 年 10 月 28 日</Text>
         </View>
         {sections.map(([title, body]) => (
           <View key={title} style={styles.section}>
@@ -63,30 +64,28 @@ export default function PrivacyScreen() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: { backgroundColor: colors.background, flex: 1 },
-    content: { padding: 20, paddingBottom: 44 },
-    introBlock: { marginBottom: 8, paddingTop: 8 },
+    content: { padding: SPACING.xl, paddingBottom: SPACING.xxl },
+    introBlock: { marginBottom: SPACING.sm, paddingTop: SPACING.sm },
     intro: {
       color: colors.ink,
-      fontSize: 16,
+      ...TYPE.body,
       fontWeight: '600',
-      lineHeight: 26,
     },
-    updated: { color: colors.subtle, fontSize: 12, marginTop: 12 },
+    updated: { color: colors.subtle, ...TYPE.caption, marginTop: SPACING.md },
     section: {
       borderTopColor: colors.track,
       borderTopWidth: StyleSheet.hairlineWidth,
-      paddingBottom: 24,
-      paddingTop: 22,
+      paddingBottom: SPACING.xl,
+      paddingTop: SPACING.xl,
     },
     sectionTitle: {
       color: colors.ink,
-      fontSize: 15,
+      ...TYPE.body,
       fontWeight: '700',
-      marginBottom: 8,
+      marginBottom: SPACING.sm,
     },
     sectionBody: {
       color: colors.muted,
-      fontSize: 14,
-      lineHeight: 24,
+      ...TYPE.body,
     },
   });

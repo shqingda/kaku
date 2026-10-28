@@ -45,12 +45,14 @@ async function createSessionTokens({
   connectionId,
   createdAt,
   deviceName,
+  deviceKey,
   store,
   userId,
 }: {
   connectionId: string;
   createdAt: number;
   deviceName: string;
+  deviceKey?: string;
   store: AuthStore;
   userId: number;
 }) {
@@ -64,6 +66,7 @@ async function createSessionTokens({
     connectionId,
     createdAt,
     deviceName,
+    deviceKey,
     expiresAt,
     refreshExpiresAt,
     refreshTokenHash: await hashToken(refreshToken),
@@ -263,6 +266,8 @@ export function registerAuthRoutes(
       connectionId: handoff.connectionId,
       createdAt: currentTime,
       deviceName: parsedBody.data.deviceName,
+      deviceKey: parsedBody.data.deviceKey
+        ? await hashToken(`${handoff.user.id}:${parsedBody.data.deviceKey}`) : undefined,
       store,
       userId: handoff.user.id,
     });

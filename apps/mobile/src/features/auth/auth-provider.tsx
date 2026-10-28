@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
+import { getLoginDevice } from './login-device';
 
 import {
   exchangeHandoffCode,
@@ -247,9 +247,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     handoffCodeRef.current = callbackKey;
-    const deviceName = Platform.select({ android: 'Android 设备', ios: 'iOS 设备', default: 'Kaku 设备' });
     const version = sessionVersionRef.current;
-    const task = exchangeHandoffCode({ code, codeVerifier: pending.codeVerifier, requestId, deviceName })
+    const task = getLoginDevice()
+      .then(device => exchangeHandoffCode({ code, codeVerifier: pending.codeVerifier, requestId, ...device }))
       .then((next) => commitSession(next, version, true))
       .then(() => undefined)
       .finally(() => clearPendingLogin(pending));

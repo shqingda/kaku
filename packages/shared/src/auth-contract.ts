@@ -14,6 +14,7 @@ export const handoffStartQuerySchema = z.object({
 export const handoffSessionRequestSchema = z.object({
   code: z.string().min(20),
   codeVerifier: codeVerifierSchema,
+  deviceKey: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   deviceName: z.string().trim().min(1).max(80).default('未知设备'),
   requestId: loginRequestIdSchema,
 });

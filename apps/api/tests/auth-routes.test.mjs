@@ -280,7 +280,7 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
   const sessionResponse = await app.request(
     '/auth/session',
     {
-      body: JSON.stringify({ code: handoffCode, codeVerifier, requestId }),
+      body: JSON.stringify({ code: handoffCode, codeVerifier, requestId, deviceKey: "a".repeat(64) }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     },
@@ -295,6 +295,9 @@ test('OAuth login keeps secrets on the server and hands the app a one-time code'
   assert.ok(session.sessionId);
   assert.notEqual(fake.state.session.tokenHash, session.sessionToken);
   assert.equal(fake.state.session.tokenHash, await hashToken(session.sessionToken));
+
+  assert.equal(fake.state.session.deviceKey, await hashToken(`${session.user.id}:${"a".repeat(64)}`));
+  assert.equal(session.deviceKey, undefined);
 
   const replayResponse = await app.request(
     '/auth/session',

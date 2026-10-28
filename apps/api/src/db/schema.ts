@@ -47,6 +47,7 @@ export const sessions = sqliteTable('sessions', {
   sessionId: text('session_id').primaryKey(),
   createdAt: integer('created_at').notNull(),
   deviceName: text('device_name').notNull(),
+  deviceKey: text('device_key'),
   expiresAt: integer('expires_at').notNull(),
   lastUsedAt: integer('last_used_at').notNull(),
   refreshExpiresAt: integer('refresh_expires_at').notNull(),

@@ -11,6 +11,8 @@ import {
   KakuApiError,
 } from '@/infrastructure/kaku/auth-client';
 
+jest.mock('@/features/auth/login-device', () => ({ getLoginDevice: async () => ({ deviceName: 'iPhone', deviceKey: 'a'.repeat(64) }) }));
+
 const mockQueryClient = { removeQueries: jest.fn() };
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => mockQueryClient,
@@ -149,7 +151,7 @@ test('the auth browser and deep link share one verified session exchange', async
   await act(async () => { await Promise.all([hook.result.current.completeSignIn(callback), hook.result.current.completeSignIn(callback)]); });
   await act(async () => { await hook.result.current.completeSignIn(callback); });
   expect(exchangeHandoffCode).toHaveBeenCalledTimes(1);
-  expect(exchangeHandoffCode).toHaveBeenCalledWith({ code: '12345678901234567890', deviceName: 'iOS 设备', codeVerifier: pendingLogin.codeVerifier, requestId });
+  expect(exchangeHandoffCode).toHaveBeenCalledWith({ code: '12345678901234567890', deviceName: 'iPhone', deviceKey: 'a'.repeat(64), codeVerifier: pendingLogin.codeVerifier, requestId });
   expect(loginAttemptStorage.clear).toHaveBeenCalledTimes(1);
 });
 

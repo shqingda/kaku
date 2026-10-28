@@ -46,6 +46,7 @@ type StoredBangumiCredential = {
 type CreateSessionInput = {
   createdAt: number;
   deviceName: string;
+  deviceKey?: string;
   expiresAt: number;
   refreshExpiresAt: number;
   refreshTokenHash: string;
@@ -260,16 +261,22 @@ export function createD1AuthStore(database: D1Database): AuthStore {
     async createSessionForConnection(input) {
       // Consumption and issuance are separate requests to D1. Recheck the
       // original connection in this write so a late issuance cannot outlive it.
-      const result = await database.prepare(`
-        INSERT INTO sessions (created_at, device_name, expires_at, last_used_at,
+      const insert = database.prepare(`
+        INSERT INTO sessions (created_at, device_name, device_key, expires_at, last_used_at,
           refresh_expires_at, refresh_token_hash, session_id, token_hash, user_id)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, user_id FROM bangumi_credentials
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, user_id FROM bangumi_credentials
         WHERE user_id = ? AND connection_id = ?
         RETURNING session_id
-      `).bind(input.createdAt, input.deviceName, input.expiresAt, input.createdAt,
+      `).bind(input.createdAt, input.deviceName, input.deviceKey ?? null, input.expiresAt, input.createdAt,
         input.refreshExpiresAt, input.refreshTokenHash, input.sessionId,
-        input.tokenHash, input.userId, input.connectionId).all();
-      return result.results.length > 0;
+        input.tokenHash, input.userId, input.connectionId);
+      if (!input.deviceKey) return (await insert.all()).results.length > 0;
+      // Issuance and replacement commit together. Failed issuance preserves the old session.
+      const [created] = await database.batch([insert, database.prepare(`
+        DELETE FROM sessions WHERE user_id = ? AND device_key = ? AND session_id <> ?
+        AND EXISTS (SELECT 1 FROM sessions WHERE session_id = ?)
+      `).bind(input.userId, input.deviceKey, input.sessionId, input.sessionId)]);
+      return created.results.length > 0;
     },
 
     async deleteAllSessions(userId) {
