@@ -77,3 +77,4 @@ an already verified APK just because uploading is slow. Verify remote size
 and SHA-256 before publishing the draft.
 
 - 更新日志从 v1.1.24 起持续累积保留；此前旧记录是一次性清理。发新版不得删除或隐藏 v1.1.24 及之后的历史版本，最新默认展开、旧版可折叠。
+- 正式发版成功并确认远端 APK 大小与 SHA-256 一致后，自动清理本地 APK 和未正式发布测试包的 `.sources`，只保留正式发布版本的 `.sources`（包括历史正式版）。按 `.sources/manifest.json` 中的 APK SHA-256 与 GitHub 正式 Release 资产或已核验的历史发布记录匹配，不能只看版本号；未确认是否正式发布的记录先核实，不凭猜测删除。清理不改动远端 Release、源码、签名密钥或设备应用数据；报告删除内容与回收空间。
