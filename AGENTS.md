@@ -25,7 +25,7 @@ This repository is both a product and a learning project.
   verification, or a local build failure does not authorize a CI build, including
   `build_only`. See `docs/development/testing.md` and `docs/deployment/release.md`.
 - Local iOS testing must reuse the existing iPhone 18 Pro (iOS 27.0), UDID
-  `498E27B7-5192-48CE-9B13-F4A27F10F806`. List devices before use; if it is
+  `A395E274-D899-42DA-BE4C-416A9F89F671`. List devices before use; if it is
   missing, report the blocker instead of creating or cloning another simulator.
   Never erase this device, uninstall Kaku, sign out, or clear its application data,
   keychain, history, or drafts for test setup. Skip tests that require a fresh guest

@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-export const DEVICE = '498E27B7-5192-48CE-9B13-F4A27F10F806';
+export const DEVICE = 'A395E274-D899-42DA-BE4C-416A9F89F671';
 const ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '');
 const PREVIEW = 'http://127.0.0.1:3200';
 const METRO = 'http://127.0.0.1:8081';

@@ -9,7 +9,7 @@
 
 历史环境的技能位于 `~/.agents/skills/argent-*`。使用前先确认当前会话实际提供了技能与 MCP；可用时先读对应技能，再调工具。
 每次先 `list-devices`，本机只复用 iPhone 18 Pro / iOS 27.0，UDID
-`498E27B7-5192-48CE-9B13-F4A27F10F806`。这是 2026-10-14 用户指定保留的设备。
+`A395E274-D899-42DA-BE4C-416A9F89F671`。这是 2026-10-29 原设备误删后，经用户授权重建的设备。
 不新建或克隆模拟器；设备缺失时报告阻塞。保留 Kaku 登录状态、钥匙串、
 应用数据、历史与草稿，不用退出登录、卸载、抹掉设备或清空数据准备测试。
 技能和工具提出不同的测试准备步骤时，也必须遵守这条规则。
@@ -38,27 +38,27 @@ Metro 仍由本机 `pnpm dev:mobile` 提供，不要另起一份。
 设备启动后查看状态：
 
 ```sh
-xcrun simctl spawn 498E27B7-5192-48CE-9B13-F4A27F10F806 launchctl print-disabled user/501
+xcrun simctl spawn A395E274-D899-42DA-BE4C-416A9F89F671 launchctl print-disabled user/501
 ```
 
 当前运行时服务域是 `user/501`，应看到 `"com.apple.PosterBoard" => disabled`。
 若服务域在升级后变化，先用
-`xcrun simctl spawn 498E27B7-5192-48CE-9B13-F4A27F10F806 launchctl print system/com.apple.PosterBoard`
+`xcrun simctl spawn A395E274-D899-42DA-BE4C-416A9F89F671 launchctl print system/com.apple.PosterBoard`
 读取实际域，不修改 macOS 主机的同名服务。只在目标模拟器内操作。
 
 设置丢失时，在确认实际域后恢复停用：
 
 ```sh
-xcrun simctl spawn 498E27B7-5192-48CE-9B13-F4A27F10F806 launchctl disable user/501/com.apple.PosterBoard
-xcrun simctl spawn 498E27B7-5192-48CE-9B13-F4A27F10F806 launchctl bootout user/501/com.apple.PosterBoard
+xcrun simctl spawn A395E274-D899-42DA-BE4C-416A9F89F671 launchctl disable user/501/com.apple.PosterBoard
+xcrun simctl spawn A395E274-D899-42DA-BE4C-416A9F89F671 launchctl bootout user/501/com.apple.PosterBoard
 ```
 
 如果用户明确要求恢复壁纸，执行下面的命令并重启同一设备：
 
 ```sh
-xcrun simctl spawn 498E27B7-5192-48CE-9B13-F4A27F10F806 launchctl enable user/501/com.apple.PosterBoard
-xcrun simctl shutdown 498E27B7-5192-48CE-9B13-F4A27F10F806
-xcrun simctl boot 498E27B7-5192-48CE-9B13-F4A27F10F806
+xcrun simctl spawn A395E274-D899-42DA-BE4C-416A9F89F671 launchctl enable user/501/com.apple.PosterBoard
+xcrun simctl shutdown A395E274-D899-42DA-BE4C-416A9F89F671
+xcrun simctl boot A395E274-D899-42DA-BE4C-416A9F89F671
 ```
 
 Argent 的 `describe` / `gesture-tap` 走自己的无障碍服务，**不依赖 idb**。

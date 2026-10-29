@@ -86,7 +86,7 @@ iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧
 避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
 分别保留门控，不写远端。`open-account.yaml` 处理两种账户入口：访客头像直接进入账户页，登录态先打开菜单。每次记录实际登录状态与跳过分支；分支存在不代表已实跑，也不能代替真实 OAuth。
 
-本机 iOS 测试只复用 `498E27B7-5192-48CE-9B13-F4A27F10F806`（iPhone 18 Pro / iOS 27.0），
+本机 iOS 测试只复用 `A395E274-D899-42DA-BE4C-416A9F89F671`（iPhone 18 Pro / iOS 27.0），
 先列出设备核实，不创建或克隆备用设备。保留登录状态、应用数据、钥匙串、历史和草稿。
 不通过退出登录、卸载、抹掉设备或清空数据准备测试；设备缺失时报告阻塞。
 需要不同登录状态的流程按当前状态跳过并报告覆盖缺口。
@@ -108,7 +108,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 `com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
 是哪一种包，必要时改 yaml 或装 release APK。
 
-前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。可运行 `xcrun simctl openurl 498E27B7-5192-48CE-9B13-F4A27F10F806 "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`。Maestro 用 `--device 498E27B7-5192-48CE-9B13-F4A27F10F806` 明确选择设备。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。壁纸服务停用与恢复方法见 [Argent 使用手册](argent-usage.md)。
+前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。可运行 `xcrun simctl openurl A395E274-D899-42DA-BE4C-416A9F89F671 "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`。Maestro 用 `--device A395E274-D899-42DA-BE4C-416A9F89F671` 明确选择设备。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。壁纸服务停用与恢复方法见 [Argent 使用手册](argent-usage.md)。
 
 ### 覆盖范围（16 项，对应全量入口）
 

@@ -21,7 +21,7 @@ Codex 应运行 `pnpm dev:sim`，再用浏览器工具打开或复用上述预�
 
 ## 命令做什么
 
-1. 列出设备，只复用 iPhone 18 Pro / iOS 27.0，UDID `498E27B7-5192-48CE-9B13-F4A27F10F806`。
+1. 列出设备，只复用 iPhone 18 Pro / iOS 27.0，UDID `A395E274-D899-42DA-BE4C-416A9F89F671`。
    关机时启动；缺失或不可用时直接报错，不创建、克隆或抹掉设备。
 2. 检查开发客户端，保持 PosterBoard 停用。保留登录、钥匙串、历史和草稿。
 3. 复用当前仓库的 Metro，或在 8081 启动它。使用 `--host lan`，避免本机 `--localhost`
@@ -42,7 +42,7 @@ Metro 和预览在后台运行，重复执行会复用，终端命令结束不�
 若仍无反应，查看 `preview.log`，并先确认点击是否出现在：
 
 ```sh
-pnpm exec serve-sim event-log -d 498E27B7-5192-48CE-9B13-F4A27F10F806
+pnpm exec serve-sim event-log -d A395E274-D899-42DA-BE4C-416A9F89F671
 ```
 
 事件日志只证明操作到达服务，最终仍需检查 App 页面变化。
@@ -52,7 +52,7 @@ Xcode 27 的键盘桥接可能需要 macOS 辅助功能权限，脚本不会自�
 停止预览可运行（只针对指定设备）：
 
 ```sh
-pnpm exec serve-sim --kill 498E27B7-5192-48CE-9B13-F4A27F10F806
+pnpm exec serve-sim --kill A395E274-D899-42DA-BE4C-416A9F89F671
 ```
 
 Metro 可通过本地进程管理工具单独停止；停止服务不需要清除应用数据。
