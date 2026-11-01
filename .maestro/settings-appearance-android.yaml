@@ -1,0 +1,8 @@
+appId: com.shqingda.kaku
+name: Inspect the current Android appearance
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- runFlow:
+    file: settings-appearance.yaml

@@ -23,8 +23,6 @@ name: kaku-regression-ios
 - runFlow:
     file: directories-smoke.yaml
 - runFlow:
-    file: settings-theme-toggle.yaml
-- runFlow:
     file: timeline-smoke.yaml
 - runFlow:
     file: collection-box-signin.yaml

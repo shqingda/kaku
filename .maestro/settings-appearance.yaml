@@ -1,0 +1,24 @@
+appId: placeholder
+name: Inspect the current appearance without changing preferences
+---
+# 只检查当前选项并截图，不切换主题。
+# 脚本中途失败不能保证恢复原偏好；实际切换与恢复留给人工验收。
+- runFlow:
+    file: reset-home.yaml
+- runFlow:
+    file: open-account.yaml
+- scrollUntilVisible:
+    direction: DOWN
+    element: "外观与同步"
+- tapOn: "外观与同步"
+- extendedWaitUntil:
+    visible: "外观"
+    timeout: 10000
+- assertVisible: "跟随系统"
+- assertVisible: "浅色"
+- assertVisible: "深色"
+- assertVisible:
+    text: "跟随系统|浅色|深色"
+    selected: true
+- waitForAnimationToEnd
+- takeScreenshot: settings-current-appearance

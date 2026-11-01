@@ -38,21 +38,28 @@ describe('ChangelogScreen', () => {
   it.each([false, true])('measures, collapses, and reopens the current release (reduced motion: %s)', async (reduced) => {
     jest.mocked(useReduceMotion).mockReturnValue(reduced);
     const screen = await render(<ThemeProvider><ChangelogScreen /></ThemeProvider>);
-    const note = screen.getByText(CHANGELOG[0]!.notes[0]!);
-    const measurement = note.parent!.parent!;
-    const clip = measurement.parent!;
+    const latest = screen.getByTestId('changelog-latest-toggle');
+    expect(latest.props.accessibilityState.expanded).toBe(true);
+    expect(screen.getByTestId('changelog-latest-first-note')).toHaveTextContent(CHANGELOG[0]!.notes[0]!);
+    const measurement = screen.getByTestId('changelog-latest-notes');
+    const clip = screen.getByTestId('changelog-latest-body');
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
     // The measured content must not share the clipping container's height constraint.
     expect(StyleSheet.flatten(measurement.props.style)).toMatchObject({ position: 'absolute', left: 0, right: 0, top: 0 });
     await fireEvent(measurement, 'layout', { nativeEvent: { layout: { height: 64, width: 320, x: 0, y: 0 } } });
     expect(StyleSheet.flatten(clip.props.style)).toMatchObject({ height: 64, opacity: 1 });
-    await fireEvent.press(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，收起更新内容` }));
+    await fireEvent.press(latest);
+    expect(screen.getByTestId('changelog-latest-toggle').props.accessibilityState.expanded).toBe(false);
     expect(StyleSheet.flatten(clip.props.style).height).toBe(0);
-    await fireEvent.press(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，展开更新内容` }));
+    await fireEvent.press(screen.getByTestId('changelog-latest-toggle'));
+    expect(screen.getByRole('button', { name: `版本 ${CHANGELOG[0]!.version}，收起更新内容` })).toBeTruthy();
     expect(StyleSheet.flatten(clip.props.style).height).toBe(64);
     expect(screen.getAllByRole('button', { name: /^版本 / })).toHaveLength(CHANGELOG.length);
-    const previous = screen.getByRole('button', { name: '版本 1.1.24，展开更新内容' });
+    const previous = screen.getByTestId('changelog-version-1.1.24-toggle');
+    expect(previous.props.accessibilityState.expanded).toBe(false);
     await fireEvent.press(previous);
     expect(screen.getByRole('button', { name: '版本 1.1.24，收起更新内容' })).toBeTruthy();
+    expect(screen.getByTestId('changelog-version-1.1.24-first-note')).toHaveTextContent(CHANGELOG.find(entry => entry.version === '1.1.24')!.notes[0]!);
+    expect(screen.getByTestId('changelog-latest-toggle').props.accessibilityState.expanded).toBe(true);
   });
 });

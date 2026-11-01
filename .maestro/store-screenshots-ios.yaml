@@ -43,4 +43,4 @@ name: Store screenshot candidates
     direction: DOWN
 - takeScreenshot: store-episodes
 - runFlow:
-    file: settings-theme-toggle.yaml
+    file: settings-appearance.yaml

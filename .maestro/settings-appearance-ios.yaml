@@ -1,0 +1,5 @@
+appId: com.shqingda.kaku.debug
+name: Inspect the current iOS appearance
+---
+- runFlow:
+    file: settings-appearance.yaml

@@ -55,12 +55,12 @@ JS bundle 写入临时目录并在退出时清理，官网仍输出到自己的�
 
 ## 2. 组件 / Hook 测试（jest-expo + React Native Testing Library）
 
-- 位置：`apps/mobile/tests/*.test.tsx`；全局 stub 见
+- 位置：`apps/mobile/tests/*.test.ts` 和 `*.test.tsx`；全局 stub 见
   `apps/mobile/tests/ui/setup.ts`（偏好上下文与触觉）。
   RNTL v14 的 `render` 是 async，必须 `await`。
 - 运行：`pnpm --filter @kaku/mobile test:ui`（根目录也有 `pnpm test:ui`），
   CI 强制。
-- 与 node:test 的分工：`.test.tsx` 归 jest，`.test.mjs` 归 node:test，
+- 与 node:test 的分工：`.test.ts` / `.test.tsx` 归 jest，`.test.mjs` 归 node:test，
   两个 testMatch 互不重叠。
 
 ## 3. Maestro（本地手动跑，不进 CI）
@@ -112,12 +112,12 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。可运行 `xcrun simctl openurl A395E274-D899-42DA-BE4C-416A9F89F671 "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`。Maestro 用 `--device A395E274-D899-42DA-BE4C-416A9F89F671` 明确选择设备。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。壁纸服务停用与恢复方法见 [Argent 使用手册](argent-usage.md)。
 
-### 覆盖范围（16 项，对应全量入口）
+### 默认全量覆盖范围
 
 冒烟步骤 `kaku-smoke-steps.yaml` 一次走完前 4 项（首页、账户、更新日志、
-网络诊断）。其余每项一个 yaml。`changelog-checks.yaml` 只被冒烟步骤嵌套，
-钉死一条仍存在的更新日志文案（现在是 1.1.24）；删掉那条 changelog 之后才
-需要改选择器。
+网络诊断）。其余每项一个 yaml。`changelog-checks.yaml` 由冒烟步骤和
+`changelog-current-ios.yaml` 专项共用：通过稳定 ID 与展开语义检查最新版默认展开、
+收起后重开，以及 1.1.24 历史记录仍可访问，不依赖某版更新文案。
 
 | 流程 | 覆盖 |
 | --- | --- |
@@ -131,9 +131,14 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 | `browse-smoke.yaml` | 频道 → 分类浏览 |
 | `calendar-smoke.yaml` | 综合页 → 每日放送 |
 | `directories-smoke.yaml` | 综合页 → 目录发现 |
-| `settings-theme-toggle.yaml` | 外观切换（深色 ↔ 跟随系统，截图留证） |
 | `timeline-smoke.yaml` | 好友动态（登录门控） |
 | `collection-box-signin.yaml` | 收藏盒未登录门控 |
+
+外观检查已移出默认全量入口。独立运行 `settings-appearance-ios.yaml` 或
+`settings-appearance-android.yaml`，只检查当前选中项与截图；商店候选图也复用该只读流程。
+自动切换中途失败无法保证恢复原偏好，因此不再把主题强制改回“跟随系统”。
+实际主题切换和恢复原选择留人工验收，不能以这项只读检查代替；需要深色商店素材时，
+由验收者先选好主题，采集后恢复原选择。
 
 首页刷新控件结束时会让搜索框移动 60pt，Maestro 偶尔使用旧坐标。`enter-subject-search.yaml` 只对点击/输入准备有限重试，确认清除按钮出现后才提交；`focus-subject-search.yaml` 用同一信号确认已有搜索词进入编辑态。搜索结果与清空断言仍在重试之外。本机 iOS 无障碍树在输入框有光标时仍报告 focused:false，因此不依赖该属性。中文粘贴不能替代输入法组合输入验收。
 
@@ -141,7 +146,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 ### 性能复测
 
-2026-10-25 起诊断页分别显示 JS 首布局、缓存恢复和首页首个有意义结果（内容/空态/错误/游客）；它们不包含原生进程启动时间。当前设备须重新建立三轮基线，可靠 profiler 不可用时保留待验，不复用旧设备数字推断收益。见 [本轮证据](../test-records/2026-10-25-reliability-slimming-performance.md)。
+诊断页分别显示 JS 首布局、缓存恢复和首页首个有意义结果（内容/空态/错误/游客），不包含原生进程启动时间。指定模拟器已有 [2026-10-26 Release 三轮基线](../test-records/2026-10-26-p1-baseline-release.md)，同设备、系统、构建模式和流程下才作比较；这些条件改变时重新采集三轮。可靠测量不可用的路径保留待验，不复用旧设备数字推断收益。
 
 工作区大小只读盘点：`node scripts/report-workspace-files.mjs`。输出逻辑字节而非可释放空间；固定白名单且不接受删除参数，排除 tutorial、签名/env、安装包和模拟器数据。
 

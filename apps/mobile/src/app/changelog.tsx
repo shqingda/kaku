@@ -53,6 +53,7 @@ export default function ChangelogScreen() {
             key={entry.version}
             styles={styles}
             initiallyExpanded={index === 0}
+            testIdPrefix={index === 0 ? 'changelog-latest' : `changelog-version-${entry.version}`}
           />
         ))}
         <Pressable
@@ -77,12 +78,14 @@ function VersionCard({
   initiallyExpanded,
   isCurrent,
   styles,
+  testIdPrefix,
 }: {
   colors: ThemeColors;
   entry: ChangelogEntry;
   initiallyExpanded: boolean;
   isCurrent: boolean;
   styles: ReturnType<typeof createStyles>;
+  testIdPrefix: string;
 }) {
   const reduceMotion = useReduceMotion();
   const [expanded, setExpanded] = useState(initiallyExpanded);
@@ -117,6 +120,7 @@ function VersionCard({
         accessibilityState={{ expanded }}
         onPress={toggle}
         style={({ pressed }) => [styles.header, pressed && styles.pressed]}
+        testID={`${testIdPrefix}-toggle`}
       >
         <View style={styles.chevronBadge}>
           <Animated.View style={chevronStyle}>
@@ -144,18 +148,19 @@ function VersionCard({
           <Text style={styles.date}>{entry.date}</Text>
         </View>
       </Pressable>
-      <Animated.View style={[styles.body, bodyStyle]}>
+      <Animated.View style={[styles.body, bodyStyle]} testID={`${testIdPrefix}-body`}>
         <View
           onLayout={(event) => {
             contentHeight.value = event.nativeEvent.layout.height;
           }}
           // 独立于裁切容器测量，收起时也保留正文的完整高度。
           style={styles.notes}
+          testID={`${testIdPrefix}-notes`}
         >
-          {entry.notes.map((note) => (
+          {entry.notes.map((note, index) => (
             <View key={note} style={styles.noteRow}>
               <View style={styles.noteDot} />
-              <Text style={styles.noteText}>{note}</Text>
+              <Text style={styles.noteText} testID={index === 0 ? `${testIdPrefix}-first-note` : undefined}>{note}</Text>
             </View>
           ))}
         </View>
