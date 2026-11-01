@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import DirectoriesScreen from '@/app/directories';
 import FriendTimelineScreen from '@/app/timeline';
@@ -7,6 +8,7 @@ import WikiScreen from '@/app/wiki';
 import type { PublicIndexSummary } from '@/features/indexes/model';
 import type { FriendTimelineItem } from '@/features/timeline/model';
 import type { PublicWikiRevision } from '@/features/wiki/model';
+import { takeReturnTo } from '@/lib/auth-redirect';
 
 function makeQuery<TData>() {
   return {
@@ -21,12 +23,15 @@ let mockIndexes = makeQuery<{ pages: { items: PublicIndexSummary[] }[] }>();
 let mockTimeline = makeQuery<{ pages: { items: FriendTimelineItem[] }[] }>();
 let mockWiki = makeQuery<{ items: PublicWikiRevision[] }>();
 let mockOffline = false;
+let mockAuth: { isLoading: boolean; session: { user: { id: number } } | null } = {
+  isLoading: false, session: { user: { id: 1 } },
+};
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() }, Stack: { Screen: () => null }, usePathname: () => '/directories',
 }));
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
-jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: { user: { id: 1 } } }) }));
+jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/lib/use-connectivity', () => ({ useIsOffline: () => mockOffline }));
 jest.mock('@/features/indexes/use-global-indexes', () => ({ useGlobalIndexes: () => mockIndexes }));
 jest.mock('@/features/timeline/use-friend-timeline', () => ({ useFriendTimeline: () => mockTimeline }));
@@ -60,6 +65,9 @@ const pages = [
 
 beforeEach(() => {
   mockIndexes = makeQuery(); mockTimeline = makeQuery(); mockWiki = makeQuery(); mockOffline = false;
+  mockAuth = { isLoading: false, session: { user: { id: 1 } } };
+  jest.mocked(router.push).mockClear();
+  takeReturnTo();
 });
 
 test.each(pages)('$name exposes an initial paused read and retries after reconnect', async ({ Component, getQuery, loading, error, retry }) => {
@@ -109,4 +117,42 @@ test.each(pages)('$name keeps existing rows visible when a refresh pauses or fai
   await screen.rerender(<Component />);
   expect(screen.getByText(loaded)).toBeTruthy();
   expect(screen.queryByText('当前显示上次保存的内容')).toBeNull();
+});
+
+test('a guest timeline waits for auth restoration, then offers login with a return destination', async () => {
+  mockAuth = { isLoading: true, session: null };
+  mockTimeline.fetchStatus = 'idle';
+  const screen = await render(<FriendTimelineScreen />);
+  expect(screen.getByText('正在读取登录状态')).toBeTruthy();
+  expect(screen.queryByText('正在读取好友动态')).toBeNull();
+  expect(screen.queryByRole('button', { name: '去登录' })).toBeNull();
+  expect(screen.queryByRole('button', { name: '发布动态' })).toBeNull();
+
+  mockAuth.isLoading = false;
+  await screen.rerender(<FriendTimelineScreen />);
+  expect(screen.getByText('登录后查看好友动态')).toBeTruthy();
+  expect(screen.queryByText('正在读取好友动态')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: '去登录' }));
+  expect(router.push).toHaveBeenCalledWith('/account');
+  expect(takeReturnTo()).toBe('/timeline');
+  expect(mockTimeline.refetch).not.toHaveBeenCalled();
+});
+
+test('a restored session reveals the feed and losing it removes private rows and publish actions', async () => {
+  mockAuth.session = null;
+  mockTimeline.fetchStatus = 'idle';
+  const screen = await render(<FriendTimelineScreen />);
+  expect(screen.getByText('登录后查看好友动态')).toBeTruthy();
+
+  mockAuth.session = { user: { id: 1 } };
+  Object.assign(mockTimeline, { data: { pages: [{ items: [timeline] }] }, isPending: false });
+  await screen.rerender(<FriendTimelineScreen />);
+  expect(screen.getByText(timeline.text)).toBeTruthy();
+  expect(screen.getByRole('button', { name: '发布动态' })).toBeTruthy();
+
+  mockAuth.session = null;
+  await screen.rerender(<FriendTimelineScreen />);
+  expect(screen.getByText('登录后查看好友动态')).toBeTruthy();
+  expect(screen.queryByText(timeline.text)).toBeNull();
+  expect(screen.queryByRole('button', { name: '发布动态' })).toBeNull();
 });

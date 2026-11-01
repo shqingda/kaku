@@ -7,12 +7,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
+import { useAuth } from '@/features/auth/auth-provider';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -24,6 +25,7 @@ import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
 import type { FriendTimelineItem } from '@/features/timeline/model';
+import { rememberReturnTo } from '@/lib/auth-redirect';
 
 const TimelineRow = memo(function TimelineRow({
   hasDivider,
@@ -38,6 +40,7 @@ const TimelineRow = memo(function TimelineRow({
 export default function FriendTimelineScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
+  const { isLoading: isAuthLoading, session } = useAuth();
   const timelineQuery = useFriendTimeline();
   const timeline = usePagedList(timelineQuery);
   const [composerVisible, setComposerVisible] = useState(false);
@@ -47,6 +50,29 @@ export default function FriendTimelineScreen() {
     ),
     [],
   );
+
+  if (isAuthLoading || !session) {
+    return (
+      <SafeAreaView edges={['bottom']} style={styles.screen}>
+        <Stack.Screen options={{ title: '好友动态' }} />
+        <View style={styles.accountState}>
+          {isAuthLoading ? (
+            <AppState title="正在读取登录状态" text="确认登录状态后即可读取好友动态。" />
+          ) : (
+            <AppState
+              action={() => {
+                rememberReturnTo('/timeline');
+                router.push('/account');
+              }}
+              actionLabel="去登录"
+              title="登录后查看好友动态"
+              text="登录后即可查看好友的最新活动。"
+            />
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
@@ -136,6 +162,7 @@ export default function FriendTimelineScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
+  accountState: { padding: SPACING.xl },
   content: {
     backgroundColor: colors.surface,
     borderRadius: 22,
