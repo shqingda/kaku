@@ -1,7 +1,4 @@
-export type BangumiContentBlock =
-  | { type: 'text'; value: string }
-  | { type: 'quote'; value: string }
-  | { type: 'image'; value: string };
+import type { RichTextBlock } from '../../features/rich-text/model.ts';
 
 const BBCODE_TAG_RE = /\[\/?(?:b|i|u|s|mask|quote|code|url|img)(?:=[^\]]*)?\]/gi;
 const IMG_TAG_RE = /\[img(?:=[^\]]*)?\]\s*(https?:\/\/[^\s\]]*)\s*\[\/img\]/gi;
@@ -16,8 +13,8 @@ export function cleanBangumiContent(content: string) {
 // 把一段 bbcode 文本切成「文本 / 图片」序列：`[img]<URL>[/img]` 提取成
 // image 块（仅接受 http(s) 外链，避免把任意内容当图片 URL），其余 bbcode
 // 标签照旧清除。
-function parseImageBlocks(content: string): BangumiContentBlock[] {
-  const blocks: BangumiContentBlock[] = [];
+function parseImageBlocks(content: string): RichTextBlock[] {
+  const blocks: RichTextBlock[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -41,8 +38,8 @@ function parseImageBlocks(content: string): BangumiContentBlock[] {
 // 把 bbcode 文本切成「普通文本 / 引用块 / 图片」序列，保留 [quote]...[/quote]
 // 结构，供回复正文渲染出块引用样式（类似 Markdown 引用）。图片与引用块
 // 之外的 bbcode 标签照旧清除。
-export function parseBangumiContent(content: string): BangumiContentBlock[] {
-  const blocks: BangumiContentBlock[] = [];
+export function parseBangumiContent(content: string): RichTextBlock[] {
+  const blocks: RichTextBlock[] = [];
   const quoteRegex = /\[quote(?:=[^\]]*)?\]([\s\S]*?)\[\/quote\]/gi;
   let lastIndex = 0;
   let match: RegExpExecArray | null;

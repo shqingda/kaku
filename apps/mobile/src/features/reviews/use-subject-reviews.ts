@@ -10,10 +10,8 @@ import {
   getSubjectReviews,
 } from '@/infrastructure/bangumi/reviews/provider';
 import { useSessionAwareQuery } from '@/features/auth/session-aware-query';
-import {
-  cleanBangumiContent,
-  mapBangumiReplies,
-} from '@/infrastructure/bangumi/discussions/adapter';
+import { cleanBangumiContent } from '@/infrastructure/bangumi/content';
+import { mapBangumiReplies } from '@/infrastructure/bangumi/discussions/adapter';
 import { mapBangumiReviewDetail } from '@/infrastructure/bangumi/reviews/adapter';
 import { getAuthenticatedReview } from '@/infrastructure/kaku/discussions-client';
 import { queryKeys } from '@/lib/query-keys';

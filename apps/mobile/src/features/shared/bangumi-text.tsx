@@ -8,7 +8,8 @@ import {
   getBangumiEmojiUrl,
   parseBangumiEmoji,
 } from '@/lib/bangumi-emoji';
-import { parseBangumiContent, type BangumiContentBlock } from '@/lib/bangumi-content';
+import type { RichTextBlock } from '@/features/rich-text/model';
+import { parseBangumiContent } from '@/infrastructure/bangumi/content';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -24,7 +25,7 @@ function BangumiEmojiText({
   style?: StyleProp<TextStyle>;
 }) {
   const flattened = StyleSheet.flatten(style);
-  const fontSize = flattened?.fontSize ?? 14;
+  const fontSize = flattened?.fontSize ?? TYPE.body.fontSize;
   const lineHeight = flattened?.lineHeight ?? Math.round(fontSize * 1.4);
   const emojiSize = Math.round(lineHeight * 0.86);
 
@@ -58,7 +59,7 @@ function BangumiRichBody({
   blocks,
   style,
 }: {
-  blocks: BangumiContentBlock[];
+  blocks: RichTextBlock[];
   style?: StyleProp<TextStyle>;
 }) {
   const colors = useTheme();
@@ -68,7 +69,7 @@ function BangumiRichBody({
   const containerStyle = flattened?.marginTop
     ? { marginTop: flattened.marginTop }
     : undefined;
-  const textStyle = flattened ? { ...flattened, marginTop: 0 } : undefined;
+  const textStyle = flattened ? { ...flattened, marginTop: SPACING.none } : undefined;
 
   return (
     <View style={containerStyle}>
@@ -122,7 +123,7 @@ export function BangumiContentText({
   blocks,
   style,
 }: {
-  blocks: BangumiContentBlock[];
+  blocks: RichTextBlock[];
   style?: StyleProp<TextStyle>;
 }) {
   if (blocks.length === 0) {

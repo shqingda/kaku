@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   cleanBangumiContent,
   parseBangumiContent,
-} from '../src/lib/bangumi-content.ts';
+} from '../src/infrastructure/bangumi/content.ts';
 
 test('cleanBangumiContent strips bbcode tags', () => {
   assert.equal(

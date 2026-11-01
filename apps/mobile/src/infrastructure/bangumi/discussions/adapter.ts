@@ -13,10 +13,8 @@ import { getNextTopicOffset } from '../../../features/discussions/topic-paginati
 import {
   cleanBangumiContent,
   parseBangumiContent,
-} from '../../../lib/bangumi-content.ts';
+} from '../content.ts';
 import { formatActivityTime } from '../../../lib/format-activity-time.ts';
-
-export { cleanBangumiContent } from '../../../lib/bangumi-content.ts';
 
 function authorName(reply: BangumiDiscussionReply) {
   return (

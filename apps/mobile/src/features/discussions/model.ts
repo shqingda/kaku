@@ -1,4 +1,4 @@
-import type { BangumiContentBlock } from '@/lib/bangumi-content';
+import type { RichTextBlock } from '@/features/rich-text/model';
 
 type ReplyReference = {
   replyId: string;
@@ -14,7 +14,7 @@ export type DiscussionReply = {
   body: string;
   createdAt: string;
   replyTo?: ReplyReference;
-  segments?: BangumiContentBlock[];
+  segments?: RichTextBlock[];
 };
 
 export type DiscussionTopic = {
