@@ -1,4 +1,4 @@
-import { clearOfflineSubjectPack, listOfflineSubjects, removeOfflineSubject, saveOfflineSubject } from '@/features/catalog/offline-subject-pack';
+import { clearOfflineSubjectPack, loadOfflineSubject, saveOfflineSubject } from '@/features/catalog/offline-subject-pack';
 import type { CatalogSubject } from '@/features/catalog/model';
 let mockRaw: string | null = null;
 let mockFailRead = false;
@@ -10,22 +10,27 @@ jest.mock('expo-sqlite/kv-store', () => ({ __esModule: true, default: {
 } }));
 const subject = (id: number) => ({ id, title: String(id), episodes: [] } as unknown as CatalogSubject);
 beforeEach(() => { mockRaw = null; mockFailRead = false; mockWrite.mockClear(); });
-test('concurrent saves and removal preserve other subjects; expired entries are hidden', async () => {
-  await Promise.all([saveOfflineSubject(subject(1)), saveOfflineSubject(subject(2)), removeOfflineSubject(1)]);
-  expect((await listOfflineSubjects()).map(item => item.subject.id)).toEqual([2]);
+test('concurrent saves preserve both subjects and expired entries are not loaded', async () => {
+  await Promise.all([saveOfflineSubject(subject(1)), saveOfflineSubject(subject(2))]);
+  expect((await loadOfflineSubject(1))?.id).toBe(1);
+  expect((await loadOfflineSubject(2))?.id).toBe(2);
   mockRaw = JSON.stringify({ items: [{ subject: subject(3), savedAt: 1 }] });
-  expect(await listOfflineSubjects()).toEqual([]);
-  await clearOfflineSubjectPack();
-  expect(mockRaw).toBeNull();
+  expect(await loadOfflineSubject(3)).toBeNull();
 });
-test('read failure is visible to management and cannot overwrite existing data', async () => {
+test('cache clear stays ordered between saves and does not erase a later save', async () => {
+  await Promise.all([saveOfflineSubject(subject(1)), clearOfflineSubjectPack(), saveOfflineSubject(subject(2))]);
+  expect(await loadOfflineSubject(1)).toBeNull();
+  expect((await loadOfflineSubject(2))?.id).toBe(2);
+});
+test('failed reads cannot overwrite existing data and the queue recovers', async () => {
   await saveOfflineSubject(subject(1));
   const previous = mockRaw;
   mockFailRead = true;
-  await expect(listOfflineSubjects()).rejects.toThrow('storage');
+  expect(await loadOfflineSubject(1)).toBeNull();
   await expect(saveOfflineSubject(subject(2))).rejects.toThrow('storage');
   expect(mockRaw).toBe(previous);
   mockFailRead = false;
-  await removeOfflineSubject(1);
-  expect(await listOfflineSubjects()).toEqual([]);
+  await saveOfflineSubject(subject(2));
+  expect((await loadOfflineSubject(1))?.id).toBe(1);
+  expect((await loadOfflineSubject(2))?.id).toBe(2);
 });

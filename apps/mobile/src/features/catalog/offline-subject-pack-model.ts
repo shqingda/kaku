@@ -3,7 +3,7 @@ import type { CatalogSubject } from './model.ts';
 export const OFFLINE_SUBJECT_PACK_MAX = 10;
 export const OFFLINE_SUBJECT_PACK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type PackedSubject = {
+type PackedSubject = {
   savedAt: number;
   subject: CatalogSubject;
 };

@@ -5,7 +5,7 @@ import { sanitizeDiagnosticText } from './diagnostic-redaction';
 const DIAGNOSTIC_STORAGE_KEY = 'kaku-diagnostic-records';
 const MAX_DIAGNOSTIC_RECORDS = 10;
 
-export type DiagnosticRecord = {
+type DiagnosticRecord = {
   componentStack?: string;
   createdAt: number;
   id: string;
@@ -43,7 +43,7 @@ function parseDiagnosticRecords(value: string | null): DiagnosticRecord[] {
   }
 }
 
-export async function readDiagnosticRecords() {
+async function readDiagnosticRecords() {
   return parseDiagnosticRecords(await Storage.getItem(DIAGNOSTIC_STORAGE_KEY));
 }
 
@@ -68,8 +68,4 @@ export async function recordDiagnosticError(
     DIAGNOSTIC_STORAGE_KEY,
     JSON.stringify([nextRecord, ...records].slice(0, MAX_DIAGNOSTIC_RECORDS)),
   );
-}
-
-export async function clearDiagnosticRecords() {
-  await Storage.removeItem(DIAGNOSTIC_STORAGE_KEY);
 }
