@@ -11,6 +11,7 @@ import { createD1PreferencesStore } from '../src/preferences/store.ts';
 import { createD1PushDeviceStore } from '../src/push/store.ts';
 import { createD1RecentSubjectsStore } from '../src/recent-subjects/store.ts';
 import { createD1SearchHistoryStore } from '../src/search-history/store.ts';
+import { createTestApp } from './helpers/app.mjs';
 
 const NOW = 1_800_000_000_000;
 
@@ -97,19 +98,7 @@ test('search history store roundtrips items and upserts per user', async () => {
   });
 });
 
-test('search history store drops non-string entries from stored JSON', async () => {
-  await database
-    .prepare('UPDATE user_search_history SET items = ? WHERE user_id = ?')
-    .bind(JSON.stringify(['正常', 12, null, '另一条']), 42)
-    .run();
-
-  assert.deepEqual((await searchHistoryStore.get(42)).items, [
-    '正常',
-    '另一条',
-  ]);
-});
-
-test('recent subjects store roundtrips, filters invalid rows, and caps at 10', async () => {
+test('recent subjects store roundtrips and caps valid legacy arrays at 10', async () => {
   assert.equal(await recentSubjectsStore.get(42), null);
 
   await recentSubjectsStore.save({
@@ -130,13 +119,6 @@ test('recent subjects store roundtrips, filters invalid rows, and caps at 10', a
     userId: 42,
   });
 
-  const invalidRows = [
-    { id: 3, title: '缺少 viewedAt', type: 2 },
-    { id: -4, title: '编号非法', type: 2, viewedAt: NOW },
-    { id: 5, title: '   ', type: 2, viewedAt: NOW },
-    { id: 6, title: 7, type: 2, viewedAt: NOW },
-    '不是对象',
-  ];
   const fillers = Array.from({ length: 12 }, (_, index) => ({
     id: 100 + index,
     title: `条目 ${index}`,
@@ -144,29 +126,99 @@ test('recent subjects store roundtrips, filters invalid rows, and caps at 10', a
     viewedAt: NOW - index,
   }));
   await recentSubjectsStore.save({
-    items: [...invalidRows, ...fillers],
+    items: fillers,
     updatedAt: NOW + 2,
     userId: 42,
   });
 
   const stored = await recentSubjectsStore.get(42);
-  assert.equal(stored.items.length, 10);
-  assert.ok(stored.items.every((item) => item.id >= 100));
+  assert.deepEqual(stored.items, fillers.slice(0, 10));
   assert.equal(stored.updatedAt, NOW + 2);
 });
 
-test('recent subjects store returns empty items when stored JSON is corrupt', async () => {
-  await database
-    .prepare('INSERT INTO user_recent_subjects (user_id, items, updated_at) VALUES (?, ?, ?)')
-    .bind(43, '{not json', NOW)
-    .run();
-
-  assert.deepEqual(await recentSubjectsStore.get(43), {
-    items: [],
-    updatedAt: NOW,
-    userId: 43,
+function createHistoryApp() {
+  return createTestApp({
+    createStore: () => ({
+      async authenticateSession() {
+        return { sessionId: 'session-42', userId: 42, user: { id: 42 } };
+      },
+    }),
+    now: () => NOW,
   });
-});
+}
+
+const historyAuthHeaders = { Authorization: `Bearer ${'x'.repeat(32)}` };
+const legacySubject = { id: 1, title: ' legacy subject ', type: 0, viewedAt: 0, coverUrl: '' };
+const histories = [
+  {
+    table: 'user_search_history', path: '/me/search-history', key: 'history',
+    createStore: createD1SearchHistoryStore,
+    legacy: [' old search ', '', 'old search', 'old search'],
+    invalidItems: [['private-history-marker', 12], ['private-history-marker', null]],
+  },
+  {
+    table: 'user_recent_subjects', path: '/me/recent-subjects', key: 'recentSubjects',
+    createStore: createD1RecentSubjectsStore,
+    legacy: [legacySubject],
+    invalidItems: [
+      [legacySubject, { id: 2, title: 'private-history-marker', type: 2 }],
+      [legacySubject, { ...legacySubject, id: -2 }],
+      [legacySubject, { ...legacySubject, title: '   ' }],
+      [legacySubject, { ...legacySubject, type: 1.5 }],
+      [legacySubject, { ...legacySubject, viewedAt: -1 }],
+      [legacySubject, { ...legacySubject, coverUrl: null }],
+      [...Array(10).fill(legacySubject), 'private-history-marker'],
+    ],
+  },
+];
+
+for (const history of histories) {
+  test(`${history.key} rejects corrupt storage through the real store and GET route without changing data`, async (t) => {
+    const logged = t.mock.method(console, 'error', () => {});
+    const store = history.createStore(database);
+    const app = createHistoryApp();
+    const invalidValues = [
+      '{private-history-marker',
+      'null',
+      JSON.stringify({ items: [], private: 'private-history-marker' }),
+      ...history.invalidItems.map(items => JSON.stringify(items)),
+    ];
+    for (const raw of invalidValues) {
+      await database.prepare(`UPDATE ${history.table} SET items = ?, updated_at = ? WHERE user_id = ?`)
+        .bind(raw, NOW + 100, 42).run();
+      await assert.rejects(store.get(42), error => {
+        assert.doesNotMatch(error.message, /private-history-marker/);
+        assert.equal(error.cause, undefined);
+        return true;
+      });
+      const response = await app.request(history.path, { headers: historyAuthHeaders }, { DB: database });
+      assert.equal(response.status, 500);
+      assert.deepEqual(await response.json(), {
+        error: 'internal_error', message: '服务暂时不可用，请稍后重试。',
+      });
+      assert.deepEqual(
+        await database.prepare(`SELECT items, updated_at FROM ${history.table} WHERE user_id = ?`).bind(42).first(),
+        { items: raw, updated_at: NOW + 100 },
+      );
+    }
+    assert.equal(logged.mock.callCount(), invalidValues.length);
+    for (const call of logged.mock.calls) {
+      for (const value of call.arguments) assert.doesNotMatch(String(value), /private-history-marker/);
+    }
+  });
+
+  test(`${history.key} keeps real empty records and valid legacy values readable`, async () => {
+    const store = history.createStore(database);
+    const app = createHistoryApp();
+    for (const items of [[], history.legacy]) {
+      await store.save({ items, updatedAt: NOW + 200, userId: 42 });
+      assert.deepEqual(await store.get(42), { items, updatedAt: NOW + 200, userId: 42 });
+      const response = await app.request(history.path, { headers: historyAuthHeaders }, { DB: database });
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { [history.key]: { items, updatedAt: NOW + 200 } });
+    }
+  });
+}
 
 test('preferences store roundtrips locale and theme and upserts', async () => {
   assert.equal(await preferencesStore.get(42), null);

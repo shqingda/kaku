@@ -28,11 +28,19 @@ export function createD1SearchHistoryStore(
         .limit(1);
       if (!row) return null;
 
-      const parsed: unknown = JSON.parse(row.items);
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(row.items);
+      } catch {
+        // JSON errors may contain search terms; log only a controlled error.
+        throw new Error('search_history_parse_failed');
+      }
+      if (!Array.isArray(parsed)
+        || !parsed.every((item): item is string => typeof item === 'string')) {
+        throw new Error('search_history_parse_failed');
+      }
       return {
-        items: Array.isArray(parsed)
-          ? parsed.filter((item): item is string => typeof item === 'string')
-          : [],
+        items: parsed,
         updatedAt: row.updatedAt,
         userId: row.userId,
       };

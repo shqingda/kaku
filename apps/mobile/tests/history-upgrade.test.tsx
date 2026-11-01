@@ -13,6 +13,10 @@ let mockFailRead = false;
 let mockUserId = 1;
 let mockSync = true;
 const mockCanSyncNow = () => mockSync;
+const mockCaptureRequest = () => {
+  const userId = mockUserId;
+  return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => userId === mockUserId };
+};
 jest.mock('expo-sqlite/kv-store', () => ({
   getItem: async (key: string) => {
     if (mockFailRead) throw new Error('storage unavailable');
@@ -25,7 +29,7 @@ jest.mock('expo-sqlite/kv-store', () => ({
 }));
 jest.mock('@/lib/diagnostic-log', () => ({ recordDiagnosticError: jest.fn() }));
 jest.mock('@/features/auth/auth-provider', () => ({
-  useAuth: () => ({ request: mockRequest, captureRequest: () => { const userId = mockUserId; return { identity: { userId, sessionId: `session-${userId}`, authEpoch: userId }, request: mockRequest, isCurrent: () => userId === mockUserId }; }, session: { user: { id: mockUserId } }, isLoading: false }),
+  useAuth: () => ({ request: mockRequest, captureRequest: mockCaptureRequest, session: { user: { id: mockUserId } }, isLoading: false }),
 }));
 jest.mock('@/features/preferences/preferences-provider', () => ({
   usePreferences: () => ({ preferences: { syncEnabled: mockSync }, isReady: true, cloudSyncAvailable: true, canSync: mockSync, canSyncNow: mockCanSyncNow }),
@@ -134,4 +138,45 @@ test('upgrade restores both histories from cloud, retains legacy data, and remou
   expect(mockRequest).toHaveBeenCalledTimes(4);
   expect(mockData.get('kaku-recent-searches')).toBe(legacySearch);
   expect(mockData.get('kaku-recent-subjects')).toBe(legacyRecent);
+});
+
+test('cloud 500 keeps both local histories intact and a successful retry resumes synchronization', async () => {
+  const searchKey = 'kaku-recent-searches:v2:1';
+  const recentKey = 'kaku-recent-subjects:v2:1';
+  const search = { items: ['local search'], updatedAt: 100 };
+  const subject = { id: 1, title: 'local subject', type: 2, viewedAt: 100 };
+  const recent = { items: [subject], updatedAt: 100 };
+  mockData.set(searchKey, JSON.stringify(search));
+  mockData.set(recentKey, JSON.stringify(recent));
+  mockRequest.mockImplementation(async () => Response.json({
+    error: 'internal_error', message: '服务暂时不可用，请稍后重试。',
+  }, { status: 500 }));
+
+  const hook = await renderHook(useHistories, { wrapper: Providers });
+  await waitFor(() => expect(hook.result.current.search.cloudError).toBeTruthy());
+  await waitFor(() => expect(hook.result.current.recent.cloudError).toBeTruthy());
+  expect(hook.result.current.search.items).toEqual(search.items);
+  expect(hook.result.current.recent.items).toEqual(recent.items);
+  expect(mockData.get(searchKey)).toBe(JSON.stringify(search));
+  expect(mockData.get(recentKey)).toBe(JSON.stringify(recent));
+  expect(mockRequest).toHaveBeenCalledTimes(2);
+  expect(mockRequest.mock.calls.every(([, options]) => options.method !== 'PUT')).toBe(true);
+
+  const recoveredSearch = { items: ['cloud search'], updatedAt: 200 };
+  const recoveredRecent = { items: [{ ...subject, title: 'cloud subject', viewedAt: 200 }], updatedAt: 200 };
+  mockRequest.mockImplementation(async (path: string) => Response.json(path === '/me/search-history'
+    ? { history: recoveredSearch }
+    : { recentSubjects: recoveredRecent }));
+  await act(async () => {
+    await hook.result.current.search.retryCloudSync();
+    await hook.result.current.recent.retryCloudSync();
+  });
+  expect(hook.result.current.search.cloudError).toBeNull();
+  expect(hook.result.current.recent.cloudError).toBeNull();
+  expect(hook.result.current.search.items).toEqual(recoveredSearch.items);
+  expect(hook.result.current.recent.items).toEqual(recoveredRecent.items);
+  expect(await loadSearchHistory(1)).toEqual(recoveredSearch);
+  expect(await loadRecentSubjects(1)).toEqual(recoveredRecent);
+  expect(mockRequest).toHaveBeenCalledTimes(4);
+  expect(mockRequest.mock.calls.every(([, options]) => options.method !== 'PUT')).toBe(true);
 });

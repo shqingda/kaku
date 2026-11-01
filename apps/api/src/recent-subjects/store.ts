@@ -52,22 +52,20 @@ export function createD1RecentSubjectsStore(
         .limit(1);
       if (!row) return null;
 
-      let parsed: unknown = [];
+      let parsed: unknown;
       try {
         parsed = JSON.parse(row.items);
       } catch {
-        console.error(
-          JSON.stringify({
-            event: 'recent_subjects_parse_failed',
-            userId,
-          }),
-        );
+        // JSON errors may contain history text; log only a controlled error.
+        throw new Error('recent_subjects_parse_failed');
+      }
+      if (!Array.isArray(parsed) || !parsed.every(isStoredRecentSubject)) {
+        // A partial or empty result could be mistaken for a newer cloud clear.
+        throw new Error('recent_subjects_parse_failed');
       }
 
       return {
-        items: Array.isArray(parsed)
-          ? parsed.filter(isStoredRecentSubject).slice(0, 10)
-          : [],
+        items: parsed.slice(0, 10),
         updatedAt: row.updatedAt,
         userId: row.userId,
       };
