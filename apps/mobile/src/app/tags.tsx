@@ -35,11 +35,8 @@ export default function TagsScreen() {
     getSubjectTypeFromSlug(type));
   // 路由参数变化时同步本地状态（页面被复用时不重新初始化 useState）。
   useEffect(() => {
-    const next = getSubjectTypeFromSlug(type);
-    if (next !== subjectType) {
-      setSubjectType(next);
-    }
-  }, [subjectType, type]);
+    setSubjectType(getSubjectTypeFromSlug(type));
+  }, [type]);
   const [draft, setDraft] = useState('');
   const tagsQuery = useGlobalTags(subjectType);
   const tags = usePagedList(tagsQuery);

@@ -29,9 +29,10 @@ function makeQueries() {
 
 let mockQueries = makeQueries();
 let mockOffline = false;
+let mockRouteParams: { type?: string } = {};
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() }, Stack: { Screen: () => null }, useLocalSearchParams: () => ({}),
+  router: { push: jest.fn() }, Stack: { Screen: () => null }, useLocalSearchParams: () => mockRouteParams,
   Link: ({ children }: { children: ReactNode }) => children,
 }));
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
@@ -77,7 +78,7 @@ const pages: PageCase[] = [
     error: '标签加载失败', empty: '暂无标签', item: { name: '已加载标签', count: 5 }, loadedText: '已加载标签' },
 ];
 
-beforeEach(() => { mockQueries = makeQueries(); mockOffline = false; });
+beforeEach(() => { mockQueries = makeQueries(); mockOffline = false; mockRouteParams = {}; });
 
 async function openPage({ Component, query }: PageCase) {
   const client = new QueryClient();
@@ -151,4 +152,19 @@ test.each(pages)('$name retains cached results during paused and failed refreshe
   await rerender();
   expect(screen.getByText(page.loadedText)).toBeTruthy();
   expect(screen.queryByText('当前显示上次保存的内容')).toBeNull();
+});
+
+test('tag categories retain the user selection until the route type changes', async () => {
+  const screen = await render(<TagsScreen />);
+  await fireEvent.press(screen.getByRole('tab', { name: '游戏分类' }));
+  expect(screen.getByRole('tab', { name: '游戏分类' }).props.accessibilityState.selected).toBe(true);
+  expect(screen.getByText('游戏标签')).toBeTruthy();
+
+  await screen.rerender(<TagsScreen />);
+  expect(screen.getByRole('tab', { name: '游戏分类' }).props.accessibilityState.selected).toBe(true);
+
+  mockRouteParams = { type: 'book' };
+  await screen.rerender(<TagsScreen />);
+  expect(screen.getByRole('tab', { name: '书籍分类' }).props.accessibilityState.selected).toBe(true);
+  expect(screen.getByText('书籍标签')).toBeTruthy();
 });
