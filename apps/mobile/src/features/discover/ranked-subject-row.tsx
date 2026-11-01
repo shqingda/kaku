@@ -5,6 +5,7 @@ import {
   View,
 } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { PressableScale } from '@/features/shared/pressable-scale';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -81,7 +82,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 92,
-    paddingVertical: 10,
+    paddingVertical: SPACING.md,
   },
   divider: {
     borderTopColor: colors.divider,
@@ -89,7 +90,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   position: {
     color: colors.accent,
-    fontSize: 15,
+    ...TYPE.body,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     textAlign: 'center',
@@ -107,25 +108,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   coverFallback: {
     color: colors.subtle,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '700',
   },
-  main: { flex: 1, marginLeft: 14 },
+  main: { flex: 1, marginLeft: SPACING.md },
   title: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 21,
   },
   meta: {
     color: colors.subtle,
-    fontSize: 12,
-    marginTop: 7,
+    ...TYPE.caption,
+    marginTop: SPACING.sm,
   },
   chevron: {
     color: colors.subtle,
-    fontSize: 26,
-    marginLeft: 8,
+    ...TYPE.display,
+    marginLeft: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
 });

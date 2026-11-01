@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useIsOffline } from '@/lib/use-connectivity';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -17,6 +19,7 @@ export function PagedListFooter({
   hasNextPage,
   isError,
   isFetching,
+  isPaused = false,
   loadedCount,
   onRetry,
   total,
@@ -24,6 +27,7 @@ export function PagedListFooter({
   hasNextPage: boolean;
   isError: boolean;
   isFetching: boolean;
+  isPaused?: boolean;
   loadedCount: number;
   onRetry: () => void;
   total?: number;
@@ -31,15 +35,18 @@ export function PagedListFooter({
   const colors = useTheme();
   const styles = createStyles(colors);
   const isOffline = useIsOffline();
+  const showPaused = hasNextPage && (isPaused || isOffline);
+  const showError = isError && !showPaused && !isFetching;
 
-  // iOS 无自动播报：加载更多失败出现时手动播一次（依赖保持空数组）。
+  // 页脚通常先显示正常状态，再进入错误；每次错误真正出现时播一次。
+  // Android 由 live region 播报，iOS 需要显式通知。
   useEffect(() => {
-    if (isError) {
+    if (showError && Platform.OS === 'ios') {
       AccessibilityInfo.announceForAccessibility('后续结果加载失败');
     }
-  }, []);
+  }, [showError]);
 
-  if (isFetching) {
+  if (isFetching && !showPaused) {
     return (
       <View accessibilityLiveRegion="polite" style={styles.footer}>
         <ActivityIndicator color={colors.accent} size="small" />
@@ -48,12 +55,18 @@ export function PagedListFooter({
     );
   }
 
-  if (isError) {
+  if (showPaused || showError) {
     return (
-      <View accessibilityRole="alert" style={styles.footer}>
-        <Text style={styles.text}>后续结果加载失败</Text>
-        {isOffline ? (
-          <Text style={styles.offlineText}>离线中，联网后可重试</Text>
+      <View
+        accessibilityLiveRegion={showError ? 'assertive' : 'polite'}
+        accessibilityRole={showError ? 'alert' : undefined}
+        style={styles.footer}
+      >
+        <Text style={styles.text}>
+          {showPaused ? '后续结果等待联网' : '后续结果加载失败'}
+        </Text>
+        {showPaused ? (
+          <Text style={styles.offlineText}>已加载的内容仍可查看，恢复连接后可重试。</Text>
         ) : null}
         <Pressable
           accessibilityRole="button"
@@ -88,15 +101,15 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     footer: {
       alignItems: 'center',
-      flexDirection: 'row',
-      gap: 9,
+      gap: SPACING.sm,
       justifyContent: 'center',
       minHeight: 58,
-      paddingHorizontal: 16,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
     },
     text: {
       color: colors.subtle,
-      fontSize: 12,
+      ...TYPE.caption,
       textAlign: 'center',
     },
     retry: {
@@ -104,14 +117,14 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.accentSoft,
       borderRadius: 11,
       justifyContent: 'center',
-      minHeight: 44,
-      paddingHorizontal: 12,
-      paddingVertical: 7,
+      minHeight: MIN_TOUCH_SIZE,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
     },
-    offlineText: { color: colors.subtle, fontSize: 11 },
+    offlineText: { color: colors.subtle, ...TYPE.micro, textAlign: 'center' },
     retryText: {
       color: colors.accent,
-      fontSize: 12,
+      ...TYPE.caption,
       fontWeight: '800',
     },
     pressed: { opacity: 0.62 },

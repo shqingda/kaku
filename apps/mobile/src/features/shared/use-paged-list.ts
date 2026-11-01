@@ -43,6 +43,7 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
   const listRef = useScrollToTopButton<FlatList<TItem>>();
   const {
     fetchNextPage,
+    fetchStatus,
     hasNextPage,
     isFetchNextPageError,
     isFetchingNextPage,
@@ -58,12 +59,13 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
   );
   const total = pages?.[0]?.total;
 
-  // 自动加载更多的守卫：有下一页、不在加载中、且上次加载没有失败。
+  // 暂停时 isFetchingNextPage 为 false，必须检查整个请求状态，
+  // 避免滚动触底重新发起暂停中的请求或打断整表刷新。
   const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+    if (hasNextPage && fetchStatus === 'idle' && !isFetchNextPageError) {
       void fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
+  }, [fetchNextPage, fetchStatus, hasNextPage, isFetchNextPageError]);
 
   // 页脚重试不判断守卫：失败后允许再次发起。
   const retryLoadMore = useCallback(() => {
@@ -89,6 +91,7 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
     hasNextPage: Boolean(hasNextPage),
     isError: isFetchNextPageError,
     isFetching: isFetchingNextPage,
+    isPaused: fetchStatus === 'paused',
     loadedCount: items.length,
     onRetry: retryLoadMore,
     total,

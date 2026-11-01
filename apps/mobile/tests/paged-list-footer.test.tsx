@@ -1,142 +1,75 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { AccessibilityInfo, Platform } from 'react-native';
 
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
-import { ThemeProvider } from '@/features/theme/theme-provider';
 
-// 离线感知文案依赖连通性 hook，这里固定为在线，离线分支单独测。
-jest.mock('@/lib/use-connectivity', () => ({
-  useIsOffline: () => false,
-}));
+let mockOffline = false;
+jest.mock('@/lib/use-connectivity', () => ({ useIsOffline: () => mockOffline }));
 
-describe('PagedListFooter', () => {
-  it('shows a loading hint without a retry button while fetching more', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage
-          isError={false}
-          isFetching
-          loadedCount={8}
-          onRetry={onRetry}
-        />
-      </ThemeProvider>,
-    );
+const baseProps = {
+  hasNextPage: true,
+  isError: false,
+  isFetching: false,
+  loadedCount: 8,
+  onRetry: jest.fn(),
+};
 
-    expect(screen.getByText('正在加载更多结果')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
-  });
+beforeEach(() => { mockOffline = false; baseProps.onRetry.mockClear(); });
+afterEach(() => jest.restoreAllMocks());
 
-  it('prefers the loading state over the error state', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage
-          isError
-          isFetching
-          loadedCount={8}
-          onRetry={onRetry}
-        />
-      </ThemeProvider>,
-    );
+it.each([false, true])('shows loading instead of a stale error while retrying (error: %s)', async (isError) => {
+  const screen = await render(<PagedListFooter {...baseProps} isError={isError} isFetching />);
+  expect(screen.getByText('正在加载更多结果')).toBeTruthy();
+  expect(screen.queryByText('后续结果加载失败')).toBeNull();
+  expect(screen.queryByRole('button')).toBeNull();
+});
 
-    expect(screen.getByText('正在加载更多结果')).toBeTruthy();
-    expect(screen.queryByText('后续结果加载失败')).toBeNull();
-  });
+it.each([
+  { hasNextPage: false, total: undefined, text: '已加载全部 8 个结果' },
+  { hasNextPage: false, total: 24, text: '已显示全部 8 个结果' },
+  { hasNextPage: true, total: undefined, text: '继续上滑加载更多 · 已显示 8 个结果' },
+  { hasNextPage: true, total: 24, text: '继续上滑加载更多 · 已显示 8 / 24' },
+])('describes the remaining results: $text', async ({ text, ...props }) => {
+  const screen = await render(<PagedListFooter {...baseProps} {...props} />);
+  expect(screen.getByText(text)).toBeTruthy();
+  expect(screen.queryByRole('button')).toBeNull();
+});
 
-  it('shows an error message and fires onRetry when loading more fails', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage
-          isError
-          isFetching={false}
-          loadedCount={8}
-          onRetry={onRetry}
-        />
-      </ThemeProvider>,
-    );
+it.each([false, true])('exposes a paused request and lets the user retry (offline: %s)', async (offline) => {
+  mockOffline = offline;
+  const screen = await render(<PagedListFooter {...baseProps} isPaused={!offline} isError />);
+  expect(screen.getByText('后续结果等待联网')).toBeTruthy();
+  expect(screen.queryByText('后续结果加载失败')).toBeNull();
+  expect(screen.queryByText('正在加载更多结果')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: '重试' }));
+  expect(baseProps.onRetry).toHaveBeenCalledTimes(1);
+});
 
-    expect(screen.root?.props.accessibilityRole).toBe('alert');
-    expect(screen.getByText('后续结果加载失败')).toBeTruthy();
+it('keeps the completed count when a fully loaded list is offline', async () => {
+  mockOffline = true;
+  const screen = await render(<PagedListFooter {...baseProps} hasNextPage={false} isPaused />);
+  expect(screen.getByText('已加载全部 8 个结果')).toBeTruthy();
+  expect(screen.queryByText('后续结果等待联网')).toBeNull();
+});
 
-    fireEvent.press(screen.getByRole('button', { name: '重试' }));
+it.each(['ios', 'android'] as const)('announces each visible failure once on %s and preserves retry', async (platform) => {
+  jest.replaceProperty(Platform, 'OS', platform);
+  const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+  announce.mockClear();
+  const screen = await render(<PagedListFooter {...baseProps} />);
+  expect(announce).not.toHaveBeenCalled();
 
-    expect(onRetry).toHaveBeenCalledTimes(1);
-  });
+  await screen.rerender(<PagedListFooter {...baseProps} isError />);
+  expect(screen.root?.props.accessibilityRole).toBe('alert');
+  expect(screen.root?.props.accessibilityLiveRegion).toBe('assertive');
+  expect(announce).toHaveBeenCalledTimes(platform === 'ios' ? 1 : 0);
+  await screen.rerender(<PagedListFooter {...baseProps} isError loadedCount={9} />);
+  expect(announce).toHaveBeenCalledTimes(platform === 'ios' ? 1 : 0);
+  await fireEvent.press(screen.getByRole('button', { name: '重试' }));
+  expect(baseProps.onRetry).toHaveBeenCalledTimes(1);
 
-  it('shows the end-of-list count without a known total', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage={false}
-          isError={false}
-          isFetching={false}
-          loadedCount={8}
-          onRetry={onRetry}
-        />
-      </ThemeProvider>,
-    );
-
-    expect(screen.getByText('已加载全部 8 个结果')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
-  });
-
-  it('shows the end-of-list count against a known total', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage={false}
-          isError={false}
-          isFetching={false}
-          loadedCount={8}
-          onRetry={onRetry}
-          total={24}
-        />
-      </ThemeProvider>,
-    );
-
-    expect(screen.getByText('已显示全部 8 个结果')).toBeTruthy();
-  });
-
-  it('shows the keep-scrolling hint while more pages exist', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage
-          isError={false}
-          isFetching={false}
-          loadedCount={8}
-          onRetry={onRetry}
-        />
-      </ThemeProvider>,
-    );
-
-    expect(screen.getByText('继续上滑加载更多 · 已显示 8 个结果')).toBeTruthy();
-  });
-
-  it('shows the keep-scrolling hint with progress against a known total', async () => {
-    const onRetry = jest.fn();
-    const screen = await render(
-      <ThemeProvider>
-        <PagedListFooter
-          hasNextPage
-          isError={false}
-          isFetching={false}
-          loadedCount={8}
-          onRetry={onRetry}
-          total={24}
-        />
-      </ThemeProvider>,
-    );
-
-    expect(
-      screen.getByText('继续上滑加载更多 · 已显示 8 / 24'),
-    ).toBeTruthy();
-  });
+  await screen.rerender(<PagedListFooter {...baseProps} isError isFetching />);
+  expect(screen.queryByText('后续结果加载失败')).toBeNull();
+  await screen.rerender(<PagedListFooter {...baseProps} isError />);
+  expect(announce).toHaveBeenCalledTimes(platform === 'ios' ? 2 : 0);
 });

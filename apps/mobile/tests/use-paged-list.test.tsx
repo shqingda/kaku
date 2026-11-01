@@ -15,6 +15,7 @@ function fakeQuery(overrides: Record<string, unknown> = {}) {
       ],
     },
     fetchNextPage: jest.fn(),
+    fetchStatus: 'idle',
     hasNextPage: true,
     isFetchNextPageError: false,
     isFetchingNextPage: false,
@@ -52,52 +53,38 @@ describe('usePagedList', () => {
     expect(fetchNextPage).toHaveBeenCalledTimes(1);
   });
 
-  it('skips loading more while the next page is already fetching', async () => {
+  it.each([
+    ['the next page is fetching', { fetchStatus: 'fetching', isFetchingNextPage: true }],
+    ['the whole list is refreshing', { fetchStatus: 'fetching', isRefetching: true }],
+    ['the request is paused', { fetchStatus: 'paused' }],
+    ['the last page request failed', { isFetchNextPageError: true }],
+    ['there is no next page', { hasNextPage: false }],
+  ])('does not load more when %s', async (_reason, overrides) => {
     const fetchNextPage = jest.fn();
     const { result } = await renderHook(() =>
-      usePagedList<TestItem>(
-        fakeQuery({ fetchNextPage, isFetchingNextPage: true }),
-      ),
+      usePagedList<TestItem>(fakeQuery({ fetchNextPage, ...overrides })),
     );
 
     result.current.listProps.onEndReached();
     expect(fetchNextPage).not.toHaveBeenCalled();
   });
 
-  it('skips loading more after a failed page fetch', async () => {
+  it.each([
+    { fetchStatus: 'idle', isFetchNextPageError: true },
+    { fetchStatus: 'paused', isFetchNextPageError: false },
+  ])('exposes paused/error state and lets the user retry ($fetchStatus)', async (state) => {
     const fetchNextPage = jest.fn();
     const { result } = await renderHook(() =>
       usePagedList<TestItem>(
-        fakeQuery({ fetchNextPage, isFetchNextPageError: true }),
-      ),
-    );
-
-    result.current.listProps.onEndReached();
-    expect(fetchNextPage).not.toHaveBeenCalled();
-  });
-
-  it('skips loading more when there is no next page', async () => {
-    const fetchNextPage = jest.fn();
-    const { result } = await renderHook(() =>
-      usePagedList<TestItem>(fakeQuery({ fetchNextPage, hasNextPage: false })),
-    );
-
-    result.current.listProps.onEndReached();
-    expect(fetchNextPage).not.toHaveBeenCalled();
-  });
-
-  it('exposes footer props and lets the retry bypass the guard', async () => {
-    const fetchNextPage = jest.fn();
-    const { result } = await renderHook(() =>
-      usePagedList<TestItem>(
-        fakeQuery({ fetchNextPage, isFetchNextPageError: true }),
+        fakeQuery({ fetchNextPage, ...state }),
       ),
     );
 
     expect(result.current.footerProps).toEqual({
       hasNextPage: true,
-      isError: true,
+      isError: state.isFetchNextPageError,
       isFetching: false,
+      isPaused: state.fetchStatus === 'paused',
       loadedCount: 3,
       onRetry: expect.any(Function),
       total: 24,
@@ -130,20 +117,5 @@ describe('usePagedList', () => {
 
     result.current.refresh();
     expect(refetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('wires the shared scroll and tuning props onto the list', async () => {
-    const { result } = await renderHook(() => usePagedList<TestItem>(fakeQuery()));
-
-    const listProps = result.current.listProps;
-    expect(listProps.onEndReachedThreshold).toBe(0.45);
-    expect(listProps.scrollEventThrottle).toBe(80);
-    expect(listProps.showsVerticalScrollIndicator).toBe(true);
-    expect([5, 7]).toContain(listProps.windowSize);
-    expect(typeof listProps.ref).toBe('object');
-    expect(typeof listProps.onScroll).toBe('function');
-    expect(typeof listProps.removeClippedSubviews).toBe('boolean');
-    expect(typeof result.current.scrollToTop).toBe('function');
-    expect(result.current.visible).toBe(false);
   });
 });

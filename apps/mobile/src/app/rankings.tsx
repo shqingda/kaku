@@ -1,9 +1,9 @@
-import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import {
   getSubjectTypeLabel,
@@ -71,7 +71,13 @@ export default function RankingsScreen() {
         data={rankings.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          rankingQuery.isPending ? (
+          rankingQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void rankingQuery.refetch()}
+              text="恢复连接后可继续读取排行榜。"
+              title="当前离线"
+            />
+          ) : rankingQuery.isPending ? (
             <AppState
               text="正在读取 Bangumi 综合排名。"
               title="排行榜加载中"
@@ -107,7 +113,7 @@ export default function RankingsScreen() {
               onChange={setSubjectType}
               selectedType={subjectType}
             />
-            {rankingQuery.data && rankingQuery.isError ? (
+            {rankingQuery.data && (rankingQuery.isError || rankingQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
             ) : null}
           </>
@@ -174,13 +180,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   title: {
     color: colors.ink,
-    fontSize: TYPE.display.fontSize,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.8,
   },
   subtitle: {
     color: colors.muted,
-    fontSize: TYPE.caption.fontSize,
+    ...TYPE.caption,
     marginTop: SPACING.sm,
   },
   subjectTypeTabs: { paddingBottom: SPACING.lg },
