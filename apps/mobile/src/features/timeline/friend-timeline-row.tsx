@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -54,7 +55,7 @@ export function FriendTimelineRow({
       <Pressable
         accessibilityLabel={`打开${item.user.nickname}的公开主页`}
         accessibilityRole="button"
-        hitSlop={6}
+        hitSlop={HIT_SLOP}
         onPress={(event) => {
           event.stopPropagation();
           router.push({
@@ -162,7 +163,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    paddingVertical: 15,
+    paddingVertical: SPACING.lg,
   },
   divider: {
     borderTopColor: colors.divider,
@@ -178,16 +179,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 36,
   },
   pressedAvatar: { opacity: 0.62 },
-  avatarFallback: { color: colors.muted, fontSize: 13, fontWeight: '700' },
-  copy: { flex: 1, marginLeft: 12 },
-  metaRow: { alignItems: 'baseline', flexDirection: 'row', gap: 8 },
-  nickname: { color: colors.ink, flexShrink: 1, fontSize: 13, fontWeight: '700' },
-  time: { color: colors.subtle, fontSize: 11 },
-  text: { color: colors.ink, fontSize: 14, lineHeight: 21, marginTop: 5 },
+  avatarFallback: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
+  copy: { flex: 1, marginLeft: SPACING.md },
+  metaRow: { alignItems: 'baseline', flexDirection: 'row', gap: SPACING.sm },
+  nickname: { color: colors.ink, flexShrink: 1, ...TYPE.caption, fontWeight: '700' },
+  time: { color: colors.subtle, ...TYPE.micro },
+  text: { color: colors.ink, ...TYPE.body, marginTop: SPACING.xs },
   blogTitle: { color: colors.accentRich, fontWeight: '700' },
   subjectTitle: { color: colors.accentRich, fontWeight: '700' },
   entityTitle: { color: colors.accentRich, fontWeight: '700' },
   userMention: { color: colors.accentRich, fontWeight: '700' },
-  replies: { color: colors.muted, fontSize: 11, marginTop: 7 },
+  replies: { color: colors.muted, ...TYPE.micro, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

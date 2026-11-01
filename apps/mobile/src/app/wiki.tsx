@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicWikiRevision } from '@/features/wiki/model';
 import { useWikiRevisions } from '@/features/wiki/use-wiki-revisions';
@@ -38,7 +40,13 @@ export default function WikiScreen() {
         initialNumToRender={12}
         keyExtractor={(item) => `${item.subjectId}-${item.revisionUrl}`}
         ListEmptyComponent={
-          revisionsQuery.isPending ? (
+          revisionsQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void revisionsQuery.refetch()}
+              title="当前离线"
+              text="恢复连接后可继续读取维基动态。"
+            />
+          ) : revisionsQuery.isPending ? (
             <AppState title="正在读取维基动态" text="最新公开修订加载中。" />
           ) : revisionsQuery.isError ? (
             <AppState
@@ -54,6 +62,9 @@ export default function WikiScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>维基动态</Text>
             <Text style={styles.meta}>查看 Bangumi 最近的公开条目修订</Text>
+            {revisions.length > 0 && (revisionsQuery.isError || revisionsQuery.fetchStatus === 'paused') ? (
+              <CachedDataNotice onRetry={() => void revisionsQuery.refetch()} />
+            ) : null}
           </View>
         }
         maxToRenderPerBatch={12}
@@ -138,7 +149,7 @@ function RevisionRow({
         <Pressable
           accessibilityLabel={`查看“${item.title}”的修改对比`}
           accessibilityRole="link"
-          hitSlop={8}
+          hitSlop={HIT_SLOP}
           onPress={(event) => {
             event.stopPropagation();
             void WebBrowser.openBrowserAsync(item.revisionUrl);
@@ -152,24 +163,23 @@ function RevisionRow({
   );
 }
 
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  header: { paddingBottom: 18, paddingTop: 20 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  rowCard: { backgroundColor: colors.surface, paddingHorizontal: 16 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl, gap: SPACING.sm },
+  title: { color: colors.ink, ...TYPE.display, fontWeight: '800' },
+  meta: { color: colors.muted, ...TYPE.caption },
+  rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  row: { alignItems: 'center', flexDirection: 'row', minHeight: 112, paddingVertical: 16 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 112, paddingVertical: SPACING.lg },
   rowDivider: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth },
   revisionIcon: { alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
-  rowMain: { flex: 1, marginLeft: 13, minWidth: 0 },
-  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
-  note: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
-  rowMeta: { color: colors.subtle, fontSize: 11, marginTop: 7 },
-  compare: { alignItems: 'center', backgroundColor: colors.background, borderRadius: 11, justifyContent: 'center', marginLeft: 10, minHeight: 44, paddingHorizontal: 11 },
-  compareText: { color: colors.accent, fontSize: 12, fontWeight: '800' },
+  rowMain: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
+  rowTitle: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
+  note: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
+  rowMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
+  compare: { alignItems: 'center', backgroundColor: colors.background, borderRadius: 11, justifyContent: 'center', marginLeft: SPACING.md, minHeight: MIN_TOUCH_SIZE, paddingHorizontal: SPACING.md },
+  compareText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

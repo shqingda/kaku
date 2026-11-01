@@ -1,4 +1,3 @@
-import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import {
   FlatList,
@@ -12,9 +11,11 @@ import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
@@ -56,7 +57,14 @@ export default function FriendTimelineScreen() {
         data={timeline.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          timelineQuery.isPending ? (
+          timelineQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void timelineQuery.refetch()}
+              actionAccessibilityLabel="重试加载好友动态"
+              text="恢复连接后可继续读取好友动态。"
+              title="当前离线"
+            />
+          ) : timelineQuery.isPending ? (
             <AppState
               actionAccessibilityLabel="重试加载好友动态"
               text="新的好友活动会显示在这里。"
@@ -81,6 +89,11 @@ export default function FriendTimelineScreen() {
             <PagedListFooter {...timeline.footerProps} />
           ) : undefined
         }
+        ListHeaderComponent={
+          timeline.items.length > 0 && (timelineQuery.isError || timelineQuery.fetchStatus === 'paused') ? (
+            <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+          ) : undefined
+        }
         refreshControl={
           <AppRefreshControl
             onRefresh={timeline.refresh}
@@ -101,7 +114,7 @@ export default function FriendTimelineScreen() {
         <Pressable
           accessibilityLabel="发布动态"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={HIT_SLOP}
           onPress={() => setComposerVisible(true)}
           style={({ pressed }) => [
             styles.publishFab,
@@ -133,10 +146,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   publishFabLayer: {
     alignItems: 'center',
-    bottom: 28,
-    left: 0,
+    bottom: SPACING.xl + SPACING.xs,
+    left: SPACING.none,
     position: 'absolute',
-    right: 0,
+    right: SPACING.none,
     zIndex: 15,
   },
   publishFab: {
@@ -148,13 +161,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.sm,
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
     paddingHorizontal: SPACING.lg,
     shadowColor: '#000000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
   },
-  publishFabText: { color: colors.surface, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  publishFabText: { color: colors.surface, ...TYPE.caption, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

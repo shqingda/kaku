@@ -1,4 +1,3 @@
-import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, Stack, usePathname } from 'expo-router';
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -87,7 +87,13 @@ export default function DirectoriesScreen() {
         initialNumToRender={10}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          indexesQuery.isPending ? (
+          indexesQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void indexesQuery.refetch()}
+              text="恢复连接后可继续读取公开目录。"
+              title="当前离线"
+            />
+          ) : indexesQuery.isPending ? (
             <AppState text="正在读取 Bangumi 公开目录。" title="目录加载中" />
           ) : indexesQuery.isError ? (
             <AppState
@@ -154,7 +160,7 @@ export default function DirectoriesScreen() {
               />
               <Text style={styles.createButtonText}>新建目录</Text>
             </Pressable>
-            {paged.items.length > 0 && indexesQuery.isError ? (
+            {paged.items.length > 0 && (indexesQuery.isError || indexesQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
             ) : null}
           </View>
@@ -260,20 +266,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
   header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl },
-  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  title: { color: colors.ink, ...TYPE.display, fontWeight: '800' },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   filters: { flexDirection: 'row', gap: SPACING.sm, paddingTop: SPACING.xl },
   filter: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 15,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
     minWidth: 72,
     justifyContent: 'center',
     paddingHorizontal: SPACING.lg,
   },
   filterSelected: { backgroundColor: colors.ink },
-  filterText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  filterText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   filterTextSelected: { color: colors.surface },
   createButton: {
     alignItems: 'center',
@@ -285,7 +291,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: SPACING.lg,
     minHeight: 46,
   },
-  createButtonText: { color: colors.surface, fontSize: TYPE.body.fontSize, fontWeight: '800' },
+  createButtonText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
@@ -300,13 +306,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 48,
   },
-  avatarFallback: { color: colors.accent, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  avatarFallback: { color: colors.accent, ...TYPE.heading, fontWeight: '800' },
   rowMain: { flex: 1, marginLeft: SPACING.lg, minWidth: 0 },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: SPACING.md },
-  rowTitle: { color: colors.ink, flex: 1, fontSize: TYPE.heading.fontSize, fontWeight: '800', lineHeight: 22 },
+  rowTitle: { color: colors.ink, flex: 1, ...TYPE.heading, fontWeight: '800' },
   countPill: { backgroundColor: colors.background, borderRadius: 10, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs },
-  countText: { color: colors.muted, fontSize: TYPE.micro.fontSize, fontWeight: '700' },
-  description: { color: colors.muted, fontSize: TYPE.caption.fontSize, lineHeight: 18, marginTop: SPACING.sm },
-  rowMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.sm },
+  countText: { color: colors.muted, ...TYPE.micro, fontWeight: '700' },
+  description: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
+  rowMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });
