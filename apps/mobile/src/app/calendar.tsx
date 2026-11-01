@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import {
   currentCalendarWeekdayId,
@@ -23,6 +24,8 @@ import { useBangumiCalendar } from '@/features/discover/use-discover';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useTheme } from '@/features/theme/theme-provider';
+
+const COVER_WIDTH = 66;
 
 export default function CalendarScreen() {
   const colors = useTheme();
@@ -45,7 +48,12 @@ export default function CalendarScreen() {
         data={selectedCalendarDay?.subjects ?? []}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          calendarQuery.isPending ? (
+          calendarQuery.fetchStatus === 'paused' ? (
+            <CalendarState
+              action={() => void calendarQuery.refetch()}
+              text="当前离线，恢复连接后可继续读取放送安排。"
+            />
+          ) : calendarQuery.isPending ? (
             <CalendarState loading text="正在读取本周放送安排。" />
           ) : calendarQuery.isError ? (
             <CalendarState
@@ -94,7 +102,7 @@ export default function CalendarScreen() {
                 );
               })}
             </ScrollView>
-            {calendarQuery.data && calendarQuery.isError ? (
+            {calendarQuery.data && (calendarQuery.isError || calendarQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
             ) : null}
             <View style={styles.listHeading}>
@@ -227,46 +235,44 @@ function CalendarState({
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: {
-    paddingBottom: 48,
-    paddingHorizontal: 20,
+    paddingBottom: SPACING.xl * 2,
+    paddingHorizontal: SPACING.xl,
   },
-  header: { paddingBottom: 16 },
-  hero: { paddingHorizontal: 4, paddingTop: 24 },
+  header: { paddingBottom: SPACING.lg },
+  hero: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xl },
   title: {
     color: colors.ink,
-    fontSize: 34,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -1,
   },
-  subtitle: { color: colors.muted, fontSize: 14, marginTop: 8 },
-  dayTabs: { gap: 8, paddingRight: 20, paddingTop: 22 },
+  subtitle: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
+  dayTabs: { gap: SPACING.sm, paddingRight: SPACING.xl, paddingTop: SPACING.xl },
   dayTab: {
     backgroundColor: colors.surface,
     borderRadius: 12,
-    paddingHorizontal: 17,
+    paddingHorizontal: SPACING.lg,
     justifyContent: 'center',
-    minHeight: 36,
+    minHeight: MIN_TOUCH_SIZE,
   },
   dayTabSelected: { backgroundColor: colors.ink },
-  dayTabText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  dayTabText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   dayTabTextSelected: { color: colors.surface },
   listHeading: {
     alignItems: 'baseline',
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 4,
-    paddingBottom: 12,
-    paddingTop: 30,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+    paddingBottom: SPACING.md,
+    paddingTop: SPACING.xxl,
   },
   listTitle: {
     color: colors.ink,
-    fontSize: 24,
+    ...TYPE.titleLarge,
     fontWeight: '800',
-    letterSpacing: -0.5,
   },
   countText: {
     color: colors.subtle,
-    fontSize: 12,
+    ...TYPE.caption,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
@@ -275,7 +281,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     flexDirection: 'row',
     minHeight: 112,
-    padding: 12,
+    padding: SPACING.md,
   },
   firstRow: {
     borderCurve: 'continuous',
@@ -290,10 +296,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rowDivider: {
     backgroundColor: colors.divider,
     height: StyleSheet.hairlineWidth,
-    left: 94,
+    left: COVER_WIDTH + SPACING.md * 2,
     position: 'absolute',
-    right: 14,
-    top: 0,
+    right: SPACING.md,
+    top: SPACING.none,
   },
   rowPressed: { opacity: 0.62 },
   cover: {
@@ -304,42 +310,42 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 88,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: 66,
+    width: COVER_WIDTH,
   },
-  coverFallback: { color: colors.subtle, fontSize: 18, fontWeight: '700' },
-  rowCopy: { flex: 1, paddingHorizontal: 14 },
+  coverFallback: { color: colors.subtle, ...TYPE.heading, fontWeight: '700' },
+  rowCopy: { flex: 1, paddingHorizontal: SPACING.md },
   rowTitle: {
     color: colors.ink,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '700',
-    lineHeight: 22,
   },
   rowMeta: {
     color: colors.muted,
-    fontSize: 12,
+    ...TYPE.caption,
     fontVariant: ['tabular-nums'],
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   state: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderCurve: 'continuous',
     borderRadius: 22,
-    gap: 10,
-    padding: 30,
+    gap: SPACING.md,
+    padding: SPACING.xxl,
   },
   stateText: {
     color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
+    ...TYPE.caption,
     textAlign: 'center',
   },
   retryButton: {
     backgroundColor: colors.accentSoft,
     borderRadius: 13,
-    paddingHorizontal: 17,
-    paddingVertical: 9,
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
-  retryText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  retryText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });
