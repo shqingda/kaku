@@ -9,6 +9,7 @@ appId: placeholder
       # launchApp 默认停止旧进程；参数只对本次进程隐藏 Expo 悬浮工具按钮。
       - launchApp:
           appId: com.shqingda.kaku.debug
+          clearState: false
           arguments:
             EXDevMenuShowFloatingActionButton: "NO"
 - runFlow:

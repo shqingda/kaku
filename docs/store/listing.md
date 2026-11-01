@@ -46,7 +46,7 @@ Public content can be browsed without signing in. Collection sync, posting, and 
 
 ## 截图与提交清单
 
-使用 `.maestro/store-screenshots-ios.yaml` 采集原始候选图。先确认模拟器仅有可公开展示的数据，截图不得包含账号、私信或真实通知。候选图在本机 Maestro 输出目录，不自动入库或上传。正式尺寸、裁切和文字标注在提交前按商店要求复核。
+按下方截图清单手动采集原始候选图，不维护专用自动化导航。先确认模拟器仅有可公开展示的数据，截图不得包含账号、私信或真实通知。新候选图统一放项目 `.cache/store-screenshots/`，不自动入库或上传。正式尺寸、裁切和文字标注在提交前按商店要求复核。
 
 1. 首页：公开浏览入口与作品内容。
 2. 搜索：搜索「葬送的芙莉莲」。

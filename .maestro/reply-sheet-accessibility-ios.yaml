@@ -5,6 +5,7 @@ name: Reply sheet accessibility after reopening
 # 冷启动 + 深链入口避免 dev-client 重载与搜索输入互相抢时序。
 - stopApp
 - launchApp:
+    clearState: false
     arguments:
       EXDevMenuShowFloatingActionButton: "NO"
 - extendedWaitUntil:

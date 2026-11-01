@@ -14,15 +14,12 @@
     "build:web": "pnpm --filter @kaku/web build",
     "test": "pnpm -r test",
     "test:ui": "pnpm --filter @kaku/mobile test:ui",
-    "test:smoke": "maestro test .maestro/kaku-smoke-ios.yaml",
-    "test:smoke:all": "maestro test .maestro/kaku-regression-ios.yaml",
-    "test:smoke:android": "maestro test .maestro/kaku-smoke-android.yaml",
-    "test:smoke:android:all": "maestro test .maestro/kaku-regression-android.yaml",
     "ci:check": "bash scripts/ci-check.sh",
     "typecheck": "pnpm -r typecheck",
     "test:performance": "node --test scripts/check-performance.test.mjs",
     "test:tooling": "node --test scripts/*.test.mjs && python3 -m unittest discover -s scripts -p '*_test.py'",
-    "build:android": "bash scripts/build-android.sh"
+    "build:android": "bash scripts/build-android.sh",
+    "test:e2e": "node scripts/test-e2e.mjs"
   },
   "devDependencies": {
     "serve-sim": "0.1.48"

@@ -519,7 +519,7 @@ FlatList 和 FlashList 都是长列表方案；FlashList 更强调复用。项�
 | Node test | 运行 JavaScript / TypeScript 逻辑测试的工具 | 执行 `.test.mjs` 用例 |
 | Jest | 组织和运行测试的工具 | 配合 Expo 跑组件与 hook 测试 |
 | RNTL | 在测试里渲染 RN 组件并模拟操作的工具 | 检查按钮操作、文字和状态变化 |
-| Maestro | 在模拟器或设备上按脚本操作 App | 搜索、跳转、返回等完整流程 |
+| Maestro | 在模拟器或设备上按脚本操作 App | 仅核心搜索/详情/返回及按需回复弹层原生回归 |
 | Mock | 用可控的假对象代替真实依赖 | 模拟接口失败等场景；不能证明真机网络一定正常 |
 | CI / GitHub Actions | 提交后自动执行检查的流程 | 类型检查、测试、覆盖率和构建 |
 
@@ -537,7 +537,7 @@ FlatList 和 FlashList 都是长列表方案；FlashList 更强调复用。项�
 
 **APK**是 Android 安装包。**JS bundle**是整理后的 JavaScript 程序，两者不是一个东西。
 
-Maestro 当前在本地运行，没有放进这条 CI。项目记录了 iOS 流程验收，Android 全量验收仍有待办。
+Maestro 当前通过项目内入口按需运行，不进 CI，也不再维护逐页全量冒烟。历史 iOS 流程证据保留；Android 核心链路等待安装后验收。
 
 ### 10.5 当前怎么发布
 

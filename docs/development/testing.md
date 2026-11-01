@@ -1,7 +1,8 @@
 # Kaku 测试指南
 
-三层测试各管一层，互不重复：纯逻辑跑得最快，组件测试管渲染与交互，
-Maestro 管模拟器上的关键路径，argent 会话做人工级别的 UI 验收。
+纯逻辑和 API 集成测试保护数据与服务行为，组件测试保护渲染与交互。
+Maestro 仅保留核心导航 E2E 和按需原生缺陷专项；其余设备体验人工验收。
+日常小改动运行关联检查，阶段收尾、构建前运行完整预检，不默认串行跑全部设备流程。
 
 CI（`.github/workflows/ci.yml`）在 `main` 和 PR 上跑：Expo 依赖检查、
 expo-doctor、全 workspace 类型检查、shared 单元测试、API 75% / 移动端 92%
@@ -63,88 +64,62 @@ JS bundle 写入临时目录并在退出时清理，官网仍输出到自己的�
 - 与 node:test 的分工：`.test.ts` / `.test.tsx` 归 jest，`.test.mjs` 归 node:test，
   两个 testMatch 互不重叠。
 
-## 3. Maestro（本地手动跑，不进 CI）
+## 3. 精简设备 E2E（按需，不进 CI）
 
-本机可先运行 `pnpm dev:sim` 统一启动 Metro、模拟器和浏览器预览；输入恢复与数据保护见
-[模拟器启动指南](ios-simulator.md)。脚本回归包含在 `pnpm test:tooling` 中。
+只保留两类行为，同一设备串行运行，验收期间停止源码编辑、依赖安装和 prebuild：
 
-流程都在仓库根 `.maestro/`。平台入口持有真实包名，子流程用占位
-`appId`，避免 Maestro 嵌套 `openLink` 丢 `${APP_ID}`。
-
-iOS 全量入口 2026-10-02 已在登录态实跑；当时专项和环境限制见 [优化验收记录](../test-records/2026-10-02-project-optimization.md)，2026-10-03 独立访客模拟器结果见 [历史恢复记录](../test-records/2026-10-03-history-recovery.md)。Android 入口文件在，**还没有实跑**
-（见 `TODO.md`）。同一台设备必须串行，不要并发跑两条 flow。
-
-### 入口
-
-| 命令 | 文件 | 包名 |
-| --- | --- | --- |
-| `pnpm test:smoke` | `kaku-smoke-ios.yaml` | `com.shqingda.kaku.debug` |
-| `pnpm test:smoke:all` | `kaku-regression-ios.yaml` | 同上 |
-| `pnpm test:smoke:android` | `kaku-smoke-android.yaml` | `com.shqingda.kaku`（release 包） |
-| `pnpm test:smoke:android:all` | `kaku-regression-android.yaml` | 同上 |
-
-iOS 入口用 `launchApp` 冷启动已经连接 Metro 的 dev client，避免旧首页先满足等待条件；通过启动参数 `EXDevMenuShowFloatingActionButton=NO` 仅在本次进程隐藏 Expo 悬浮工具按钮，防止遮挡表单，不修改持久偏好。验收期间停止源码编辑、依赖安装和 prebuild；热更新会让搜索输入及导航失效。全量入口把冒烟步骤
-和下面各业务 flow 串起来；每条业务 flow 开头用 `reset-home.yaml` 回首页，
-避免路由状态串台。需要登录态的 flow 用 `runFlow.when` 门控，两种登录态
-分别保留门控，不写远端。`open-account.yaml` 处理两种账户入口：访客头像直接进入账户页，登录态先打开菜单。每次记录实际登录状态与跳过分支；分支存在不代表已实跑，也不能代替真实 OAuth。
-
-本机 iOS 测试只复用 `A395E274-D899-42DA-BE4C-416A9F89F671`（iPhone 18 Pro / iOS 27.0），
-先列出设备核实，不创建或克隆备用设备。保留登录状态、应用数据、钥匙串、历史和草稿。
-不通过退出登录、卸载、抹掉设备或清空数据准备测试；设备缺失时报告阻塞。
-需要不同登录状态的流程按当前状态跳过并报告覆盖缺口。
-
-访客历史专项 `.maestro/history-guest-ios.yaml` 会生成并清除本机历史，
-因此本机默认跳过；只有用户另行明确授权可丢弃的测试环境时才可运行。
-它验证重启恢复、综合页直接清除且无结果弹窗、另一类历史保留及清除后再次新增，
-不会加入通用全量入口。存储异常仅在组件／Hook 测试注入，没有生产故障开关。
-
-回复弹层无障碍专项：`maestro test .maestro/reply-sheet-accessibility-ios.yaml`。
-
-需 iOS 开发客户端、Metro 和已登录账号；独立冷启动后连续关闭/重开三次，
-断言输入框及发送按钮仍在原生树中、背景章节不可访问。保留已有草稿，不输入或发送内容。
-该专项不会加入兼容未登录状态的全量入口。
-
-访客评论弹层专项：`maestro test .maestro/entity-sheet-guest-ios.yaml`，覆盖连续关闭重开后的可访问节点、正常下拖关闭及重开，不登录或发送评论。入场/回弹中再次拖动、反向释放和系统取消由 `app-sheet.test.tsx` 覆盖；模拟动画测试不代替设备手感验收。
-
-Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 Metro。本地 `expo run:android` 打出来的是
-`com.shqingda.kaku.debug`，对不上。要用 Android Maestro，先确认设备上装的
-是哪一种包，必要时改 yaml 或装 release APK。
-
-前置：对应平台的 App 已安装；iOS 还要通过 `pnpm dev:mobile` 启动 Metro，并先让开发客户端连接该服务。可运行 `xcrun simctl openurl A395E274-D899-42DA-BE4C-416A9F89F671 "exp+kaku://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"`。Maestro 用 `--device A395E274-D899-42DA-BE4C-416A9F89F671` 明确选择设备。可用 `curl --noproxy "*" http://127.0.0.1:8081/status` 验证连接；本机 `--localhost` 可能仅监听 IPv6，导致客户端 IPv4 请求失败。壁纸服务停用与恢复方法见 [Argent 使用手册](argent-usage.md)。
-
-### 默认全量覆盖范围
-
-冒烟步骤 `kaku-smoke-steps.yaml` 依次访问首页、账户、关于、更新日志，再返回账户查看
-网络诊断。其余每项一个 yaml。`changelog-checks.yaml` 由冒烟步骤和
-`changelog-current-ios.yaml` 专项共用：通过稳定 ID 与展开语义检查最新版默认展开、
-收起后重开，以及 1.1.24 历史记录仍可访问，不依赖某版更新文案。
-
-| 流程 | 覆盖 |
+| 命令 | 何时运行 / 保护什么 |
 | --- | --- |
-| `kaku-smoke-steps.yaml` | 首页 → 账户 → 关于 Kaku（游客为“关于、帮助与隐私”）→ 更新日志 → 返回账户 → 网络诊断 |
-| `public-browse-smoke.yaml` | 搜索 → 条目详情 → 返回 |
-| `subject-comments.yaml` | 条目详情 → 吐槽箱 |
-| `subject-sections.yaml` | 条目详情 → 角色与声优 → 打开角色 → 返回 |
-| `episode-signed-in.yaml` | 剧集行 → 剧集详情（含登录门控） |
-| `search-clear.yaml` | 搜索 → 清空 → 回概览 |
-| `rankings-smoke.yaml` | 排行榜入口 |
-| `browse-smoke.yaml` | 频道 → 分类浏览 |
-| `calendar-smoke.yaml` | 综合页 → 每日放送 |
-| `directories-smoke.yaml` | 综合页 → 目录发现 |
-| `timeline-smoke.yaml` | 好友动态（登录门控） |
-| `collection-box-signin.yaml` | 收藏盒未登录门控 |
+| `pnpm test:e2e ios` | 核心导航或原生升级后：启动 → 搜索 → 详情 → 返回；复用指定模拟器 |
+| `pnpm test:e2e android <设备序列号>` | 用户安装本地 release APK 后，同一条核心链路；不自动选择设备 |
+| `pnpm test:e2e reply` | 回复弹层、导航或无障碍实现变更时：已登录 iOS 连续关闭重开，检查输入框/发送按钮可访问、背景隔离；不输入、发送或清除草稿 |
 
-外观检查已移出默认全量入口。独立运行 `settings-appearance-ios.yaml` 或
-`settings-appearance-android.yaml`，记录原选中项、验证深浅色切换，并由
-`onFlowComplete` 恢复原选择。该钩子在成功与失败后都会运行，恢复断言失败也使流程失败；
-不能将强制退出测试进程当作正常清理，异常终止后需核对原选择。行为见
-[Maestro hooks](https://docs.maestro.dev/maestro-flows/flow-control-and-logic/hooks)。
-商店候选图只复用 `settings-appearance.yaml` 的当前选项检查与截图，不切主题。
-新专项尚需两端设备实跑，静态校验不能代替实际外观和恢复验收。
+不保留全量入口、逐页标题冒烟、更新日志/主题/商店截图/旧性能导航脚本或游客清历史流程。
+更新日志与主题状态由组件测试保护；设备外观、原生键盘及手势按下表人工检查。
+核心搜索可能正常产生浏览/搜索历史；不会为了复位删除它们。中文粘贴不算输入法组合输入验收。
 
-首页刷新控件结束时会让搜索框移动 60pt，Maestro 偶尔使用旧坐标。`enter-subject-search.yaml` 只对点击/输入准备有限重试，确认清除按钮出现后才提交；`focus-subject-search.yaml` 用同一信号确认已有搜索词进入编辑态。搜索结果与清空断言仍在重试之外。本机 iOS 无障碍树在输入框有光标时仍报告 focused:false，因此不依赖该属性。中文粘贴不能替代输入法组合输入验收。
+### 项目内安装与输出
 
-编辑器专项：已登录时运行 `maestro test .maestro/collection-editor-discard-ios.yaml`，覆盖连续开关、继续编辑、放弃修改与重开复位；`reply-sheet-accessibility-ios.yaml` 覆盖回复弹层重开后的无障碍树。两者均不发送或保存远端内容。`collection-return-ios.yaml` 从验收者已打开、至少有两项条目的收藏列表开始，打开条目前后分别截图，人工比较列表位置；流程断言本身只证明成功返回。
+只通过 `pnpm test:e2e` 调用项目 CLI，不使用全局安装或修改 shell PATH。
+固定 Maestro 2.12.0，官方 ZIP SHA-256 为
+`a6044a84542f522f434c5dc3d609e60c7446d423f3ed1b2ae513f5c48663ec5e`。
+在仓库根目录下载并核验后解压（需要已有 Java；不自动安装系统工具）：
+
+```sh
+mkdir -p .cache/maestro/downloads .cache/maestro/cli
+curl -fL -o .cache/maestro/downloads/maestro.zip https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.0/maestro.zip
+python3 -c 'import hashlib,pathlib; p=pathlib.Path(".cache/maestro/downloads/maestro.zip"); assert hashlib.sha256(p.read_bytes()).hexdigest()=="a6044a84542f522f434c5dc3d609e60c7446d423f3ed1b2ae513f5c48663ec5e"'
+unzip -q .cache/maestro/downloads/maestro.zip -d .cache/maestro/cli
+pnpm test:e2e check
+```
+
+`check` 使用 CLI 检查三个入口及引用流程的语法，不操作设备，不表示 E2E 通过。
+安装、XDG 状态、Java home 回退、临时文件和报告都集中于被 Git 忽略的 `.cache/maestro/`；
+报告位于 `results/<ios|android|reply>/`，固定目录复用，不额外创建每次运行的 debug 时间戳目录。禁用 Maestro 使用统计，不使用 Cloud 上传。
+这不是系统沙箱：Java、Xcode、Android SDK、系统诊断和设备侧测试驱动仍由系统管理，
+不能保证操作系统完全不产生项目外缓存。不会改写 HOME、清理用户主目录或迁移旧截图。
+停止测试后可删除项目 `.cache/maestro/` 回收全部项目工具和产物；需要历史证据时先保留对应结果。
+配置依据：[CLI 参数](https://github.com/mobile-dev-inc/maestro-docs/blob/main/maestro-cli/maestro-cli-commands-and-options.md)、
+[Maestro 状态目录实现](https://github.com/mobile-dev-inc/Maestro/blob/cli-2.12.0/maestro-cli/src/main/java/maestro/cli/util/EnvUtils.kt)。
+
+### 设备前置与简短验收清单
+
+- iOS 先列设备，仅复用 `A395E274-D899-42DA-BE4C-416A9F89F671`（iPhone 18 Pro / iOS 27.0）；
+  用 `pnpm dev:sim` 启动，保留 PosterBoard 停用、登录、钥匙串、历史和草稿，不卸载/抹除/退出。
+  鉴权专项前提醒用户本人重新登录；不满足当前登录态的场景跳过并记录。启动步骤见 [模拟器指南](ios-simulator.md)。
+- Android 按上文先交付本地 release APK，等用户安装，再显式选择设备；不触发 Android CI。
+- 只检查与改动有关的项目，不要求每次全部执行：
+
+| 改动 | 最小设备检查 |
+| --- | --- |
+| 导航、原生升级 | 核心 E2E；打开与返回、冷启动是否正常 |
+| 编辑器/弹层 | 键盘遮挡、中文组合输入、关闭重开、已有草稿保留；不擅自发送或丢弃 |
+| 列表/网络 | 首次离线提示、旧内容保留、恢复后刷新与翻页重试 |
+| 图片/动效 | 缩放与关闭、回弹中接管、反向拖动、减少动态效果 |
+| 排版/外观/无障碍 | 小屏大字号、深浅色、真实读屏；记录并恢复原设置 |
+| 账号/安装/推送 | 按 TODO 和可用账号/设备验收登录、覆盖安装数据保留、通知送达；缺条件明确待验 |
+
+只记录设备、构建提交、实际检查、结果及跳过项。原生行为不能由组件模拟替代。
 
 ### 性能复测
 
@@ -152,10 +127,7 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 工作区大小只读盘点：`node scripts/report-workspace-files.mjs`。输出逻辑字节而非可释放空间；固定白名单且不接受删除参数，排除 tutorial、签名/env、安装包和模拟器数据。
 
-先 `maestro test .maestro/kaku-reset-ios.yaml`，profiler 连上之后再
-`maestro test .maestro/kaku-profile-ios.yaml`。两段刻意分开，因为
-dev client 重载会断开 React profiler。基线数字见
-`docs/test-records/2026-09-04-ios-ui-profiler.md`。
+性能路径由验收者按当次测量目标操作并记录，不再维护旧自动导航脚本。历史基线保留，不能混用不同路径的样本。
 
 构建与测量脚本运行 `pnpm test:tooling`，覆盖纯构建的发布副作用隔离、APK 分类统计和性能阈值。
 性能工具支持 `node scripts/check-performance.mjs report.json baseline.json`；省略第二个参数时读取 2026-10-26 Release 冷启动基线（`scripts/baselines/ios-2026-10-26-release.json`，诊断页三项 JS 计时）；旧的 2026-09-04 profiler 基线保留作历史对照。基线必须包含 device、os、mode、flow、budgetRatio 和 metrics（各指标毫秒值）；报告中的每个指标需要三轮正数采样。同环境才比较，首页数据只能来自实际采集，不能补写推测值。
@@ -167,5 +139,4 @@ argent 是 agent 驱动的模拟器交互：起模拟器、装 debug 构建、�
 `docs/development/argent-usage.md`。结果按 `docs/test-records/` 的既有格式归档。
 OAuth 登录、真实写入等需要人工参与的场景也记在那里。
 
-Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时改用 Maestro
-或重新 `describe`，不要对着同一坐标连点。
+Argent 0.24 在部分页面会出现「树读得到、手势送不进去」。这时按 [模拟器指南](ios-simulator.md) 检查输入，不要对着同一坐标连点。

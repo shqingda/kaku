@@ -69,9 +69,9 @@ Argent 的 `describe` / `gesture-tap` 走自己的无障碍服务，**不依赖 
 | --- | --- | --- |
 | 探索页面、找元素、单步交互 | `describe` → `gesture-tap` | 读无障碍树拿 label 和归一化坐标（0–1），不要从截图像素猜 |
 | 调 JS 问题（白屏、报错、状态不对） | `debugger-log-registry`、`debugger-component-tree`、`debugger-evaluate` | 走 Metro CDP |
-| 可重复的回归验证 | `pnpm test:smoke` / `pnpm test:smoke:all` | Maestro 已覆盖关键路径；不必迁到 `.argent/flows/` |
+| 可重复的回归验证 | `pnpm test:e2e ios` | 仅核心导航；专项按测试指南选择 |
 
-发新页面的验收节奏：视觉截图目检 → Maestro 相关流程通过 → 需要人工手感或
+发新页面的验收节奏：关联组件测试 → 按需核心 E2E / 视觉目检 → 需要人工手感或
 OAuth 的场景再开 argent 会话，记录追加到 `docs/test-records/`。
 
 ## 包名
@@ -85,7 +85,7 @@ OAuth 的场景再开 argent 会话，记录追加到 `docs/test-records/`。
 
 `.maestro/kaku-*-ios.yaml` 用 debug 包名。`.maestro/kaku-*-android.yaml`
 目前写的是 `com.shqingda.kaku`（release 包）；用 `expo run:android` 的
-debug 包跑会找不到 App。Android 全量入口还没有实跑。
+debug 包跑会找不到 App。Android 核心链路仍需在用户安装后验收。
 
 ## 本机注意事项
 
@@ -96,11 +96,7 @@ debug 包跑会找不到 App。Android 全量入口还没有实跑。
    `openSimulator: true` 都会报「Unable to find application named 'Simulator'」，
    设备启动与操作本身不受影响。SDK 58 默认启用 iOS 27 要求的 UIScene 生命周期，
    prebuild 会生成官方场景入口，无需再设置 `ios.enableSceneSupport`。原生依赖更新后必须重建开发客户端。
-3. **Maestro 选择器**（详见 `.maestro/kaku-smoke-steps.yaml` 注释）：
-   RN 容器设了 `accessibilityLabel` 后 iOS 无障碍树只暴露容器；展开卡片的
-   `text` 是 `'expanded'`；`assertVisible` 不支持 `timeout`，长等待用
-   `extendedWaitUntil`；管道跑 Maestro 要 `set -o pipefail`。
-   `changelog-checks.yaml` 使用稳定 ID 和展开语义检查最新版本与保留的历史；现行流程见 [测试指南](testing.md)。
+3. **设备 E2E**：只通过项目入口按需运行，输出目录与范围见 [测试指南](testing.md)。
 4. **Argent 0.24 已知限制**（2026-09-04 实测）：部分页面 `describe` 仍可读树，
    但 `gesture-tap` / swipe 未送达 App。连续两次同一坐标失败就停，改用
    Maestro 或重新 `describe`，不要死戳。
