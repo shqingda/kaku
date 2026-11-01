@@ -38,6 +38,7 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { AppActionMenu } from '@/features/shared/app-action-menu';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -159,11 +160,19 @@ export default function PublicIndexScreen() {
         data={items.items}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         ListEmptyComponent={
-          itemsQuery.isPending ? (
+          itemsQuery.isPaused ? (
+            <AppState
+              action={() => void itemsQuery.refetch()}
+              actionAccessibilityLabel="重试加载目录条目"
+              text="网络暂不可用，恢复连接后可重试。"
+              title="目录条目读取已暂停"
+            />
+          ) : itemsQuery.isPending ? (
             <AppState text="正在读取目录条目。" title="条目加载中" />
           ) : itemsQuery.isError ? (
             <AppState
               action={() => void itemsQuery.refetch()}
+              actionAccessibilityLabel="重试加载目录条目"
               text="请检查网络后重试。"
               title="目录条目读取失败"
             />
@@ -178,13 +187,23 @@ export default function PublicIndexScreen() {
         }
         ListHeaderComponent={
           <>
-            <DiscussionStatus
-              errorText="目录读取失败，请检查网络后重试。"
-              isError={indexQuery.isError}
-              isPending={indexQuery.isPending}
-              loadingText="正在读取目录内容…"
-              onRetry={() => void indexQuery.refetch()}
-            />
+            {index && (indexQuery.isError || indexQuery.isPaused) ? (
+              <CachedDataNotice
+                onRetry={() => void indexQuery.refetch()}
+                retryLabel="重新获取目录资料"
+              />
+            ) : (
+              <DiscussionStatus
+                errorText={indexQuery.isPaused
+                  ? '网络暂不可用，恢复连接后可重试目录资料。'
+                  : '目录读取失败，请检查网络后重试。'}
+                isError={indexQuery.isError || indexQuery.isPaused}
+                isPending={indexQuery.isPending}
+                loadingText="正在读取目录内容…"
+                onRetry={() => void indexQuery.refetch()}
+                retryLabel="重试加载目录资料"
+              />
+            )}
             {index ? (
               <IndexDetailHeader
                 index={index}
@@ -207,6 +226,12 @@ export default function PublicIndexScreen() {
                   已加载 {items.items.length} · 共 {itemTotal.toLocaleString('zh-CN')}
                 </Text>
               </View>
+            ) : null}
+            {items.items.length > 0 && (itemsQuery.isError || itemsQuery.isPaused) ? (
+              <CachedDataNotice
+                onRetry={() => void itemsQuery.refetch()}
+                retryLabel="重新获取目录条目"
+              />
             ) : null}
           </>
         }
@@ -271,15 +296,17 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: { gap: SPACING.md, padding: SPACING.xl, paddingBottom: SPACING.xxl + SPACING.md },
   sectionTitle: {
     color: colors.ink,
-    fontSize: TYPE.title.fontSize,
+    ...TYPE.title,
     fontWeight: '800',
   },
   sectionHeader: {
     alignItems: 'baseline',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xs,
     paddingTop: SPACING.lg,
   },
-  sectionMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
+  sectionMeta: { color: colors.subtle, ...TYPE.caption },
 });

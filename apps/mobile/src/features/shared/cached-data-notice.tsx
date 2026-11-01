@@ -4,7 +4,13 @@ import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
-export function CachedDataNotice({ onRetry }: { onRetry: () => void }) {
+export function CachedDataNotice({
+  onRetry,
+  retryLabel = '重新获取最新内容',
+}: {
+  onRetry: () => void;
+  retryLabel?: string;
+}) {
   const colors = useTheme();
   const styles = createStyles(colors);
 
@@ -15,7 +21,7 @@ export function CachedDataNotice({ onRetry }: { onRetry: () => void }) {
         <Text style={styles.detail}>网络恢复后可重新读取最新数据。</Text>
       </View>
       <Pressable
-        accessibilityLabel="重新获取最新内容"
+        accessibilityLabel={retryLabel}
         accessibilityRole="button"
         onPress={onRetry}
         style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
