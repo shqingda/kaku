@@ -34,26 +34,3 @@ jobs:
 
       - name: Run shared verification
         run: pnpm ci:check verify
-
-  scrape-regression:
-    name: HTML scrape regression
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 12.14.0
-
-      - name: Install Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26.12.1
-          cache: pnpm
-
-      - name: Run shared HTML parser regression
-        run: pnpm ci:check html

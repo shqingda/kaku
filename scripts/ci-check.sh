@@ -26,7 +26,7 @@ if [[ "$GROUP" != html ]]; then
   run pnpm --filter @kaku/mobile exec expo install --check
   (cd apps/mobile && run pnpm dlx expo-doctor)
   run pnpm typecheck
-  run pnpm test
+  run pnpm --filter @kaku/shared test
   run pnpm test:tooling
   run pnpm --filter @kaku/api test:coverage
   run pnpm --filter @kaku/mobile test:coverage
@@ -37,7 +37,7 @@ if [[ "$GROUP" != html ]]; then
   run pnpm --filter @kaku/mobile exec expo export --platform android --output-dir "$BUNDLE_DIR/android"
   run pnpm build:web
 fi
-if [[ "$GROUP" != verify ]]; then
+if [[ "$GROUP" == html ]]; then
   run pnpm --filter @kaku/api test:html-parsers
 fi
 printf '\n全部检查通过（%s）。原生构建与实机验证需另行执行。\n' "$GROUP"

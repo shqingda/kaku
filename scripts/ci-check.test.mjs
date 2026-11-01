@@ -30,22 +30,30 @@ if (args.includes(process.env.KAKU_TEST_FAIL)) process.exit(7);
   };
 }
 
-test('default preflight runs all CI gates from the repository without native builds', () => {
-  const f = fixture();
-  try {
-    const result = f.run();
-    assert.equal(result.status, 0, result.stderr);
-    const commands = f.commands();
-    assert.deepEqual(commands[0].args, ['install', '--frozen-lockfile']);
-    for (const gate of ['typecheck', 'test', 'test:tooling', 'test:coverage', 'test:ui', 'build:web', 'test:html-parsers']) {
-      assert.ok(commands.some(c => c.args.includes(gate)), gate);
-    }
-    assert.equal(commands.filter(c => c.args.includes('test:coverage')).length, 2);
-    assert.deepEqual(commands.filter(c => c.args.includes('export')).map(c => c.args[c.args.indexOf('--platform') + 1]), ['ios', 'android']);
-    assert.equal(commands.find(c => c.args.includes('expo-doctor')).cwd, join(f.root, 'apps/mobile'));
-    assert.ok(commands.every(c => c.ci === '1'));
-    assert.ok(commands.every(c => !c.args.includes('build:android')));
-  } finally { f.cleanup(); }
+test('default, all and verify run each test group once without native builds', () => {
+  for (const args of [[], ['all'], ['verify']]) {
+    const f = fixture();
+    try {
+      const result = f.run(args);
+      assert.equal(result.status, 0, result.stderr);
+      const commands = f.commands();
+      assert.deepEqual(commands[0].args, ['install', '--frozen-lockfile']);
+      assert.deepEqual(commands.filter(c => c.args.some(arg => /^test(?::|$)/.test(arg))).map(c => c.args), [
+        ['--filter', '@kaku/shared', 'test'],
+        ['test:tooling'],
+        ['--filter', '@kaku/api', 'test:coverage'],
+        ['--filter', '@kaku/mobile', 'test:coverage'],
+        ['--filter', '@kaku/mobile', 'test:ui'],
+      ]);
+      for (const gate of ['typecheck', 'build:web']) {
+        assert.ok(commands.some(c => c.args.includes(gate)), gate);
+      }
+      assert.deepEqual(commands.filter(c => c.args.includes('export')).map(c => c.args[c.args.indexOf('--platform') + 1]), ['ios', 'android']);
+      assert.equal(commands.find(c => c.args.includes('expo-doctor')).cwd, join(f.root, 'apps/mobile'));
+      assert.ok(commands.every(c => c.ci === '1'));
+      assert.ok(commands.every(c => !c.args.includes('build:android')));
+    } finally { f.cleanup(); }
+  }
 });
 
 test('a failed gate stops later checks and returns its exit status', () => {
@@ -58,16 +66,18 @@ test('a failed gate stops later checks and returns its exit status', () => {
   } finally { f.cleanup(); }
 });
 
-test('CI groups retain separate verify and HTML regression jobs; invalid arguments do no work', () => {
-  for (const group of ['verify', 'html', 'invalid']) {
+test('HTML regression stays available on request; invalid arguments do no work', () => {
+  for (const args of [['html'], ['invalid'], ['verify', 'html']]) {
     const f = fixture();
     try {
-      const result = f.run([group]);
-      assert.equal(result.status, group === 'invalid' ? 2 : 0, result.stderr);
+      const valid = args.length === 1 && args[0] === 'html';
+      const result = f.run(args);
+      assert.equal(result.status, valid ? 0 : 2, result.stderr);
       const commands = f.commands();
-      if (group === 'invalid') assert.deepEqual(commands, []);
-      else assert.equal(commands.some(c => c.args.includes('test:html-parsers')), group === 'html');
-      if (group === 'html') assert.equal(commands.length, 2);
+      assert.deepEqual(commands.map(c => c.args), valid ? [
+        ['install', '--frozen-lockfile'],
+        ['--filter', '@kaku/api', 'test:html-parsers'],
+      ] : []);
     } finally { f.cleanup(); }
   }
 });

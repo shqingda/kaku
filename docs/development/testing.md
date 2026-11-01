@@ -4,9 +4,10 @@
 Maestro 管模拟器上的关键路径，argent 会话做人工级别的 UI 验收。
 
 CI（`.github/workflows/ci.yml`）在 `main` 和 PR 上跑：Expo 依赖检查、
-expo-doctor、全 workspace 类型检查、`pnpm test`、API 75% / 移动端 92%
-行覆盖、构建/测量脚本检查、jest 组件测试、iOS/Android JS bundle、官网构建。另有独立 job
-跑 HTML 解析回归（`pnpm --filter @kaku/api test:html-parsers`）。
+expo-doctor、全 workspace 类型检查、shared 单元测试、API 75% / 移动端 92%
+行覆盖、构建/测量脚本检查、jest 组件测试、iOS/Android JS bundle、官网构建。
+API 与移动端的覆盖率命令已经运行各自的完整单元测试；HTML 解析回归包含在 API 测试中，
+完整检查只执行每组测试一次。
 Maestro 和 argent **不进 CI**。
 
 ## 本地 CI 预检
@@ -20,13 +21,14 @@ pnpm build:android
 ```
 
 `ci:check` 与 GitHub CI 共用 `scripts/ci-check.sh`，先以 frozen lockfile 安装依赖，
-再检查 Expo 依赖与项目诊断、全仓类型与单元测试、工具脚本、API 75% / 移动端 92%
-行覆盖、移动端组件、iOS / Android JS bundle、官网构建和 HTML 解析回归。
+再检查 Expo 依赖与项目诊断、全仓类型、shared 单元测试、工具脚本、API 75% / 移动端 92%
+行覆盖（含各自完整单元测试）、移动端组件、iOS / Android JS bundle 和官网构建。
 任一步失败立即停止，显示失败命令并返回非零退出码；修复后重跑。
 需要联网下载缺失依赖及运行 Expo 诊断，前置环境为仓库要求的 Node / pnpm 与 Python 3。
 
-GitHub 的 `verify` 和 `scrape-regression` 两个任务分别调用 `pnpm ci:check verify`
-和 `pnpm ci:check html`；本地默认不传参数，即运行两组全部检查。
+GitHub 的 `verify` 任务调用 `pnpm ci:check verify`；本地默认不传参数或传 `all`，
+均运行同一套完整检查。只需检查 HTML 解析时，可用 `pnpm ci:check html` 安装依赖并运行专项，
+或在已有依赖的工作区直接运行 `pnpm --filter @kaku/api test:html-parsers`。
 JS bundle 写入临时目录并在退出时清理，官网仍输出到自己的忽略目录。
 此命令不打原生安装包、不上传、不发布、不操作模拟器或实机，也不覆盖已有 APK。
 通过表示这些检查在当前机器通过，不代表 Linux CI、原生编译或实机验证必然通过。
