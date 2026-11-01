@@ -24,12 +24,13 @@
 
 商店素材：[中英文文案与截图清单](store/listing.md)。
 
-## 阶段计划与执行记录
+## 当前计划与历史记录
 
-这些文档保存当时的计划、决策与证据。当前未完成事项统一看 [TODO](../TODO.md)，发布结果看 [GitHub Releases](https://github.com/shqingda/kaku/releases)。
+本轮按 [2026-11-01 维护计划](plans/2026-11-01-maintenance.md) 逐片实施，进度与未完成事项只在 [TODO](../TODO.md) 维护。以下历史文档保留当时的决策与独有证据，不重写为当前状态；发布结果看 [GitHub Releases](https://github.com/shqingda/kaku/releases)，验收结果看 [测试记录索引](test-records/README.md)。
 
 | 阶段 | 计划 | 执行证据 |
 | --- | --- | --- |
+| 2026-11-01 维护与体验打磨 | [实施顺序、验收与保护边界](plans/2026-11-01-maintenance.md) | 实施状态统一在 [TODO](../TODO.md) 维护 |
 | 2026-10-25 可靠性与瘦身 | [实施顺序与保护边界](plans/2026-10-25-reliability-slimming-performance.md) | 当前状态统一在 [TODO](../TODO.md) 维护 |
 | 2026-10-17 原生推送 | [FCM / APNs 实施计划](plans/2026-10-17-direct-fcm.md) | [本地回归及真实送达待验](test-records/2026-10-17-native-push.md) |
 | 2026-10-17 Android 签名迁移 | Android 13+ 换签、Android 10–12L 兼容，设备验证暂缓 | [内部包、密钥备份及待验事项](test-records/2026-10-17-signing-migration.md) |
@@ -59,4 +60,4 @@ docs/
 
 根目录只保留项目首页、当前待办与协作规则。应用或源码目录里的 README 保留就近说明；`scripts/release-notes.md` 是发布脚本使用的发版文案，保留原位。
 
-新增文档放入对应分类；当前指南在用途表登记，阶段计划在阶段表登记，验收记录在测试记录索引登记。操作步骤只维护一份，其他文档链接过去；阶段记录保留日期，不能代替当前待办或当前实现。发版结果以 GitHub Releases 为准。
+新增文档放入对应分类；当前指南在用途表登记，阶段计划在阶段表登记，验收记录在测试记录索引登记。操作步骤只维护一份，其他文档链接过去；当前待办只写在 TODO，架构只描述已实现行为，计划不提前宣称完成。历史记录中的唯一决策、失败实验、设备边界与发布摘要保留，过时入口在现行指南中更正；`tutorial/` 不参与整理。发版结果以 GitHub Releases 为准。

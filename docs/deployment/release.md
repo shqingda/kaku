@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。本轮 v1.1.25 提供 44.54 MB 正式包，包含账户页整理、独立设备管理和缓存清理反馈，详见 [发布记录](../test-records/2026-10-29-release-1.1.25.md)。此前 v1.1.23 提供 44.52 MB 正式包，包含可靠性修复与缩略图内存优化，未经 Android 真机验证，构建及上传核验见 [发布记录](../test-records/2026-10-26-release-1.1.23.md)。v1.1.22 的 44.48 MB 包（Expo SDK 58）见 [此前记录](../test-records/2026-10-24-release-1.1.22.md)。v1.1.21 的 53.06 MB 包见 [此前记录](../test-records/2026-10-18-release-1.1.21.md)。v1.1.19 的 42.21 MB 历史包见 [此前记录](../test-records/2026-10-16-release-1.1.19.md)。v1.1.18 的正式和独立 debug 包见 [历史记录](../test-records/2026-10-03-android-images.md)。本地正式包和 GitHub APK 均默认启用 R8 与资源裁剪；调试包保持关闭。此前 v1.1.15 同版本安装包替换见 [历史记录](../test-records/2026-10-03-release-1.1.15.md)，早期裁剪对比见 [2026-10-02 记录](../test-records/2026-10-02-project-optimization.md)。Android 实机兼容性仍待验。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。最近一次发布记录为 v1.1.25：44,541,503 字节，包含账户页整理、独立设备管理和缓存清理反馈；最终 APK 的实机验收仍待完成，详见 [发布记录](../test-records/2026-10-29-release-1.1.25.md)。历史版本、体积与验收边界统一查 [测试记录索引](../test-records/README.md)。本地正式包和 GitHub APK 默认启用 R8 与资源裁剪，调试包保持关闭。
 
 ## 构建入口约定
 
@@ -77,7 +77,11 @@ bash scripts/build-split-apks.sh --build-only
 
 纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及本轮启用 R8 时的 mapping（非裁剪构建不收录旧文件）。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
 
-整个目录沿用 `dist-split/` 的 Git 忽略规则，应与验收 APK 一起保留。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。当前历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；本轮工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。实现与检查边界见 [本轮记录](../test-records/2026-10-25-reliability-slimming-performance.md)。
+整个目录沿用 `dist-split/` 的 Git 忽略规则，发布前与验收 APK 一起保留，发布后按下节清理。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。实现与检查边界见 [产物追溯记录](../test-records/2026-10-25-reliability-slimming-performance.md)。
+
+### 正式发布后的本地产物清理
+
+正式 Release 发布成功，且远端 APK 大小与 SHA-256 已核对一致后，自动清理本地 APK 和未正式发布测试包的 `.sources/`，保留所有正式版本的 `.sources/`（包括历史正式版）。匹配依据是各 `manifest.json` 中的 APK SHA-256 与 GitHub 正式 Release 资产或已核验历史记录，不能只看版本号；归属不明的记录先核实，不猜测删除。清理不改动远端 Release、源码、签名密钥或设备应用数据，完成后报告删除内容与回收空间。
 
 ### macOS 代理下 Gradle 下载停滞
 
@@ -112,12 +116,12 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
-## 分步准备与发布 GitHub Release（本地备用）
+## 分步准备与发布 GitHub Release（本地构建）
 
 准备、构建、上传和发布分别执行。推送和发布仍需要用户明确授权；构建和上传脚本不会隐式提交、推送或发布。
 
 1. 修改 Expo 配置的版本，编写 `scripts/release-notes.md`。
-2. 显式运行 `node scripts/sync-changelog.mjs` 准备 App 内日志；检查完整差异并通过回归后提交。已有版本不覆盖手改内容，安装提示不收入 App 内日志。
+2. 显式运行 `node scripts/sync-changelog.mjs` 准备 App 内日志；检查完整差异并通过回归后提交。已有版本不覆盖手改内容，安装提示不收入 App 内日志；持续保留 v1.1.24 及之后的历史版本，最新默认展开，旧版可折叠。
 3. 运行 `pnpm build:android`，核对签名、版本、权限和回归结果。已有验收 APK 时直接复用，不重新构建。
 4. 获得推送授权后，将对应提交推到目标分支；按下节创建草稿、上传和核验。发布是最后一个独立步骤。
 
@@ -145,7 +149,7 @@ v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求�
 ```bash
 set -e # 任一步失败即停止，保留草稿
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-TAG=v1.1.22 # 改成实际版本；从仓库根目录执行
+TAG=vX.Y.Z # 改成实际待发布版本；从仓库根目录执行
 # 新版本只创建草稿，不在这一步附加 APK。已存在草稿则跳过这条。
 gh release create "$TAG" --repo shqingda/kaku --draft --title "$TAG" \
   --notes-file scripts/release-notes.md --target "$(git rev-parse HEAD)"
@@ -165,7 +169,7 @@ GitHub API / git push 继续使用清除代理环境变量的普通命令。
 
 ## 配置与账号边界
 
-当前仅维护本地构建和本地上传 GitHub Release 的流程，已移除 EAS 云构建配置、命令和依赖 EAS 的 GitHub Actions 发版工作流。本地使用 `KAKU_BUILD_PROFILE=production` 选择正式包名；未设置时使用 debug 包名。构建脚本按 release / debug 参数设置该变量。
+当前维护本地构建、GitHub Release 上传，以及仅在明确发版时使用的 Android Actions 构建；不使用 EAS 云构建配置、命令或工作流。本地使用 `KAKU_BUILD_PROFILE=production` 选择正式包名；未设置时使用 debug 包名。构建脚本按 release / debug 参数设置该变量。
 
 版本和 Android 构建号由 `app.config.js` 本地维护；GitHub APK 已接入签名轮换，Play 签名与上架流程仍未配置，GitHub 发版不等于商店提交。
 

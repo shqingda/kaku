@@ -14,17 +14,17 @@ Kaku 是面向 iOS / Android 的第三方 Bangumi 客户端（Expo / React Nativ
 | `apps/api` | OAuth、会话、写入代理、偏好 / 推送 / 缓存 | Cloudflare Workers |
 | `apps/web` | 产品站、隐私、条款、FAQ | Cloudflare Workers |
 
-还没上架 App Store / Play。Android 日常包走本地构建 + GitHub Releases。见 [发版指南](docs/deployment/release.md)。
+还没上架 App Store / Play。最近一次发布记录为 [v1.1.25](docs/test-records/2026-10-29-release-1.1.25.md)，构建检查已通过，Android 实机验收仍待完成。Android 日常测试使用本地 Release APK；明确发版后才使用 Android CI 构建，正式包通过 GitHub Releases 分发。见 [发版指南](docs/deployment/release.md)。
 
 ## 功能
 
-浏览条目、人物、目录、排行与时间线；同步 Bangumi 收藏状态与章节进度；吐槽、长评、讨论版、好友动态、通知（可选推送）。OAuth 多设备会话、主题云同步、最近条目离线包、可分享的本机错误记录。
+浏览条目、人物、目录、排行与时间线；同步 Bangumi 收藏状态与章节进度；吐槽、长评、讨论版、好友动态、通知（可选推送）。登录设备在独立页面管理，支持主题云同步与最近条目自动离线包。本机错误记录保留作内部排错，不再提供离线包管理或错误日志分享页面。
 
 未开放：加入 / 退出小组、删除自己的动态、角色 / 人物收藏入口。其余见 [TODO](TODO.md)。
 
 ## 安全
 
-Bangumi 密码只在官方页处理。`client_secret` 与 OAuth token 留在服务端。App 只拿一次性 handoff code。D1 里的 token 用 AES-GCM；Kaku refresh token 只存哈希。可撤销单设备会话，或断开 Bangumi 并清空凭据。
+Bangumi 密码只在官方页处理。`client_secret` 与 OAuth token 留在服务端。App 用一次性 handoff code 换取 Kaku 会话。D1 里的 token 用 AES-GCM；Kaku refresh token 只存哈希。可退出当前设备或撤销其他设备会话，客户端不再提供“断开 Bangumi”操作。
 
 ## 开发
 

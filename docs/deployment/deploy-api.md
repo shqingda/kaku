@@ -5,10 +5,12 @@
 （`kaku-production`）、KV（`KAKU_CONFIG`）和两个 Cron 触发器：
 
 - `0 3 * * *`：清理过期认证数据
-- `*/15 * * * *`：给已登记设备轮询 Bangumi 通知，当前代码分别走 FCM / APNs；线上需部署后才切换
+- `*/15 * * * *`：给已登记设备轮询 Bangumi 通知，分别走 FCM / APNs；Android FCM 后端已上线，APNs 凭据暂缓
 
 本文只写本机手动部署。CI（`.github/workflows/ci.yml`）跑类型检查、测试和
 覆盖率，**不**自动 `wrangler deploy`。
+
+最近一次部署记录为 2026-10-29：迁移 `0011_yielding_betty_brant.sql` 已应用，Worker 版本为 `fbad2958-dd03-4287-946e-698e7ce45b0d`，健康检查通过，见 [v1.1.25 发布记录](../test-records/2026-10-29-release-1.1.25.md)。这不代表实际登录、设备归并或推送送达已验收。新部署仍先列出远端未应用迁移，不能凭历史记录跳过检查。
 
 ## 前提
 
@@ -17,7 +19,7 @@
      `~/Library/Preferences/.wrangler/config/default.toml`）；
    - 或环境变量 `CLOUDFLARE_API_TOKEN`（CI 场景）。
    检查登录状态：`npx wrangler whoami`。
-2. 解除代理环境变量，否则上传会挂起（与 git push / EAS 相同的坑）：
+2. 解除代理环境变量，否则上传会挂起（与 git push 相同）：
 
    ```sh
    unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
@@ -117,13 +119,13 @@ pnpm --filter @kaku/api dev                # wrangler dev 热重载
 
 ## 目录写入保护与恢复
 
-部署包含目录并发保护的版本前，先应用 `0008_perpetual_gressill.sql`，再部署新版 API。迁移只新增 `index_write_locks` 表；不要回滚时删表。旧版 API 不遵守占用，混用旧／新 Worker 的部署切换期间不能保证互斥；回滚旧版 API 会撤销这项保护。新 API 也保护旧客户端的重叠写入，但旧客户端没有 `expected`，顺序保存仍可能覆盖新内容。
+目录并发保护与迁移 `0008_perpetual_gressill.sql` 已上线，见 [目录保存保护记录](../test-records/2026-10-16-index-save-conflict.md)。新环境仍须先迁移再部署；迁移只新增 `index_write_locks` 表，回滚时不删表。旧版 API 不遵守占用，混用旧／新 Worker 的部署切换期间不能保证互斥；回滚旧版 API 会撤销这项保护。新 API 也保护旧客户端的重叠写入，但旧客户端没有 `expected`，顺序保存仍可能覆盖新内容。
 
 表以 `(user_id, index_id)` 为主键，`operation_id` 标识持有者，`created_at` 便于定位。正常完成／明确拒绝后释放；上游写入超时、5xx、202 或 Worker 中断后，结果无法确认，记录会保留，后续写入返回 423。此时不能仅因等待时间较长就解锁：上游请求可能仍会执行，超时／中止本地 fetch 不能证明上游已停止。
 
 恢复时先停止对该账号／目录的重试，核查对应请求已经结束、上游写入已完成或确定不再执行，并读回目录最终状态。确认前保持占用并让用户保留草稿；无法确认时不自动清除。只在核查确认并获得恢复授权后，按**账号、目录和原始操作编号**删除单条记录，防止误删其他操作。不清空整表，不加入定时清理。
 
-以下是数据库内的查询模板，需由维护者替换参数并在正确环境执行；本轮仅测试独立 Miniflare 数据库，没有对线上运行：
+以下是数据库内的查询模板，需由维护者替换参数并在正确环境执行；它不是可直接执行的自动恢复脚本：
 
 ```sql
 SELECT user_id, index_id, operation_id, created_at
@@ -136,9 +138,9 @@ WHERE user_id = :user_id AND index_id = :index_id AND operation_id = :operation_
 
 不对占用记录设置自动过期，也不在删除账号或认证清理时级联删除，避免尚未确认的上游写入失去保护。
 
-## 架构安全修复的发布顺序
+## 已上线安全机制与兼容边界
 
-2026-10-16 修复的迁移是 `0009_architecture_safety.sql`。本轮代码准备与自动化不代表已经应用远端迁移、部署 Worker 或发布手机客户端；验证记录见 [架构修复](../test-records/2026-10-16-architecture-review-fixes.md)。
+`0009_architecture_safety.sql` 对应的安全修复已上线，原始验证见 [架构修复](../test-records/2026-10-16-architecture-review-fixes.md)。后续部署仍须保留下述迁移与原生客户端的兼容顺序，真实新登录、发送和设备验收按 [TODO](../../TODO.md) 跟踪。
 
 发布前先准备并验证含 `expo-crypto` 的原生构建，协调客户端可用时间；API 上线后旧客户端发起新登录会被拒绝，不能把准备安装包留到 API 部署后。
 
@@ -154,9 +156,11 @@ WHERE user_id = :user_id AND index_id = :index_id AND operation_id = :operation_
 
 `collection_write_locks` 与目录占用遵循相同恢复原则：未知上游操作不自动过期。维护者确认上游已结束、读回最终状态并获准恢复后，只按 user_id、subject_id、operation_id 删除对应一行。不要清空整表或把它加入每日维护；与认证会话分离，避免注销使未知写入失去保护。
 
-Expo ticket 与游标通过 D1 batch 原子提交；receipt 15 分钟后检查、24 小时清理。`DeviceNotRegistered` 只清理仍匹配原 registrationId 的订阅。其他 receipt 错误可通过安全错误码观察，本轮不自动重放已获 ticket 的消息，不承诺恰好一次投递。
+推送已使用 FCM / APNs，服务商接受结果与游标按登记身份保护提交。旧 Expo receipt 仅按原 24 小时保留期清理，不再写入或查询服务商回执；原生失效 token 的处理与重试边界见 [原生推送指南](native-push.md)。服务商接受不证明设备已显示，数据库提交失败仍可能导致后续重复发送。
 
-开发、CI 与发布构建显式设置 `EXPO_PUBLIC_KAKU_API_URL`。EAS profile 与本地原生构建脚本保留现有生产 origin；本地隔离测试需显式选择 loopback API，示例见 [移动端环境模板](../../apps/mobile/.env.example)。不要把本机测试库当作现有生产账号的数据源。正式 profile 拒绝 HTTP API 地址。
+开发、CI 与发布构建显式设置 `EXPO_PUBLIC_KAKU_API_URL`。本地原生构建脚本和 GitHub Actions 保留生产 origin，不再使用 EAS；本地隔离测试需显式选择 loopback API，示例见 [移动端环境模板](../../apps/mobile/.env.example)。不要把本机测试库当作现有生产账号的数据源。正式构建拒绝 HTTP API 地址。
+
+`0011_yielding_betty_brant.sql` 为 sessions 增加可空 `device_key`，已随上述 2026-10-29 部署上线。新登录只归并同账号、同标识的会话；旧会话不回填归属，不能按设备名称猜测。回滚 Worker 保留新增列，兼容旧 API；实际同机重装效果仍待设备验证。
 
 
 Bangumi v0 的条目收藏 POST 在同步完成后返回空 202（[固定实现](https://github.com/bangumi/server/blob/5fc276a1f22368a80655c2b72427f24d177dee83/web/handler/user/post_subject_collection.go#L44-L57)），由专属 adapter 识别完成；这不改变通用占用规则。其他端点、重定向或带 body 的 202 仍视为未确认，不可据此批量解锁。未知收藏写入日志为 `collection_write_unconfirmed`，只含操作编号与安全状态，按对应 D1 key 定位，不记录或索取用户 token。
