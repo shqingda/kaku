@@ -135,10 +135,12 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 | `collection-box-signin.yaml` | 收藏盒未登录门控 |
 
 外观检查已移出默认全量入口。独立运行 `settings-appearance-ios.yaml` 或
-`settings-appearance-android.yaml`，只检查当前选中项与截图；商店候选图也复用该只读流程。
-自动切换中途失败无法保证恢复原偏好，因此不再把主题强制改回“跟随系统”。
-实际主题切换和恢复原选择留人工验收，不能以这项只读检查代替；需要深色商店素材时，
-由验收者先选好主题，采集后恢复原选择。
+`settings-appearance-android.yaml`，记录原选中项、验证深浅色切换，并由
+`onFlowComplete` 恢复原选择。该钩子在成功与失败后都会运行，恢复断言失败也使流程失败；
+不能将强制退出测试进程当作正常清理，异常终止后需核对原选择。行为见
+[Maestro hooks](https://docs.maestro.dev/maestro-flows/flow-control-and-logic/hooks)。
+商店候选图只复用 `settings-appearance.yaml` 的当前选项检查与截图，不切主题。
+新专项尚需两端设备实跑，静态校验不能代替实际外观和恢复验收。
 
 首页刷新控件结束时会让搜索框移动 60pt，Maestro 偶尔使用旧坐标。`enter-subject-search.yaml` 只对点击/输入准备有限重试，确认清除按钮出现后才提交；`focus-subject-search.yaml` 用同一信号确认已有搜索词进入编辑态。搜索结果与清空断言仍在重试之外。本机 iOS 无障碍树在输入框有光标时仍报告 focused:false，因此不依赖该属性。中文粘贴不能替代输入法组合输入验收。
 

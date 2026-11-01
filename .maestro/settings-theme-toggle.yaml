@@ -1,0 +1,51 @@
+appId: placeholder
+name: Switch appearance and restore the original selection
+onFlowStart:
+  - evalScript: ${output.originalAppearance = null}
+onFlowComplete:
+  - runFlow:
+      when:
+        true: ${output.originalAppearance != null}
+      commands:
+        - tapOn: ${output.originalAppearance}
+        - assertVisible:
+            text: ${output.originalAppearance}
+            selected: true
+        - takeScreenshot: settings-appearance-restored
+---
+# 独立专项：先记录选中项，失败也走 onFlowComplete 恢复，不强制改为系统主题。
+- runFlow:
+    file: settings-appearance.yaml
+- runFlow:
+    when:
+      visible:
+        text: "跟随系统"
+        selected: true
+    commands:
+      - evalScript: ${output.originalAppearance = '跟随系统'}
+- runFlow:
+    when:
+      visible:
+        text: "浅色"
+        selected: true
+    commands:
+      - evalScript: ${output.originalAppearance = '浅色'}
+- runFlow:
+    when:
+      visible:
+        text: "深色"
+        selected: true
+    commands:
+      - evalScript: ${output.originalAppearance = '深色'}
+- assertTrue: ${output.originalAppearance != null}
+- evalScript: ${console.log('Original appearance = ' + output.originalAppearance)}
+- tapOn: "深色"
+- assertVisible:
+    text: "深色"
+    selected: true
+- takeScreenshot: settings-dark
+- tapOn: "浅色"
+- assertVisible:
+    text: "浅色"
+    selected: true
+- takeScreenshot: settings-light

@@ -1,5 +1,5 @@
 appId: com.shqingda.kaku.debug
-name: Inspect the current iOS appearance
+name: Switch iOS appearance and restore the original selection
 ---
 - runFlow:
-    file: settings-appearance.yaml
+    file: settings-theme-toggle.yaml

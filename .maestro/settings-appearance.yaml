@@ -2,7 +2,7 @@ appId: placeholder
 name: Inspect the current appearance without changing preferences
 ---
 # 只检查当前选项并截图，不切换主题。
-# 脚本中途失败不能保证恢复原偏好；实际切换与恢复留给人工验收。
+# 供商店截图和独立切换专项复用；切换与恢复由 settings-theme-toggle.yaml 负责。
 - runFlow:
     file: reset-home.yaml
 - runFlow:

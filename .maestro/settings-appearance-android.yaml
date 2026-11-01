@@ -1,8 +1,8 @@
 appId: com.shqingda.kaku
-name: Inspect the current Android appearance
+name: Switch Android appearance and restore the original selection
 ---
 - launchApp:
     clearState: false
     stopApp: true
 - runFlow:
-    file: settings-appearance.yaml
+    file: settings-theme-toggle.yaml
