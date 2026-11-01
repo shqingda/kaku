@@ -9,6 +9,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectIndexes } from '@/features/indexes/use-indexes';
 import type { PublicIndexSummary } from '@/features/indexes/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -28,6 +29,8 @@ const SubjectIndexRow = memo(function SubjectIndexRow({
 }) {
   return (
     <Pressable
+      accessibilityLabel={`打开目录：${item.title}`}
+      accessibilityRole="button"
       onPress={() => onPressItem(item.id)}
       style={({ pressed }) => [
         styles.card,
@@ -77,7 +80,7 @@ export default function SubjectIndexesScreen() {
         data={indexes.items}
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
-          !indexesQuery.isPending && !indexesQuery.isError ? (
+          !indexesQuery.isPending && !indexesQuery.isError && !indexesQuery.isPaused ? (
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>暂无相关目录</Text>
               <Text style={styles.emptyText}>该条目还没有被收录进公开目录。</Text>
@@ -94,13 +97,20 @@ export default function SubjectIndexesScreen() {
                   : '公开内容'}
               </Text>
             </View>
-            <DiscussionStatus
-              errorText="目录加载失败，请检查网络后重试。"
-              isError={indexesQuery.isError}
-              isPending={indexesQuery.isPending}
-              loadingText="正在读取相关目录…"
-              onRetry={() => void indexesQuery.refetch()}
-            />
+            {indexes.items.length > 0 && (indexesQuery.isError || indexesQuery.isPaused) ? (
+              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
+            ) : (
+              <DiscussionStatus
+                errorText={indexesQuery.isPaused
+                  ? '网络暂不可用，恢复连接后可重试目录。'
+                  : '目录加载失败，请检查网络后重试。'}
+                isError={indexesQuery.isError || indexesQuery.isPaused}
+                isPending={indexesQuery.isPending}
+                loadingText="正在读取相关目录…"
+                onRetry={() => void indexesQuery.refetch()}
+                retryLabel="重试加载目录"
+              />
+            )}
           </>
         }
         ListFooterComponent={
@@ -130,11 +140,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   header: { paddingBottom: SPACING.md, paddingTop: SPACING.xs },
   title: {
     color: colors.ink,
-    fontSize: TYPE.display.fontSize,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 20,
@@ -142,17 +151,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   indexTitle: {
     color: colors.ink,
-    fontSize: TYPE.heading.fontSize,
+    ...TYPE.heading,
     fontWeight: '800',
-    lineHeight: 23,
   },
-  indexMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  indexMeta: { color: colors.subtle, ...TYPE.caption, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: SPACING.xxl },
-  emptyTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  emptyTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   emptyText: {
     color: colors.muted,
-    fontSize: TYPE.caption.fontSize,
+    ...TYPE.caption,
     marginTop: SPACING.sm,
     textAlign: 'center',
   },

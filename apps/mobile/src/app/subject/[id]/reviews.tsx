@@ -9,6 +9,7 @@ import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import { useSubjectReviews } from '@/features/reviews/use-subject-reviews';
 import type { SubjectReview } from '@/features/reviews/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
@@ -97,6 +98,7 @@ export default function SubjectReviewsScreen() {
         ListEmptyComponent={
           !reviewsQuery.isPending &&
           !reviewsQuery.isError &&
+          !reviewsQuery.isPaused &&
           reviews.items.length === 0 ? (
             <EmptyState />
           ) : undefined
@@ -111,13 +113,20 @@ export default function SubjectReviewsScreen() {
                   : '无需登录即可浏览'}
               </Text>
             </View>
-            <DiscussionStatus
-              errorText="评论加载失败，请检查网络后重试。"
-              isError={reviewsQuery.isError && reviews.items.length === 0}
-              isPending={reviewsQuery.isPending}
-              loadingText="正在读取 Bangumi 评论…"
-              onRetry={() => void reviewsQuery.refetch()}
-            />
+            {reviews.items.length > 0 && (reviewsQuery.isError || reviewsQuery.isPaused) ? (
+              <CachedDataNotice onRetry={() => void reviewsQuery.refetch()} />
+            ) : (
+              <DiscussionStatus
+                errorText={reviewsQuery.isPaused
+                  ? '网络暂不可用，恢复连接后可重试评论。'
+                  : '评论加载失败，请检查网络后重试。'}
+                isError={reviewsQuery.isError || reviewsQuery.isPaused}
+                isPending={reviewsQuery.isPending}
+                loadingText="正在读取 Bangumi 评论…"
+                onRetry={() => void reviewsQuery.refetch()}
+                retryLabel="重试加载评论"
+              />
+            )}
           </>
         }
         ListFooterComponent={
@@ -159,11 +168,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   header: { paddingBottom: SPACING.lg, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: TYPE.display.fontSize,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
@@ -174,25 +182,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   pressed: { opacity: 0.62, transform: [{ scale: 0.99 }] },
   reviewTitle: {
     color: colors.ink,
-    fontSize: TYPE.heading.fontSize,
+    ...TYPE.heading,
     fontWeight: '800',
-    lineHeight: 23,
   },
-  body: { color: colors.muted, fontSize: TYPE.body.fontSize, lineHeight: 22, marginTop: SPACING.md },
+  body: { color: colors.muted, ...TYPE.body, marginTop: SPACING.md },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: SPACING.sm,
     justifyContent: 'space-between',
     marginTop: SPACING.md,
   },
-  footerText: { color: colors.subtle, flex: 1, fontSize: TYPE.micro.fontSize },
-  replyCount: { color: colors.muted, fontSize: TYPE.micro.fontSize, fontWeight: '700' },
+  footerText: { color: colors.subtle, flex: 1, ...TYPE.micro },
+  replyCount: { color: colors.muted, ...TYPE.micro, fontWeight: '700' },
   state: { alignItems: 'center', padding: SPACING.xxl },
-  stateTitle: { color: colors.ink, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  stateTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   stateText: {
     color: colors.muted,
-    fontSize: TYPE.body.fontSize,
-    lineHeight: 21,
+    ...TYPE.body,
     marginTop: SPACING.sm,
     textAlign: 'center',
   },
