@@ -3,6 +3,7 @@ import { SymbolView } from 'expo-symbols';
 import { router, usePathname } from 'expo-router';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { rememberReturnTo } from '@/lib/auth-redirect';
@@ -17,7 +18,7 @@ import { RatingStars } from '@/features/reviews/rating-stars';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { WatchingItem } from '@/features/watching/model';
 import { canRateCollectionStatus } from '@/features/watching/progress';
-import { playSuccessHaptic, playWarningHaptic } from '@/lib/haptics';
+import { playSuccessHaptic } from '@/lib/haptics';
 
 import type { CollectionBoxDraft } from './collection-box-draft';
 import { collectionBoxUpdateFromDraft } from './collection-box-draft';
@@ -67,12 +68,7 @@ export function CollectionControls({
         }),
       );
       setIsOpen(false);
-      // 取消收藏（draft 不带状态）是不可逆操作，用 warning 区别于普通保存的 success。
-      if (draft.collectionStatus) {
-        playSuccessHaptic();
-      } else {
-        playWarningHaptic();
-      }
+      playSuccessHaptic();
     } catch (error) {
       Alert.alert(
         '收藏没有保存',
@@ -90,16 +86,13 @@ export function CollectionControls({
 
     const clearsProgress =
       item.watchedEpisodeNumbers.length > 0 &&
-      (draft.collectionStatus === 'wish' ||
-        draft.collectionStatus === undefined);
+      draft.collectionStatus === 'wish';
     const clearsRating =
       item.rating !== undefined &&
-      (draft.collectionStatus === 'wish' ||
-        draft.collectionStatus === undefined);
+      draft.collectionStatus === 'wish';
     const clearsReadingProgress =
       ((item.readChapterCount ?? 0) > 0 || (item.readVolumeCount ?? 0) > 0) &&
-      (draft.collectionStatus === 'wish' ||
-        draft.collectionStatus === undefined);
+      draft.collectionStatus === 'wish';
     if (
       !clearsProgress &&
       !clearsReadingProgress &&
@@ -121,16 +114,14 @@ export function CollectionControls({
     ].filter(Boolean);
 
     Alert.alert(
-      clearedRecords.length > 0 ? '清空个人记录？' : '取消收藏？',
-      clearedRecords.length > 0
-        ? `${action}会清空${clearedRecords.join('和')}。`
-        : '该条目将不再保留当前收藏状态。',
+      '清空个人记录？',
+      `${action}会清空${clearedRecords.join('和')}。`,
       [
         { style: 'cancel', text: '保留' },
         {
           onPress: () => void applyDraft(draft),
           style: 'destructive',
-          text: clearedRecords.length > 0 ? '清空并继续' : '取消收藏',
+          text: '清空并继续',
         },
       ],
     );
@@ -184,7 +175,7 @@ export function CollectionControls({
         <Pressable
           accessibilityLabel={`编辑${item.title}的收藏和进度`}
           accessibilityRole="button"
-          hitSlop={5}
+          hitSlop={HIT_SLOP}
           onPress={(event) => {
             event.stopPropagation();
             openCollectionBox();
@@ -233,7 +224,7 @@ export function CollectionControls({
               />
             </View>
           </View>
-  
+
           {canShowPersonalData ? (
             <View style={styles.details}>
               <View style={styles.progressDetail}>
@@ -327,8 +318,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.xl,
   },
   compactButton: {
     alignItems: 'center',
@@ -338,7 +329,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     height: 34,
     justifyContent: 'center',
-    marginLeft: 10,
+    marginLeft: SPACING.md,
     width: 34,
   },
   heading: {
@@ -346,9 +337,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  headingCopy: { gap: 7 },
-  title: { color: colors.muted, fontSize: 11, fontWeight: '600' },
-  statusValue: { color: colors.accent, fontSize: 20, fontWeight: '800' },
+  headingCopy: { gap: SPACING.sm },
+  title: { color: colors.muted, ...TYPE.micro, fontWeight: '600' },
+  statusValue: { color: colors.accent, ...TYPE.title, fontWeight: '800' },
   emptyStatus: { color: colors.accent },
   editButton: {
     alignItems: 'center',
@@ -365,15 +356,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    marginTop: 18,
+    marginTop: SPACING.lg,
     minHeight: 68,
-    paddingTop: 16,
+    paddingTop: SPACING.lg,
   },
   progressDetail: {
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    paddingRight: 18,
+    paddingRight: SPACING.lg,
   },
   progressHeading: {
     alignItems: 'baseline',
@@ -386,31 +377,31 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   watchedValue: {
     color: colors.accent,
-    fontSize: 19,
+    ...TYPE.title,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
-  compactWatchedValue: { fontSize: 17 },
+  compactWatchedValue: { ...TYPE.heading },
   totalValue: {
     color: colors.ink,
-    fontSize: 17,
+    ...TYPE.heading,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
-  compactTotalValue: { fontSize: 15 },
+  compactTotalValue: { ...TYPE.body },
   unitValue: {
     color: colors.muted,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginLeft: 5,
+    marginLeft: SPACING.xs,
   },
-  compactUnitValue: { fontSize: 11, marginLeft: 4 },
-  detailHint: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
+  compactUnitValue: { ...TYPE.micro, marginLeft: SPACING.xs },
+  detailHint: { color: colors.subtle, ...TYPE.micro, fontWeight: '600' },
   progressTrack: {
     backgroundColor: colors.accentSoft,
     borderRadius: 2,
     height: 3,
-    marginTop: 10,
+    marginTop: SPACING.md,
     overflow: 'hidden',
   },
   progressFill: {
@@ -426,12 +417,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   ratingDetail: {
     alignItems: 'flex-start',
     flex: 1,
-    gap: 8,
+    gap: SPACING.sm,
     justifyContent: 'center',
     minWidth: 0,
-    paddingLeft: 18,
+    paddingLeft: SPACING.lg,
   },
-  ratingLabel: { color: colors.ink, fontSize: 17, fontWeight: '800' },
+  ratingLabel: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   unsetText: { color: colors.muted },
   pressed: { opacity: 0.58 },
 });
