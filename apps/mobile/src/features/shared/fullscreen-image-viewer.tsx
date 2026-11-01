@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { requestPermissionsAsync } from 'expo-media-library';
 import { SymbolView } from 'expo-symbols';
@@ -23,7 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import {
   containedTranslation,
   resistedScale,
@@ -40,6 +40,13 @@ const MATERIALIZE_SPRING = { damping: 35, mass: 1, stiffness: 300 };
 const ZOOM_SPRING = { damping: 28, mass: 1, stiffness: 300 };
 const DOUBLE_TAP_SCALE = 2.5;
 const AnimatedImage = Animated.createAnimatedComponent(Image);
+type ImageRequest = { url: string | undefined; visible: boolean; generation: number };
+type ImageLoad = {
+  generation: number;
+  status: 'loading' | 'ready' | 'error';
+  size: { height: number; width: number };
+};
+const EMPTY_SIZE = { height: 0, width: 0 };
 
 // 以 contain 方式计算原图在容器内实际渲染的尺寸，缩放与约束都以它为基准。
 function getFittedSize(
@@ -72,8 +79,23 @@ export function FullscreenImageViewer({
   const progress = useSharedValue(0);
   const [mounted, setMounted] = useState(visible);
   const [isSaving, setIsSaving] = useState(false);
+  const saving = useRef(false);
   const [containerSize, setContainerSize] = useState({ height: 0, width: 0 });
-  const [naturalSize, setNaturalSize] = useState({ height: 0, width: 0 });
+  const [imageRequest, setImageRequest] = useState<ImageRequest>({ url, visible, generation: 0 });
+  const [imageLoad, setImageLoad] = useState<ImageLoad>({ generation: 0, status: 'loading', size: EMPTY_SIZE });
+  // Render 时就换请求归属，旧回调不能趁 effect 尚未执行污染新图片。
+  // 关闭保留画面完成退场；换图、重试或重新打开才换原生 Image 实例。
+  if (imageRequest.url !== url || imageRequest.visible !== visible) {
+    setImageRequest({
+      url,
+      visible,
+      generation: imageRequest.generation + (imageRequest.url !== url || visible ? 1 : 0),
+    });
+  }
+  const currentImageRequest = useRef(imageRequest);
+  currentImageRequest.current = imageRequest;
+  const imageStatus = imageLoad.generation === imageRequest.generation ? imageLoad.status : 'loading';
+  const naturalSize = imageLoad.generation === imageRequest.generation ? imageLoad.size : EMPTY_SIZE;
   const scale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -131,11 +153,16 @@ export function FullscreenImageViewer({
     );
   }, [mounted, progress, visible]);
 
-  // 每次打开重置缩放与平移，避免上一次的查看状态残留。
-  useEffect(() => {
+  // 每次打开、换图或重试都从新图的原始尺寸开始，保留正常拖动中的连续性。
+  useLayoutEffect(() => {
     if (!visible) {
       return;
     }
+    cancelAnimation(scale);
+    cancelAnimation(translateX);
+    cancelAnimation(translateY);
+    cancelAnimation(dismissY);
+    cancelAnimation(dismissOpacity);
     scale.value = 1;
     translateX.value = 0;
     translateY.value = 0;
@@ -145,7 +172,7 @@ export function FullscreenImageViewer({
     savedTranslateX.value = 0;
     savedTranslateY.value = 0;
     savedDismissY.value = 0;
-  }, [dismissOpacity, dismissY, savedDismissY, savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
+  }, [dismissOpacity, dismissY, imageRequest.generation, savedDismissY, savedScale, savedTranslateX, savedTranslateY, scale, translateX, translateY, visible]);
 
   const style = useAnimatedStyle(() => {
     if (reduceMotion) {
@@ -346,9 +373,23 @@ export function FullscreenImageViewer({
 
   const zoomGestures = Gesture.Simultaneous(pinch, pan, doubleTap);
 
-  async function saveImage() {
-    if (!url || isSaving) return;
+  function finishImageLoad(status: 'ready' | 'error', size = EMPTY_SIZE) {
+    if (!imageRequest.visible || currentImageRequest.current !== imageRequest) return;
+    setImageLoad((current) => {
+      if (current.generation === imageRequest.generation && current.status !== 'loading') return current;
+      return { generation: imageRequest.generation, status, size };
+    });
+  }
 
+  function retryImage() {
+    if (!url || !visible || currentImageRequest.current !== imageRequest) return;
+    setImageRequest((current) => ({ ...current, generation: current.generation + 1 }));
+  }
+
+  async function saveImage() {
+    if (!url || saving.current) return;
+
+    saving.current = true;
     setIsSaving(true);
 
     try {
@@ -364,6 +405,7 @@ export function FullscreenImageViewer({
     } catch {
       Alert.alert('图片保存失败', '图片服务暂时没有响应，请稍后重试。');
     } finally {
+      saving.current = false;
       setIsSaving(false);
     }
   }
@@ -395,15 +437,20 @@ export function FullscreenImageViewer({
               <AnimatedImage
                 accessibilityLabel={`${title}图片`}
                 contentFit="fill"
+                key={imageRequest.generation}
+                onError={() => finishImageLoad('error')}
                 onLoad={(event) => {
                   const source = event.source;
-                  if (source.width && source.height) {
-                    setNaturalSize({
+                  if (source.width > 0 && source.height > 0) {
+                    finishImageLoad('ready', {
                       height: source.height,
                       width: source.width,
                     });
+                  } else {
+                    finishImageLoad('error');
                   }
                 }}
+                recyclingKey={`${url}:${imageRequest.generation}`}
                 source={url}
                 style={[
                   fitted
@@ -415,6 +462,27 @@ export function FullscreenImageViewer({
                   imageStyle,
                 ]}
               />
+            ) : null}
+            {!url || imageStatus !== 'ready' ? (
+              <View style={[StyleSheet.absoluteFill, styles.imageStatus]}>
+                {url && imageStatus === 'loading' ? (
+                  <ActivityIndicator accessibilityLabel="图片加载中" color="#FFFFFF" size="large" />
+                ) : (
+                  <>
+                    <Text style={styles.statusText}>{url ? '图片加载失败' : '暂无可用图片'}</Text>
+                    {url ? (
+                      <Pressable
+                        accessibilityLabel="重试加载图片"
+                        accessibilityRole="button"
+                        onPress={retryImage}
+                        style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
+                      >
+                        <Text style={styles.statusText}>重试</Text>
+                      </Pressable>
+                    ) : null}
+                  </>
+                )}
+              </View>
             ) : null}
           </View>
           <Pressable
@@ -482,6 +550,21 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.xxl * 2 + SPACING.sm,
     overflow: 'hidden',
   },
+  imageStatus: {
+    alignItems: 'center',
+    gap: SPACING.md,
+    justifyContent: 'center',
+    padding: SPACING.xl,
+  },
+  retry: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(38, 38, 40, 0.86)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.lg,
+  },
+  statusText: { ...TYPE.body, color: '#FFFFFF', textAlign: 'center' },
   close: {
     alignItems: 'center',
     backgroundColor: 'rgba(38, 38, 40, 0.78)',
@@ -501,7 +584,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     flexDirection: 'row',
     gap: SPACING.sm,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
     paddingHorizontal: SPACING.lg,
     position: 'absolute',
   },
