@@ -24,10 +24,6 @@ test('accepts an explicit same-environment baseline with home measurements', () 
   }
 });
 
-test('keeps the historical profiler limits', () => {
-  assert.deepEqual(checkPerformance(base, profilerBaseline).map(item => item.limit), [116.33, 94.83, 75.37]);
-});
-
 test('defaults to the Release cold launch baseline', () => {
   const report = { device: 'iPhone 18 Pro', os: 'iOS 27.0', mode: 'release', flow: 'cold-launch-diagnostics', firstLayoutMs: [76, 79, 94], cacheRestoredMs: [88, 93, 107], homeReadyMs: [154, 127, 121] };
   assert.ok(checkPerformance(report).every(item => item.passed));

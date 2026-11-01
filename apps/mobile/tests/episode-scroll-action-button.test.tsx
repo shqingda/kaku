@@ -1,18 +1,12 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import { EpisodeScrollActionButton } from '@/features/discussions/episode-scroll-action-button';
 
-jest.mock('@/features/shared/scroll-to-top-button', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return {
-    ScrollToTopButton: (props: object) =>
-      React.createElement(View, { ...props, testID: 'scroll-action' }),
-  };
-});
+jest.mock('expo-symbols', () => ({ SymbolView: () => null }));
+jest.mock('@/lib/use-reduce-motion', () => ({ useReduceMotion: () => true }));
 
 describe('EpisodeScrollActionButton', () => {
-  it('keeps the button visible while its direction changes', async () => {
+  it('switches the accessible action in both directions and ignores presses while hidden', async () => {
     const onTop = jest.fn();
     const onBottom = jest.fn();
     const props = { bottom: 80, onTop, onBottom };
@@ -20,43 +14,33 @@ describe('EpisodeScrollActionButton', () => {
       <EpisodeScrollActionButton {...props} action="top" />,
     );
 
-    expect(screen.getByTestId('scroll-action').props).toMatchObject({
-      accessibilityLabel: '回到顶部',
-      visible: true,
-      onPress: onTop,
-    });
+    await fireEvent.press(screen.getByRole('button', { name: '回到顶部' }));
+    expect(onTop).toHaveBeenCalledTimes(1);
+    expect(onBottom).not.toHaveBeenCalled();
 
     await screen.rerender(
       <EpisodeScrollActionButton {...props} action="bottom" />,
     );
-    expect(screen.getByTestId('scroll-action').props).toMatchObject({
-      accessibilityLabel: '跳到最新回复',
-      visible: true,
-      onPress: onBottom,
-    });
+    expect(screen.queryByRole('button', { name: '回到顶部' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: '跳到最新回复' }));
+    expect(onTop).toHaveBeenCalledTimes(1);
+    expect(onBottom).toHaveBeenCalledTimes(1);
+
+    await screen.rerender(
+      <EpisodeScrollActionButton {...props} action="top" />,
+    );
+    expect(screen.queryByRole('button', { name: '跳到最新回复' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: '回到顶部' }));
+    expect(onTop).toHaveBeenCalledTimes(2);
+    expect(onBottom).toHaveBeenCalledTimes(1);
 
     await screen.rerender(
       <EpisodeScrollActionButton {...props} action={null} />,
     );
-    expect(screen.getByTestId('scroll-action').props.visible).toBe(false);
-  });
-
-  it('can reverse direction without hiding the button', async () => {
-    const props = { bottom: 80, onTop: jest.fn(), onBottom: jest.fn() };
-    const screen = await render(
-      <EpisodeScrollActionButton {...props} action="top" />,
-    );
-
-    await screen.rerender(
-      <EpisodeScrollActionButton {...props} action="bottom" />,
-    );
-    await screen.rerender(
-      <EpisodeScrollActionButton {...props} action="top" />,
-    );
-    expect(screen.getByTestId('scroll-action').props).toMatchObject({
-      accessibilityLabel: '回到顶部',
-      visible: true,
-      onPress: props.onTop,
-    });
+    await fireEvent.press(screen.getByRole('button', {
+      name: '跳到最新回复', includeHiddenElements: true,
+    }));
+    expect(onTop).toHaveBeenCalledTimes(2);
+    expect(onBottom).toHaveBeenCalledTimes(1);
   });
 });
