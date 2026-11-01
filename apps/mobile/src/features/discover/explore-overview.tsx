@@ -77,6 +77,7 @@ export function ExploreOverviewBody({
   calendarDays,
   calendarError,
   calendarPending,
+  calendarPaused,
   hasCalendarData,
   onChangeDay,
   onChangeSearchType,
@@ -84,6 +85,7 @@ export function ExploreOverviewBody({
   onRetryRanking,
   rankingError,
   rankingPending,
+  rankingPaused,
   rankedSubjects,
   selectedCalendarDay,
   selectedSearchType,
@@ -91,6 +93,7 @@ export function ExploreOverviewBody({
   calendarDays: CalendarDay[];
   calendarError: boolean;
   calendarPending: boolean;
+  calendarPaused: boolean;
   hasCalendarData: boolean;
   onChangeDay: (dayId: number) => void;
   onChangeSearchType: (subjectType: number) => void;
@@ -98,6 +101,7 @@ export function ExploreOverviewBody({
   onRetryRanking: () => void;
   rankingError: boolean;
   rankingPending: boolean;
+  rankingPaused: boolean;
   rankedSubjects: DiscoverSubject[];
   selectedCalendarDay?: CalendarDay;
   selectedSearchType: number;
@@ -119,6 +123,7 @@ export function ExploreOverviewBody({
             hasData={hasCalendarData}
             isError={calendarError}
             isPending={calendarPending}
+            isPaused={calendarPaused}
             onChangeDay={onChangeDay}
             onRetry={onRetryCalendar}
             selectedDay={selectedCalendarDay}
@@ -127,6 +132,7 @@ export function ExploreOverviewBody({
         <RankingSection
           isError={rankingError}
           isPending={rankingPending}
+          isPaused={rankingPaused}
           onRetry={onRetryRanking}
           subjects={rankedSubjects}
           subjectType={selectedSearchType}
@@ -237,6 +243,7 @@ function CalendarPreview({
   hasData,
   isError,
   isPending,
+  isPaused,
   onChangeDay,
   onRetry,
   selectedDay,
@@ -245,6 +252,7 @@ function CalendarPreview({
   hasData: boolean;
   isError: boolean;
   isPending: boolean;
+  isPaused: boolean;
   onChangeDay: (dayId: number) => void;
   onRetry: () => void;
   selectedDay?: CalendarDay;
@@ -264,8 +272,10 @@ function CalendarPreview({
           onPress={() => router.push('/calendar')}
         />
       </View>
-      {hasData && isError ? <CachedDataNotice onRetry={onRetry} /> : null}
-      {isPending && !hasData ? (
+      {hasData && (isError || isPaused) ? <CachedDataNotice onRetry={onRetry} /> : null}
+      {isPaused && !hasData ? (
+        <AppState action={onRetry} title="当前离线" text="恢复连接后可继续读取放送安排。" />
+      ) : isPending && !hasData ? (
         <AppState title="正在读取放送表" text="本周动画加载中。" />
       ) : isError && !hasData ? (
         <AppState
@@ -327,12 +337,14 @@ function CalendarPreview({
 function RankingSection({
   isError,
   isPending,
+  isPaused,
   onRetry,
   subjects,
   subjectType,
 }: {
   isError: boolean;
   isPending: boolean;
+  isPaused: boolean;
   onRetry: () => void;
   subjects: DiscoverSubject[];
   subjectType: number;
@@ -360,16 +372,20 @@ function RankingSection({
           onPressIn={() => prefetchRankings(queryClient, subjectType)}
         />
       </View>
-      {subjects.length > 0 && isError ? (
+      {subjects.length > 0 && (isError || isPaused) ? (
         <CachedDataNotice onRetry={onRetry} />
       ) : null}
-      {isPending && subjects.length === 0 ? (
+      {isPaused && subjects.length === 0 ? (
+        <AppState action={onRetry} title="当前离线" text="恢复连接后可继续读取排行榜。" />
+      ) : isPending && subjects.length === 0 ? (
         <AppState
           title="正在读取排行榜"
           text={`高评分${subjectTypeLabel}加载中。`}
         />
       ) : isError && subjects.length === 0 ? (
         <AppState action={onRetry} title="排行榜读取失败" text="请稍后重试。" />
+      ) : subjects.length === 0 ? (
+        <AppState title="暂无排行数据" text={`Bangumi 暂时没有返回可显示的${subjectTypeLabel}。`} />
       ) : (
         <View style={styles.rankingList}>
           {subjects.slice(0, 6).map((item, index) => (

@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { type FetchStatus, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import {
@@ -18,8 +18,10 @@ import {
 import type { PublicPersonSummary } from '@/features/people-browser/model';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { SubjectSearchField } from '@/features/shared/subject-search-field';
+import { useIsOffline } from '@/lib/use-connectivity';
 
 import type { DiscoverSubject } from './model';
 import {
@@ -34,6 +36,7 @@ type SearchResult = DiscoverSubject | PublicPersonSummary;
 
 export function ExploreSearchResults({
   draft,
+  fetchStatus,
   hasNextPage,
   isError,
   isFetchNextPageError,
@@ -53,6 +56,7 @@ export function ExploreSearchResults({
   total,
 }: {
   draft: string;
+  fetchStatus: FetchStatus;
   hasNextPage: boolean;
   isError: boolean;
   isFetchNextPageError: boolean;
@@ -72,6 +76,8 @@ export function ExploreSearchResults({
   total: number;
 }) {
   const { styles } = useExploreStyles();
+  const isOffline = useIsOffline();
+  const isPaused = fetchStatus === 'paused';
   const kindLabel = exploreSearchKindLabel(searchMode, selectedSearchTab);
   const unit = exploreSearchUnit(searchMode);
 
@@ -83,7 +89,9 @@ export function ExploreSearchResults({
       keyboardShouldPersistTaps="handled"
       keyExtractor={(item) => String(item.id)}
       ListEmptyComponent={
-        isPending ? (
+        isPaused ? (
+          <AppState action={onRetry} title="当前离线" text="恢复连接后可继续搜索。" />
+        ) : isPending ? (
           <AppState title="正在搜索" text={`正在查询${kindLabel}。`} />
         ) : isError ? (
           <AppState
@@ -101,6 +109,7 @@ export function ExploreSearchResults({
             hasNextPage={hasNextPage}
             isError={isFetchNextPageError}
             isFetching={isFetchingNextPage}
+            isPaused={isPaused}
             loadedCount={items.length}
             onRetry={onLoadMore}
             total={total}
@@ -109,7 +118,9 @@ export function ExploreSearchResults({
       }
       ListHeaderComponent={
         <>
-          {isError && !isFetchNextPageError && items.length > 0 ? (
+          {isPaused && items.length > 0 ? (
+            <CachedDataNotice onRetry={onRetry} />
+          ) : isError && !isFetchNextPageError && items.length > 0 ? (
             <AppState title="刷新失败" text="已保留上次搜索结果，可以重试获取最新内容。" action={onRetry} />
           ) : null}
           <SubjectSearchField
@@ -129,14 +140,14 @@ export function ExploreSearchResults({
               <Text style={styles.sectionTitle}>搜索结果</Text>
               <Text style={styles.sectionMeta}>
                 {kindLabel} · “{keyword}” ·{' '}
-                {isPending ? '查询中' : isError && items.length === 0 ? '查询失败' : `${total} 个${unit}`}
+                {isPaused ? '等待联网' : isPending ? '查询中' : isError && items.length === 0 ? '查询失败' : `${total} 个${unit}`}
               </Text>
             </View>
           </View>
         </>
       }
       onEndReached={() => {
-        if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+        if (hasNextPage && fetchStatus === 'idle' && !isOffline && !isFetchNextPageError) {
           onLoadMore();
         }
       }}

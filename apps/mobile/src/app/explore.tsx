@@ -216,6 +216,7 @@ export default function ExploreScreen() {
               calendarDays={calendarDays}
               calendarError={calendarQuery.isError}
               calendarPending={calendarQuery.isPending}
+              calendarPaused={calendarQuery.fetchStatus === 'paused'}
               hasCalendarData={Boolean(calendarQuery.data)}
               onChangeDay={setSelectedDay}
               onChangeSearchType={setSelectedSearchType}
@@ -223,6 +224,7 @@ export default function ExploreScreen() {
               onRetryRanking={() => void rankedQuery.refetch()}
               rankingError={rankedQuery.isError}
               rankingPending={rankedQuery.isPending}
+              rankingPaused={rankedQuery.fetchStatus === 'paused'}
               rankedSubjects={rankedSubjects}
               selectedCalendarDay={selectedCalendarDay}
               selectedSearchType={selectedSearchType}
@@ -232,6 +234,7 @@ export default function ExploreScreen() {
             <View style={styles.searchOverlay}>
               <ExploreSearchResults
                 draft={draft}
+                fetchStatus={search.fetchStatus}
                 hasNextPage={Boolean(search.hasNextPage)}
                 isError={search.isError}
                 isFetchNextPageError={search.isFetchNextPageError}

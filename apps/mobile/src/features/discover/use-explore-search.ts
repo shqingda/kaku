@@ -57,6 +57,7 @@ export function useExploreSearch(
 
   return {
     fetchNextPage: query.fetchNextPage,
+    fetchStatus: query.fetchStatus,
     hasNextPage: query.hasNextPage,
     isError: query.isError,
     isFetchNextPageError: query.isFetchNextPageError,
