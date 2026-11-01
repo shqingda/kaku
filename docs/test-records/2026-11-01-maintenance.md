@@ -146,3 +146,13 @@ Android 实机继续暂缓；本轮未触发 Android CI、未生成或交付 APK
 新增唯一入口 `pnpm test:e2e`，只选择 ios / android（显式设备）/ reply；check 只做语法检查。Maestro 2.12.0 官方 ZIP 已核对官方 SHA-256，解压至项目 `.cache/maestro/cli/`，没有全局安装或 PATH 修改；核验解压后删除 349,408,958 字节下载 ZIP。Java home、XDG 状态、临时文件和输出显式放在项目 `.cache/maestro/`，禁用使用统计。它不是系统沙箱，Xcode/SDK/系统诊断与设备侧驱动仍有系统管理的状态，不宣称绝无项目外文件。
 
 验证：项目 CLI 启动成功，三个入口的官方 check-syntax 全部 OK；6 份 YAML 子流程引用完整；入口隔离/设备选择相关 Node 测试 2/2；现行修改文档本地链接检查通过。未运行真实设备 E2E，iOS 鉴权与 Android 安装前置仍保留；没有因此重跑无关完整预检或重建 APK。tutorial 文件清单与摘要不变。本次只提交/推送测试与文档整理，不部署、不发版。
+
+## 后续：iOS 核心 E2E 实跑与产物落点
+
+2026-11-01（Asia/Taipei），先列出并复用指定 iPhone 18 Pro / iOS 27.0，`pnpm dev:sim` 复用服务，前后确认 PosterBoard disabled。未卸载、退出账号、清空应用/钥匙串/历史/草稿；公开搜索正常更新浏览/搜索记录，不做清理复位。
+
+- `pnpm test:e2e ios` 首轮成功，核心搜索→详情→返回 1/1，约 21 秒。成功流程原先没有 takeScreenshot，所以补一张结束截图后重跑验证落盘；第二轮 1/1，JUnit 21.234 秒、0 failures。
+- 输出根目录为项目 `.cache/maestro/results/ios/`，包含 runner.log、report.xml、debug 下的 CLI/XCTest/设备日志、commands.json 和 manifest.json。成功截图位于 `debug/Core public navigation (ios)-2/takeScreenshot/core-navigation-returned.png`，已目检确为返回后的搜索结果页。截图及原始日志留在忽略目录，不提交。
+- 对比运行前后 `~/.maestro`、`~/.mobiledev`、`~/.cache/maestro`，均仍不存在；这只证明已检查的 Maestro 默认目录没有新增，不声称系统 SDK/模拟器不产生日志。dev:sim 自身既有日志仍按模拟器指南位于系统临时目录，和 Maestro 产物分开。
+- `--flatten-debug-output` 不代表完全没有累积：实跑出现同名流程编号子目录和带时间戳的 XCTest 日志，现行说明已修正。完全停止测试后可删 results/tmp；整目录删除会连 CLI 一起删除，需重装。
+- 本次未运行登录回复专项或 Android E2E，未部署、未发版。

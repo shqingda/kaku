@@ -95,10 +95,10 @@ pnpm test:e2e check
 
 `check` 使用 CLI 检查三个入口及引用流程的语法，不操作设备，不表示 E2E 通过。
 安装、XDG 状态、Java home 回退、临时文件和报告都集中于被 Git 忽略的 `.cache/maestro/`；
-报告位于 `results/<ios|android|reply>/`，固定目录复用，不额外创建每次运行的 debug 时间戳目录。禁用 Maestro 使用统计，不使用 Cloud 上传。
+报告位于 `results/<ios|android|reply>/`。实跑中 Maestro 仍会为同名流程创建 `-2` 等编号子目录，并为 XCTest 日志加时间戳；它们全部留在该项目目录内。禁用 Maestro 使用统计，不使用 Cloud 上传。
 这不是系统沙箱：Java、Xcode、Android SDK、系统诊断和设备侧测试驱动仍由系统管理，
 不能保证操作系统完全不产生项目外缓存。不会改写 HOME、清理用户主目录或迁移旧截图。
-停止测试后可删除项目 `.cache/maestro/` 回收全部项目工具和产物；需要历史证据时先保留对应结果。
+测试及相关进程完全停止后，可删除项目 `.cache/maestro/`，但会同时删除 CLI，下次须重新安装。日常只清理 `results/` 和 `tmp/` 即可保留 CLI；需要的截图/日志先留存。不要在运行中删除，也不要把这个目录当作模拟器应用数据目录。
 配置依据：[CLI 参数](https://github.com/mobile-dev-inc/maestro-docs/blob/main/maestro-cli/maestro-cli-commands-and-options.md)、
 [Maestro 状态目录实现](https://github.com/mobile-dev-inc/Maestro/blob/cli-2.12.0/maestro-cli/src/main/java/maestro/cli/util/EnvUtils.kt)。
 

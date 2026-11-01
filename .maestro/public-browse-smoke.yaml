@@ -24,3 +24,4 @@ tags:
     timeout: 15000
 - tapOn: 返回
 - assertVisible: 搜索结果
+- takeScreenshot: core-navigation-returned
