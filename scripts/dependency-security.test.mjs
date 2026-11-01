@@ -25,20 +25,3 @@ test('Expo signing tooling rejects nested DigestAlgorithm garbage and accepts va
   const signature = privateKey.sign(a.toDer(malformed).getBytes(), 'NONE');
   assert.throws(() => publicKey.verify(digest.digest().bytes(), signature), /DigestInfo/);
 });
-
-test('Expo CLI plugin schemas retain validation with the patched Zod major', () => {
-  const { PluginSchema, DevToolsPluginOutputSchema } = cliRequire('./build/src/start/server/DevToolsPlugin.schema.js');
-  const { createMCPDevToolsExtensionSchema } = cliRequire('./build/src/start/server/createMCPDevToolsExtensionSchema.js');
-  const plugin = { packageName: 'test-plugin', packageRoot: '/tmp/test-plugin', cliExtensions: {
-    description: 'Test plugin', entryPoint: 'index.js', commands: [{ name: 'inspect', title: 'Inspect', environments: ['cli', 'mcp'], parameters: [{ name: 'count', type: 'number' }] }],
-  } };
-  assert.equal(PluginSchema.safeParse(plugin).success, true);
-  assert.equal(PluginSchema.safeParse({ ...plugin, packageName: '' }).success, false);
-  const schema = createMCPDevToolsExtensionSchema(plugin);
-  assert.deepEqual(schema.parse({ command: 'inspect', count: 2 }), { command: 'inspect', count: 2 });
-  assert.equal(schema.safeParse({ command: 'inspect', count: 'bad' }).success, false);
-  assert.equal(schema.safeParse({ command: 'unknown' }).success, false);
-  assert.equal(schema.safeParse({ command: 'inspect', extra: true }).success, false);
-  assert.equal(DevToolsPluginOutputSchema.safeParse([{ type: 'text', text: 'ok', level: 'info' }]).success, true);
-  assert.equal(DevToolsPluginOutputSchema.safeParse([{ type: 'audio', url: 'invalid' }]).success, false);
-});

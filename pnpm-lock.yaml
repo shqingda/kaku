@@ -164,7 +164,6 @@ settings:
 
 overrides:
   sharp@>=0.35.0 <0.35.5: 0.35.5
-  '@expo/cli@58.1.15>zod': 4.6.7
   '@types/react-dom': 19.3.0
   '@esbuild-kit/core-utils>esbuild': 0.25.12
   undici@>=6.0.0 <6.29.1: 6.29.1

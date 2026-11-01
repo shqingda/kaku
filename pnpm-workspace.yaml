@@ -5,7 +5,6 @@ packages:
 overrides:
   # Security fixes for pinned tooling dependencies; keep the native SDK unchanged.
   'sharp@>=0.35.0 <0.35.5': 0.35.5
-  '@expo/cli@58.1.15>zod': 4.6.7
   '@types/react-dom': 19.3.0
   # GHSA-67mh-4wv8-2f99: drizzle-kit declares but never loads @esbuild-kit/esm-loader;
   # reuse the esbuild drizzle-kit already ships instead of the vulnerable 0.18 copy.
