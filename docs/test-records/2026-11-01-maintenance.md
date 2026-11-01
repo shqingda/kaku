@@ -116,3 +116,15 @@ Android 实机继续暂缓；本轮未触发 Android CI、未生成或交付 APK
 草稿、历史或钥匙串。历史发布记录和 v1.1.24 起更新日志保留。
 `tutorial/` 文件清单及逐文件摘要与开始前完全一致，未计入整理成果。
 全部改动按片提交在本地 `codex/maintenance-2026-11-01`；未推送、部署或正式发布。
+
+## 后续：API 部署与本地测试包
+
+用户在完成分支推送后授权部署 API 和本地测试包，仍不正式发版。2026-11-01 部署源码为 `61ff47d20c10d269dc1ae821adab8d74e72ab701`，复用上节已通过的完整预检。
+
+- 远端 D1 migrations list：无待应用迁移。
+- Worker：`7de966ea-67e7-44ad-b12e-0d3b73821a3c`，上传和两个原有 Cron 更新成功；未改 Secrets。
+- 部署后 curl 验证：`/health` 200 / status ok，`/config` 200，未认证 `/me/timeline` 401。Python urllib 首次探测均返回 403，curl 随后验证以上预期响应，未据首次探测修改服务。
+- 本地 `pnpm build:android` 成功，936 个任务，8 分 32 秒；Android 13+ 正式证书与 Android 10–12L 原证书校验通过。Gradle 有上游弃用及 Metaspace 守护进程退出提示，没有构建失败。
+- APK：`apps/mobile/dist-split/kaku-release.apk`，44,365,374 字节；包名 `com.shqingda.kaku`、版本 `1.1.25`、versionCode 12、arm64-v8a、最低 API 29。此为同版本源码更新测试包，不是新的正式 Release。
+- SHA-256：`89fa688cf83b8fe7b80249fe17030ca64f6a7c7c8ce5a9c1a5d7efb7b118e565`。对应 `.sources/manifest.json` 记录 dirty=false，Hermes bundle/source map 与 R8 mapping 完整。
+- 等待用户安装后再验证覆盖、数据保留和手机交互；未操作设备，未触发 Android CI、上传 APK、发布 Release 或部署官网。
