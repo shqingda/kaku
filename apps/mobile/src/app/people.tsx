@@ -1,4 +1,3 @@
-import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -15,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -103,7 +103,13 @@ export default function PeopleScreen() {
         key={keyword ? `search:${kind}` : `browse:${kind}`}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
         ListEmptyComponent={
-          activeQuery.isPending ? (
+          activeQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void activeQuery.refetch()}
+              title="当前离线"
+              text={keyword ? '恢复连接后可继续搜索角色或人物。' : '恢复连接后可继续读取人物资料。'}
+            />
+          ) : activeQuery.isPending ? (
             <AppState
               title={keyword ? '正在搜索' : '人物加载中'}
               text={keyword ? `正在查找“${keyword}”。` : '正在读取 Bangumi 公开人物资料。'}
@@ -160,12 +166,12 @@ export default function PeopleScreen() {
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  hitSlop={8}
+                  hitSlop={HIT_SLOP}
                   onPress={() => {
                     setDraft('');
                     setKeyword('');
                   }}
-                  style={({ pressed }) => pressed && styles.pressed}
+                  style={({ pressed }) => [styles.clearSearchButton, pressed && styles.pressed]}
                 >
                   <Text style={styles.clearSearch}>清除</Text>
                 </Pressable>
@@ -204,7 +210,7 @@ export default function PeopleScreen() {
                 </FilterRow>
               </>
             )}
-            {people.items.length > 0 && activeQuery.isError ? (
+            {people.items.length > 0 && (activeQuery.isError || activeQuery.fetchStatus === 'paused') ? (
               <CachedDataNotice onRetry={() => void activeQuery.refetch()} />
             ) : null}
           </View>
@@ -358,24 +364,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
   content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
   header: { paddingBottom: SPACING.lg, paddingTop: SPACING.xl },
-  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
-  meta: { color: colors.muted, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  title: { color: colors.ink, ...TYPE.display, fontWeight: '800' },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   searchField: { marginTop: SPACING.xl },
   kindTabs: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
-  kindTab: { flex: 1, minHeight: 44 },
+  kindTab: { flex: 1, minHeight: MIN_TOUCH_SIZE },
   filterSection: { alignItems: 'center', flexDirection: 'row', marginTop: SPACING.md },
-  filterLabel: { color: colors.subtle, fontSize: TYPE.micro.fontSize, fontWeight: '700', width: 40 },
+  filterLabel: { color: colors.subtle, ...TYPE.micro, fontWeight: '700', width: 40 },
   filterOptions: { gap: SPACING.sm, paddingRight: SPACING.md },
   filter: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 14,
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
     paddingHorizontal: SPACING.lg,
   },
   filterSelected: { backgroundColor: colors.ink },
-  filterText: { color: colors.muted, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  filterText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   filterTextSelected: { color: colors.surface },
   searchSummary: {
     alignItems: 'center',
@@ -384,8 +390,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: SPACING.xs,
   },
-  searchSummaryText: { color: colors.muted, flex: 1, fontSize: TYPE.caption.fontSize },
-  clearSearch: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
+  searchSummaryText: { color: colors.muted, flex: 1, ...TYPE.caption },
+  clearSearchButton: { justifyContent: 'center', minHeight: MIN_TOUCH_SIZE, paddingHorizontal: SPACING.sm },
+  clearSearch: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   rowCard: { backgroundColor: colors.surface, paddingHorizontal: SPACING.lg },
   firstRowCard: { borderTopLeftRadius: 22, borderTopRightRadius: 22 },
   lastRowCard: { borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
@@ -401,13 +408,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 58,
   },
-  avatarFallback: { color: colors.accent, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  avatarFallback: { color: colors.accent, ...TYPE.heading, fontWeight: '800' },
   rowMain: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
-  rowTitle: { color: colors.ink, fontSize: TYPE.body.fontSize, fontWeight: '800', lineHeight: 21 },
-  categories: { color: colors.accentRich, fontSize: TYPE.caption.fontSize, fontWeight: '700', marginTop: SPACING.xs },
-  rowMeta: { color: colors.muted, fontSize: TYPE.caption.fontSize, lineHeight: 17, marginTop: SPACING.xs },
+  rowTitle: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
+  categories: { color: colors.accentRich, ...TYPE.caption, fontWeight: '700', marginTop: SPACING.xs },
+  rowMeta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
   commentCount: { alignItems: 'center', flexDirection: 'row', gap: SPACING.xs, marginTop: SPACING.sm },
-  commentText: { color: colors.subtle, fontSize: TYPE.micro.fontSize, fontWeight: '600' },
+  commentText: { color: colors.subtle, ...TYPE.micro, fontWeight: '600' },
   chevron: { marginLeft: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

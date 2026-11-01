@@ -1,9 +1,9 @@
-import { SPACING, TYPE } from '@/constants/design';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import {
   getSubjectTypeFromSlug,
@@ -13,6 +13,7 @@ import {
 import { SubjectTypeTabs } from '@/features/catalog/subject-type-tabs';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
+import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
@@ -75,7 +76,13 @@ export default function TagsScreen() {
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          tagsQuery.isPending ? (
+          tagsQuery.fetchStatus === 'paused' ? (
+            <AppState
+              action={() => void tagsQuery.refetch()}
+              text="恢复连接后可继续读取标签。"
+              title="当前离线"
+            />
+          ) : tagsQuery.isPending ? (
             <AppState text="换一种条目类型看看。" title="正在读取标签" />
           ) : tagsQuery.isError ? (
             <AppState
@@ -112,6 +119,9 @@ export default function TagsScreen() {
             <Text style={styles.sectionTitle}>
               {getSubjectTypeLabel(subjectType)}标签
             </Text>
+            {tags.items.length > 0 && (tagsQuery.isError || tagsQuery.fetchStatus === 'paused') ? (
+              <CachedDataNotice onRetry={() => void tagsQuery.refetch()} />
+            ) : null}
           </View>
         }
         numColumns={2}
@@ -154,11 +164,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
   row: { gap: SPACING.md },
   hero: { paddingHorizontal: SPACING.xs, paddingTop: SPACING.xl },
-  title: { color: colors.ink, fontSize: TYPE.display.fontSize, fontWeight: '800', letterSpacing: -0.8 },
-  subtitle: { color: colors.muted, fontSize: TYPE.body.fontSize, marginTop: SPACING.sm },
+  title: { color: colors.ink, ...TYPE.display, fontWeight: '800' },
+  subtitle: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
   tabs: { paddingBottom: SPACING.xs, paddingTop: SPACING.xl },
   search: { marginTop: SPACING.lg },
-  sectionTitle: { color: colors.ink, fontSize: TYPE.title.fontSize, fontWeight: '800', marginBottom: SPACING.lg, marginTop: SPACING.xxl },
+  sectionTitle: { color: colors.ink, ...TYPE.title, fontWeight: '800', marginBottom: SPACING.lg, marginTop: SPACING.xxl },
   tag: {
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -166,13 +176,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 16,
     flex: 1,
     flexDirection: 'row',
-    height: 54,
+    minHeight: 54,
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
     maxWidth: '49%',
     paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
-  tagName: { color: colors.ink, flex: 1, fontSize: TYPE.body.fontSize, fontWeight: '700' },
-  tagCount: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginLeft: SPACING.sm },
+  tagName: { color: colors.ink, flex: 1, ...TYPE.body, fontWeight: '700' },
+  tagCount: { color: colors.subtle, ...TYPE.micro, marginLeft: SPACING.sm },
   pressed: { opacity: 0.62 },
 });
