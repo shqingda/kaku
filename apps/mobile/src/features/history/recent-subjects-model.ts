@@ -1,12 +1,8 @@
-export const RECENT_SUBJECT_LIMIT = 10;
+import { isRecentSubject, type RecentSubject } from '@kaku/shared/recent-subjects-contract';
 
-export type RecentSubject = {
-  coverUrl?: string;
-  id: number;
-  title: string;
-  type: number;
-  viewedAt: number;
-};
+export type { RecentSubject } from '@kaku/shared/recent-subjects-contract';
+
+export const RECENT_SUBJECT_LIMIT = 10;
 
 export type RecentSubjectsRecord = {
   items: RecentSubject[];
@@ -21,23 +17,6 @@ export function addRecentSubject(
     subject,
     ...current.filter((item) => item.id !== subject.id),
   ].slice(0, RECENT_SUBJECT_LIMIT);
-}
-
-function isRecentSubject(value: unknown): value is RecentSubject {
-  if (!value || typeof value !== 'object') return false;
-
-  const subject = value as Partial<RecentSubject>;
-  return (
-    Number.isInteger(subject.id) &&
-    Number(subject.id) > 0 &&
-    typeof subject.title === 'string' &&
-    Boolean(subject.title.trim()) &&
-    Number.isInteger(subject.type) &&
-    typeof subject.viewedAt === 'number' &&
-    Number.isFinite(subject.viewedAt) &&
-    subject.viewedAt >= 0 &&
-    (subject.coverUrl === undefined || typeof subject.coverUrl === 'string')
-  );
 }
 
 function normalizeItems(value: unknown) {

@@ -41,8 +41,14 @@ test('recent subjects keep only the latest ten entries', () => {
   assert.equal(next.at(-1)?.id, 9);
 });
 
-test('legacy recent subjects use their latest real visit as sync time', () => {
-  assert.deepEqual(parseRecentSubjectsRecord([first, second]), {
+test('legacy recent subjects retain local filtering and use their latest real visit as sync time', () => {
+  assert.deepEqual(parseRecentSubjectsRecord([
+    first,
+    { ...second, title: ` ${second.title} ` },
+    { ...first, viewedAt: 50 },
+    { ...first, id: -1, viewedAt: 999 },
+    { id: 3, title: 'incomplete', type: 2 },
+  ]), {
     items: [second, first],
     updatedAt: 200,
   });

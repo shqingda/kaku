@@ -9,6 +9,7 @@
     "./collections-contract": "./src/collections-contract.ts",
     "./notifications-contract": "./src/notifications-contract.ts",
     "./push-contract": "./src/push-contract.ts",
+    "./recent-subjects-contract": "./src/recent-subjects-contract.ts",
     "./timeline-contract": "./src/timeline-contract.ts"
   },
   "scripts": {
