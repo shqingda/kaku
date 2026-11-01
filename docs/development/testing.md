@@ -114,14 +114,14 @@ Android yaml 写的是 **release 包名**，通过 `kaku://` 复位，不依赖 
 
 ### 默认全量覆盖范围
 
-冒烟步骤 `kaku-smoke-steps.yaml` 一次走完前 4 项（首页、账户、更新日志、
-网络诊断）。其余每项一个 yaml。`changelog-checks.yaml` 由冒烟步骤和
+冒烟步骤 `kaku-smoke-steps.yaml` 依次访问首页、账户、关于、更新日志，再返回账户查看
+网络诊断。其余每项一个 yaml。`changelog-checks.yaml` 由冒烟步骤和
 `changelog-current-ios.yaml` 专项共用：通过稳定 ID 与展开语义检查最新版默认展开、
 收起后重开，以及 1.1.24 历史记录仍可访问，不依赖某版更新文案。
 
 | 流程 | 覆盖 |
 | --- | --- |
-| `kaku-smoke-steps.yaml` | 首页 → 账户 → 更新日志 → 网络诊断 |
+| `kaku-smoke-steps.yaml` | 首页 → 账户 → 关于 Kaku（游客为“关于、帮助与隐私”）→ 更新日志 → 返回账户 → 网络诊断 |
 | `public-browse-smoke.yaml` | 搜索 → 条目详情 → 返回 |
 | `subject-comments.yaml` | 条目详情 → 吐槽箱 |
 | `subject-sections.yaml` | 条目详情 → 角色与声优 → 打开角色 → 返回 |
