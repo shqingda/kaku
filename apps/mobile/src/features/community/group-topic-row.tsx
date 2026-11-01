@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
@@ -88,7 +89,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 90,
-    paddingVertical: 15,
+    paddingVertical: SPACING.lg,
   },
   divider: {
     borderTopColor: colors.track,
@@ -105,35 +106,34 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   avatarFallback: {
     color: colors.accent,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '800',
   },
-  main: { flex: 1, paddingHorizontal: 12 },
+  main: { flex: 1, paddingHorizontal: SPACING.md },
   title: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 21,
   },
   meta: {
     color: colors.subtle,
-    fontSize: 11,
-    marginTop: 7,
+    ...TYPE.micro,
+    marginTop: SPACING.sm,
   },
   reply: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
     borderRadius: 13,
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
     justifyContent: 'center',
     minHeight: 27,
     minWidth: 42,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
   replyCount: {
     color: colors.muted,
-    fontSize: 11,
+    ...TYPE.micro,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -9,6 +10,7 @@ type DiscussionStatusProps = {
   isPending: boolean;
   loadingText?: string;
   onRetry: () => void;
+  retryLabel?: string;
 };
 
 export function DiscussionStatus({
@@ -17,6 +19,7 @@ export function DiscussionStatus({
   isPending,
   loadingText = '正在读取 Bangumi 讨论…',
   onRetry,
+  retryLabel = '重试加载讨论',
 }: DiscussionStatusProps) {
   const colors = useTheme();
   const styles = createStyles(colors);
@@ -36,7 +39,7 @@ export function DiscussionStatus({
       </Text>
       {isError ? (
         <Pressable
-          accessibilityLabel="重试加载讨论"
+          accessibilityLabel={retryLabel}
           accessibilityRole="button"
           onPress={onRetry}
           style={({ pressed }) => [
@@ -58,12 +61,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    padding: 14,
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
   },
   errorBox: { backgroundColor: colors.accentSoft },
-  text: { color: colors.muted, flex: 1, fontSize: 13 },
-  retryButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 56 },
-  retry: { color: colors.accent, fontSize: 13, fontWeight: '700', marginLeft: 12 },
+  text: { color: colors.muted, flex: 1, ...TYPE.caption },
+  retryButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_SIZE,
+    minWidth: MIN_TOUCH_SIZE,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.sm,
+  },
+  retry: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });

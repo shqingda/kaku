@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -33,22 +34,23 @@ const createStyles = (colors: ThemeColors) =>
       borderCurve: 'continuous',
       borderRadius: 16,
       flexDirection: 'row',
-      marginBottom: 14,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      marginBottom: SPACING.lg,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
     },
     copy: { flex: 1 },
-    title: { color: colors.ink, fontSize: 13, fontWeight: '700' },
-    detail: { color: colors.muted, fontSize: 11, marginTop: 3 },
+    title: { color: colors.ink, ...TYPE.caption, fontWeight: '700' },
+    detail: { color: colors.muted, ...TYPE.micro, marginTop: SPACING.xs },
     retry: {
       backgroundColor: colors.surface,
       borderCurve: 'continuous',
       borderRadius: 11,
       justifyContent: 'center',
-      marginLeft: 12,
-      minHeight: 44,
-      paddingHorizontal: 12,
+      marginLeft: SPACING.md,
+      minHeight: MIN_TOUCH_SIZE,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
     },
-    retryText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+    retryText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
     pressed: { opacity: 0.62 },
   });

@@ -92,15 +92,18 @@ export default function CommunityScreen() {
         }
         ListHeaderComponent={
           <>
-            {community && communityQuery.isError ? (
+            {community && (communityQuery.isError || communityQuery.isPaused) ? (
               <CachedDataNotice onRetry={() => void communityQuery.refetch()} />
             ) : (
               <DiscussionStatus
-                errorText="社区内容加载失败，请检查网络后重试。"
-                isError={communityQuery.isError}
+                errorText={communityQuery.isPaused
+                  ? '网络暂不可用，恢复连接后可重试社区资料。'
+                  : '社区内容加载失败，请检查网络后重试。'}
+                isError={communityQuery.isError || communityQuery.isPaused}
                 isPending={communityQuery.isPending}
                 loadingText="正在读取 Bangumi 社区…"
                 onRetry={() => void communityQuery.refetch()}
+                retryLabel="重试加载社区资料"
               />
             )}
             {community ? (
@@ -224,7 +227,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
   sectionTitle: {
     color: colors.ink,
-    fontSize: TYPE.title.fontSize,
+    ...TYPE.title,
     fontWeight: '800',
     paddingBottom: SPACING.md,
     paddingHorizontal: SPACING.xs,
@@ -233,9 +236,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topicHeader: {
     alignItems: 'baseline',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  sectionMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
+  sectionMeta: { color: colors.subtle, ...TYPE.caption },
   groupList: { gap: SPACING.md, paddingBottom: SPACING.sm, paddingTop: SPACING.xs },
   groupCard: {
     backgroundColor: colors.surface,
@@ -253,15 +257,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 48,
   },
-  iconFallback: { color: colors.subtle, fontSize: TYPE.heading.fontSize, fontWeight: '800' },
+  iconFallback: { color: colors.subtle, ...TYPE.heading, fontWeight: '800' },
   groupTitle: {
     color: colors.ink,
-    fontSize: TYPE.body.fontSize,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 19,
     marginTop: SPACING.md,
   },
-  groupMeta: { color: colors.subtle, fontSize: TYPE.micro.fontSize, marginTop: SPACING.sm },
+  groupMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
   topicList: {
     backgroundColor: colors.surface,
     overflow: 'hidden',
@@ -277,5 +280,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   pressed: { opacity: 0.62 },
   empty: { alignItems: 'center', padding: SPACING.xxl },
-  emptyText: { color: colors.muted, fontSize: TYPE.body.fontSize },
+  emptyText: { color: colors.muted, ...TYPE.body },
 });

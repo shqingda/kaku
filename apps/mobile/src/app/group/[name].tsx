@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
 import { rememberReturnTo } from '@/lib/auth-redirect';
-import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
+import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { GroupTopicRow } from '@/features/community/group-topic-row';
 import type { PublicGroupTopicSummary } from '@/features/community/model';
@@ -98,15 +98,18 @@ export default function GroupScreen() {
         }
         ListHeaderComponent={
           <>
-            {group && groupQuery.isError ? (
+            {group && (groupQuery.isError || groupQuery.isPaused) ? (
               <CachedDataNotice onRetry={() => void groupQuery.refetch()} />
             ) : (
               <DiscussionStatus
-                errorText="小组加载失败，请检查网络后重试。"
-                isError={groupQuery.isError}
+                errorText={groupQuery.isPaused
+                  ? '网络暂不可用，恢复连接后可重试小组资料。'
+                  : '小组加载失败，请检查网络后重试。'}
+                isError={groupQuery.isError || groupQuery.isPaused}
                 isPending={groupQuery.isPending}
                 loadingText="正在读取小组资料…"
                 onRetry={() => void groupQuery.refetch()}
+                retryLabel="重试加载小组资料"
               />
             )}
             {group ? (
@@ -307,7 +310,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: SPACING.md,
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: MIN_TOUCH_SIZE,
   },
   descriptionToggleText: {
     color: colors.accent,
@@ -317,6 +320,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.xs,
@@ -330,9 +335,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     gap: SPACING.xs,
-    height: 34,
+    minHeight: MIN_TOUCH_SIZE,
     justifyContent: 'center',
     paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   newTopicButtonPressed: { backgroundColor: colors.track },
   newTopicIcon: {
@@ -346,7 +352,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     ...TYPE.body,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: TYPE.caption.lineHeight,
     textAlignVertical: 'center',
   },
   topicList: {
