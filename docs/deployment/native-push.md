@@ -7,7 +7,7 @@
 ## 配置进度（2026-10-17）
 
 - Firebase 项目与 HTTP v1 API 已确认正常；已创建专用账号 `kaku-fcm-sender@kaku-2f94c.iam.gserviceaccount.com`，只授予 FCM API Admin 角色。原有 `firebase-adminsdk-…` 账号和本人 Owner 身份未变更。
-- JSON 私钥保存在仓库外 `/Users/shqingda/.local/share/kaku-push/2026-10-17-fcm/service-account.json`；同目录 `README.txt` 记录恢复步骤与验证结果。目录权限 0700、文件 0600，没有将密钥放入 Git、聊天或 APK。另行安全备份到 Mac 之外仍需用户安排。
+- JSON 私钥原保存在仓库外，2026-11-03 误删且无法找回；重新生成的私钥保存在 `.secrets/fcm/service-account.json`（见 [本地密钥目录](../development/local-secrets.md)）。目录权限 0700、文件 0600，没有将密钥放入 Git、聊天或 APK。另行安全备份到 Mac 之外仍需用户安排。
 - Google OAuth 认证 HTTP 200、FCM `validate_only` HTTP 200，证明该账号可认证并通过发送请求校验；未向任何手机或主题投递消息，不代表设备送达验收通过。
 - 凭据准备阶段，Cloudflare 保存 `FCM_SERVICE_ACCOUNT_JSON` 的未部署版本为 `aaf5e180-2910-4f2d-a5c5-bb1381000c33`，流量 0%。已有四个 Secret 绑定保留。该版本仅给原有线上代码增加凭据，不包含本地迁移实现，不能把它当作原生推送迁移上线包。
 - 用户后续授权正式发版：D1 新增列迁移已应用，会话、推送设备、旧回执与上游凭据表的记录数量保持；新版 Worker `b7dd3864-1b5b-4818-a80d-549bd5dd3162` 已切到 100% 流量并保留 FCM Secret。健康 / 公开配置均 200，未认证的私有接口和 FCM 登记均 401。
@@ -20,12 +20,12 @@
 1. 现有 `apps/mobile/google-services.json` 对应项目 `kaku-2f94c`，已登记 `com.shqingda.kaku` 和 `com.shqingda.kaku.debug`。后端服务账号必须有权向该项目发送消息。
 2. 在 Google Cloud 确认 Firebase Cloud Messaging API（HTTP v1）已启用，不使用已经废弃的 legacy server key。
 3. 准备有 FCM 发送权限的服务账号 JSON；建议使用用途单一的账号，授予 `Firebase Cloud Messaging API Admin`（`roles/firebasecloudmessaging.admin`，包含 `cloudmessaging.messages.create`），避免项目 Owner 权限，也不复用 Firebase Admin SDK 的广泛权限账号。服务端用其中的 `project_id`、`client_email`、`private_key`；OAuth 地址固定为 Google 官方域名，不使用文件提供的任意 token_uri。
-4. JSON 原件安全保存在仓库外，写入 Worker Secret `FCM_SERVICE_ACCOUNT_JSON`。不要放入 `EXPO_PUBLIC_*`、APK、Git 或聊天；`google-services.json` 是客户端配置，不是这个私钥文件。
+4. JSON 原件保存在 Git 忽略的 `.secrets/fcm/`，写入 Worker Secret `FCM_SERVICE_ACCOUNT_JSON`。不要放入 `EXPO_PUBLIC_*`、APK、Git 或聊天；`google-services.json` 是客户端配置，不是这个私钥文件。
 5. 如果客户端 Google API key 配置了 Android 应用限制，核对包名与新旧 SHA-1 指纹。新证书 SHA-1 为 `8d03597f65c33bf8bdde7bb5ea87b6a8e2e6d3b3`；旧证书为 `5e8f16062ea3cd2c4a0d547876baa6f38cabf625`。仅在实际使用应用限制时需要登记，不能把签名指纹误当成 FCM 服务端认证。
 
 FCM 仍依赖手机的 Google Play 服务和到 Google 的网络。直连 FCM 不等于解决国产设备的 GMS、后台限制或代理连通性问题。
 
-仅准备 Secret、暂不部署时，使用 `wrangler versions secret put FCM_SERVICE_ACCOUNT_JSON` 并从仓库外文件传入标准输入；普通 `wrangler secret put` 会立即部署新版本，不适合这个阶段。准备后记录未部署版本 ID，并再次核对线上 deployment 未改变。后续部署前仍需复核目标版本保留了该 Secret。
+仅准备 Secret、暂不部署时，使用 `wrangler versions secret put FCM_SERVICE_ACCOUNT_JSON` 并从 `.secrets/fcm/` 中的文件传入标准输入；普通 `wrangler secret put` 会立即部署新版本，不适合这个阶段。准备后记录未部署版本 ID，并再次核对线上 deployment 未改变。后续部署前仍需复核目标版本保留了该 Secret。
 
 ## Apple APNs 配置
 

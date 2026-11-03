@@ -11,6 +11,7 @@
 | 排查内容发布安全验证 | [应用内验证](development/timeline-verification.md) | WebView、上游契约与错误处理 |
 | 在 Codex 里运行 iOS 模拟器 | [模拟器启动与输入恢复](development/ios-simulator.md) | `pnpm dev:sim`、内置浏览器预览、输入恢复 |
 | 操作模拟器、用 Argent 验收 | [Argent 使用手册](development/argent-usage.md) | 工具使用与本机注意事项 |
+| 找签名密钥、FCM 私钥放在哪 | [本地密钥目录](development/local-secrets.md) | `.secrets/` 布局、备份与误删风险 |
 | 配置 Android / iOS 远程推送 | [原生推送指南](deployment/native-push.md) | FCM / APNs 凭据、旧 token 迁移和启用顺序 |
 | 构建 Android 包、发布到 GitHub / Play | [发版指南](deployment/release.md) | 构建渠道、版本号与发布步骤 |
 | 部署或回滚后端 | [API 部署指南](deployment/deploy-api.md) | Worker、数据库迁移与环境配置 |

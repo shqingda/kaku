@@ -21,14 +21,14 @@
 2. 在该 Environment 下添加 4 个 Secrets（内容来自本机签名目录，命令在本机终端执行，不要粘贴到聊天或 issue）：
 
 ```bash
-DIR="$HOME/.local/share/kaku-signing/2026-10-17-rotation"
+DIR=".secrets/android-signing"
 base64 -i "$DIR/legacy-debug.keystore" | gh secret set KAKU_SIGNING_LEGACY_KEYSTORE_B64 --env android-release --repo shqingda/kaku
 base64 -i "$DIR/release.p12" | gh secret set KAKU_SIGNING_RELEASE_P12_B64 --env android-release --repo shqingda/kaku
 gh secret set KAKU_SIGNING_RELEASE_PASSWORD --env android-release --repo shqingda/kaku < "$DIR/release-password.txt"
 base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_B64 --env android-release --repo shqingda/kaku
 ```
 
-3. GitHub 账号开启两步验证：密钥离开本机后，安全性取决于账号保护。本机签名目录仍是唯一的原始备份，继续按 [迁移记录](../test-records/2026-10-17-signing-migration.md) 保留异地加密备份。
+3. GitHub 账号开启两步验证：密钥离开本机后，安全性取决于账号保护。本机签名目录仍是唯一能取回原文件的副本（GitHub Secrets 只能在 CI 中使用、无法读回），继续按 [迁移记录](../test-records/2026-10-17-signing-migration.md) 保留异地加密备份。
 
 ### CI 发版步骤
 
@@ -45,7 +45,7 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 
 前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
-从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 37.0.0 及仓库外签名目录，默认 `$HOME/.local/share/kaku-signing/2026-10-17-rotation/`，可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
+从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 37.0.0 及主仓库的签名目录 `.secrets/android-signing/`（worktree 中运行也读取主仓库这一份），可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
 
 构建、签名和发布不需要连接手机。手机用于额外验证覆盖、数据保留和真实通知送达；未连接时在发布记录中保留未验范围。
 

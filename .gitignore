@@ -15,6 +15,9 @@ apps/api/data/
 apps/api/.dev.vars
 !.env.example
 
+# Local secrets (signing keys, FCM key, release evidence); never commit
+.secrets/
+
 # Legacy local EAS credentials: keep ignored to prevent accidental commits
 .eas-home/
 .eas-env.sh

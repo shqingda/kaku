@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# Android 13+ 正式证书轮换；Android 10–12L 保留旧证书。私钥始终位于仓库外。
+# Android 13+ 正式证书轮换；Android 10–12L 保留旧证书。私钥位于 Git 忽略的 .secrets/。
 set -euo pipefail
-SIGNING_DIR="${KAKU_SIGNING_DIR:-$HOME/.local/share/kaku-signing/2026-10-17-rotation}"
+if [[ -z "${KAKU_SIGNING_DIR:-}" ]]; then
+  # worktree 也读取主仓库里唯一的一份密钥，不复制私钥
+  MAIN_ROOT="$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")"
+fi
+SIGNING_DIR="${KAKU_SIGNING_DIR:-$MAIN_ROOT/.secrets/android-signing}"
 BUILD_TOOLS="${ANDROID_HOME:-$HOME/Library/Android/sdk}/build-tools/37.0.0"
 APKSIGNER="${KAKU_APKSIGNER:-$BUILD_TOOLS/apksigner}"
 ZIPALIGN="${KAKU_ZIPALIGN:-$BUILD_TOOLS/zipalign}"
