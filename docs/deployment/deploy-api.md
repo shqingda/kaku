@@ -99,7 +99,7 @@ pnpm --filter @kaku/api exec wrangler deployments list
 pnpm --filter @kaku/api exec wrangler rollback
 ```
 
-2026-11-03 起线上版本使用新 FCM 私钥（`449c424c…`）。回滚到更早的版本会带回旧私钥；旧密钥在 Google Cloud 删除后，这些版本的推送会认证失败，回滚后需用 `wrangler versions secret put FCM_SERVICE_ACCOUNT_JSON` 从 `.secrets/fcm/service-account.json` 重新写入。
+2026-11-03 起线上版本使用新 FCM 私钥（`449c424c…`）。回滚到更早的版本会带回旧私钥；旧密钥已于 2026-11-03 在 Google Cloud 删除，这些版本的推送会认证失败，回滚后需用 `wrangler versions secret put FCM_SERVICE_ACCOUNT_JSON` 从 `.secrets/fcm/service-account.json` 重新写入。
 
 ## 本地开发
 

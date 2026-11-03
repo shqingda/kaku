@@ -11,7 +11,7 @@
 - Google OAuth 认证 HTTP 200、FCM `validate_only` HTTP 200，证明该账号可认证并通过发送请求校验；未向任何手机或主题投递消息，不代表设备送达验收通过。
 - 凭据准备阶段，Cloudflare 保存 `FCM_SERVICE_ACCOUNT_JSON` 的未部署版本为 `aaf5e180-2910-4f2d-a5c5-bb1381000c33`，流量 0%。已有四个 Secret 绑定保留。该版本仅给原有线上代码增加凭据，不包含本地迁移实现，不能把它当作原生推送迁移上线包。
 - 用户后续授权正式发版：D1 新增列迁移已应用，会话、推送设备、旧回执与上游凭据表的记录数量保持；新版 Worker `b7dd3864-1b5b-4818-a80d-549bd5dd3162` 已切到 100% 流量并保留 FCM Secret。健康 / 公开配置均 200，未认证的私有接口和 FCM 登记均 401。
-- 2026-11-03 私钥轮换：新密钥 `2e4ac67e…`，OAuth 与 `validate_only` 均 HTTP 200；只替换 `FCM_SERVICE_ACCOUNT_JSON` 的 Worker 版本 `449c424c-56d3-456b-a601-f16b893c1249` 已切到 100%，其余四个 Secret 与绑定不变，健康 / 公开配置 200、未认证私有接口 401。旧密钥 `8779647d…` 删除后对回滚的影响见 [API 部署指南](deploy-api.md#回滚)；真实设备送达仍未验。
+- 2026-11-03 私钥轮换：新密钥 `2e4ac67e…`，OAuth 与 `validate_only` 均 HTTP 200；只替换 `FCM_SERVICE_ACCOUNT_JSON` 的 Worker 版本 `449c424c-56d3-456b-a601-f16b893c1249` 已切到 100%，其余四个 Secret 与绑定不变，健康 / 公开配置 200、未认证私有接口 401。旧密钥 `8779647d…` 已于同日在 Google Cloud 删除（控制台无停用选项），对回滚的影响见 [API 部署指南](deploy-api.md#回滚)；真实设备送达仍未验。
 - 用户没有 Apple Developer 付费会员，也没有 iOS 实机，APNs 凭据暂缓；后端实现保留。Expo Push 代转 iOS 通知同样需要自有 Apple 推送凭据，本地通知与 Android FCM 不需要 Apple 会员。
 
 ## Firebase / FCM 配置
