@@ -101,6 +101,7 @@ const TITLED_SCREENS = [
   ['account', '账户'],
   ['devices', '登录设备'],
   ['settings', '外观与同步'],
+  ['app-icon', '应用图标'],
   ['about', '关于 Kaku'],
   ['changelog', '更新日志'],
   ['network-status', '网络诊断'],

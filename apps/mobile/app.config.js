@@ -2,6 +2,12 @@
 // - production：正式包名 com.shqingda.kaku。
 // - 本地与 debug 构建（无 KAKU_BUILD_PROFILE）：com.shqingda.kaku.debug。
 const { resolveApiUrl } = require('./config/api-url.cjs');
+const {
+  ANDROID_ICON_BACKGROUND,
+  DEFAULT_APP_ICON,
+  alternateIconPluginEntries,
+  appIconFiles,
+} = require('./config/app-icons.cjs');
 const KAKU_BUILD_PROFILE = process.env.KAKU_BUILD_PROFILE;
 
 const isProduction = KAKU_BUILD_PROFILE === 'production';
@@ -12,10 +18,7 @@ const suffix = isProduction ? '' : '.debug';
 const apnsEnvironment = process.env.KAKU_APNS_ENVIRONMENT || (isProduction ? 'production' : 'sandbox');
 if (!['sandbox', 'production'].includes(apnsEnvironment)) throw new Error('KAKU_APNS_ENVIRONMENT 必须为 sandbox 或 production');
 const channel = isProduction ? 'production' : 'debug';
-const iconDirectory = './assets/images/app-icons';
-const appIcon = `${iconDirectory}/kaku-${channel}.png`;
-const foregroundIcon = `${iconDirectory}/kaku-${channel}-foreground.png`;
-const monochromeIcon = `${iconDirectory}/kaku-${channel}-monochrome.png`;
+const defaultIcon = appIconFiles(DEFAULT_APP_ICON, channel);
 const sentryPlugin =
   process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG
     ? [
@@ -36,15 +39,16 @@ module.exports = {
     name: 'Kaku',
     version: '1.1.25',
     orientation: 'portrait',
-    icon: appIcon,
+    icon: defaultIcon.iosLight,
     scheme: 'kaku',
     userInterfaceStyle: 'automatic',
     ios: {
       bundleIdentifier: `com.shqingda.kaku${suffix}`,
       entitlements: { 'aps-environment': apnsEnvironment === 'sandbox' ? 'development' : 'production' },
       icon: {
-        dark: appIcon,
-        light: appIcon,
+        dark: defaultIcon.iosDark,
+        light: defaultIcon.iosLight,
+        tinted: defaultIcon.iosTinted,
       },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
@@ -56,11 +60,11 @@ module.exports = {
     android: {
       versionCode: 12,
       adaptiveIcon: {
-        backgroundColor: '#1C181F',
-        foregroundImage: foregroundIcon,
-        monochromeImage: monochromeIcon,
+        backgroundColor: ANDROID_ICON_BACKGROUND,
+        foregroundImage: defaultIcon.foreground,
+        monochromeImage: defaultIcon.monochrome,
       },
-      icon: appIcon,
+      icon: defaultIcon.iosLight,
       googleServicesFile: './google-services.json',
       predictiveBackGestureEnabled: false,
       package: `com.shqingda.kaku${suffix}`,
@@ -85,16 +89,17 @@ module.exports = {
         },
       }],
       'expo-router',
+      ['expo-alternate-app-icons', alternateIconPluginEntries(channel)],
       'expo-image',
       'expo-font',
       'expo-web-browser',
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#1C181F',
+          backgroundColor: '#FFFFFF',
           dark: {
-            backgroundColor: '#1C181F',
-            image: './assets/images/kaku-mark.png',
+            backgroundColor: '#16131A',
+            image: './assets/images/kaku-mark-dark.png',
           },
           image: './assets/images/kaku-mark.png',
           imageWidth: 116,

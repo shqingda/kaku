@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HIT_SLOP } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -83,6 +84,26 @@ export default function SettingsScreen() {
           colors={colors}
           styles={styles}
         />
+        <View style={[styles.group, styles.groupSpacing]}>
+          <Pressable
+            accessibilityLabel="应用图标"
+            accessibilityRole="button"
+            onPress={() => router.push('/app-icon')}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+            testID="settings-app-icon"
+          >
+            <View style={styles.rowCopy}>
+              <Text style={styles.rowTitle}>应用图标</Text>
+              <Text style={styles.rowDescription}>在墨、彩和小写三款图标之间切换。</Text>
+            </View>
+            <SymbolView
+              name={{ android: 'chevron_right', ios: 'chevron.right', web: 'chevron_right' }}
+              size={14}
+              tintColor={colors.subtle}
+              weight="semibold"
+            />
+          </Pressable>
+        </View>
 
         {localStatus === 'loading' ? (
           <Text style={styles.rowDescription}>正在读取本机偏好，云同步暂未开启。</Text>

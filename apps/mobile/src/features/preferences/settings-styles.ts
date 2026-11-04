@@ -22,6 +22,7 @@ export const createSettingsStyles = (colors: ThemeColors) =>
       borderRadius: 20,
       paddingHorizontal: SPACING.lg,
     },
+    groupSpacing: { marginTop: SPACING.md },
     row: {
       alignItems: 'center',
       flexDirection: 'row',
