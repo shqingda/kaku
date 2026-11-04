@@ -56,7 +56,7 @@ module.exports = {
     android: {
       versionCode: 12,
       adaptiveIcon: {
-        backgroundColor: '#DA6E80',
+        backgroundColor: '#1C181F',
         foregroundImage: foregroundIcon,
         monochromeImage: monochromeIcon,
       },
@@ -91,9 +91,9 @@ module.exports = {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#C96878',
+          backgroundColor: '#1C181F',
           dark: {
-            backgroundColor: '#0E0E10',
+            backgroundColor: '#1C181F',
             image: './assets/images/kaku-mark.png',
           },
           image: './assets/images/kaku-mark.png',
@@ -113,7 +113,7 @@ module.exports = {
         {
           color: '#C96878',
           defaultChannel: 'kaku-default',
-          icon: './assets/images/kaku-mark.png',
+          icon: './assets/images/kaku-mark-monochrome.png',
         },
       ],
       [
