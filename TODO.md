@@ -43,6 +43,7 @@
 
 ## 外部条件与兼容跟踪
 
+- [ ] Bangumi passkey 登录后停在 bgm.tv 首页、不回授权页：上游 passkey 脚本登录成功后跳 `result.redirect || '/'`，不带 `chii_referer`。cf62cdd 的「登录窗口开满 5 秒后关闭则自动重开一次授权页」经实机反馈仍未解决，暂缓；可考虑向 Bangumi 反馈或改用其他接入方式。
 - [ ] 商店渠道整体暂停：没有付费 Apple Developer 会员。恢复后依次准备 App Store Connect / Play 记录与凭据、正式签名内部包及设备验收、演示账号截图、隐私/分级/审核资料，齐备后提交。中英文候选文案与截图清单保留在 [商店资料](docs/store/listing.md)。
 - [ ] 原生推送：FCM 凭据、D1 迁移与 Worker 已上线，待小米 13 Ultra 连续覆盖、实际送达与点击验收；APNs 凭据及正式环境暂缓，见 [推送指南](docs/deployment/native-push.md)。
 - [ ] 角色/人物收藏与删除自己的动态：用专用账号复核凭据适用性、真实写入/删除与读回，记录上游错误和列表刷新；不以接口文档代替真实可用证据。
