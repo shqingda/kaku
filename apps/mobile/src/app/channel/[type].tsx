@@ -109,7 +109,7 @@ export default function ChannelScreen() {
           title="近期热门"
         />
         {channelQuery.data && channelQuery.isError ? (
-          <CachedDataNotice onRetry={() => void channelQuery.refetch()} />
+          <CachedDataNotice onRetry={() => void channelQuery.refetch()} retrying={channelQuery.isRefetching} />
         ) : null}
         {channelQuery.isPending && !channelQuery.data ? (
           <View style={styles.stateSlot}>
@@ -195,7 +195,7 @@ export default function ChannelScreen() {
           />
         </View>
         {rankingQuery.data && rankingQuery.isError ? (
-          <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
+          <CachedDataNotice onRetry={() => void rankingQuery.refetch()} retrying={rankingQuery.isRefetching} />
         ) : null}
         {rankingQuery.isPending && !rankingQuery.data ? (
           <View style={styles.stateSlot}>

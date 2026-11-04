@@ -117,7 +117,7 @@ export default function FriendTimelineScreen() {
         }
         ListHeaderComponent={
           timeline.items.length > 0 && (timelineQuery.isError || timelineQuery.fetchStatus === 'paused') ? (
-            <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+            <CachedDataNotice onRetry={() => void timelineQuery.refetch()} retrying={timelineQuery.isRefetching} />
           ) : undefined
         }
         refreshControl={

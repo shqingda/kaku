@@ -221,3 +221,36 @@ test.each(['signOut'] as const)('an old %s cannot revoke or clear a replacement 
   expect(fetchKaku).not.toHaveBeenCalled();
   expect(authStorage.clear).not.toHaveBeenCalled();
 });
+
+describe('passkey login that strands the user on Bangumi home', () => {
+  let clock = 0;
+  const realNow = Date.now;
+  beforeEach(() => { clock = realNow(); jest.spyOn(Date, 'now').mockImplementation(() => clock); });
+  afterEach(() => { jest.mocked(Date.now).mockRestore(); });
+
+  test('a browser closed after signing in reopens authorization once and completes', async () => {
+    const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+    jest.mocked(exchangeHandoffCode).mockResolvedValue(refreshed);
+    const urls: string[] = [];
+    jest.mocked(WebBrowser.openAuthSessionAsync)
+      .mockImplementationOnce(async (url) => { urls.push(url); clock += 20_000; return { type: 'cancel' as WebBrowser.WebBrowserResultType }; })
+      .mockImplementationOnce(async (url) => { urls.push(url); return { type: 'success', url: callback }; });
+    await act(async () => { expect(await hook.result.current.signIn()).toBe(true); });
+    expect(urls).toHaveLength(2);
+    expect(urls[1]).toBe(urls[0]);
+  });
+
+  test('a quick close is a real cancel and does not reopen', async () => {
+    const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+    jest.mocked(WebBrowser.openAuthSessionAsync).mockReset().mockImplementation(async () => { clock += 1_000; return { type: 'cancel' as WebBrowser.WebBrowserResultType }; });
+    await act(async () => { expect(await hook.result.current.signIn()).toBe(false); });
+    expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('closing the reopened authorization ends sign-in', async () => {
+    const hook = await renderHook(useAuth, { wrapper: AuthProvider });
+    jest.mocked(WebBrowser.openAuthSessionAsync).mockReset().mockImplementation(async () => { clock += 20_000; return { type: 'cancel' as WebBrowser.WebBrowserResultType }; });
+    await act(async () => { expect(await hook.result.current.signIn()).toBe(false); });
+    expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledTimes(2);
+  });
+});

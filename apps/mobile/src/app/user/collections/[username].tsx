@@ -182,7 +182,7 @@ function PublicUserCollectionsScreen() {
               subjectType={subjectType}
             />
             {collections.items.length > 0 && (collectionsQuery.isError || collectionsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void collectionsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void collectionsQuery.refetch()} retrying={collectionsQuery.isRefetching} />
             ) : null}
           </>
         }

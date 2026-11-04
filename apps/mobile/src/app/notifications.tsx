@@ -101,7 +101,7 @@ export default function NotificationsScreen() {
         ListHeaderComponent={
           <View>
             {notificationsQuery.data && (notificationsQuery.isError || notificationsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void notificationsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void notificationsQuery.refetch()} retrying={notificationsQuery.isRefetching} />
             ) : null}
             {markRead.isError ? (
               <AppState title="标记已读失败" text="请检查网络后重试，未读状态已恢复。" />

@@ -130,7 +130,7 @@ export default function PublicUserTimelineScreen() {
             <Text style={styles.title}>时间线</Text>
             <Text style={styles.subtitle}>@{username} 的公开动态</Text>
             {timeline.items.length > 0 && (timelineQuery.isError || timelineQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void timelineQuery.refetch()} retrying={timelineQuery.isRefetching} />
             ) : null}
           </View>
         }

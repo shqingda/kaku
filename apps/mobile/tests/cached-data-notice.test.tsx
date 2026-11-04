@@ -33,4 +33,22 @@ describe('CachedDataNotice', () => {
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it('shows progress and ignores taps while a retry is running', async () => {
+    const onRetry = jest.fn();
+    const screen = await render(
+      <ThemeProvider>
+        <CachedDataNotice onRetry={onRetry} retrying />
+      </ThemeProvider>,
+    );
+
+    const button = screen.getByRole('button', { name: '重新获取最新内容' });
+    expect(button.props.accessibilityState).toMatchObject({ busy: true, disabled: true });
+    expect(screen.getByText('正在重新读取最新数据…')).toBeTruthy();
+    expect(screen.queryByText('重试')).toBeNull();
+
+    fireEvent.press(button);
+
+    expect(onRetry).not.toHaveBeenCalled();
+  });
 });

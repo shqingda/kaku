@@ -103,13 +103,13 @@ export async function getPublicUserEntities(
 
 export async function getPublicUserTimeline(
   username: string,
-  cursor?: string,
+  cursor?: string | null,
   signal?: AbortSignal,
 ): Promise<PublicTimelinePage> {
   const limit = 10;
   const timeline = await getBangumiUserTimeline(
     username,
-    cursor === undefined ? undefined : Number(cursor),
+    cursor == null ? undefined : Number(cursor),
     limit,
     signal,
   );

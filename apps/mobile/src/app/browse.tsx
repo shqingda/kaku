@@ -226,7 +226,7 @@ export default function BrowseScreen() {
               {year ? ` · ${year}` : ''}{tag ? ` · ${tag}` : ''}
             </Text>
             {browse.items.length > 0 && (browseQuery.isError || browseQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void browseQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void browseQuery.refetch()} retrying={browseQuery.isRefetching} />
             ) : null}
           </View>
         }

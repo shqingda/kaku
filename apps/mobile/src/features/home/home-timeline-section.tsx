@@ -52,7 +52,8 @@ export function HomeTimelineSection({
         </Pressable>
       </View>
       <View style={styles.timelineCard}>
-        {timelineQuery.isPending ? (
+        {timelineQuery.isPending ||
+        (timelineQuery.isError && items.length === 0 && timelineQuery.isFetching) ? (
           <View style={styles.timelineInlineState}>
             <ActivityIndicator color={colors.accent} size="small" />
             <Text style={styles.timelineEmptyText}>正在读取好友动态</Text>
@@ -76,7 +77,10 @@ export function HomeTimelineSection({
           <>
             {timelineQuery.isError ? (
               <View style={styles.timelineCachedNotice}>
-                <CachedDataNotice onRetry={() => void timelineQuery.refetch()} />
+                <CachedDataNotice
+                  onRetry={() => void timelineQuery.refetch()}
+                  retrying={timelineQuery.isRefetching}
+                />
               </View>
             ) : null}
             {items.map((item, index) => (

@@ -52,6 +52,7 @@ export default function SubjectCharactersScreen() {
               {charactersQuery.isError ? (
                 <CachedDataNotice
                   onRetry={() => void charactersQuery.refetch()}
+                  retrying={charactersQuery.isRefetching}
                 />
               ) : null}
               <View style={styles.header}>

@@ -103,7 +103,7 @@ export default function CalendarScreen() {
               })}
             </ScrollView>
             {calendarQuery.data && (calendarQuery.isError || calendarQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void calendarQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void calendarQuery.refetch()} retrying={calendarQuery.isRefetching} />
             ) : null}
             <View style={styles.listHeading}>
               <Text style={styles.listTitle}>

@@ -107,7 +107,7 @@ export default function PublicUserEntitiesScreen() {
               })}
             </View>
             {entities.length > 0 && (entitiesQuery.isError || entitiesQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void entitiesQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void entitiesQuery.refetch()} retrying={entitiesQuery.isRefetching} />
             ) : null}
           </View>
         }

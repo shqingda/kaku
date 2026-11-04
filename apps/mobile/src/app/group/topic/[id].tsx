@@ -139,7 +139,7 @@ export default function GroupTopicScreen() {
           ListHeaderComponent={
             <>
               {topic && topicQuery.isError ? (
-                <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
+                <CachedDataNotice onRetry={() => void topicQuery.refetch()} retrying={topicQuery.isRefetching} />
               ) : (
                 <DiscussionStatus
                   errorText="话题读取失败，请检查网络后重试。"

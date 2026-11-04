@@ -129,7 +129,7 @@ export default function TopicScreen() {
           ListHeaderComponent={
             <>
               {topic && topicQuery.isError ? (
-                <CachedDataNotice onRetry={() => void topicQuery.refetch()} />
+                <CachedDataNotice onRetry={() => void topicQuery.refetch()} retrying={topicQuery.isRefetching} />
               ) : (
                 <DiscussionStatus
                   isError={topicQuery.isError}

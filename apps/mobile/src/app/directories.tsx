@@ -161,7 +161,7 @@ export default function DirectoriesScreen() {
               <Text style={styles.createButtonText}>新建目录</Text>
             </Pressable>
             {paged.items.length > 0 && (indexesQuery.isError || indexesQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} retrying={indexesQuery.isRefetching} />
             ) : null}
           </View>
         }

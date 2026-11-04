@@ -121,7 +121,7 @@ export default function GlobalBlogsScreen() {
               })}
             </ScrollView>
             {blogs.items.length > 0 && (blogsQuery.isError || blogsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} retrying={blogsQuery.isRefetching} />
             ) : null}
           </View>
         }

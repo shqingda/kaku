@@ -132,7 +132,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           ListHeaderComponent={
             <>
               {review && reviewQuery.isError ? (
-                <CachedDataNotice onRetry={() => void reviewQuery.refetch()} />
+                <CachedDataNotice onRetry={() => void reviewQuery.refetch()} retrying={reviewQuery.isRefetching} />
               ) : (
                 <DiscussionStatus
                   errorText={`${contentLabel}读取失败，请检查网络后重试。`}

@@ -117,7 +117,7 @@ export default function TagsScreen() {
               {getSubjectTypeLabel(subjectType)}标签
             </Text>
             {tags.items.length > 0 && (tagsQuery.isError || tagsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void tagsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void tagsQuery.refetch()} retrying={tagsQuery.isRefetching} />
             ) : null}
           </View>
         }

@@ -1,3 +1,5 @@
+import { getTurnstileTokenFromCallback, isTurnstileCallbackUrl } from './turnstile-callback.ts';
+
 // Load Bangumi's real HTTPS page: never emulate its origin with local HTML.
 export const TURNSTILE_PAGE_URL = 'https://next.bgm.tv/p1/turnstile?redirect_uri=kaku%3A%2F%2Fauth%2Fturnstile&theme=auto';
 
@@ -14,6 +16,16 @@ export function allowTurnstileNavigation(url: string, isTopFrame: boolean) {
   if (url === 'about:blank' || url === 'about:srcdoc') return true;
   try { return new URL(url).origin === 'https://challenges.cloudflare.com'; }
   catch { return false; }
+}
+
+// The official page redirects to kaku://auth/turnstile?token=… when its own
+// widget succeeds. Accept that token instead of dropping the navigation.
+export function turnstileTokenFromRedirect(url: string) {
+  if (!isTurnstileCallbackUrl(url)) return null;
+  try {
+    const token = getTurnstileTokenFromCallback(url);
+    return token.length <= 2048 ? token : null;
+  } catch { return null; }
 }
 
 type TurnstileMessage = { type: 'token'; token: string } | { type: 'interactive' | 'error' | 'expired' | 'timeout' };

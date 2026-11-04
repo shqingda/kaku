@@ -5,5 +5,7 @@ import { getFriendTimelinePath } from '../src/infrastructure/kaku/timeline-pagin
 
 test('friend timeline forwards the Bangumi until cursor through Kaku', () => {
   assert.equal(getFriendTimelinePath(), '/me/timeline');
+  // A persisted first-page cursor is restored from JSON as null.
+  assert.equal(getFriendTimelinePath(null), '/me/timeline');
   assert.equal(getFriendTimelinePath(42), '/me/timeline?until=42');
 });

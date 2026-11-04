@@ -114,7 +114,7 @@ export default function RankingsScreen() {
               selectedType={subjectType}
             />
             {rankingQuery.data && (rankingQuery.isError || rankingQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void rankingQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void rankingQuery.refetch()} retrying={rankingQuery.isRefetching} />
             ) : null}
           </>
         }

@@ -211,7 +211,7 @@ export default function PeopleScreen() {
               </>
             )}
             {people.items.length > 0 && (activeQuery.isError || activeQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void activeQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void activeQuery.refetch()} retrying={activeQuery.isRefetching} />
             ) : null}
           </View>
         }

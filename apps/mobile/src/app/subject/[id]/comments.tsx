@@ -109,7 +109,7 @@ export default function SubjectCommentsScreen() {
               </Text>
             </View>
             {comments.items.length > 0 && (commentsQuery.isError || commentsQuery.isPaused) ? (
-              <CachedDataNotice onRetry={() => void commentsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void commentsQuery.refetch()} retrying={commentsQuery.isRefetching} />
             ) : (
               <DiscussionStatus
                 errorText={commentsQuery.isPaused

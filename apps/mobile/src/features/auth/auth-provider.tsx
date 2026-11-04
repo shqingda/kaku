@@ -36,6 +36,9 @@ import { AuthSessionChangedError, type AuthRequestScope } from './auth-request-s
 export { AuthSessionChangedError, type AuthRequestIdentity, type AuthRequestScope } from './auth-request-scope';
 import type { AuthSession } from './model';
 
+// Long enough that the user signed in on Bangumi rather than backing out.
+const PASSKEY_RESUME_MIN_MS = 5_000;
+
 type AuthSessionValue = {
   authEpoch: number;
   error?: string;
@@ -332,10 +335,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pending = proof.pending;
       pendingLoginRef.current = pending;
       await loginAttemptStorage.save(pending);
-      const result = await WebBrowser.openAuthSessionAsync(
-        getBangumiLoginUrl({ codeChallenge: proof.codeChallenge, requestId: pending.requestId }),
-        getAppCallbackUrl(),
-      );
+      const loginUrl = getBangumiLoginUrl({ codeChallenge: proof.codeChallenge, requestId: pending.requestId });
+      const openedAt = Date.now();
+      let result = await WebBrowser.openAuthSessionAsync(loginUrl, getAppCallbackUrl());
+      // Bangumi's passkey login ignores the pending authorization and lands on
+      // its own home page, so the user closes the browser while signed in.
+      // Reopen once: Bangumi now has its cookie and goes straight to 授权.
+      // A quick close is a real cancel and is respected.
+      if (
+        (result.type === 'cancel' || result.type === 'dismiss') &&
+        Date.now() - openedAt >= PASSKEY_RESUME_MIN_MS &&
+        sessionVersionRef.current === previousVersion
+      ) {
+        result = await WebBrowser.openAuthSessionAsync(loginUrl, getAppCallbackUrl());
+      }
       if (result.type === 'success') {
         await completeSignIn(result.url);
         return true;

@@ -125,7 +125,7 @@ export default function PublicUserBlogsScreen() {
               @{username} · {total ? `${total} 篇` : '读取中'}
             </Text>
             {blogs.items.length > 0 && (blogsQuery.isError || blogsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void blogsQuery.refetch()} retrying={blogsQuery.isRefetching} />
             ) : null}
           </View>
         }

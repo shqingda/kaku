@@ -143,6 +143,7 @@ export default function SubjectDiscussionsScreen() {
                 discussionQuery.refetch(),
               ])
             }
+            retrying={subjectQuery.isRefetching || discussionQuery.isRefetching}
           />
         ) : null}
         <View style={styles.header}>

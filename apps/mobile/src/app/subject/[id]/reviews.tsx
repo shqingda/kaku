@@ -114,7 +114,7 @@ export default function SubjectReviewsScreen() {
               </Text>
             </View>
             {reviews.items.length > 0 && (reviewsQuery.isError || reviewsQuery.isPaused) ? (
-              <CachedDataNotice onRetry={() => void reviewsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void reviewsQuery.refetch()} retrying={reviewsQuery.isRefetching} />
             ) : (
               <DiscussionStatus
                 errorText={reviewsQuery.isPaused

@@ -63,7 +63,7 @@ export default function WikiScreen() {
             <Text style={styles.title}>维基动态</Text>
             <Text style={styles.meta}>查看 Bangumi 最近的公开条目修订</Text>
             {revisions.length > 0 && (revisionsQuery.isError || revisionsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void revisionsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void revisionsQuery.refetch()} retrying={revisionsQuery.isRefetching} />
             ) : null}
           </View>
         }

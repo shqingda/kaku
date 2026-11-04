@@ -75,3 +75,20 @@ test('navigation keeps the top frame on the official page and permits challenge 
     assert.equal(allowTurnstileNavigation(url, true), false);
   }
 });
+
+test('the official page redirect still yields its token when its own widget wins', async () => {
+  const { turnstileTokenFromRedirect } = await import('../src/features/auth/inline-turnstile-bridge.ts');
+  assert.equal(turnstileTokenFromRedirect('kaku://auth/turnstile?token=abc.def'), 'abc.def');
+  assert.equal(turnstileTokenFromRedirect('kaku://auth/turnstile'), null);
+  assert.equal(turnstileTokenFromRedirect('kaku://auth/other?token=abc'), null);
+  assert.equal(turnstileTokenFromRedirect('https://next.bgm.tv/p1/turnstile?token=abc'), null);
+  assert.equal(turnstileTokenFromRedirect(`kaku://auth/turnstile?token=${'x'.repeat(2049)}`), null);
+});
+
+test('prefetched tokens are only reused well inside their five-minute life', async () => {
+  const { isTurnstileTokenFresh } = await import('../src/features/auth/inline-verification-timing.ts');
+  assert.equal(isTurnstileTokenFresh(0, 239_999), true);
+  // Cloudflare tokens die at 300 s; stop reusing them well before that.
+  assert.equal(isTurnstileTokenFresh(0, 240_000), false);
+  assert.equal(isTurnstileTokenFresh(0, 299_999), false);
+});

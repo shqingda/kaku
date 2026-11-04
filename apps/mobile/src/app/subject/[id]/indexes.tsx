@@ -98,7 +98,7 @@ export default function SubjectIndexesScreen() {
               </Text>
             </View>
             {indexes.items.length > 0 && (indexesQuery.isError || indexesQuery.isPaused) ? (
-              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void indexesQuery.refetch()} retrying={indexesQuery.isRefetching} />
             ) : (
               <DiscussionStatus
                 errorText={indexesQuery.isPaused

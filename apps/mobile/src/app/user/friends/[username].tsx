@@ -101,7 +101,7 @@ export default function PublicUserFriendsScreen() {
               @{username} · {friends.total ? `${friends.total} 位` : '读取中'}
             </Text>
             {friends.items.length > 0 && (friendsQuery.isError || friendsQuery.fetchStatus === 'paused') ? (
-              <CachedDataNotice onRetry={() => void friendsQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void friendsQuery.refetch()} retrying={friendsQuery.isRefetching} />
             ) : null}
           </View>
         }

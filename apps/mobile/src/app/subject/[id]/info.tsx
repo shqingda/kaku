@@ -78,7 +78,7 @@ export default function SubjectInfoScreen() {
           showsVerticalScrollIndicator={false}
         >
           {subjectQuery.isError ? (
-            <CachedDataNotice onRetry={() => void subjectQuery.refetch()} />
+            <CachedDataNotice onRetry={() => void subjectQuery.refetch()} retrying={subjectQuery.isRefetching} />
           ) : null}
           <View style={styles.header}>
             <Text style={styles.title}>评分与资料</Text>

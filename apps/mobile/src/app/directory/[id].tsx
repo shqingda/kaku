@@ -190,6 +190,7 @@ export default function PublicIndexScreen() {
             {index && (indexQuery.isError || indexQuery.isPaused) ? (
               <CachedDataNotice
                 onRetry={() => void indexQuery.refetch()}
+                retrying={indexQuery.isRefetching}
                 retryLabel="重新获取目录资料"
               />
             ) : (
@@ -230,6 +231,7 @@ export default function PublicIndexScreen() {
             {items.items.length > 0 && (itemsQuery.isError || itemsQuery.isPaused) ? (
               <CachedDataNotice
                 onRetry={() => void itemsQuery.refetch()}
+                retrying={itemsQuery.isRefetching}
                 retryLabel="重新获取目录条目"
               />
             ) : null}

@@ -93,7 +93,7 @@ export default function CommunityScreen() {
         ListHeaderComponent={
           <>
             {community && (communityQuery.isError || communityQuery.isPaused) ? (
-              <CachedDataNotice onRetry={() => void communityQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void communityQuery.refetch()} retrying={communityQuery.isRefetching} />
             ) : (
               <DiscussionStatus
                 errorText={communityQuery.isPaused

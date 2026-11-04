@@ -252,7 +252,7 @@ export default function StaffScreen() {
           ListHeaderComponent={
             <>
               {staffQuery.isError ? (
-                <CachedDataNotice onRetry={() => void staffQuery.refetch()} />
+                <CachedDataNotice onRetry={() => void staffQuery.refetch()} retrying={staffQuery.isRefetching} />
               ) : null}
               <View style={styles.pageHeader}>
                 <Text style={styles.pageTitle}>{pageTitle}</Text>

@@ -148,11 +148,12 @@ export function usePublicUserTimeline(username: string) {
     Error,
     InfiniteData<PublicTimelinePage>,
     ReturnType<typeof queryKeys.publicUserTimeline>,
-    string | undefined
+    string | null
   >({
     enabled: username.trim().length > 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: undefined,
+    // null survives JSON persistence; undefined would be restored as null anyway.
+    initialPageParam: null,
     meta: PUBLIC_QUERY_META,
     queryFn: ({ pageParam, signal }) =>
       getPublicUserTimeline(username.trim(), pageParam, signal),

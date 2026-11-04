@@ -99,7 +99,7 @@ export default function GroupScreen() {
         ListHeaderComponent={
           <>
             {group && (groupQuery.isError || groupQuery.isPaused) ? (
-              <CachedDataNotice onRetry={() => void groupQuery.refetch()} />
+              <CachedDataNotice onRetry={() => void groupQuery.refetch()} retrying={groupQuery.isRefetching} />
             ) : (
               <DiscussionStatus
                 errorText={groupQuery.isPaused

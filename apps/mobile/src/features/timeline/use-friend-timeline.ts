@@ -18,11 +18,12 @@ export function useFriendTimeline() {
     Error,
     InfiniteData<FriendTimelinePage>,
     ReturnType<typeof queryKeys.friendTimeline>,
-    number | undefined
+    number | null
   >({
     enabled: Boolean(session),
     getNextPageParam: (lastPage) => lastPage.nextUntil,
-    initialPageParam: undefined,
+    // null survives JSON persistence; undefined would be restored as null anyway.
+    initialPageParam: null,
     queryFn: ({ pageParam, signal }) =>
       getFriendTimeline(request, pageParam, signal),
     queryKey: queryKeys.friendTimeline(session?.user.id),
