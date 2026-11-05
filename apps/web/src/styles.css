@@ -25,6 +25,7 @@
   --on-ink: #ffffff;
   --on-rose: #1f1a24;
   --header-bg: rgba(255, 255, 255, 0.76);
+  --island-shadow: 0 0 0 1px var(--line), 0 8px 24px rgba(31, 26, 36, 0.08);
   --shadow-card: 0 1px 2px rgba(31, 26, 36, 0.05), 0 8px 24px rgba(31, 26, 36, 0.05);
   --shadow-phone: 0 32px 80px rgba(31, 26, 36, 0.16);
 
@@ -47,6 +48,7 @@
   --space-10: 144px;
   --gutter: clamp(16px, 4vw, 32px);
   --page-width: 1120px;
+  --island-width: 880px;
 
   --text-xs: 12px;
   --text-sm: 14px;
@@ -86,7 +88,8 @@
   --amber: #f7be6b;
   --violet: #9d8cc9;
   --on-ink: #16131a;
-  --header-bg: rgba(14, 12, 17, 0.72);
+  --header-bg: rgba(33, 29, 38, 0.72);
+  --island-shadow: 0 0 0 1px var(--line), 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-card: none;
   --shadow-phone: 0 32px 80px rgba(0, 0, 0, 0.6);
   --band-bg: #17141b;
@@ -172,6 +175,8 @@ main:focus {
 
 .site-shell {
   min-height: 100dvh;
+  /* The header pill's spring overshoots by a pixel; clip keeps sticky working, hidden would not. */
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
 }
@@ -302,10 +307,47 @@ main:focus {
   gap: var(--space-4);
   min-height: 64px;
   padding-inline: max(var(--gutter), calc((100% - var(--page-width)) / 2));
-  border-bottom: 1px solid var(--line);
-  background: var(--header-bg);
+  /* Only the pill and the controls take clicks, so the page stays usable beside the pill. */
+  pointer-events: none;
+  transition: padding-inline var(--spring-duration) var(--spring-soft);
+}
+
+.site-header > *,
+.site-header::before {
+  pointer-events: auto;
+}
+
+/* The pill is its own layer: the header's content never has to be redrawn with it. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: 0;
+  transition-property: inset, border-radius, background-color, box-shadow, backdrop-filter;
+  transition-duration: var(--spring-duration);
+  transition-timing-function: var(--spring-soft);
+}
+
+.site-header.is-island {
+  padding-inline: calc(max(var(--space-2), (100% - var(--island-width)) / 2) + var(--space-4));
+}
+
+.site-header.is-island::before {
+  inset: 10px max(var(--space-2), calc((100% - var(--island-width)) / 2));
+  border-radius: 22px;
+  background-color: var(--header-bg);
+  box-shadow: var(--island-shadow);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
+}
+
+.header-sentinel {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
 
 .brand {
