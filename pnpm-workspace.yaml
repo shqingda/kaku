@@ -17,20 +17,9 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
   # Previously approved Expo patches still younger than 24 hours on 2026-11-01.
-  - '@expo/cli@58.1.18'
-  - '@expo/local-build-cache-provider@58.0.10'
-  - '@expo/log-box@58.0.14'
-  - '@expo/metro-config@58.0.20'
-  - '@expo/metro-runtime@58.0.16'
-  - '@expo/prebuild-config@58.0.18'
-  - '@expo/router-server@58.0.20'
-  - 'babel-preset-expo@58.0.23'
-  - 'expo@58.0.22'
   - 'expo-build-properties@58.0.12'
   - 'expo-dev-client@58.0.18'
   - 'expo-dev-launcher@58.0.18'
-  - 'expo-modules-core@58.0.29'
-  - 'expo-router@58.0.29'
   - 'expo-sqlite@58.0.15'
 
 allowBuilds:
