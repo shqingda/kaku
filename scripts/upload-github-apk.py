@@ -8,8 +8,11 @@ import re
 from pathlib import Path
 import subprocess
 import tempfile
+import time
 
 REPOSITORY = 'shqingda/kaku'
+DRAFT_LOOKUP_ATTEMPTS = 6
+DRAFT_LOOKUP_DELAY_SECONDS = 5
 PROXY_KEYS = ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY')
 
 
@@ -41,6 +44,16 @@ def check_asset(assets, apk, digest):
     return True
 
 
+def find_releases(tag):
+    # The tag endpoint is for published releases; the authenticated list includes drafts.
+    # A draft created moments ago can take a few seconds to appear in that list.
+    for attempt in range(DRAFT_LOOKUP_ATTEMPTS):
+        matches = [item for item in github_items(f'repos/{REPOSITORY}/releases') if item['tag_name'] == tag]
+        if matches or attempt == DRAFT_LOOKUP_ATTEMPTS - 1:
+            return matches
+        time.sleep(DRAFT_LOOKUP_DELAY_SECONDS)
+
+
 def upload_apk(tag, apk, direct=False):
     if apk.name not in ('kaku-release.apk', 'kaku-debug.apk') or not apk.is_file():
         raise ValueError('需要已验证的 kaku-release.apk 或 kaku-debug.apk')
@@ -48,8 +61,7 @@ def upload_apk(tag, apk, direct=False):
         raise ValueError('需要形如 v1.2.3 的版本标签')
     with apk.open('rb') as source:
         digest = 'sha256:' + hashlib.file_digest(source, 'sha256').hexdigest()
-    # The tag endpoint is for published releases; the authenticated list includes drafts.
-    matches = [item for item in github_items(f'repos/{REPOSITORY}/releases') if item['tag_name'] == tag]
+    matches = find_releases(tag)
     if len(matches) != 1:
         raise RuntimeError('未找到唯一的版本草稿，请先创建草稿并确认权限')
     release = matches[0]

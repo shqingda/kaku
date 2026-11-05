@@ -31,6 +31,17 @@ class UploadTests(unittest.TestCase):
                 upload.upload_apk('vv1..2', self.apk)
             query.assert_not_called()
 
+    def test_new_draft_is_found_after_a_short_delay(self):
+        with patch.object(upload, 'github_json', side_effect=[[], [self.release]]), \
+                patch.object(upload.time, 'sleep') as sleep:
+            self.assertEqual(upload.find_releases('v1.2.3'), [self.release])
+            sleep.assert_called_once()
+
+    def test_missing_draft_stops_after_the_last_lookup(self):
+        with patch.object(upload, 'github_json', return_value=[]) as query, patch.object(upload.time, 'sleep'):
+            self.assertEqual(upload.find_releases('v1.2.3'), [])
+            self.assertEqual(query.call_count, upload.DRAFT_LOOKUP_ATTEMPTS)
+
     def test_verified_existing_asset_never_reuploads(self):
         with patch.object(upload, 'github_json', side_effect=[[self.release], [self.asset]]), \
                 patch.object(upload.subprocess, 'run') as run:

@@ -4,9 +4,11 @@
 
 ## 构建入口约定
 
-自 2026-10-28 起，Android 日常实机测试和验证默认先运行 `pnpm ci:check`，通过后本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
+**自 2026-11-05 起，正式发版一律走 GitHub Actions 线上构建、签名和上传，本地构建只用于给用户发测试包。** 不把本地 APK 上传到正式 Release，也不让用户手动上传。
 
-## GitHub Actions 构建（仅确定发版时）
+Android 日常实机测试和验证先运行 `pnpm ci:check`，通过后本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
+
+## GitHub Actions 构建（正式发版唯一入口）
 
 用户明确确定要发版后，可使用 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py --direct` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
 
@@ -33,13 +35,14 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 ### CI 发版步骤
 
 1. 本地修改版本、写 `scripts/release-notes.md`、运行 `node scripts/sync-changelog.mjs`，检查差异后提交并推送（需要用户授权推送）。
-2. Actions 页运行 **Android release**，在审批提示中批准。
-3. 下载构建附件或草稿中的 APK，核对版本、签名与权限；需要时装到手机验证。
+2. 运行 `gh workflow run android-release.yml --repo shqingda/kaku --ref main`，用户在 Actions 页批准 `android-release` 环境。
+3. 下载草稿中的 APK，核对版本、签名、权限、大小与 SHA-256；需要时装到手机验证。线上包与本地测试包的摘要不同，不能用本地包的 SHA-256 代替。
 4. 在草稿页点击发布并设为 latest，或执行 `gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest`。
+5. 把构建附件里的 `*.sources/` 下载到本地 `apps/mobile/dist-split/` 保留（附件只存 90 天），再按下文清理。
 
 2026-10-27 首次 `build_only` 试跑（运行 40374580613，提交 `b8b0742`）与本地 v1.1.23 包比对：大小同为 44,521,023 字节，versionCode 10 / 1.1.23、仅 arm64，API 29 与 API 33 签名证书摘要一致，权限清单相同。
 
-本地构建是日常实机测试的默认路径，也可用于正式发版、排查构建问题或生成诊断对照包。已有验收 APK 时优先复用，避免重复构建。
+本地构建用于实机测试包、排查构建问题或生成诊断对照包，不用于正式发版。已有验收 APK 时优先复用，避免重复构建。
 
 ## 纯本地构建（实机测试默认）
 
@@ -116,7 +119,9 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
-## 分步准备与发布 GitHub Release（本地构建）
+## 分步准备与发布 GitHub Release（本地构建，已停用）
+
+2026-11-05 起正式发版不再使用本节和下一节的本地上传方式，仅保留作历史记录和脚本说明。
 
 准备、构建、上传和发布分别执行。推送和发布仍需要用户明确授权；构建和上传脚本不会隐式提交、推送或发布。
 
@@ -134,7 +139,7 @@ v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求�
 
 ## GitHub APK 上传固定方式
 
-下次本机发版优先复用 v1.1.21 成功方式：`curl --http2`，显式 SOCKS5
+以下是停用前的本机上传经验：当时优先复用 v1.1.21 成功方式：`curl --http2`，显式 SOCKS5
 `127.0.0.1:7890`，关闭 `Expect`，15 秒连接超时、900 秒总超时并显示上传进度。
 本次约 8 分钟传完 53.06 MB；没有输出响应不代表卡死，应看上传百分比。
 保留 FlClash / TUN 配置，清除代理环境变量，仅上传命令显式使用 SOCKS5。

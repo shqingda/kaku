@@ -17,13 +17,17 @@ This repository is both a product and a learning project.
 - Prefer code the owner can explain in an interview over clever abstractions.
 - Keep the product provider-neutral. Bangumi is an adapter, not the domain model.
 - Never hide failures behind a blank loading state. Offline, retrying, and failed states must be explicit.
-- Android physical-device testing and verification default to a locally built release
-  APK (`pnpm build:android`). Send the APK or provide its absolute path, then wait
-  for the user to install it before device testing. Report build checks separately
-  from device verification. To conserve GitHub Actions usage, run Android CI builds
-  only when the user has explicitly confirmed release intent; routine testing,
-  verification, or a local build failure does not authorize a CI build, including
-  `build_only`. See `docs/development/testing.md` and `docs/deployment/release.md`.
+- Local Android builds (`pnpm build:android`) are only for test APKs sent to the user.
+  Send the APK or provide its absolute path, then wait for the user to install it
+  before device testing. Report build checks separately from device verification.
+- Every formal Android release builds, signs and uploads through the Android release
+  GitHub Actions workflow. Never upload a locally built APK to a formal release, and
+  never ask the user to upload one. To conserve GitHub Actions usage, run this
+  workflow only when the user has explicitly confirmed release intent; routine
+  testing, verification, or a local build failure does not authorize a CI build,
+  including `build_only`. The `android-release` environment needs the user's own
+  approval on each run; do not approve it for them. See
+  `docs/development/testing.md` and `docs/deployment/release.md`.
 - Local iOS testing must reuse the existing iPhone 18 Pro (iOS 27.0), UDID
   `A395E274-D899-42DA-BE4C-416A9F89F671`. List devices before use; if it is
   missing, report the blocker instead of creating or cloning another simulator.
@@ -68,13 +72,8 @@ Unset `http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY`
 before `git push`, GitHub Release, EAS, or wrangler. Clash will hang those
 connections.
 
-For GitHub APK uploads, use the successful v1.1.21 procedure in
-`docs/deployment/release.md#github-apk-上传固定方式` first: curl HTTP/2,
-explicit `socks5h://127.0.0.1:7890`, no Expect header, 900-second timeout,
-and visible progress. Keep proxy environment variables unset; the explicit
-SOCKS proxy applies only to APK upload. Do not retry gh uploads or rebuild
-an already verified APK just because uploading is slow. Verify remote size
-and SHA-256 before publishing the draft.
+The workflow uploads the APK to the draft from GitHub's network. Verify the draft's
+APK version, signature, permissions, size and SHA-256 before publishing it.
 
 - 更新日志从 v1.1.24 起持续累积保留；此前旧记录是一次性清理。发新版不得删除或隐藏 v1.1.24 及之后的历史版本，最新默认展开、旧版可折叠。
-- 正式发版成功并确认远端 APK 大小与 SHA-256 一致后，自动清理本地 APK 和未正式发布测试包的 `.sources`，只保留正式发布版本的 `.sources`（包括历史正式版）。按 `.sources/manifest.json` 中的 APK SHA-256 与 GitHub 正式 Release 资产或已核验的历史发布记录匹配，不能只看版本号；未确认是否正式发布的记录先核实，不凭猜测删除。清理不改动远端 Release、源码、签名密钥或设备应用数据；报告删除内容与回收空间。
+- 正式发版成功并确认远端 APK 大小与 SHA-256 一致后，自动清理本地 APK 和未正式发布测试包的 `.sources`，只保留正式发布版本的 `.sources`（包括历史正式版）。线上构建的 `.sources` 在 Actions 附件里只存 90 天，发布后要下载到本地 `apps/mobile/dist-split/` 保留。按 `.sources/manifest.json` 中的 APK SHA-256 与 GitHub 正式 Release 资产或已核验的历史发布记录匹配，不能只看版本号；未确认是否正式发布的记录先核实，不凭猜测删除。清理不改动远端 Release、源码、签名密钥或设备应用数据；报告删除内容与回收空间。
