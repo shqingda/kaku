@@ -67,21 +67,29 @@ class UploadTests(unittest.TestCase):
                 self.assertEqual(run.call_count, 1)
                 args = run.call_args.args[0]
                 self.assertIn('--http2', args)
-                self.assertEqual(args[args.index('--proxy') + 1], 'socks5h://127.0.0.1:7890')
+                self.assertNotIn('--proxy', args)
+                self.assertEqual(args[args.index('--noproxy') + 1], '*')
                 self.assertEqual(args[args.index('--max-time') + 1], '900')
                 self.assertIn('Expect:', args)
                 self.assertNotIn('test-token', ' '.join(args))
                 self.assertNotIn('HTTPS_PROXY', run.call_args.kwargs['env'])
 
-    def test_direct_upload_skips_the_local_proxy(self):
-        with patch.object(upload, 'github_json', side_effect=[[self.release], [], [self.asset]]), \
-                patch.object(upload.subprocess, 'check_output', return_value='test-token'), \
+    def test_interrupted_upload_is_cleared_before_uploading(self):
+        starter = {**self.asset, 'id': 9, 'state': 'starter', 'digest': None}
+        with patch.object(upload, 'github_json', side_effect=[[self.release], [starter], [self.asset]]), \
+                patch.object(upload.subprocess, 'check_output', return_value='test-token') as command, \
                 patch.object(upload.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
-            upload.upload_apk('v1.2.3', self.apk, direct=True)
-            args = run.call_args.args[0]
-            self.assertNotIn('--proxy', args)
-            self.assertEqual(args[args.index('--noproxy') + 1], '*')
-            self.assertEqual(args[args.index('--max-time') + 1], '900')
+            upload.upload_apk('v1.2.3', self.apk)
+            self.assertEqual(command.call_args_list[0].args[0],
+                             ['gh', 'api', '-X', 'DELETE', 'repos/shqingda/kaku/releases/assets/9'])
+            self.assertEqual(run.call_count, 1)
+
+    def test_upload_refuses_to_run_outside_github_actions(self):
+        with patch.object(upload.sys, 'argv', ['upload', 'v1.2.3']), patch.dict(upload.os.environ, clear=True), \
+                patch.object(upload, 'upload_apk') as upload_apk, patch.object(upload.sys, 'stderr'):
+            with self.assertRaises(SystemExit):
+                upload.main()
+            upload_apk.assert_not_called()
 
     def test_unconfirmed_upload_stops_without_retry_or_rebuild(self):
         with patch.object(upload, 'github_json', side_effect=[[self.release], [], []]), \

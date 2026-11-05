@@ -120,10 +120,10 @@ jobs:
               --notes-file scripts/release-notes.md --target "$GITHUB_SHA"
           fi
 
-      # 远端已有同名资源时只核对大小和 SHA-256，不一致即停止，不覆盖。
+      # 中断留下的 starter 占位会先清掉；已完成的同名资源只核对大小和 SHA-256，不一致即停止，不覆盖。
       - name: Upload APK to draft
         if: ${{ !inputs.build_only }}
-        run: python3 scripts/upload-github-apk.py "${{ steps.version.outputs.tag }}" --direct
+        run: python3 scripts/upload-github-apk.py "${{ steps.version.outputs.tag }}"
 
       - name: Remove signing files
         if: always()

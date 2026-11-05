@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upload an already verified APK to an existing draft; never build or publish."""
+"""Upload the CI-built APK to an existing draft from GitHub Actions; never build or publish."""
 import argparse
 import hashlib
 import json
@@ -7,6 +7,7 @@ import os
 import re
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -54,7 +55,20 @@ def find_releases(tag):
         time.sleep(DRAFT_LOOKUP_DELAY_SECONDS)
 
 
-def upload_apk(tag, apk, direct=False):
+def remove_unfinished_assets(assets, name):
+    # An interrupted upload leaves a `starter` asset: it never holds a usable
+    # file, is hidden from `gh release view`, and blocks a new upload of that name.
+    kept = []
+    for asset in assets:
+        if asset['name'] == name and asset['state'] == 'starter':
+            subprocess.check_output(['gh', 'api', '-X', 'DELETE', f'repos/{REPOSITORY}/releases/assets/{asset["id"]}'],
+                                    env=clean_environment(), text=True)
+        else:
+            kept.append(asset)
+    return kept
+
+
+def upload_apk(tag, apk):
     if apk.name not in ('kaku-release.apk', 'kaku-debug.apk') or not apk.is_file():
         raise ValueError('需要已验证的 kaku-release.apk 或 kaku-debug.apk')
     if not re.fullmatch(r'v\d+\.\d+\.\d+', tag):
@@ -68,7 +82,7 @@ def upload_apk(tag, apk, direct=False):
     if not release['draft']:
         raise RuntimeError('只接受现有草稿，不修改已发布版本')
     asset_path = f'repos/{REPOSITORY}/releases/{release["id"]}/assets'
-    assets = github_items(asset_path)
+    assets = remove_unfinished_assets(github_items(asset_path), apk.name)
     if check_asset(assets, apk, digest):
         return
     upload_url = release['upload_url'].split('{')[0]
@@ -80,11 +94,8 @@ def upload_apk(tag, apk, direct=False):
         raise RuntimeError('GitHub 凭据格式无效')
     with tempfile.TemporaryDirectory(prefix='kaku-upload-') as directory:
         result = Path(directory) / 'asset.json'
-        # Locally the upload goes through the Clash SOCKS port (see release.md);
-        # GitHub Actions runners reach GitHub directly.
-        proxy = ['--noproxy', '*'] if direct else ['--proxy', 'socks5h://127.0.0.1:7890', '--noproxy', '']
         completed = subprocess.run([
-            'curl', '--http2', *proxy,
+            'curl', '--http2', '--noproxy', '*',
             '--connect-timeout', '15', '--max-time', '900', '--fail-with-body', '--progress-bar',
             '--config', '-', '-H', 'Content-Type: application/vnd.android.package-archive',
             '-H', 'Expect:', '--data-binary', '@' + str(apk),
@@ -101,10 +112,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('tag')
     parser.add_argument('--apk', type=Path, default=Path('apps/mobile/dist-split/kaku-release.apk'))
-    parser.add_argument('--direct', action='store_true', help='connect without the local SOCKS proxy (CI)')
     args = parser.parse_args()
+    if os.environ.get('GITHUB_ACTIONS') != 'true':
+        parser.exit(1, '禁止从本机上传：正式 APK 只由 Android release 工作流上传\n')
     try:
-        upload_apk(args.tag, args.apk.resolve(), direct=args.direct)
+        upload_apk(args.tag, args.apk.resolve())
     except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError, KeyError) as error:
         parser.exit(1, str(error) + '\n')
     print('远端大小与 SHA-256 一致；草稿保持未发布。')

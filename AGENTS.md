@@ -21,8 +21,8 @@ This repository is both a product and a learning project.
   Send the APK or provide its absolute path, then wait for the user to install it
   before device testing. Report build checks separately from device verification.
 - Every formal Android release builds, signs and uploads through the Android release
-  GitHub Actions workflow. Never upload a locally built APK to a formal release, and
-  never ask the user to upload one. To conserve GitHub Actions usage, run this
+  GitHub Actions workflow. Never upload any APK from this Mac, including a CI-built
+  artifact, and never ask the user to upload one; only the workflow uploads. To conserve GitHub Actions usage, run this
   workflow only when the user has explicitly confirmed release intent; routine
   testing, verification, or a local build failure does not authorize a CI build,
   including `build_only`. The `android-release` environment needs the user's own

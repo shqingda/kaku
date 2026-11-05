@@ -4,13 +4,13 @@
 
 ## 构建入口约定
 
-**自 2026-11-05 起，正式发版一律走 GitHub Actions 线上构建、签名和上传，本地构建只用于给用户发测试包。** 不把本地 APK 上传到正式 Release，也不让用户手动上传。
+**自 2026-11-05 起，正式发版一律走 GitHub Actions 线上构建、签名和上传，本地构建只用于给用户发测试包。** 禁止从本机上传任何 APK（包括 CI 构建的附件），也不让用户手动上传；`upload-github-apk.py` 离开 GitHub Actions 会直接拒绝运行。
 
 Android 日常实机测试和验证先运行 `pnpm ci:check`，通过后本地运行 `pnpm build:android`，交付 APK 或其绝对路径，待用户安装后再验证；详见[实机测试约定](../development/testing.md#android-实机测试约定)。为节省 GitHub Actions 用量，只有用户明确确定要发版时才运行 Android CI 构建，包括 `build_only`。本地构建失败不自动授权改用 CI。常规 CI 质量检查保持原有规则。
 
 ## GitHub Actions 构建（正式发版唯一入口）
 
-用户明确确定要发版后，可使用 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py --direct` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
+用户明确确定要发版后，可使用 [Android release 工作流](../../.github/workflows/android-release.yml) 构建：在仓库 Actions 页选择 **Android release** → **Run workflow**（分支默认 main）。工作流按 `app.config.js` 的版本得到标签 `vX.Y.Z`，依次执行类型检查与测试、`bash scripts/build-android.sh release`（prebuild、Gradle、签名分段校验、体积报告与产物记录），把 APK 与 `*.sources/` 产物记录存为 90 天的构建附件，再创建同名草稿并用 `upload-github-apk.py` 上传、核对远端大小与 SHA-256。**发布仍由人在草稿页手动完成**，工作流不会发布。
 
 - 只接受尚不存在或仍是草稿的版本；同名 Release 已发布时直接失败，提示先提升版本号。
 - 运行时勾选 **build_only**：只构建、签名并保存附件，跳过版本检查、草稿和上传，仅用于已确定发版流程中的构建验证或与本地包比对，不用于日常实机测试。
@@ -115,20 +115,11 @@ python3 scripts/report-apk-size.py apps/mobile/dist-split/kaku-release.apk --bas
 
 报告按 ZIP 压缩后大小分类为原生库、DEX、JS、资源和其他，单列 ZIP/签名/对齐开销；它不是安装后的磁盘占用。仓库资产清理另记，不合并到 APK 收益。
 
-正式包通过 Expo 配置源默认打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。本地发布入口默认上传裁剪后的 `kaku-release.apk`；纯构建显式传入 `--no-optimize` 才关闭，并使用独立文件名。脚本按参数确定开关，旧 shell 或 `.env` 中的 `KAKU_OPTIMIZE_NATIVE=0` 不会悄悄关闭默认裁剪。直接调用 Expo 配置时可用 `KAKU_OPTIMIZE_NATIVE=0` 生成诊断配置。
+正式包通过 Expo 配置源默认打开 `enableMinifyInReleaseBuilds` 与 `enableShrinkResourcesInReleaseBuilds`；两项配置的用途见 [Expo 构建配置](https://docs.expo.dev/versions/latest/sdk/build-properties/)。正式发版默认使用裁剪后的 `kaku-release.apk`；纯构建显式传入 `--no-optimize` 才关闭，并使用独立文件名。脚本按参数确定开关，旧 shell 或 `.env` 中的 `KAKU_OPTIMIZE_NATIVE=0` 不会悄悄关闭默认裁剪。直接调用 Expo 配置时可用 `KAKU_OPTIMIZE_NATIVE=0` 生成诊断配置。
 
 v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求替换为裁剪包；原产物与替换产物的摘要分别保留在发布记录中。Android 运行验收仍待完成。直接使用忽略的 `android/` 工程会沿用上次生成的设置，下一次应从纯构建入口重新生成所需配置。
 
-## 分步准备与发布 GitHub Release（本地构建，已停用）
-
-2026-11-05 起正式发版不再使用本节和下一节的本地上传方式，仅保留作历史记录和脚本说明。
-
-准备、构建、上传和发布分别执行。推送和发布仍需要用户明确授权；构建和上传脚本不会隐式提交、推送或发布。
-
-1. 修改 Expo 配置的版本，编写 `scripts/release-notes.md`。
-2. 显式运行 `node scripts/sync-changelog.mjs` 准备 App 内日志；检查完整差异并通过回归后提交。已有版本不覆盖手改内容，安装提示不收入 App 内日志；持续保留 v1.1.24 及之后的历史版本，最新默认展开，旧版可折叠。
-3. 运行 `pnpm build:android`，核对签名、版本、权限和回归结果。已有验收 APK 时直接复用，不重新构建。
-4. 获得推送授权后，将对应提交推到目标分支；按下节创建草稿、上传和核验。发布是最后一个独立步骤。
+## 本地构建说明
 
 兼容入口 `bash scripts/build-split-apks.sh [tag] [release|debug] [--build-only]` 仍校验渠道及标签，但现在只调用纯构建并提示分步流程；省略标签时取当前 App 版本。
 
@@ -137,36 +128,13 @@ v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求�
 - 本地归档 source map 与产物对应关系，但不上传；真实 Sentry 堆栈还原仍待凭据和设备验收。
 - 构建完成只证明可编译，发布前仍要核对签名、版本和权限；实际设备安装、运行及未验范围另行记录。
 
-## GitHub APK 上传固定方式
+## 线上上传行为
 
-以下是停用前的本机上传经验：当时优先复用 v1.1.21 成功方式：`curl --http2`，显式 SOCKS5
-`127.0.0.1:7890`，关闭 `Expect`，15 秒连接超时、900 秒总超时并显示上传进度。
-本次约 8 分钟传完 53.06 MB；没有输出响应不代表卡死，应看上传百分比。
-保留 FlClash / TUN 配置，清除代理环境变量，仅上传命令显式使用 SOCKS5。
-2026-10-24 的 v1.1.22 在 SOCKS5 上传到 100% 后发生连接重置；确认远端无资产、
-上传端点无显式代理可达后，改用 `--noproxy '*'` 的同一 HTTP/2 流程成功。
-此为经过检查后的备用路径，不自动重试、不改系统代理；仍须核对大小及摘要。
-
-上传脚本只接受固定仓库的已有草稿与已验证 APK，先检查远端同名资源。
-已有资源的大小和 SHA-256 相符时直接结束；不一致时停止，不覆盖。
-上传超时也先重新查询资源确认结果，不自动重试或重新构建。
+上传脚本只接受固定仓库的已有草稿，并先检查同名资源：中断留下的 `starter` 占位（`gh release view` 看不到，要查 REST assets 接口）会自动删除；已完成且大小和 SHA-256 相符时直接结束；不一致时停止，不覆盖。工作流只上传到草稿，发布是最后一个独立步骤：
 
 ```bash
-set -e # 任一步失败即停止，保留草稿
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-TAG=vX.Y.Z # 改成实际待发布版本；从仓库根目录执行
-# 新版本只创建草稿，不在这一步附加 APK。已存在草稿则跳过这条。
-gh release create "$TAG" --repo shqingda/kaku --draft --title "$TAG" \
-  --notes-file scripts/release-notes.md --target "$(git rev-parse HEAD)"
-python3 scripts/upload-github-apk.py "$TAG"
-# 独立 debug 包：加 --apk apps/mobile/dist-split/kaku-debug.apk
-# 仅在上一步成功、对应提交及设备验收确认、用户明确授权发布后执行。
-gh release edit "$TAG" --repo shqingda/kaku --draft=false --latest
+gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest
 ```
-
-令牌通过 stdin 传给 curl，不写入脚本、日志或进程参数。上传失败保留草稿，
-再次执行前先检查资源；不自动重试、不盲目 `--clobber`，也不发布缺少 APK 的版本。
-GitHub API / git push 继续使用清除代理环境变量的普通命令。
 
 ## 签名迁移内部候选包
 
