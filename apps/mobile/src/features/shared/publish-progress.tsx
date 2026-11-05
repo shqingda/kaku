@@ -13,7 +13,7 @@ export function PublishProgress({ cancel, saving = false }: { cancel?: () => voi
   }, []);
   return <View style={styles.row}>
     <Text accessibilityLiveRegion="polite" style={[styles.text, { color: colors.muted }]}>
-      {saving ? (slow ? '还在保存，请稍候' : '正在保存…') : (slow ? '还在发布，请稍候' : '正在发布…')}
+      {cancel ? '等待安全验证…' : saving ? (slow ? '还在保存，请稍候' : '正在保存…') : (slow ? '还在发布，请稍候' : '正在发布…')}
     </Text>
     {cancel ? <Pressable accessibilityRole="button" onPress={cancel} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
       <Text style={[styles.text, { color: colors.muted }]}>取消发布</Text>

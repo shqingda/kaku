@@ -4,7 +4,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import { ThemeProvider } from '@/features/theme/theme-provider';
-import { VERIFICATION_LIMITS } from '../src/features/auth/inline-verification-timing';
 const timelineDraftKey = (id: number) => `kaku:timeline-draft:v1:${id}`;
 
 const mockStorage = new Map<string, string>();
@@ -25,7 +24,7 @@ jest.mock('react-native-webview', () => {
   const { useEffect } = require('react');
   return { WebView: (props: any) => {
     useEffect(() => {
-      if (mockAutomaticVerification) props.onMessage({ nativeEvent: { url: props.source.uri, data: JSON.stringify({ type: 'token', token: 'test-token' }) } });
+      if (mockAutomaticVerification) props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=test-token', isTopFrame: true });
     }, []);
     return <View {...props} testID="verification-webview" />;
   } };
@@ -181,20 +180,20 @@ async function startVerification() {
   await fireEvent.press(screen.getByLabelText('发布动态'));
   return screen.findByTestId('verification-webview', { includeHiddenElements: true });
 }
-async function bridgeMessage(type: string, token?: string) {
+async function passVerification(token: string) {
   const webview = screen.getByTestId('verification-webview', { includeHiddenElements: true });
-  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type, token }) } }));
+  let allowed: boolean | undefined;
+  await act(() => { allowed = webview.props.onShouldStartLoadWithRequest({ url: `kaku://auth/turnstile?token=${token}`, isTopFrame: true }); });
+  expect(allowed).toBe(false);
 }
 
-test('verification stays inline, opens only on interaction, and sends once after a valid token', async () => {
+test('verification card appears after publishing and sends once after a valid token', async () => {
   mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 123 })));
   await startVerification();
-  expect(screen.getByText('正在发布…')).toBeTruthy();
-  expect(screen.queryByText('请完成下方安全验证')).toBeNull();
+  expect(screen.getByText('等待安全验证…')).toBeTruthy();
+  expect(screen.getByText('Bangumi 需要确认是你本人，通过后会自动发布。')).toBeTruthy();
   expect(mockRequest).not.toHaveBeenCalled();
-  await bridgeMessage('interactive');
-  expect(screen.getByText('请完成下方安全验证')).toBeTruthy();
-  await bridgeMessage('token', 'fresh-token');
+  await passVerification('fresh-token');
   await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
   expect(mockRequest).toHaveBeenCalledTimes(1);
   expect(JSON.parse(mockRequest.mock.calls[0][1].body).turnstileToken).toBe('fresh-token');
@@ -204,23 +203,26 @@ test('cancelled verification keeps draft and ignores late tokens; retry mounts a
   const old = await startVerification();
   await fireEvent.press(screen.getByText('取消发布'));
   await screen.findByText('已取消发布，内容没有发送。');
-  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await act(() => old.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('应用内验证测试');
   await fireEvent.press(screen.getByLabelText('发布动态'));
-  await screen.findByText('正在发布…');
-  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await screen.findByText('等待安全验证…');
+  await act(() => old.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
 });
 
-test('network failure is explicit, preserves draft, and releases the composer', async () => {
+test('network failure is explicit, preserves draft, and can be retried in place', async () => {
   const webview = await startVerification();
   await act(() => webview.props.onError({ nativeEvent: { description: 'offline' } }));
-  await screen.findByText('无法连接安全验证服务，请检查网络后重新发布。');
+  await screen.findByText('无法连接安全验证服务，请检查网络后重新验证。');
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('应用内验证测试');
-  await fireEvent.press(screen.getByLabelText('关闭'));
-  expect(screen.queryByLabelText('动态内容')).toBeNull();
+  // The failure stays in the card; retrying loads a fresh challenge in place.
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 124 })));
+  await fireEvent.press(screen.getByText('重新验证'));
+  await passVerification('after-retry');
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
 });
 
 test('account switch while verifying cannot send the previous account content', async () => {
@@ -231,31 +233,10 @@ test('account switch while verifying cannot send the previous account content', 
   const old = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
   mockUserId = 2;
   await view.rerender(<Page />);
-  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await act(() => old.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('旧账号草稿');
   expect(screen.getByLabelText('动态内容').props.value).toBe('');
-});
-
-test('automatic verification times out and lets the user retry without losing their draft', async () => {
-  jest.useFakeTimers();
-  try {
-    await startVerification();
-    await act(() => jest.advanceTimersByTime(VERIFICATION_LIMITS.automatic));
-    await screen.findByText('安全验证超时，请重新发布。');
-    expect(mockStorage.get(key)).toBe('应用内验证测试');
-    expect(mockRequest).not.toHaveBeenCalled();
-    await fireEvent.press(screen.getByLabelText('发布动态'));
-    expect(screen.getByText('正在发布…')).toBeTruthy();
-  } finally { jest.useRealTimers(); }
-});
-
-test.each(['expired', 'timeout', 'error'])('a %s challenge cannot publish or clear the draft', async type => {
-  await startVerification();
-  await bridgeMessage(type);
-  await screen.findByText(type === 'error' ? '安全验证未通过，请重新发布以重试。' : '安全验证已过期，请重新发布。');
-  expect(mockRequest).not.toHaveBeenCalled();
-  expect(mockStorage.get(key)).toBe('应用内验证测试');
 });
 
 test('closing the composer externally cancels pending verification', async () => {
@@ -268,7 +249,7 @@ test('closing the composer externally cancels pending verification', async () =>
   await fireEvent.press(screen.getByLabelText('发布动态'));
   const old = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
   await view.rerender(composer(false));
-  await act(() => old.props.onMessage({ nativeEvent: { url: old.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await act(() => old.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('保留草稿');
   await view.rerender(composer(true));
@@ -278,9 +259,9 @@ test('closing the composer externally cancels pending verification', async () =>
 test('a Cloudflare subresource HTTP error does not fail a valid challenge', async () => {
   const webview = await startVerification();
   await act(() => webview.props.onHttpError({ nativeEvent: { url: 'https://challenges.cloudflare.com/pat', statusCode: 401 } }));
-  expect(screen.getByText('正在发布…')).toBeTruthy();
+  expect(screen.getByText('等待安全验证…')).toBeTruthy();
   await act(() => webview.props.onHttpError({ nativeEvent: { url: webview.props.source.uri, statusCode: 503 } }));
-  await screen.findByText('安全验证服务暂时不可用，请稍后重新发布。');
+  await screen.findByText('安全验证服务暂时不可用，请稍后重新验证。');
   expect(mockRequest).not.toHaveBeenCalled();
 });
 
@@ -291,55 +272,15 @@ test('publishing feedback covers verification and submission, with a slow respon
     await startVerification();
     expect(screen.queryByText('安全验证将尽量自动完成')).toBeNull();
     expect(screen.queryByText('正在安全验证…')).toBeNull();
-    expect(screen.getByText('正在发布…')).toBeTruthy();
+    expect(screen.getByText('等待安全验证…')).toBeTruthy();
     await act(() => jest.advanceTimersByTime(8_000));
-    expect(screen.getByText('还在发布，请稍候')).toBeTruthy();
+    expect(screen.getByText('等待安全验证…')).toBeTruthy();
     let finishRequest!: (response: Response) => void;
     mockRequest.mockImplementation(() => new Promise<Response>(resolve => { finishRequest = resolve; }));
-    await bridgeMessage('token', 'fresh-token');
+    await passVerification('fresh-token');
     expect(screen.getByText('还在发布，请稍候')).toBeTruthy();
     expect(screen.queryByText('取消发布')).toBeNull();
     await act(() => finishRequest(new Response(JSON.stringify({ id: 123 }))));
     await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
   } finally { jest.useRealTimers(); }
-});
-
-test('verification starts in the background while writing, so publishing reuses its token', async () => {
-  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 456 })));
-  mockAutomaticVerification = false;
-  await render(<Page />);
-  // The check is already running before 发布 is tapped.
-  await screen.findByTestId('verification-webview', { includeHiddenElements: true });
-  await bridgeMessage('interactive');
-  // A challenge that needs a tap stays hidden until the user publishes.
-  expect(screen.queryByText('请完成下方安全验证')).toBeNull();
-  await fireEvent.changeText(screen.getByLabelText('动态内容'), '预先验证');
-  await fireEvent.press(screen.getByLabelText('发布动态'));
-  expect(screen.getByText('请完成下方安全验证')).toBeTruthy();
-  await bridgeMessage('token', 'prefetched-token');
-  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
-  expect(JSON.parse(mockRequest.mock.calls[0][1].body).turnstileToken).toBe('prefetched-token');
-});
-
-test('a token finished before publishing is sent immediately', async () => {
-  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 789 })));
-  mockAutomaticVerification = false;
-  await render(<Page />);
-  await screen.findByTestId('verification-webview', { includeHiddenElements: true });
-  await bridgeMessage('token', 'ready-token');
-  expect(screen.queryByTestId('verification-webview', { includeHiddenElements: true })).toBeNull();
-  await fireEvent.changeText(screen.getByLabelText('动态内容'), '马上发出');
-  await fireEvent.press(screen.getByLabelText('发布动态'));
-  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
-  expect(JSON.parse(mockRequest.mock.calls[0][1].body).turnstileToken).toBe('ready-token');
-});
-
-test('the official page redirect is accepted as the verification result', async () => {
-  mockRequest.mockResolvedValue(new Response(JSON.stringify({ id: 790 })));
-  const webview = await startVerification();
-  let allowed: boolean | undefined;
-  await act(() => { allowed = webview.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=redirect-token', isTopFrame: true }); });
-  expect(allowed).toBe(false);
-  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
-  expect(JSON.parse(mockRequest.mock.calls[0][1].body).turnstileToken).toBe('redirect-token');
 });

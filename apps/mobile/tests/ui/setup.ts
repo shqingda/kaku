@@ -33,8 +33,15 @@ jest.mock('react-native-reanimated', () => {
       React.createElement(Component, { ...(props as object), ref }),
     );
 
+  // Layout animation builders chain freely and do nothing here.
+  const layoutAnimation: unknown = new Proxy({}, { get: () => () => layoutAnimation });
+
   return {
     __esModule: true,
+    FadeIn: layoutAnimation,
+    FadeInDown: layoutAnimation,
+    FadeOut: layoutAnimation,
+    LinearTransition: layoutAnimation,
     default: { createAnimatedComponent: passthrough, View },
     Animated: { createAnimatedComponent: passthrough, View },
     useSharedValue: (initial: unknown) => ({ value: initial }),

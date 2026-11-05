@@ -24,7 +24,7 @@ jest.mock('react-native-webview', () => {
   const { useEffect } = require('react');
   return { WebView: (props: any) => {
     useEffect(() => {
-      if (mockAutomaticVerification) props.onMessage({ nativeEvent: { url: props.source.uri, data: JSON.stringify({ type: 'token', token: 'test-token' }) } });
+      if (mockAutomaticVerification) props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=test-token', isTopFrame: true });
     }, []);
     return <View {...props} testID="verification-webview" />;
   } };
@@ -170,12 +170,11 @@ test.each([
   await fireEvent.changeText(screen.getByLabelText('回复内容'), '评论测试');
   await fireEvent.press(screen.getByLabelText('发送回复'));
   const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
-  expect(screen.getByText('正在发布…')).toBeTruthy();
+  expect(screen.getByText('等待安全验证…')).toBeTruthy();
   expect(screen.queryByText('发送时完成一次 Bangumi 安全验证')).toBeNull();
   expect(mockRequest).not.toHaveBeenCalled();
-  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'interactive' }) } }));
-  expect(screen.getByText('请完成下方安全验证')).toBeTruthy();
-  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'inline-token' }) } }));
+  expect(screen.getByText('Bangumi 需要确认是你本人，通过后会自动发布。')).toBeTruthy();
+  await act(() => webview.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=inline-token', isTopFrame: true }));
   await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
   expect(mockRequest).toHaveBeenCalledWith(path, expect.objectContaining({ body: JSON.stringify({ content: '评论测试', turnstileToken: 'inline-token' }) }));
 });
@@ -188,7 +187,7 @@ test('cancel inline verification preserves the reply draft and ignores late succ
   const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
   await fireEvent.press(screen.getByText('取消发布'));
   await screen.findByText('已取消发布，内容没有发送。');
-  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await act(() => webview.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('保留评论');
 });
@@ -215,7 +214,7 @@ test('switching account during verification preserves the old reply and cannot s
   const webview = await screen.findByTestId('verification-webview', { includeHiddenElements: true });
   mockUserId = 2;
   await view.rerender(<Page />);
-  await act(() => webview.props.onMessage({ nativeEvent: { url: webview.props.source.uri, data: JSON.stringify({ type: 'token', token: 'late-token' }) } }));
+  await act(() => webview.props.onShouldStartLoadWithRequest({ url: 'kaku://auth/turnstile?token=late-token', isTopFrame: true }));
   expect(mockRequest).not.toHaveBeenCalled();
   expect(mockStorage.get(key)).toBe('旧账号评论');
   expect(screen.getByLabelText('回复内容').props.value).toBe('');
