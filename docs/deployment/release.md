@@ -140,6 +140,19 @@ gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest
 
 2026-10-17 已制作并实测构建号 6 的 Release 内部包。用户随后授权正式发版，v1.1.20 / 构建号 7 将同一签名策略接入正式本地入口，见 [发布记录](../test-records/2026-10-17-release-1.1.20.md)。密钥备份、首次覆盖、登录及本机设置保留证据见 [迁移记录](../test-records/2026-10-17-signing-migration.md)。草稿、完整历史和本次连续升级仍待验，不承诺所有设备或全部数据无损。
 
+## 清理失败的 Actions 记录
+
+由仓库所有者在本机终端手动运行。删除不可恢复，运行的日志和构建附件会一起删掉，也不占 Actions 分钟；只匹配失败的运行，等待审批或运行中的不受影响。要排查的失败运行先看完日志再删。
+
+```bash
+# 预览将被删除的运行
+gh run list --repo shqingda/kaku --status failure --limit 1000 --json databaseId,workflowName,createdAt --jq '.[] | "\(.databaseId) \(.createdAt) \(.workflowName)"'
+# 全部删除（已清除代理环境变量）
+env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY sh -c "gh run list --repo shqingda/kaku --status failure --limit 1000 --json databaseId --jq '.[].databaseId' | xargs -n1 gh run delete --repo shqingda/kaku"
+```
+
+`--limit 1000` 是单次上限，失败运行更多时再运行一次。
+
 ## 配置与账号边界
 
 当前维护本地构建、GitHub Release 上传，以及仅在明确发版时使用的 Android Actions 构建；不使用 EAS 云构建配置、命令或工作流。本地使用 `KAKU_BUILD_PROFILE=production` 选择正式包名；未设置时使用 debug 包名。构建脚本按 release / debug 参数设置该变量。
