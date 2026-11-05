@@ -284,3 +284,21 @@ test('publishing feedback covers verification and submission, with a slow respon
     await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
   } finally { jest.useRealTimers(); }
 });
+
+test('closing during verification abandons the publish and keeps the draft', async () => {
+  await startVerification();
+  await fireEvent.press(screen.getByLabelText('关闭'));
+  await waitFor(() => expect(screen.queryByLabelText('动态内容')).toBeNull());
+  expect(mockRequest).not.toHaveBeenCalled();
+  expect(mockStorage.get(key)).toBe('应用内验证测试');
+  await fireEvent.press(screen.getByText('重新打开'));
+  expect(await screen.findByDisplayValue('应用内验证测试')).toBeTruthy();
+});
+
+test('closing is unavailable once the post is being sent', async () => {
+  mockRequest.mockImplementation(() => new Promise<Response>(() => {}));
+  await startVerification();
+  await passVerification('fresh-token');
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  expect(screen.getByLabelText('关闭').props.accessibilityState.disabled).toBe(true);
+});

@@ -125,6 +125,13 @@ function TopicComposerContent({
   }
 
   function close() {
+    // Leaving during verification abandons the publish; the draft stays saved.
+    if (cancel) {
+      cancel();
+      finishClose();
+      return;
+    }
+
     if (mutation.isPending) {
       return;
     }
@@ -155,7 +162,7 @@ function TopicComposerContent({
           <Pressable
             accessibilityLabel="关闭"
             accessibilityRole="button"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending && !cancel}
             hitSlop={HIT_SLOP}
             onPress={close}
             style={({ pressed }) => [
@@ -196,7 +203,7 @@ function TopicComposerContent({
       }
       onClose={close}
       onShow={focusTitle}
-      swipeToDismissEnabled={!mutation.isPending && !draft.error}
+      swipeToDismissEnabled={(!mutation.isPending || Boolean(cancel)) && !draft.error}
       visible={visible}
     >
       <ScrollView

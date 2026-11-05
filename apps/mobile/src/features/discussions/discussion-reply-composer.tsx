@@ -96,6 +96,13 @@ function ReplyComposerContent({
   }
 
   function close() {
+    // Leaving during verification abandons the publish; the draft stays saved.
+    if (cancel) {
+      cancel();
+      finishClose();
+      return;
+    }
+
     if (pending) {
       return;
     }
@@ -156,7 +163,7 @@ function ReplyComposerContent({
           <Pressable
             accessibilityLabel="关闭"
             accessibilityRole="button"
-            disabled={pending}
+            disabled={pending && !cancel}
             hitSlop={HIT_SLOP}
             onPress={close}
             style={({ pressed }) => [
@@ -203,7 +210,7 @@ function ReplyComposerContent({
       }
       onClose={close}
       onShow={focusInput}
-      swipeToDismissEnabled={!pending && !draft.error && (!isEditing || !hasUnsavedChanges)}
+      swipeToDismissEnabled={(!pending || Boolean(cancel)) && !draft.error && (!isEditing || !hasUnsavedChanges)}
       visible={visible}
     >
       <ScrollView

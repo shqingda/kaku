@@ -12,7 +12,7 @@ import {
   BangumiTimelineError,
   createBangumiTimelineSay,
   deleteBangumiTimeline,
-  getBangumiFriendTimeline,
+  getBangumiHomeTimeline,
 } from './bangumi-client.ts';
 
 const MAX_TIMELINE_CONTENT_LENGTH = 380;
@@ -60,10 +60,15 @@ export function registerTimelineRoutes(
         store,
         userId: authentication.userId,
       });
-      const page = await getBangumiFriendTimeline({
+      const page = await getBangumiHomeTimeline({
         accessToken,
         fetcher,
         until,
+        user: {
+          avatarUrl: authentication.user.avatarUrl,
+          nickname: authentication.user.nickname,
+          username: authentication.user.username,
+        },
       });
 
       return context.json(page);

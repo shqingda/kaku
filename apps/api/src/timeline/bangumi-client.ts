@@ -308,10 +308,29 @@ export async function getBangumiFriendTimeline({
   }
 
   const rawItems = timelineListSchema.parse(await response.json());
-  const items: FriendTimelineItem[] = rawItems.flatMap((item) => {
+
+  return {
+    items: toFriendTimelineItems(rawItems),
+    nextUntil:
+      rawItems.length === limit ? rawItems.at(-1)?.id : undefined,
+  };
+}
+
+function toFriendTimelineItems(
+  rawItems: z.infer<typeof timelineListSchema>,
+  fallbackUser?: FriendTimelineItem['user'],
+): FriendTimelineItem[] {
+  return rawItems.flatMap((item) => {
+    const user = item.user
+      ? {
+          avatarUrl: item.user.avatar.small || undefined,
+          nickname: item.user.nickname,
+          username: item.user.username,
+        }
+      : fallbackUser;
     // Bangumi's private API marks `user` as optional. A deleted account should
     // hide only its event instead of making the entire timeline unavailable.
-    if (!item.user) {
+    if (!user) {
       return [];
     }
 
@@ -320,28 +339,91 @@ export async function getBangumiFriendTimeline({
       item.memo.progress?.batch?.subject ??
       item.memo.progress?.single?.subject ??
       item.memo.wiki?.subject;
-    const description = describeTimeline(item);
 
     return [
       {
         createdAt: item.createdAt,
-        ...description,
+        ...describeTimeline(item),
         id: item.id,
         replies: item.replies,
         subjectId: subject?.id,
-        user: {
-          avatarUrl: item.user.avatar.small || undefined,
-          nickname: item.user.nickname,
-          username: item.user.username,
-        },
+        user,
       },
     ];
   });
+}
+
+async function getBangumiOwnTimeline({
+  accessToken,
+  fetcher,
+  limit,
+  until,
+  user,
+}: {
+  accessToken: string;
+  fetcher: typeof fetch;
+  limit: number;
+  until?: number;
+  user: FriendTimelineItem['user'];
+}) {
+  const url = new URL(
+    `${BANGUMI_PRIVATE_API_URL}/users/${encodeURIComponent(user.username)}/timeline`,
+  );
+  url.searchParams.set('limit', String(limit));
+  if (until !== undefined) {
+    url.searchParams.set('until', String(until));
+  }
+
+  const response = await fetcher(url, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': BANGUMI_USER_AGENT,
+    },
+  });
+  if (!response.ok) return [];
+
+  // This endpoint omits `user`: every item belongs to the requested account.
+  return toFriendTimelineItems(
+    timelineListSchema.parse(await response.json()),
+    user,
+  );
+}
+
+// Bangumi adds a post to its author's cached home feed only when the author
+// has followers, so someone with no followers never sees their own posts in
+// mode=friends. Merge the account's own timeline into the same id window.
+export async function getBangumiHomeTimeline({
+  accessToken,
+  fetcher = fetch,
+  limit = 20,
+  until,
+  user,
+}: {
+  accessToken: string;
+  fetcher?: typeof fetch;
+  limit?: number;
+  until?: number;
+  user: FriendTimelineItem['user'];
+}): Promise<FriendTimelinePage> {
+  const [page, ownItems] = await Promise.all([
+    getBangumiFriendTimeline({ accessToken, fetcher, limit, until }),
+    // The friend feed is the primary content; own posts are best effort.
+    getBangumiOwnTimeline({ accessToken, fetcher, limit, until, user }).catch(
+      () => [],
+    ),
+  ]);
+  const seen = new Set(page.items.map((item) => item.id));
+  // Older own posts belong to the page after this one's cursor.
+  const missing = ownItems.filter(
+    (item) =>
+      !seen.has(item.id) &&
+      (page.nextUntil === undefined || item.id > page.nextUntil),
+  );
 
   return {
-    items,
-    nextUntil:
-      rawItems.length === limit ? rawItems.at(-1)?.id : undefined,
+    ...page,
+    items: [...page.items, ...missing].sort((a, b) => b.id - a.id),
   };
 }
 

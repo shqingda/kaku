@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   createBangumiTimelineSay,
   getBangumiFriendTimeline,
+  getBangumiHomeTimeline,
 } from '../src/timeline/bangumi-client.ts';
 
 test('Bangumi friend timeline maps private API data into Kaku models', async () => {
@@ -463,4 +464,56 @@ test('deleting a timeline item surfaces a captcha error distinctly', async () =>
       return true;
     },
   );
+});
+
+const homeUser = { nickname: '我', username: 'me' };
+function homeFetcher({ friends, own, ownStatus = 200 }) {
+  return async (input) => {
+    const url = String(input);
+    if (url.includes('/users/me/timeline')) {
+      return Response.json(own, { status: ownStatus });
+    }
+    return Response.json(friends);
+  };
+}
+function say(id, user) {
+  return {
+    batch: false, cat: 5, createdAt: id, id,
+    memo: { status: { tsukkomi: `动态 ${id}` } },
+    replies: 0, type: 2, ...(user ? { user } : {}),
+  };
+}
+const friend = { avatar: { small: '' }, nickname: '好友', username: 'friend' };
+
+test('home timeline adds own posts missing from the friend feed, newest first', async () => {
+  const page = await getBangumiHomeTimeline({
+    accessToken: 'token',
+    fetcher: homeFetcher({ friends: [say(20, friend), say(10, friend)], own: [say(30), say(20)] }),
+    limit: 2,
+    user: homeUser,
+  });
+  assert.deepEqual(page.items.map((item) => item.id), [30, 20, 10]);
+  assert.deepEqual(page.items[0].user, homeUser);
+  assert.equal(page.items[0].text, '动态 30');
+  assert.equal(page.items[1].user.username, 'friend');
+  assert.equal(page.nextUntil, 10);
+});
+
+test('own posts older than the page cursor wait for the next page', async () => {
+  const page = await getBangumiHomeTimeline({
+    accessToken: 'token',
+    fetcher: homeFetcher({ friends: [say(20, friend), say(10, friend)], own: [say(5)] }),
+    limit: 2,
+    user: homeUser,
+  });
+  assert.deepEqual(page.items.map((item) => item.id), [20, 10]);
+});
+
+test('a failed own timeline never hides the friend feed', async () => {
+  const page = await getBangumiHomeTimeline({
+    accessToken: 'token',
+    fetcher: homeFetcher({ friends: [say(20, friend)], own: [], ownStatus: 503 }),
+    user: homeUser,
+  });
+  assert.deepEqual(page.items.map((item) => item.id), [20]);
 });

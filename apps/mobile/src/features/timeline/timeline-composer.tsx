@@ -74,6 +74,13 @@ function TimelineComposerContent({
   }
 
   function close() {
+    // Leaving during verification abandons the publish; the draft stays saved.
+    if (cancel) {
+      cancel();
+      finishClose();
+      return;
+    }
+
     if (createTimeline.isPending) {
       return;
     }
@@ -99,7 +106,7 @@ function TimelineComposerContent({
           <Pressable
             accessibilityLabel="关闭"
             accessibilityRole="button"
-            disabled={createTimeline.isPending}
+            disabled={createTimeline.isPending && !cancel}
             hitSlop={HIT_SLOP}
             onPress={close}
             style={({ pressed }) => [
@@ -139,7 +146,7 @@ function TimelineComposerContent({
       onClose={close}
       onShow={focusInput}
       swipeToDismissEnabled={
-        !draft.error && !createTimeline.isPending
+        !draft.error && (!createTimeline.isPending || Boolean(cancel))
       }
       visible={visible}
     >
