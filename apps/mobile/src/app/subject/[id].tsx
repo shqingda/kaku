@@ -172,6 +172,7 @@ export default function SubjectScreen() {
       <SubjectTitleBar title={title} top={chromeTop} visible={titleBarVisible} />
       <FloatingShareButton path={`/subject/${subjectId}`} title={title} top={chromeTop} />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={contentStyle}
         onScroll={handleScroll}
         refreshControl={

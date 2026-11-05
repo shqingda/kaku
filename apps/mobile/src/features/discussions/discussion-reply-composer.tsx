@@ -95,6 +95,10 @@ function ReplyComposerContent({
     onClose();
   }
 
+  // A cancelled or failed attempt must not greet the user on the next opening.
+  const resetCreate = createReply.reset;
+  useEffect(() => { if (!visible) resetCreate(); }, [resetCreate, visible]);
+
   function close() {
     // Leaving during verification abandons the publish; the draft stays saved.
     if (cancel) {

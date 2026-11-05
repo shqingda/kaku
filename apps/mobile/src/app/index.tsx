@@ -98,7 +98,10 @@ function HomeContent() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* Sheets sit under this ScrollView in the React tree, so it would otherwise
+          take their first tap while the keyboard is open just to dismiss it. */}
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
         refreshControl={
           session ? (

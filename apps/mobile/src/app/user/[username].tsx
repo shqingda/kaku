@@ -112,6 +112,7 @@ export default function PublicUserScreen() {
         />
       ) : (
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.content}
           data={collections}
           keyExtractor={(item) => String(item.id)}

@@ -68,6 +68,10 @@ function TimelineComposerContent({
   const createTimeline = useCreateTimelineSay(requestToken);
   const canSend = content.trim().length > 0 && !createTimeline.isPending && draft.loaded && !sent;
 
+  // A cancelled or failed attempt must not greet the user on the next opening.
+  const resetPublish = createTimeline.reset;
+  useEffect(() => { if (!visible) resetPublish(); }, [resetPublish, visible]);
+
   function finishClose() {
     Keyboard.dismiss();
     onClose();

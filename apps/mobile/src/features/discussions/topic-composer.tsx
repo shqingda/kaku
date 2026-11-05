@@ -119,6 +119,10 @@ function TopicComposerContent({
 
   const { inputRef: titleInputRef, onShow: focusTitle } = useSheetInputFocus(visible, editable);
 
+  // A cancelled or failed attempt must not greet the user on the next opening.
+  const resetPublish = mutation.reset;
+  useEffect(() => { if (!visible) resetPublish(); }, [resetPublish, visible]);
+
   function finishClose() {
     Keyboard.dismiss();
     onClose();

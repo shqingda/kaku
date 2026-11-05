@@ -293,6 +293,7 @@ test('closing during verification abandons the publish and keeps the draft', asy
   expect(mockStorage.get(key)).toBe('应用内验证测试');
   await fireEvent.press(screen.getByText('重新打开'));
   expect(await screen.findByDisplayValue('应用内验证测试')).toBeTruthy();
+  expect(screen.queryByText('已取消发布，内容没有发送。')).toBeNull();
 });
 
 test('closing is unavailable once the post is being sent', async () => {
