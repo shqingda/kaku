@@ -1,6 +1,6 @@
 # Kaku 待办
 
-> 更新：2026-11-01。最近一次发布记录为 [v1.1.25](docs/test-records/2026-10-29-release-1.1.25.md)：44,541,503 字节，Android versionCode 12；0011 迁移与 Worker `fbad2958` 已上线。最终 APK 未完成 Android 实机验收，未上架 App Store / Google Play。当前源码已继续更新 Expo SDK 58 补丁，不能把源码检查当作已发布包验证。
+> 更新：2026-11-05。最近一次发布记录为 [v1.1.26](docs/test-records/2026-11-05-release-1.1.26.md)，Android versionCode 13；随版本升级 Expo SDK 58 补丁与 TanStack Query 等依赖。最终 APK 未完成 Android 实机验收，未上架 App Store / Google Play。不能把源码检查当作已发布包验证。
 
 ## 本轮实施
 

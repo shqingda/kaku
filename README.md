@@ -14,7 +14,7 @@ Kaku is a third-party Bangumi client for iOS and Android (Expo / React Native / 
 | `apps/api` | OAuth, sessions, write proxy, preferences / push / cache | Cloudflare Workers |
 | `apps/web` | Product site, privacy, terms, FAQ | Cloudflare Workers |
 
-Not on App Store / Play. The latest recorded release is [v1.1.25](docs/test-records/2026-10-29-release-1.1.25.md); its build checks passed, while Android device verification remains pending. Day-to-day Android testing uses a local release APK. Android CI builds require explicit release intent; GitHub Releases distributes published packages. See [Release](docs/deployment/release.md).
+Not on App Store / Play. The latest recorded release is [v1.1.26](docs/test-records/2026-11-05-release-1.1.26.md); its build checks passed, while Android device verification remains pending. Day-to-day Android testing uses a local release APK. Android CI builds require explicit release intent; GitHub Releases distributes published packages. See [Release](docs/deployment/release.md).
 
 ## Features
 

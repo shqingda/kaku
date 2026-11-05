@@ -14,7 +14,7 @@ Kaku 是面向 iOS / Android 的第三方 Bangumi 客户端（Expo / React Nativ
 | `apps/api` | OAuth、会话、写入代理、偏好 / 推送 / 缓存 | Cloudflare Workers |
 | `apps/web` | 产品站、隐私、条款、FAQ | Cloudflare Workers |
 
-还没上架 App Store / Play。最近一次发布记录为 [v1.1.25](docs/test-records/2026-10-29-release-1.1.25.md)，构建检查已通过，Android 实机验收仍待完成。Android 日常测试使用本地 Release APK；明确发版后才使用 Android CI 构建，正式包通过 GitHub Releases 分发。见 [发版指南](docs/deployment/release.md)。
+还没上架 App Store / Play。最近一次发布记录为 [v1.1.26](docs/test-records/2026-11-05-release-1.1.26.md)，构建检查已通过，Android 实机验收仍待完成。Android 日常测试使用本地 Release APK；明确发版后才使用 Android CI 构建，正式包通过 GitHub Releases 分发。见 [发版指南](docs/deployment/release.md)。
 
 ## 功能
 
