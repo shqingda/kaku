@@ -36,6 +36,8 @@ import { useReduceMotion } from '@/lib/use-reduce-motion';
 // 向上拖出展开位时按橡皮筋逐渐抵抗。减少动态效果时退化为不透明度过渡。
 // header：标题行插槽，渲染在下拖手势区内（把手下方），让「按住标题拖动」
 // 成为关闭路径的一部分；内部按钮的点按不受影响（Pan 按位移激活，轻点不算）。
+const SHEET_CLOSE_DEADLINE_MS = 400;
+
 export function AppSheet({
   children,
   header,
@@ -96,6 +98,7 @@ export function AppSheet({
     const version = transitionVersion.value + 1;
     transitionVersion.value = version;
     if (!visible) hasEnteredRef.current = false;
+    let closeFallback: ReturnType<typeof setTimeout> | undefined;
 
     if (visible) {
       if (!mountedRef.current) {
@@ -139,6 +142,8 @@ export function AppSheet({
         translateY.value = withSpring(windowHeight, { ...SHEET_DISMISS_SPRING, overshootClamping: true }, (finished) => {
           if (finished) runOnJS(finishClosing)(version);
         });
+        // A busy UI thread can delay that callback; the page must not wait for it.
+        closeFallback = setTimeout(() => finishClosing(version), SHEET_CLOSE_DEADLINE_MS);
         backdropOpacity.value = withTiming(0, {
           duration: 160,
           easing: Easing.out(Easing.cubic),
@@ -146,7 +151,10 @@ export function AppSheet({
       }
     }
 
-    return () => { transitionVersion.value += 1; };
+    return () => {
+      clearTimeout(closeFallback);
+      transitionVersion.value += 1;
+    };
   }, [backdropOpacity, finishClosing, finishEntering, reduceMotion, transitionVersion, translateY, visible, windowHeight]);
 
   // 关闭阈值基于弹层自身高度而不是整屏高度：小弹层拖一小段即可关闭。

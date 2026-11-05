@@ -1,7 +1,7 @@
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 
 import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
@@ -75,8 +75,8 @@ function VerificationCard({ onToken }: { onToken: (token: string) => void }) {
   return <Animated.View
     accessibilityLabel="安全验证"
     entering={FadeInDown.springify().damping(18).stiffness(220)}
-    exiting={FadeOut.duration(160)}
-    layout={LinearTransition.springify().damping(20).stiffness(220)}
+    // No exit animation: it would keep the WebView alive and busy after the user
+    // leaves. Closing must drop Cloudflare's page at once.
     style={styles.card}
   >
     <View style={styles.titleRow}>
@@ -102,9 +102,9 @@ function VerificationCard({ onToken }: { onToken: (token: string) => void }) {
     ) : (
       <View style={styles.widget}>
         {ready ? null : (
-          <Animated.View exiting={FadeOut.duration(120)} style={styles.loading}>
+          <View style={styles.loading}>
             <ActivityIndicator color={colors.muted} size="small" />
-          </Animated.View>
+          </View>
         )}
         {/* Hidden until styled, so an unstyled page never flashes. */}
         <View style={[StyleSheet.absoluteFill, { opacity: ready ? 1 : 0 }]}>
