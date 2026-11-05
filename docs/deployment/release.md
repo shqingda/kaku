@@ -1,6 +1,6 @@
 # 构建与发版指南
 
-先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。最近一次发布记录为 v1.1.26：43,445,907 字节，包含发布安全验证卡片、好友动态修复、新图标和依赖升级；最终 APK 的实机验收仍待完成，详见 [发布记录](../test-records/2026-11-05-release-1.1.26.md)。历史版本、体积与验收边界统一查 [测试记录索引](../test-records/README.md)。本地正式包和 GitHub APK 默认启用 R8 与资源裁剪，调试包保持关闭。
+先选构建入口，再决定是否发布。源码版本以 [Expo 配置](../../apps/mobile/app.config.js) 为准，已发布产物以 [GitHub Releases](https://github.com/shqingda/kaku/releases) 为准。最近一次发布记录为 v1.1.26：43,445,907 字节，包含发布安全验证卡片、好友动态修复、新图标和依赖升级，是首个完全由 GitHub Actions 构建和上传的版本；用户确认本地候选包实机通过，线上正式包未单独实机验收，详见 [发布记录](../test-records/2026-11-05-release-1.1.26.md)。历史版本、体积与验收边界统一查 [测试记录索引](../test-records/README.md)。本地正式包和 GitHub APK 默认启用 R8 与资源裁剪，调试包保持关闭。
 
 ## 构建入口约定
 
