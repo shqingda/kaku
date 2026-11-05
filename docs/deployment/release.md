@@ -142,16 +142,16 @@ gh release edit vX.Y.Z --repo shqingda/kaku --draft=false --latest
 
 ## 清理失败的 Actions 记录
 
-由仓库所有者在本机终端手动运行。删除不可恢复，运行的日志和构建附件会一起删掉，也不占 Actions 分钟；只匹配失败的运行，等待审批或运行中的不受影响。要排查的失败运行先看完日志再删。
+由仓库所有者在本机终端手动运行。删除不可恢复，运行的日志和构建附件会一起删掉，也不占 Actions 分钟。只匹配 `failure`（红叉）和 `cancelled`（灰色叹号）的运行，等待审批或运行中的不受影响。要排查的运行先看完日志再删。
 
 ```bash
 # 预览将被删除的运行
-gh run list --repo shqingda/kaku --status failure --limit 1000 --json databaseId,workflowName,createdAt --jq '.[] | "\(.databaseId) \(.createdAt) \(.workflowName)"'
+env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY sh -c 'for s in failure cancelled; do gh run list --repo shqingda/kaku --status "$s" --limit 1000 --json databaseId,conclusion,workflowName,createdAt --jq ".[] | \"\(.databaseId) \(.conclusion) \(.createdAt) \(.workflowName)\""; done'
 # 全部删除（已清除代理环境变量）
-env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY sh -c "gh run list --repo shqingda/kaku --status failure --limit 1000 --json databaseId --jq '.[].databaseId' | xargs -n1 gh run delete --repo shqingda/kaku"
+env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY sh -c 'for s in failure cancelled; do gh run list --repo shqingda/kaku --status "$s" --limit 1000 --json databaseId --jq ".[].databaseId"; done | xargs -n1 gh run delete --repo shqingda/kaku'
 ```
 
-`--limit 1000` 是单次上限，失败运行更多时再运行一次。
+`--limit 1000` 是每种状态的单次上限，记录更多时再运行一次。没有可删记录时 `gh run delete` 可能提示缺少参数，可以忽略。
 
 ## 配置与账号边界
 
