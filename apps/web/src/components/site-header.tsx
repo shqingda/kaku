@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GitHubIcon, MonitorIcon, MoonIcon, SunIcon } from './icons';
 import { KakuMark } from './kaku-mark';
 import { useI18n, useThemeMode } from '../i18n';
-import { GITHUB_URL, RELEASES_URL } from '../site-links';
+import { APK_DOWNLOAD_URL, GITHUB_URL } from '../site-links';
 
 export function SiteHeader() {
   const { lang, setLang, t } = useI18n();
@@ -67,7 +67,7 @@ export function SiteHeader() {
           >
             {themeIcon}
           </button>
-          <a className="button primary compact" href={RELEASES_URL} rel="noreferrer" target="_blank">
+          <a className="button primary compact" href={APK_DOWNLOAD_URL} rel="noreferrer">
             {t.header.download}
           </a>
         </div>

@@ -2,7 +2,7 @@ import { CollectionDemo, EpisodesDemo, IconsDemo } from '../components/feature-d
 import { KakuMark } from '../components/kaku-mark';
 import { ProductPreview } from '../components/product-preview';
 import { useI18n } from '../i18n';
-import { GITHUB_URL, RELEASES_URL } from '../site-links';
+import { APK_DOWNLOAD_URL, GITHUB_URL } from '../site-links';
 
 export function HomePage() {
   const { t } = useI18n();
@@ -16,7 +16,7 @@ export function HomePage() {
           <h1>{t.home.heroTitle1}<br /><em>{t.home.heroTitle2}</em></h1>
           <p>{t.home.heroSub}</p>
           <div className="hero-actions">
-            <a className="button primary" href={RELEASES_URL} rel="noreferrer" target="_blank">
+            <a className="button primary" href={APK_DOWNLOAD_URL} rel="noreferrer">
               {t.home.heroPrimary}<small>{t.home.heroFreeTag}</small>
             </a>
             <a className="button secondary" href={GITHUB_URL} rel="noreferrer" target="_blank">{t.home.heroSecondary}</a>
@@ -148,7 +148,7 @@ export function HomePage() {
         <h2>{closing.title}</h2>
         <p>{closing.copy}</p>
         <div className="hero-actions">
-          <a className="button primary" href={RELEASES_URL} rel="noreferrer" target="_blank">{t.home.heroPrimary}</a>
+          <a className="button primary" href={APK_DOWNLOAD_URL} rel="noreferrer">{t.home.heroPrimary}</a>
           <a className="button secondary" href="#faq">{closing.cta}</a>
         </div>
       </section>
