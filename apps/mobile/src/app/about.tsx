@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { openExternalUrl } from '@/lib/open-url';
 
-const WEBSITE_URL = 'https://kaku-web.shqingda.workers.dev';
+const WEBSITE_URL = 'https://kaku.shqingda.workers.dev';
 
 type AboutLink = {
   icon: ComponentProps<typeof SymbolView>['name'];
@@ -154,34 +155,32 @@ function AboutLinkGroup({ colors, links }: { colors: ThemeColors; links: AboutLi
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { padding: 20, paddingBottom: 44 },
-  hero: { alignItems: 'center', paddingBottom: 30, paddingTop: 20 },
+  content: { padding: SPACING.xl, paddingBottom: SPACING.xxl },
+  hero: { alignItems: 'center', paddingBottom: SPACING.xxl, paddingTop: SPACING.xl },
   logo: {
     borderRadius: 21,
     height: 80,
     width: 80,
   },
   title: {
+    ...TYPE.display,
     color: colors.ink,
-    fontSize: 28,
     fontWeight: '800',
-    letterSpacing: -0.7,
-    marginTop: 18,
+    marginTop: SPACING.lg,
   },
-  version: { color: colors.subtle, fontSize: 12, marginTop: 5 },
+  version: { ...TYPE.caption, color: colors.subtle, marginTop: SPACING.xs },
   summary: {
+    ...TYPE.body,
     color: colors.muted,
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 13,
+    marginTop: SPACING.md,
     textAlign: 'center',
   },
   group: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
   row: {
     alignItems: 'center',
@@ -201,16 +200,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 36,
   },
   rowLabel: {
+    ...TYPE.body,
     color: colors.ink,
     flex: 1,
-    fontSize: 15,
     fontWeight: '700',
-    marginLeft: 13,
+    marginLeft: SPACING.md,
   },
   footer: {
+    ...TYPE.caption,
     color: colors.subtle,
-    fontSize: 12,
-    marginTop: 12,
+    marginTop: SPACING.md,
     textAlign: 'center',
   },
   pressed: { opacity: 0.62 },

@@ -36,6 +36,6 @@ pnpm build:web
 pnpm --filter @kaku/web run deploy
 ```
 
-公开地址：<https://kaku-web.shqingda.workers.dev>
+公开地址：<https://kaku.shqingda.workers.dev>
 
 产品介绍、免费使用说明、隐私政策、服务条款和支持信息均可由首页导航访问。Kaku 当前不提供购买或订阅入口。

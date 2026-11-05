@@ -7,7 +7,7 @@ import { HomePage } from './pages/home-page';
 import { LegalPage } from './pages/legal-page';
 import { NotFoundPage } from './pages/not-found-page';
 
-const PUBLIC_SITE_URL = 'https://kaku-web.shqingda.workers.dev';
+const PUBLIC_SITE_URL = 'https://kaku.shqingda.workers.dev';
 const legalPages = {
   '/privacy': 'privacy',
   '/terms': 'terms',
