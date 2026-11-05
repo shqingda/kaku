@@ -134,7 +134,9 @@ export function AppSheet({
           },
         );
       } else {
-        translateY.value = withSpring(windowHeight, SHEET_DISMISS_SPRING, (finished) => {
+        // Clamp at the screen edge: the native Modal keeps swallowing taps until
+        // this finishes, and an unclamped spring settles long after leaving view.
+        translateY.value = withSpring(windowHeight, { ...SHEET_DISMISS_SPRING, overshootClamping: true }, (finished) => {
           if (finished) runOnJS(finishClosing)(version);
         });
         backdropOpacity.value = withTiming(0, {
@@ -193,7 +195,7 @@ export function AppSheet({
       // 正常释放交接真实速度；被系统取消的拖动平稳归位，不意外关闭。
       translateY.value = withSpring(
         dismiss ? windowHeight : 0,
-        { ...SHEET_DISMISS_SPRING, velocity: success ? event.velocityY : 0 },
+        { ...SHEET_DISMISS_SPRING, overshootClamping: dismiss, velocity: success ? event.velocityY : 0 },
         (finished) => {
           if (!finished) return;
           if (dismiss) runOnJS(finishDismiss)(version);

@@ -7,8 +7,13 @@ function page(pathname = '/p1/turnstile') {
   const appended = [];
   const root = { appendChild: node => appended.push(node) };
   const window = { location: { origin: 'https://next.bgm.tv', pathname } };
-  const document = { head: null, documentElement: root, createElement: () => ({}) };
-  return { appended, window, context: vm.createContext({ window, document }) };
+  const document = {
+    head: null,
+    documentElement: root,
+    createElement: () => ({}),
+    getElementById: id => appended.find(node => node.id === id) ?? null,
+  };
+  return { appended, document, window, context: vm.createContext({ window, document }) };
 }
 
 test('the bridge only restyles the official page, once, before head exists', () => {
@@ -17,9 +22,18 @@ test('the bridge only restyles the official page, once, before head exists', () 
   vm.runInContext(TURNSTILE_BRIDGE, p.context);
   assert.equal(p.appended.length, 2);
   assert.match(p.appended[1].textContent, /#turnstile-container/);
+  assert.match(p.appended[1].textContent, /overflow:hidden!important/);
   const other = page('/other');
   vm.runInContext(TURNSTILE_BRIDGE, other.context);
   assert.equal(other.appended.length, 0);
+});
+
+test('the bridge restyles again if the document discarded its first injection', () => {
+  const p = page();
+  vm.runInContext(TURNSTILE_BRIDGE, p.context);
+  p.appended.length = 0;
+  vm.runInContext(TURNSTILE_BRIDGE, p.context);
+  assert.equal(p.appended.length, 2);
 });
 
 test('navigation keeps the top frame on the official page and permits challenge subframes only', () => {

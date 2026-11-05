@@ -1,7 +1,7 @@
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 
 import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
@@ -106,7 +106,8 @@ function VerificationCard({ onToken }: { onToken: (token: string) => void }) {
             <ActivityIndicator color={colors.muted} size="small" />
           </Animated.View>
         )}
-        <Animated.View entering={FadeIn.duration(200)} style={StyleSheet.absoluteFill}>
+        {/* Hidden until styled, so an unstyled page never flashes. */}
+        <View style={[StyleSheet.absoluteFill, { opacity: ready ? 1 : 0 }]}>
           <WebView
             key={load}
             source={{ uri: TURNSTILE_PAGE_URL }}
@@ -131,12 +132,18 @@ function VerificationCard({ onToken }: { onToken: (token: string) => void }) {
             }}
             onContentProcessDidTerminate={() => fail('安全验证已中断，请重新验证。')}
             onRenderProcessGone={() => fail('安全验证已中断，请重新验证。')}
+            // Android otherwise lays the page out at desktop width and shrinks it.
+            scalesPageToFit={false}
+            setBuiltInZoomControls={false}
             scrollEnabled={false}
+            nestedScrollEnabled={false}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
             bounces={false}
             overScrollMode="never"
             style={styles.webview}
           />
-        </Animated.View>
+        </View>
       </View>
     )}
   </Animated.View>;
@@ -161,6 +168,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     height: TURNSTILE_WIDGET_HEIGHT,
     justifyContent: 'center',
+    // Borrow card padding so the fixed 300 pt widget fits 360 pt phones.
+    marginHorizontal: -SPACING.sm,
     marginTop: SPACING.sm,
   },
   loading: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
