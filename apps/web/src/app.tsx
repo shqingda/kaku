@@ -60,18 +60,20 @@ function Site() {
   const path = retired?.path ?? rawPath;
 
   useEffect(() => {
-    if (!retired) {
-      window.scrollTo(0, 0);
-      return;
+    if (retired) {
+      const nextUrl = retired.hash ? `${retired.path}#${retired.hash}` : retired.path;
+      window.history.replaceState(null, '', nextUrl);
     }
 
-    const nextUrl = retired.hash ? `${retired.path}#${retired.hash}` : retired.path;
-    window.history.replaceState(null, '', nextUrl);
-    if (retired.hash) {
-      document.getElementById(retired.hash)?.scrollIntoView();
+    // The page renders after load, so the browser can't reach a hash target by
+    // itself. Jump there instantly: smooth-scrolling a fresh page reads as lag.
+    const hash = window.location.hash.slice(1);
+    const target = hash ? document.getElementById(hash) : null;
+    if (target) {
+      target.scrollIntoView({ behavior: 'instant' });
       return;
     }
-    window.scrollTo(0, 0);
+    window.scrollTo({ behavior: 'instant', left: 0, top: 0 });
   }, [rawPath, retired]);
 
   let page = path === '/' ? <HomePage /> : <NotFoundPage />;

@@ -2,6 +2,7 @@ export type Language = 'zh' | 'en';
 
 type FaqItem = { q: string; a: string };
 type LegalSection = { title: string; body: string };
+type SiteNav = { features: string; privacy: string; free: string; faq: string };
 type LegalDoc = { title: string; intro: string; updated: string; sections: LegalSection[] };
 
 type Translation = {
@@ -11,6 +12,9 @@ type Translation = {
     switchTheme: string;
     switchLanguage: string;
     themeNames: Record<'light' | 'dark' | 'system', string>;
+    navLabel: string;
+    nav: SiteNav;
+    download: string;
   };
   home: {
     pill: string;
@@ -18,36 +22,77 @@ type Translation = {
     heroTitle2: string;
     heroSub: string;
     heroPrimary: string;
+    heroFreeTag: string;
     heroSecondary: string;
     platformNote: string;
+    preview: {
+      label: string;
+      weekday: string;
+      continueTitle: string;
+      search: string;
+      shows: { title: string; meta: string }[];
+      friendsTitle: string;
+      friendLine: string;
+      detailMeta: string;
+      detailTitle: string;
+      collectionLabel: string;
+      collectionStatus: string;
+      progress: string;
+      rating: string;
+      ratingCount: string;
+      episodesTitle: string;
+      episodesMeta: string;
+      discussionTitle: string;
+      discussion: { name: string; text: string }[];
+    };
     features: {
       eyebrow: string;
       title1: string;
       title2: string;
       sub: string;
-      items: { title: string; copy: string }[];
+      collection: {
+        title: string;
+        copy: string;
+        groupLabel: string;
+        statuses: string[];
+        showTitle: string;
+        unit: string;
+      };
+      episodes: {
+        title: string;
+        copy: string;
+        progressLabel: string;
+        episodeLabel: (episode: number) => string;
+      };
+      community: { title: string; copy: string; thread: { name: string; text: string; reply?: boolean }[] };
+      timeline: { title: string; copy: string; items: { name: string; action: string; time: string }[] };
+      icons: { title: string; copy: string; groupLabel: string; names: Record<'ink' | 'color' | 'lower', string> };
+      states: { title: string; copy: string; offline: string; cached: string; retry: string };
     };
-    sync: {
+    privacy: {
       eyebrow: string;
       title1: string;
       title2: string;
       copy: string;
-      privacyLink: string;
+      link: string;
+      synced: string;
+      points: { title: string; copy: string }[];
     };
-    closing: {
-      eyebrow: string;
-      title: string;
-      copy: string;
-      cta: string;
-    };
+    free: { eyebrow: string; price: string; title: string; copy: string; points: string[] };
     faq: { eyebrow: string; title: string; items: FaqItem[] };
+    closing: { eyebrow: string; title: string; copy: string; cta: string };
   };
   footer: {
     tagline: string;
+    productTitle: string;
+    legalTitle: string;
+    communityTitle: string;
+    nav: SiteNav;
     privacy: string;
     terms: string;
     feedback: string;
     github: string;
+    download: string;
     note: string;
   };
   legal: {
@@ -75,6 +120,9 @@ const zh: Translation = {
     switchTheme: '切换主题',
     switchLanguage: '切换语言',
     themeNames: { light: '日间模式', dark: '夜间模式', system: '跟随系统' },
+    navLabel: '页面导航',
+    nav: { features: '功能', privacy: '隐私', free: '免费使用', faq: '常见问题' },
+    download: '下载',
   },
   home: {
     pill: 'iOS 与 Android 测试中',
@@ -82,41 +130,106 @@ const zh: Translation = {
     heroTitle2: '留在一个安静的地方。',
     heroSub:
       'Kaku 是一个为移动端重新设计的 Bangumi 第三方客户端。收藏、追踪、评分与讨论，都更轻、更快，也更像原生 App。',
-    heroPrimary: '了解 Kaku',
-    heroSecondary: '在 GitHub 上关注',
-    platformNote: 'iPhone · Android · 免费测试中',
+    heroPrimary: '下载 Android 版',
+    heroFreeTag: '免费',
+    heroSecondary: '在 GitHub 上查看',
+    platformNote: '需要 Android 10 及以上 · iPhone 版测试中',
+    preview: {
+      label: 'Kaku 应用首页、条目详情与章节界面预览',
+      weekday: '星期三',
+      continueTitle: '继续观看',
+      search: '搜索动画、书籍、音乐与游戏',
+      shows: [
+        { title: '葬送的芙莉莲', meta: '在看 · 17 / 28 集' },
+        { title: '胆大党', meta: '在看 · 8 / 12 集' },
+        { title: '攻壳机动队', meta: '看过 · 26 / 26 集' },
+      ],
+      friendsTitle: '好友动态',
+      friendLine: 'Mio 看过了第 12 集',
+      detailMeta: '2023 · TV',
+      detailTitle: '葬送的芙莉莲',
+      collectionLabel: '收藏盒',
+      collectionStatus: '在看',
+      progress: '17 / 28 集',
+      rating: '力荐',
+      ratingCount: '2.1 万人评分',
+      episodesTitle: '章节',
+      episodesMeta: '看到第 17 集',
+      discussionTitle: '本集讨论',
+      discussion: [
+        { name: 'Mio', text: '这一集的留白太好了。' },
+        { name: 'Haru', text: '配乐响起的时候忍不住了。' },
+      ],
+    },
     features: {
       eyebrow: '熟悉，但更顺手',
       title1: '少一点操作，',
       title2: '多一点作品本身。',
       sub: '功能尊重 Bangumi 原版，交互则从移动端重新思考。没有为了“粘性”制造的负担。',
-      items: [
-        {
-          title: '收藏，进度与评分',
-          copy: '想看、在看、看过、搁置与抛弃完整对应 Bangumi。每次更新都同步到你的真实账户。',
-        },
-        {
-          title: '章节不再是表格',
-          copy: '格子与列表两种视图，长篇作品自动分段。点进每一集，都能继续读讨论。',
-        },
-        {
-          title: '讨论仍然属于社区',
-          copy: '吐槽箱、评论、讨论版与回复关系保持原意，用更适合手机的方式呈现。',
-        },
-      ],
+      collection: {
+        title: '收藏，进度与评分',
+        copy: '想看、在看、看过、搁置与抛弃完整对应 Bangumi。每次更新都同步到你的真实账户。',
+        groupLabel: '收藏状态示例',
+        statuses: ['想看', '在看', '看过', '搁置', '抛弃'],
+        showTitle: '葬送的芙莉莲',
+        unit: '集',
+      },
+      episodes: {
+        title: '章节不再是表格',
+        copy: '格子与列表两种视图，长篇作品自动分段。点进每一集，都能继续读讨论。',
+        progressLabel: '看到',
+        episodeLabel: (episode) => `看到第 ${episode} 集`,
+      },
+      community: {
+        title: '讨论仍然属于社区',
+        copy: '吐槽箱、评论、讨论版与回复关系保持原意，用更适合手机的方式呈现。',
+        thread: [
+          { name: 'Ren', text: '第二遍看才注意到这个伏笔。' },
+          { name: 'Mio', text: '片头其实早就暗示了。', reply: true },
+        ],
+      },
+      timeline: {
+        title: '好友在看什么',
+        copy: '好友的动态和你自己发的内容，都在首页。',
+        items: [
+          { name: 'Mio', action: '看过了第 12 集', time: '刚刚' },
+          { name: 'Haru', action: '把一部作品加入想看', time: '1 小时前' },
+          { name: 'Ren', action: '给了 9 分', time: '昨天' },
+        ],
+      },
+      icons: {
+        title: '三款图标，随你换',
+        copy: '墨、彩与小写，每款都有日间和夜间版本。',
+        groupLabel: 'App 图标示例',
+        names: { ink: '墨', color: '彩', lower: '小写' },
+      },
+      states: {
+        title: '网络不好，也说实话',
+        copy: '离线、重试和失败都有明确状态。暂时连不上时，先显示上次的内容，并告诉你这是缓存，不用对着空白页转圈。',
+        offline: '离线',
+        cached: '正在显示上次的内容',
+        retry: '重试',
+      },
     },
-    sync: {
+    privacy: {
       eyebrow: '一个账户，多台设备',
       title1: '换一块屏幕，',
       title2: '不用重新开始。',
-      copy: '使用 Bangumi 官方授权登录。密码不会经过 Kaku；收藏、进度与评分直接同步到你的 Bangumi 账户。',
-      privacyLink: '了解隐私设计',
+      copy: '使用 Bangumi 官方授权登录。收藏、进度与评分直接同步到你的 Bangumi 账户。',
+      link: '阅读隐私政策',
+      synced: '已同步',
+      points: [
+        { title: '密码不经过 Kaku', copy: '登录在 Bangumi 官方页面完成，我们不收集，也不会索要你的密码。' },
+        { title: '内容不进数据库', copy: '评论、收藏、动态与通知只在请求时实时转发，不写入我们的数据库。' },
+        { title: '不做画像，不投广告', copy: '不分析观看历史，不建立个人画像，也不把数据用于任何形式的广告。' },
+      ],
     },
-    closing: {
-      eyebrow: '正在认真做出来',
-      title: '下一集，继续。',
-      copy: 'Kaku 正在 iOS 与 Android 上测试，当前全部功能免费开放。',
-      cta: '常见问题',
+    free: {
+      eyebrow: '免费使用',
+      price: '¥0',
+      title: '当前全部功能免费。',
+      copy: '官网与 App 当前均不提供购买、订阅或赞助入口。',
+      points: ['浏览、收藏、进度、评分与社区阅读不按条目数量限制', '不需要信用卡，也不需要试用期', '有问题可以直接到 GitHub 反馈'],
     },
     faq: {
       eyebrow: '常见问题',
@@ -134,13 +247,24 @@ const zh: Translation = {
         { q: 'Kaku 是 Bangumi 官方产品吗？', a: 'Kaku 是独立开发的第三方客户端，与 Bangumi 番组计划没有隶属关系。' },
       ],
     },
+    closing: {
+      eyebrow: '正在认真做出来',
+      title: '下一集，继续。',
+      copy: 'Kaku 正在 iOS 与 Android 上测试，当前全部功能免费开放。',
+      cta: '常见问题',
+    },
   },
   footer: {
     tagline: '为喜欢的作品，留一个安静的位置。',
+    productTitle: '产品',
+    legalTitle: '条款',
+    communityTitle: '社区',
+    nav: { features: '功能', privacy: '隐私设计', free: '免费使用', faq: '常见问题' },
     privacy: '隐私政策',
     terms: '服务条款',
     feedback: '问题反馈',
     github: 'GitHub 仓库',
+    download: '下载 APK',
     note: '© 2026 Kaku · 独立开发产品。Kaku 与 Bangumi 番组计划无隶属关系。',
   },
   legal: {
@@ -266,6 +390,9 @@ const en: Translation = {
     switchTheme: 'Switch theme',
     switchLanguage: 'Switch language',
     themeNames: { light: 'Light mode', dark: 'Dark mode', system: 'System mode' },
+    navLabel: 'Page navigation',
+    nav: { features: 'Features', privacy: 'Privacy', free: 'Free to use', faq: 'FAQ' },
+    download: 'Download',
   },
   home: {
     pill: 'Testing on iOS & Android',
@@ -273,41 +400,106 @@ const en: Translation = {
     heroTitle2: 'in a quiet place of its own.',
     heroSub:
       'Kaku is a Bangumi third-party client redesigned for mobile. Collections, tracking, ratings and discussions — lighter, faster, more native.',
-    heroPrimary: 'Learn more',
-    heroSecondary: 'Follow on GitHub',
-    platformNote: 'iPhone · Android · Free in testing',
+    heroPrimary: 'Download for Android',
+    heroFreeTag: 'Free',
+    heroSecondary: 'View on GitHub',
+    platformNote: 'Requires Android 10 or later · iPhone version in testing',
+    preview: {
+      label: 'Preview of the Kaku home, subject detail and episode screens',
+      weekday: 'Wednesday',
+      continueTitle: 'Continue',
+      search: 'Search anime, books, music, games',
+      shows: [
+        { title: 'Frieren', meta: 'Watching · 17 / 28' },
+        { title: 'Dandadan', meta: 'Watching · 8 / 12' },
+        { title: 'Ghost in the Shell', meta: 'Watched · 26 / 26' },
+      ],
+      friendsTitle: 'Friends',
+      friendLine: 'Mio watched episode 12',
+      detailMeta: '2023 · TV',
+      detailTitle: 'Frieren',
+      collectionLabel: 'Collection',
+      collectionStatus: 'Watching',
+      progress: '17 / 28',
+      rating: 'Superb',
+      ratingCount: '21k ratings',
+      episodesTitle: 'Episodes',
+      episodesMeta: 'Up to episode 17',
+      discussionTitle: 'Episode discussion',
+      discussion: [
+        { name: 'Mio', text: 'The quiet in this episode is perfect.' },
+        { name: 'Haru', text: 'That music cue got me.' },
+      ],
+    },
     features: {
       eyebrow: 'Familiar, yet smoother',
       title1: 'Less to operate,',
       title2: 'more of the work itself.',
       sub: 'Features respect the original Bangumi while the interactions are rethought for mobile. No artificial hooks for “engagement”.',
-      items: [
-        {
-          title: 'Collections, progress & ratings',
-          copy: 'Plan-to-watch, watching, watched, on-hold and dropped map one-to-one to your real Bangumi account.',
-        },
-        {
-          title: 'Episodes, not spreadsheets',
-          copy: 'Grid and list views, with long series auto-segmented. Open any episode to keep reading its discussion.',
-        },
-        {
-          title: 'Community, as it should be',
-          copy: 'Comments, reviews, boards and replies keep their original meaning, presented the way a phone should.',
-        },
+      collection: {
+        title: 'Collections, progress & ratings',
+        copy: 'Plan-to-watch, watching, watched, on-hold and dropped map one-to-one to your real Bangumi account.',
+        groupLabel: 'Collection status example',
+        statuses: ['Plan', 'Watching', 'Watched', 'On hold', 'Dropped'],
+        showTitle: 'Frieren',
+        unit: 'episodes',
+      },
+      episodes: {
+        title: 'Episodes, not spreadsheets',
+        copy: 'Grid and list views, with long series auto-segmented. Open any episode to keep reading its discussion.',
+        progressLabel: 'Up to',
+        episodeLabel: (episode) => `Up to episode ${episode}`,
+      },
+      community: {
+        title: 'Community, as it should be',
+        copy: 'Comments, reviews, boards and replies keep their original meaning, presented the way a phone should.',
+        thread: [
+          { name: 'Ren', text: 'Only caught this foreshadowing on a rewatch.' },
+          { name: 'Mio', text: 'The opening hinted at it all along.', reply: true },
+        ],
+      },
+      timeline: {
+        title: 'What friends are watching',
+        copy: 'Your friends’ updates and your own posts, together on the home screen.',
+        items: [
+          { name: 'Mio', action: 'watched episode 12', time: 'Now' },
+          { name: 'Haru', action: 'added a title to Plan', time: '1h' },
+          { name: 'Ren', action: 'rated a title 9', time: '1d' },
+        ],
+      },
+      icons: {
+        title: 'Three icons, your pick',
+        copy: 'Ink, Color and Lowercase, each with light and dark versions.',
+        groupLabel: 'App icon example',
+        names: { ink: 'Ink', color: 'Color', lower: 'Lowercase' },
+      },
+      states: {
+        title: 'Honest when the network isn’t',
+        copy: 'Offline, retrying and failed states are always explicit. When Kaku can’t connect, it shows what it last loaded and tells you it’s cached, instead of leaving you with a spinner.',
+        offline: 'Offline',
+        cached: 'Showing your last loaded content',
+        retry: 'Retry',
+      },
+    },
+    privacy: {
+      eyebrow: 'One account, many devices',
+      title1: 'Change screens,',
+      title2: 'not your place.',
+      copy: 'Sign in through the official Bangumi authorization. Collections, progress and ratings sync straight to your Bangumi account.',
+      link: 'Read the privacy policy',
+      synced: 'Synced',
+      points: [
+        { title: 'Passwords skip Kaku', copy: 'You sign in on the official Bangumi page. We never collect or ask for your password.' },
+        { title: 'Content stays out of our database', copy: 'Comments, collections, updates and notifications are forwarded live on request, never stored.' },
+        { title: 'No profiling, no ads', copy: 'We don’t analyze your watch history, build profiles, or use data for advertising of any kind.' },
       ],
     },
-    sync: {
-      eyebrow: 'One account, many devices',
-      title1: 'Switch screens,',
-      title2: 'never start over.',
-      copy: 'Sign in with the official Bangumi authorization. Your password never passes through Kaku; collections, progress and ratings sync straight to your Bangumi account.',
-      privacyLink: 'Learn about privacy',
-    },
-    closing: {
-      eyebrow: 'Being built with care',
-      title: 'Next episode, continue.',
-      copy: 'Kaku is in testing on iOS and Android, with all features free.',
-      cta: 'FAQ',
+    free: {
+      eyebrow: 'Free to use',
+      price: '$0',
+      title: 'Every feature is free right now.',
+      copy: 'Neither the site nor the app currently offers purchases, subscriptions or sponsorships.',
+      points: ['Browsing, collections, progress, ratings and community reading have no item limits', 'No credit card and no trial period', 'Questions go straight to GitHub'],
     },
     faq: {
       eyebrow: 'FAQ',
@@ -319,13 +511,24 @@ const en: Translation = {
         { q: 'Is Kaku an official Bangumi product?', a: 'No. Kaku is an independently developed third-party client, unaffiliated with Bangumi.' },
       ],
     },
+    closing: {
+      eyebrow: 'Being built with care',
+      title: 'Next episode, continue.',
+      copy: 'Kaku is in testing on iOS and Android, with all features free.',
+      cta: 'FAQ',
+    },
   },
   footer: {
     tagline: 'A quiet place for the works you love.',
+    productTitle: 'Product',
+    legalTitle: 'Legal',
+    communityTitle: 'Community',
+    nav: { features: 'Features', privacy: 'Privacy design', free: 'Free to use', faq: 'FAQ' },
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
     feedback: 'Report an issue',
     github: 'GitHub',
+    download: 'Download APK',
     note: '© 2026 Kaku · An independent project. Kaku is not affiliated with Bangumi.',
   },
   legal: {

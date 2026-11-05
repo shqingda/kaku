@@ -79,7 +79,7 @@ export function useThemeMode() {
     document.documentElement.dataset.theme = resolveTheme(mode);
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
       'content',
-      resolveTheme(mode) === 'dark' ? '#141413' : '#f7f6f2',
+      resolveTheme(mode) === 'dark' ? '#0e0c11' : '#ffffff',
     );
   }, [mode]);
 
@@ -91,7 +91,7 @@ export function useThemeMode() {
       document.documentElement.dataset.theme = theme;
       document.querySelector('meta[name="theme-color"]')?.setAttribute(
         'content',
-        theme === 'dark' ? '#141413' : '#f7f6f2',
+        theme === 'dark' ? '#0e0c11' : '#ffffff',
       );
     };
     apply();

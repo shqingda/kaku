@@ -1,23 +1,32 @@
 import { GitHubIcon, MonitorIcon, MoonIcon, SunIcon } from './icons';
+import { KakuMark } from './kaku-mark';
 import { useI18n, useThemeMode } from '../i18n';
+import { GITHUB_URL, RELEASES_URL } from '../site-links';
 
 export function SiteHeader() {
   const { lang, setLang, t } = useI18n();
   const { mode, cycleMode } = useThemeMode();
   const themeIcon =
     mode === 'light' ? <SunIcon /> : mode === 'dark' ? <MoonIcon /> : <MonitorIcon />;
+  const themeLabel = `${t.header.switchTheme}（${t.header.themeNames[mode]}）`;
 
   return (
     <header className="site-header">
       <a aria-label="Kaku" className="brand" href="/">
-        <img alt="" aria-hidden="true" className="brand-mark" height="32" src="/kaku-icon.png" width="32" />
+        <KakuMark className="brand-mark" />
         <span>Kaku</span>
       </a>
-      <div className="header-tools" role="group" aria-label={t.header.switchTheme}>
+      <nav aria-label={t.header.navLabel} className="site-nav">
+        <a href="/#features">{t.header.nav.features}</a>
+        <a href="/#privacy">{t.header.nav.privacy}</a>
+        <a href="/#free">{t.header.nav.free}</a>
+        <a href="/#faq">{t.header.nav.faq}</a>
+      </nav>
+      <div className="header-tools">
         <a
           aria-label={t.header.github}
-          className="tool-button"
-          href="https://github.com/shqingda/kaku"
+          className="tool-button tool-github"
+          href={GITHUB_URL}
           rel="noreferrer"
           target="_blank"
           title={t.header.github}
@@ -34,14 +43,17 @@ export function SiteHeader() {
           {lang === 'zh' ? 'EN' : '中文'}
         </button>
         <button
-          aria-label={`${t.header.switchTheme}（${t.header.themeNames[mode]}）`}
+          aria-label={themeLabel}
           className="tool-button"
           onClick={cycleMode}
-          title={`${t.header.switchTheme}（${t.header.themeNames[mode]}）`}
+          title={themeLabel}
           type="button"
         >
           {themeIcon}
         </button>
+        <a className="button primary compact" href={RELEASES_URL} rel="noreferrer" target="_blank">
+          {t.header.download}
+        </a>
       </div>
     </header>
   );
