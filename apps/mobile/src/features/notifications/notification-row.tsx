@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import type { NotificationTarget, UserNotification } from './model';
@@ -134,7 +135,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    paddingVertical: 16,
+    paddingVertical: SPACING.lg,
   },
   divider: {
     borderTopColor: colors.track,
@@ -149,11 +150,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 40,
   },
-  avatarFallback: { color: colors.muted, fontSize: 14, fontWeight: '700' },
-  copy: { flex: 1, marginLeft: 13 },
-  heading: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  sender: { color: colors.ink, flexShrink: 1, fontSize: 14, fontWeight: '700' },
-  time: { color: colors.subtle, fontSize: 11 },
+  avatarFallback: { color: colors.muted, ...TYPE.body, fontWeight: '700' },
+  copy: { flex: 1, marginLeft: SPACING.md },
+  heading: { alignItems: 'center', flexDirection: 'row', gap: SPACING.sm },
+  sender: { color: colors.ink, flexShrink: 1, ...TYPE.body, fontWeight: '700' },
+  time: { color: colors.subtle, ...TYPE.micro },
   unreadDot: {
     backgroundColor: colors.accent,
     borderRadius: 4,
@@ -161,7 +162,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginLeft: 'auto',
     width: 7,
   },
-  action: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 4 },
-  title: { color: colors.ink, fontSize: 14, fontWeight: '600', lineHeight: 21, marginTop: 4 },
+  action: { color: colors.muted, ...TYPE.caption, lineHeight: 19, marginTop: SPACING.xs },
+  title: { color: colors.ink, ...TYPE.body, fontWeight: '600', marginTop: SPACING.xs },
   pressed: { opacity: 0.62 },
 });

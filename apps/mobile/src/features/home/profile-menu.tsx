@@ -49,7 +49,7 @@ export function ProfileMenu({ session }: { session: AuthSession }) {
       const windowWidth = Dimensions.get('window').width;
       setAnchor({
         right: Math.max(MENU_EDGE_MARGIN, windowWidth - x - width),
-        top: y + height + 8,
+        top: y + height + SPACING.sm,
       });
       setVisible(true);
       if (reduceMotion) {
