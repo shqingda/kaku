@@ -33,6 +33,7 @@ import { SubjectTitleBar } from '@/features/subject-detail/subject-title-bar';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 import { useIsOffline } from '@/lib/use-connectivity';
+import { loadStatus } from '@/lib/query-status';
 
 function useThemedStyles() {
   const colors = useTheme();
@@ -129,7 +130,7 @@ export default function SubjectScreen() {
   );
   const contentStyle = [styles.content, { paddingTop: chromeTop + SPACING.xs }];
 
-  if (catalogQuery.isPending) {
+  if (loadStatus(catalogQuery).isPending) {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />

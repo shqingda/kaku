@@ -40,6 +40,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { withoutBlockedReplies } from '@/features/users/blocked-content';
 import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function GroupTopicScreen() {
   const colors = useTheme();
@@ -146,8 +147,8 @@ export default function GroupTopicScreen() {
               ) : (
                 <DiscussionStatus
                   errorText="话题读取失败，请检查网络后重试。"
-                  isError={topicQuery.isError}
-                  isPending={topicQuery.isPending}
+                  isError={loadStatus(topicQuery).isError}
+                  isPending={loadStatus(topicQuery).isPending}
                   loadingText="正在读取小组话题…"
                   onRetry={() => void topicQuery.refetch()}
                 />

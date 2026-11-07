@@ -39,6 +39,7 @@ import {
   zoomSourceScrollProps,
 } from '@/features/shared/zoom-source-layout';
 import { readInfiniteItems, readQueryItems } from '@/lib/query-data';
+import { loadStatus } from '@/lib/query-status';
 
 function useThemedStyles() {
   const colors = useTheme();
@@ -111,14 +112,14 @@ export default function ChannelScreen() {
         {channelQuery.data && channelQuery.isError ? (
           <CachedDataNotice onRetry={() => void channelQuery.refetch()} retrying={channelQuery.isRefetching} />
         ) : null}
-        {channelQuery.isPending && !channelQuery.data ? (
+        {loadStatus(channelQuery).isPending && !channelQuery.data ? (
           <View style={styles.stateSlot}>
             <SkeletonList
               accessibilityLabel="正在读取热门条目"
               direction="horizontal"
             />
           </View>
-        ) : channelQuery.isError && !channelQuery.data ? (
+        ) : loadStatus(channelQuery).isError && !channelQuery.data ? (
           <View style={styles.stateSlot}>
             <AppState
               action={() => void channelQuery.refetch()}
@@ -197,11 +198,11 @@ export default function ChannelScreen() {
         {rankingQuery.data && rankingQuery.isError ? (
           <CachedDataNotice onRetry={() => void rankingQuery.refetch()} retrying={rankingQuery.isRefetching} />
         ) : null}
-        {rankingQuery.isPending && !rankingQuery.data ? (
+        {loadStatus(rankingQuery).isPending && !rankingQuery.data ? (
           <View style={styles.stateSlot}>
             <AppState title="正在读取高分条目" text="排行榜加载中。" />
           </View>
-        ) : rankingQuery.isError && !rankingQuery.data ? (
+        ) : loadStatus(rankingQuery).isError && !rankingQuery.data ? (
           <View style={styles.stateSlot}>
             <AppState
               action={() => void rankingQuery.refetch()}

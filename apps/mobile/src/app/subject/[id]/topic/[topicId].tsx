@@ -38,6 +38,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { withoutBlockedReplies } from '@/features/users/blocked-content';
 import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function TopicScreen() {
   const colors = useTheme();
@@ -135,8 +136,8 @@ export default function TopicScreen() {
                 <CachedDataNotice onRetry={() => void topicQuery.refetch()} retrying={topicQuery.isRefetching} />
               ) : (
                 <DiscussionStatus
-                  isError={topicQuery.isError}
-                  isPending={topicQuery.isPending}
+                  isError={loadStatus(topicQuery).isError}
+                  isPending={loadStatus(topicQuery).isPending}
                   onRetry={() => void topicQuery.refetch()}
                 />
               )}

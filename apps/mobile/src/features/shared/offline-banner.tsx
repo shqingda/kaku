@@ -28,7 +28,7 @@ export function OfflineBanner() {
         tintColor={colors.surface}
         weight="semibold"
       />
-      <Text style={styles.text}>当前离线，显示的是缓存内容</Text>
+      <Text style={styles.text}>当前离线，只能查看已保存的内容</Text>
     </View>
   );
 }

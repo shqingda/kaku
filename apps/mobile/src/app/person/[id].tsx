@@ -4,6 +4,7 @@ import { EntityDetailScreen } from '@/features/people/entity-detail-screen';
 import { usePerson } from '@/features/people/use-public-entity';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function PersonScreen() {
   const { id, replyId } = useLocalSearchParams<{
@@ -21,8 +22,7 @@ export default function PersonScreen() {
     <EntityDetailScreen
       data={personQuery.data}
       initialReplyId={replyId}
-      isError={personQuery.isError}
-      isPending={personQuery.isPending}
+      {...loadStatus(personQuery)}
       isRefreshing={personQuery.isRefetching && !personQuery.isPending}
       kind="人物"
       onRetry={() => void personQuery.refetch()}
