@@ -38,7 +38,7 @@ export const PublicIndexItemRow = memo(function PublicIndexItemRow({
   const row = (
     <Pressable
       accessibilityHint={href ? '进入详情' : undefined}
-      accessibilityLabel={`打开${item.title}`}
+      accessibilityLabel={href ? `打开${item.title}` : item.title}
       accessibilityRole={href ? 'button' : undefined}
       style={styles.subjectRow}
     >
@@ -55,16 +55,18 @@ export const PublicIndexItemRow = memo(function PublicIndexItemRow({
           {item.comment ? ` · ${item.comment}` : ''}
         </Text>
       </View>
-      <SymbolView
-        name={{
-          android: 'chevron_right',
-          ios: 'chevron.right',
-          web: 'chevron_right',
-        }}
-        size={14}
-        tintColor={colors.subtle}
-        weight="semibold"
-      />
+      {href ? (
+        <SymbolView
+          name={{
+            android: 'chevron_right',
+            ios: 'chevron.right',
+            web: 'chevron_right',
+          }}
+          size={14}
+          tintColor={colors.subtle}
+          weight="semibold"
+        />
+      ) : null}
     </Pressable>
   );
 

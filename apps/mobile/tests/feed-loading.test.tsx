@@ -119,6 +119,13 @@ test.each(pages)('$name keeps existing rows visible when a refresh pauses or fai
   expect(screen.queryByText('当前显示上次保存的内容')).toBeNull();
 });
 
+test('wiki rows stay inside Kaku and do not offer a web-only comparison', async () => {
+  Object.assign(mockWiki, { data: { items: [revision] }, isPending: false });
+  const screen = await render(<WikiScreen />);
+  expect(screen.getByRole('button', { name: `打开条目：${revision.title}` })).toBeTruthy();
+  expect(screen.queryByText('对比')).toBeNull();
+});
+
 test('a guest timeline waits for auth restoration, then offers login with a return destination', async () => {
   mockAuth = { isLoading: true, session: null };
   mockTimeline.fetchStatus = 'idle';
