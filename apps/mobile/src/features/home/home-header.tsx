@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import type { AuthSession } from '@/features/auth/model';
 import { useSearchDraft } from '@/features/search/search-draft';
@@ -78,7 +79,7 @@ export function HomeHeader({ session }: { session: AuthSession | null }) {
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  area: { paddingBottom: 8, paddingTop: 10 },
+  area: { paddingBottom: SPACING.sm, paddingTop: SPACING.md },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -87,9 +88,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   brand: {
     color: colors.ink,
-    fontSize: 30,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.9,
   },
   avatarButton: {
     alignItems: 'center',
@@ -97,6 +97,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
-  tools: { marginTop: 14 },
+  tools: { marginTop: SPACING.lg },
   pressed: { opacity: 0.62 },
 });

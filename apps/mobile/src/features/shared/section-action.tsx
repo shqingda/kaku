@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { HIT_SLOP, TYPE } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export function SectionAction({
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
     justifyContent: 'center',
     minHeight: 44,
   },

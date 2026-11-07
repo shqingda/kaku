@@ -1,6 +1,7 @@
 import { SymbolView } from 'expo-symbols';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -114,5 +115,5 @@ const createStyles = (_colors: ThemeColors) => StyleSheet.create({
     position: 'absolute',
     top: 0,
   },
-  row: { flexDirection: 'row', gap: 1 },
+  row: { flexDirection: 'row', gap: SPACING.xs },
 });

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -45,19 +46,18 @@ export function DiscussionUnavailableState({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', padding: 24 },
+  screen: { flex: 1, justifyContent: 'center', padding: SPACING.xl },
   card: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 24,
-    padding: 26,
+    padding: SPACING.xl,
   },
-  title: { color: colors.ink, fontSize: 20, fontWeight: '800' },
+  title: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
   message: {
     color: colors.muted,
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 9,
+    ...TYPE.body,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
   button: {
@@ -65,10 +65,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: 15,
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: SPACING.xl,
     minHeight: 48,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.xl,
   },
-  buttonText: { color: colors.surface, fontSize: 14, fontWeight: '800' },
+  buttonText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

@@ -3,6 +3,7 @@ import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -76,8 +77,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 34,
-    paddingVertical: 48,
+    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.xxl + SPACING.lg,
   },
   iconFrame: {
     alignItems: 'center',
@@ -89,24 +90,22 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   title: {
     color: colors.ink,
-    fontSize: 22,
+    ...TYPE.titleLarge,
     fontWeight: '800',
-    letterSpacing: -0.4,
-    marginTop: 24,
+    marginTop: SPACING.xl,
     textAlign: 'center',
   },
   description: {
     color: colors.muted,
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 10,
+    ...TYPE.body,
+    marginTop: SPACING.md,
     maxWidth: 330,
     textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 28,
+    gap: SPACING.md,
+    marginTop: SPACING.xxl,
     width: '100%',
   },
   secondaryButton: {
@@ -121,7 +120,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   secondaryButtonText: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
   },
   primaryButton: {
@@ -134,7 +133,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   primaryButtonText: {
     color: colors.surface,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
   },
   pressed: { opacity: 0.62 },

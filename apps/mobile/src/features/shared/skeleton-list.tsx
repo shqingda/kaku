@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { SPACING } from '@/constants/design';
 import { SkeletonBox } from '@/features/shared/skeleton';
 
 // 列表加载骨架：与最终内容同构的占位，替代「正在读取…」文字卡，
@@ -53,14 +54,14 @@ export function SkeletonList({
 }
 
 const styles = StyleSheet.create({
-  row: { marginBottom: 12 },
+  row: { marginBottom: SPACING.md },
   mediaRow: {
     flexDirection: 'row',
-    gap: 13,
+    gap: SPACING.md,
   },
   mediaCard: {
     alignItems: 'flex-start',
     flex: 1,
-    gap: 9,
+    gap: SPACING.sm,
   },
 });

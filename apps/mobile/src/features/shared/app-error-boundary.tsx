@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { recordDiagnosticError } from '@/lib/diagnostic-log';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -114,14 +115,14 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background,
       flex: 1,
       justifyContent: 'center',
-      padding: 24,
+      padding: SPACING.xl,
     },
     card: {
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: 28,
       maxWidth: 420,
-      padding: 28,
+      padding: SPACING.xxl,
       width: '100%',
     },
     icon: {
@@ -134,17 +135,15 @@ const createStyles = (colors: ThemeColors) =>
     },
     title: {
       color: colors.ink,
-      fontSize: 21,
+      ...TYPE.title,
       fontWeight: '800',
-      letterSpacing: -0.3,
-      marginTop: 20,
+      marginTop: SPACING.xl,
       textAlign: 'center',
     },
     message: {
       color: colors.muted,
-      fontSize: 14,
-      lineHeight: 22,
-      marginTop: 9,
+      ...TYPE.body,
+      marginTop: SPACING.sm,
       textAlign: 'center',
     },
     primaryButton: {
@@ -152,16 +151,16 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.accent,
       borderRadius: 15,
       justifyContent: 'center',
-      marginTop: 22,
+      marginTop: SPACING.xl,
       minHeight: 50,
       width: '100%',
     },
     primaryButtonText: {
       color: colors.surface,
-      fontSize: 15,
+      ...TYPE.body,
       fontWeight: '800',
     },
-    reportButton: { marginTop: 8, padding: 10 },
-    reportButtonText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
+    reportButton: { marginTop: SPACING.sm, padding: SPACING.md },
+    reportButtonText: { color: colors.muted, ...TYPE.caption, fontWeight: '600' },
     pressed: { opacity: 0.62 },
   });

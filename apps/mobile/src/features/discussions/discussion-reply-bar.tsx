@@ -1,7 +1,7 @@
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -54,9 +54,9 @@ const createStyles = (colors: ThemeColors) =>
       bottom: 0,
       elevation: Platform.OS === 'android' ? 12 : 0,
       left: 0,
-      paddingBottom: 10,
-      paddingHorizontal: 20,
-      paddingTop: 8,
+      paddingBottom: SPACING.md,
+      paddingHorizontal: SPACING.xl,
+      paddingTop: SPACING.sm,
       position: 'absolute',
       right: 0,
       zIndex: 20,
@@ -68,10 +68,10 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 20,
       borderWidth: StyleSheet.hairlineWidth,
       flexDirection: 'row',
-      gap: 9,
+      gap: SPACING.sm,
       minHeight: 48,
-      paddingHorizontal: 17,
+      paddingHorizontal: SPACING.lg,
     },
-    label: { color: colors.muted, flexShrink: 1, fontSize: 14 },
+    label: { color: colors.muted, flexShrink: 1, ...TYPE.body },
     pressed: { opacity: 0.62 },
   });
