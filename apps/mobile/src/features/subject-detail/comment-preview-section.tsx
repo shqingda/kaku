@@ -166,6 +166,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: SPACING.md,
   },
   moreText: { color: colors.accent, ...TYPE.body, fontWeight: '700' },
-  chevron: { color: colors.subtle, ...TYPE.display, fontWeight: '300' },
+  chevron: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });
