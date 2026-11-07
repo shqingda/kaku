@@ -56,6 +56,16 @@ test('failed mark-read restores unread state and explains the failure', async ()
   await screen.findByText('标记已读失败');
   expect(screen.getByText('未读 1')).toBeTruthy();
 });
+test('a failed mark-read can be retried from its notice', async () => {
+  await render(<Page />);
+  await screen.findByText('新回复');
+  mockRequest.mockResolvedValue(new Response(JSON.stringify({ message: 'failed' }), { status: 400 }));
+  await fireEvent.press(screen.getByText('新回复'));
+  await screen.findByText('标记已读失败');
+  mockRequest.mockClear();
+  await fireEvent.press(screen.getByRole('button', { name: '重试标记已读' }));
+  expect(mockRequest).toHaveBeenCalledWith('/me/notifications/read', expect.objectContaining({ method: 'POST' }));
+});
 test('failed refresh preserves rows and offers retry', async () => {
   await render(<Page />);
   await screen.findByText('新回复');
