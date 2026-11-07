@@ -1,5 +1,5 @@
 import { userErrorMessage } from '@/lib/user-error-message';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
@@ -7,8 +7,10 @@ import { HIT_SLOP } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppActionMenu } from '@/features/shared/app-action-menu';
 import { ReportSheet } from '@/features/reports/report-sheet';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useTheme } from '@/features/theme/theme-provider';
 
+import { rememberBlockedUserName } from './blocked-user-names';
 import { useBlocklist, useSetUserBlocked } from './use-blocklist';
 
 // 用户主页的溢出菜单：管理类操作（屏蔽、举报）收进"⋯"，
@@ -29,6 +31,15 @@ export function ProfileOverflow({
   const [reportVisible, setReportVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const isBlocked = blocklistQuery.data?.includes(userId) ?? false;
+  const { session } = useAuth();
+  const ownerId = session?.user.id;
+
+  // 屏蔽成功或打开已屏蔽用户的主页时记下名字，管理页才能显示和取消。
+  useEffect(() => {
+    if (isBlocked && ownerId) {
+      rememberBlockedUserName(ownerId, userId, { nickname, username });
+    }
+  }, [isBlocked, nickname, ownerId, userId, username]);
 
   function applyBlock(shouldBlock: boolean) {
     setBlocked.mutate(shouldBlock, {
