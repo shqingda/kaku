@@ -34,6 +34,8 @@ import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function SubjectReviewScreen() {
@@ -58,7 +60,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
     kind: 'review',
   });
   const review = reviewQuery.data;
-  const replies = review?.replies ?? [];
+  const blockedIds = useBlockedUserIds();
+  const replies = withoutBlockedReplies(review?.replies ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);

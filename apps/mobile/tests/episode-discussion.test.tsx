@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useEpisodeDiscussion } from '@/features/discussions/use-episode-discussion';
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('@/features/preferences/spoiler-preference', () => ({
   useSpoilerPreference: () => ({ enabled: true }),
 }));

@@ -23,6 +23,8 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 
 export default function GroupScreen() {
@@ -34,7 +36,8 @@ export default function GroupScreen() {
   const [composerVisible, setComposerVisible] = useState(false);
   const groupQuery = usePublicGroup(name);
   const topicsQuery = usePublicGroupTopics(name);
-  const topics = usePagedList(topicsQuery);
+  const blockedIds = useBlockedUserIds();
+  const topics = usePagedList(topicsQuery, (items) => withoutBlockedAuthors(items, blockedIds));
   const group = groupQuery.data;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const canCollapseDescription = (group?.description.length ?? 0) > 180;

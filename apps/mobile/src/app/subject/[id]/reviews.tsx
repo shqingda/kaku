@@ -14,6 +14,8 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -60,7 +62,8 @@ export default function SubjectReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const reviewsQuery = useSubjectReviews(subjectId ?? 0);
-  const reviews = usePagedList(reviewsQuery);
+  const blockedIds = useBlockedUserIds();
+  const reviews = usePagedList(reviewsQuery, (items) => withoutBlockedAuthors(items, blockedIds));
   const total = reviews.total ?? 0;
   const openReview = useCallback(
     (review: SubjectReview) => {

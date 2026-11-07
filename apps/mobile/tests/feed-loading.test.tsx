@@ -27,6 +27,7 @@ let mockAuth: { isLoading: boolean; session: { user: { id: number } } | null } =
   isLoading: false, session: { user: { id: 1 } },
 };
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() }, Stack: { Screen: () => null }, usePathname: () => '/directories',
 }));

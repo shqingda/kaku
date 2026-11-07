@@ -24,6 +24,7 @@ test('Bangumi friend timeline maps private API data into Kaku models', async () 
         uid: 7,
         user: {
           avatar: { small: 'https://lain.bgm.tv/avatar.jpg' },
+          id: 7,
           nickname: 'Kaku 用户',
           username: 'kaku-user',
         },
@@ -46,6 +47,7 @@ test('Bangumi friend timeline maps private API data into Kaku models', async () 
         text: '今天也要看动画。',
         user: {
           avatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+          id: 7,
           nickname: 'Kaku 用户',
           username: 'kaku-user',
         },
@@ -102,6 +104,7 @@ test('Bangumi collection timeline keeps its exact action and subject title', asy
     trailingText: '',
     user: {
       avatarUrl: undefined,
+      id: undefined,
       nickname: '好友 A',
       username: 'friend-a',
     },
@@ -160,6 +163,7 @@ test('Bangumi blog timeline keeps the entry id so clients can deep link', async 
     trailingText: '',
     user: {
       avatarUrl: undefined,
+      id: undefined,
       nickname: '好友 B',
       username: 'friend-b',
     },

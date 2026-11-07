@@ -16,6 +16,7 @@ const friendTimelineItemSchema = z.object({
   trailingText: z.string().optional(),
   user: z.object({
     avatarUrl: z.string().url().optional(),
+    id: z.number().int().positive().optional(),
     nickname: z.string(),
     username: z.string(),
   }),

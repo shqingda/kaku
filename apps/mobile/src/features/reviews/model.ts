@@ -2,6 +2,7 @@ import type { DiscussionReply } from '@/features/discussions/model';
 
 export type SubjectComment = {
   author: string;
+  authorId?: number;
   authorUsername?: string;
   body: string;
   id: string;
@@ -11,6 +12,7 @@ export type SubjectComment = {
 
 export type SubjectReview = {
   author: string;
+  authorId?: number;
   authorUsername?: string;
   id: string;
   replyCount: number;

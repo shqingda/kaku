@@ -15,6 +15,8 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -66,7 +68,8 @@ export default function SubjectCommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const commentsQuery = useSubjectComments(subjectId ?? 0);
-  const comments = usePagedList(commentsQuery);
+  const blockedIds = useBlockedUserIds();
+  const comments = usePagedList(commentsQuery, (items) => withoutBlockedAuthors(items, blockedIds));
   const total = comments.total ?? 0;
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: SubjectComment }) => (

@@ -20,6 +20,8 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { isBlockedUser } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
@@ -42,7 +44,10 @@ export default function FriendTimelineScreen() {
   const styles = createStyles(colors);
   const { isLoading: isAuthLoading, session } = useAuth();
   const timelineQuery = useFriendTimeline();
-  const timeline = usePagedList(timelineQuery);
+  const blockedIds = useBlockedUserIds();
+  const timeline = usePagedList(timelineQuery, (items) =>
+    items.filter((item) => !isBlockedUser(item.user.id, blockedIds)),
+  );
   const [composerVisible, setComposerVisible] = useState(false);
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: FriendTimelineItem }) => (

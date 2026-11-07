@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSubjectComments, useSubjectReviews } from '@/features/reviews/use-subject-reviews';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { CommentPreviewSection } from './comment-preview-section';
 import { ReviewPreviewSection } from './review-preview-section';
 
@@ -13,6 +15,7 @@ export function CommentsPreview({
   subjectId: number;
 }) {
   const { data, isError, isPending, refetch } = useSubjectComments(subjectId);
+  const blockedIds = useBlockedUserIds();
   const appliedRefreshToken = useRef(refreshToken);
 
   useEffect(() => {
@@ -25,7 +28,7 @@ export function CommentsPreview({
 
   return (
     <CommentPreviewSection
-      comments={page?.items.slice(0, 5) ?? []}
+      comments={withoutBlockedAuthors(page?.items ?? [], blockedIds).slice(0, 5)}
       isError={isError}
       isPending={isPending}
       onOpenMore={onOpenMore}
@@ -47,6 +50,7 @@ export function ReviewsPreview({
   subjectId: number;
 }) {
   const { data, isError, isPending, refetch } = useSubjectReviews(subjectId);
+  const blockedIds = useBlockedUserIds();
   const appliedRefreshToken = useRef(refreshToken);
 
   useEffect(() => {
@@ -64,7 +68,7 @@ export function ReviewsPreview({
       onOpenMore={onOpenMore}
       onOpenReview={onOpenReview}
       onRetry={() => void refetch()}
-      reviews={page?.items.slice(0, 3) ?? []}
+      reviews={withoutBlockedAuthors(page?.items ?? [], blockedIds).slice(0, 3)}
       total={page?.total}
     />
   );

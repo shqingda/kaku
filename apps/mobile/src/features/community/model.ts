@@ -10,6 +10,7 @@ export type PublicGroup = {
 export type PublicGroupTopicSummary = {
   author: string;
   authorAvatarUrl?: string;
+  authorId?: number;
   authorUsername?: string;
   groupName?: string;
   groupTitle?: string;
