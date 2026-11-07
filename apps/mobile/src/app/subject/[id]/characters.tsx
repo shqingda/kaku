@@ -3,6 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -175,21 +176,20 @@ export default function SubjectCharactersScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 12, paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 10, paddingTop: 14 },
+  content: { gap: SPACING.md, paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.md, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     flexDirection: 'row',
     minHeight: 158,
-    padding: 12,
+    padding: SPACING.md,
   },
   portrait: {
     alignItems: 'center',
@@ -200,33 +200,32 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 92,
   },
-  fallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
-  main: { flex: 1, justifyContent: 'center', marginLeft: 14, width: 0 },
+  fallback: { color: colors.subtle, ...TYPE.title, fontWeight: '700' },
+  main: { flex: 1, justifyContent: 'center', marginLeft: SPACING.lg, width: 0 },
   nameLine: { alignItems: 'center', flexDirection: 'row' },
   nameButton: { flex: 1, minWidth: 0, overflow: 'hidden' },
-  name: { color: colors.ink, fontSize: 17, fontWeight: '800' },
+  name: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   roleBadge: {
     backgroundColor: colors.accentSoft,
     borderRadius: 9,
     flexShrink: 0,
-    marginLeft: 8,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
+    marginLeft: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  roleText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
+  roleText: { color: colors.accent, ...TYPE.micro, fontWeight: '800' },
   summary: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 9,
+    ...TYPE.caption,
+    marginTop: SPACING.sm,
   },
   actors: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 9,
+    marginTop: SPACING.sm,
   },
-  actorLabel: { color: colors.ink, fontSize: 12, fontWeight: '600' },
-  actor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+  actorLabel: { color: colors.ink, ...TYPE.caption, fontWeight: '600' },
+  actor: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
   pressed: { opacity: 0.62 },
 });
