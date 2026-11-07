@@ -43,7 +43,8 @@ test('collection edits reach save and a dirty close requires discard', async () 
   const save = jest.fn(); const close = jest.fn();
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   try {
-    await render(<ThemeProvider><CollectionBoxSheet item={item} visible isSaving={false} supportsProgress onSave={save} onClose={close} onRemove={jest.fn()} /></ThemeProvider>);
+    await render(<ThemeProvider><CollectionBoxSheet item={item} visible isSaving={false} supportsProgress onSave={save} onClose={close} /></ThemeProvider>);
+    expect(screen.queryByLabelText('取消收藏')).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('吐槽'), '保留我的想法');
     await fireEvent.press(screen.getByLabelText('保存收藏'));
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ comment: '保留我的想法' }));
@@ -54,7 +55,7 @@ test('collection edits reach save and a dirty close requires discard', async () 
 });
 
 test('collection saving preserves input until a confirmed item update or reopening', async () => {
-  const props = { item, visible: true, isSaving: false, supportsProgress: true, onSave: jest.fn(), onClose: jest.fn(), onRemove: jest.fn() };
+  const props = { item, visible: true, isSaving: false, supportsProgress: true, onSave: jest.fn(), onClose: jest.fn() };
   const view = await render(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
   await fireEvent.changeText(screen.getByLabelText('吐槽'), '等待保存');
   await fireEvent.changeText(screen.getByLabelText('已看集数'), '3');
@@ -77,7 +78,7 @@ test('collection saving preserves input until a confirmed item update or reopeni
 test('refresh after a conflict preserves dirty form and its original progress baseline', async () => {
   const original = { ...item, watchedEpisodeNumbers: [1], watchedEpisodeIds: [101] };
   const save = jest.fn();
-  const props = { item: original, visible: true, isSaving: false, supportsProgress: true, onSave: save, onClose: jest.fn(), onRemove: jest.fn() };
+  const props = { item: original, visible: true, isSaving: false, supportsProgress: true, onSave: save, onClose: jest.fn() };
   const view = await render(<ThemeProvider><CollectionBoxSheet {...props} /></ThemeProvider>);
   await fireEvent.changeText(screen.getByLabelText('吐槽'), '保留草稿');
   await fireEvent.changeText(screen.getByLabelText('已看集数'), '3');

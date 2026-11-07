@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import * as WebBrowser from 'expo-web-browser';
 import { router, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -12,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -146,18 +145,6 @@ function RevisionRow({
             {item.author} · {formatActivityTime(item.editedAt)}
           </Text>
         </View>
-        <Pressable
-          accessibilityLabel={`查看“${item.title}”的修改对比`}
-          accessibilityRole="link"
-          hitSlop={HIT_SLOP}
-          onPress={(event) => {
-            event.stopPropagation();
-            void WebBrowser.openBrowserAsync(item.revisionUrl);
-          }}
-          style={({ pressed }) => [styles.compare, pressed && styles.pressed]}
-        >
-          <Text style={styles.compareText}>对比</Text>
-        </Pressable>
       </Pressable>
     </View>
   );
@@ -179,7 +166,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rowTitle: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
   note: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
   rowMeta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
-  compare: { alignItems: 'center', backgroundColor: colors.background, borderRadius: 11, justifyContent: 'center', marginLeft: SPACING.md, minHeight: MIN_TOUCH_SIZE, paddingHorizontal: SPACING.md },
-  compareText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });

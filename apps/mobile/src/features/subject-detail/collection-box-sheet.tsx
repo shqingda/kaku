@@ -40,7 +40,6 @@ export function CollectionBoxSheet({
   isSaving,
   item,
   onClose,
-  onRemove,
   onSave,
   supportsProgress,
   visible,
@@ -48,7 +47,6 @@ export function CollectionBoxSheet({
   isSaving: boolean;
   item: WatchingItem;
   onClose: () => void;
-  onRemove: () => void;
   onSave: (draft: CollectionBoxDraft) => void;
   supportsProgress: boolean;
   visible: boolean;
@@ -269,22 +267,6 @@ export function CollectionBoxSheet({
             </View>
           ) : null}
           <View style={styles.footer}>
-            {item.collectionStatus ? (
-              <Pressable
-                accessibilityLabel="取消收藏"
-                accessibilityRole="button"
-                accessibilityState={{ disabled: isSaving }}
-                disabled={isSaving}
-                onPress={onRemove}
-                style={({ pressed }) => [
-                  styles.footerButton,
-                  styles.removeButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.removeText}>取消收藏</Text>
-              </Pressable>
-            ) : null}
             <Pressable
               accessibilityLabel={status ? '保存收藏' : '请先选择收藏状态'}
               accessibilityRole="button"
@@ -439,8 +421,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
   },
-  removeButton: { backgroundColor: colors.accentSoft },
-  removeText: { color: colors.accent, ...TYPE.body, fontWeight: '800' },
   saveButton: { backgroundColor: colors.accent },
   saveText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   disabledButton: { opacity: 0.46 },
