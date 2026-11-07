@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { getSubjectDetailLabels } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
@@ -20,6 +21,7 @@ import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const COLLAPSED_COUNT = 3;
 const ROLE_PRIORITY = [
@@ -179,6 +181,7 @@ export default function StaffScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const staffQuery = useSubjectStaff(subjectId ?? 0);
+  const staffStatus = loadStatus(staffQuery);
   const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
   const title = labels.credits.label;
@@ -219,12 +222,12 @@ export default function StaffScreen() {
           title,
         }}
       />
-      {staffQuery.isPending ? (
+      {staffStatus.isPending ? (
         <View style={styles.state}>
           <Text style={styles.stateTitle}>正在读取{title}</Text>
           <Text style={styles.stateText}>名单较长，请稍候。</Text>
         </View>
-      ) : staffQuery.isError && !staffQuery.data ? (
+      ) : staffStatus.isError && !staffQuery.data ? (
         <View style={styles.state}>
           <Text style={styles.stateTitle}>{title}读取失败</Text>
           <Text style={styles.stateText}>网络恢复后可以重新获取。</Text>
@@ -308,38 +311,37 @@ export default function StaffScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  pageHeader: { paddingBottom: 22, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  pageHeader: { paddingBottom: SPACING.xl, paddingTop: SPACING.lg },
   pageTitle: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  pageMeta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  pageMeta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   sectionHeader: {
     alignItems: 'center',
     backgroundColor: colors.background,
     flexDirection: 'row',
-    paddingBottom: 10,
-    paddingTop: 18,
+    paddingBottom: SPACING.md,
+    paddingTop: SPACING.lg,
   },
-  sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  sectionTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   sectionCount: {
     color: colors.subtle,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginLeft: 8,
+    marginLeft: SPACING.sm,
   },
   staffRow: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 16,
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
     minHeight: 66,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   avatar: {
     alignItems: 'center',
@@ -350,47 +352,47 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 44,
   },
-  avatarFallback: { color: colors.subtle, fontSize: 15, fontWeight: '700' },
-  staffMain: { flex: 1, marginLeft: 12 },
-  staffName: { color: colors.ink, fontSize: 15, fontWeight: '700' },
-  staffType: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  avatarFallback: { color: colors.subtle, ...TYPE.body, fontWeight: '700' },
+  staffMain: { flex: 1, marginLeft: SPACING.md },
+  staffName: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
+  staffType: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
   episodeBadge: {
     backgroundColor: colors.accentSoft,
     borderRadius: 9,
-    marginLeft: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    marginLeft: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  episodeBadgeText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
+  episodeBadgeText: { color: colors.accent, ...TYPE.micro, fontWeight: '800' },
   expandButton: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
     borderRadius: 14,
-    marginTop: 2,
-    paddingVertical: 11,
+    marginTop: SPACING.xs,
+    paddingVertical: SPACING.md,
   },
-  expandText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  expandText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
+  pressed: { opacity: 0.62 },
   state: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    padding: 32,
+    padding: SPACING.xxl,
   },
-  stateTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
+  stateTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   stateText: {
     color: colors.muted,
-    fontSize: 13,
+    ...TYPE.caption,
     lineHeight: 20,
-    marginTop: 7,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
   retryButton: {
     backgroundColor: colors.accent,
     borderRadius: 14,
-    marginTop: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  retryText: { color: colors.surface, fontSize: 13, fontWeight: '800' },
+  retryText: { color: colors.surface, ...TYPE.caption, fontWeight: '800' },
 });

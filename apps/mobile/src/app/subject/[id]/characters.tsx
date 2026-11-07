@@ -3,6 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -13,6 +14,7 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function SubjectCharactersScreen() {
   const colors = useTheme();
@@ -28,12 +30,14 @@ export default function SubjectCharactersScreen() {
     return <InvalidRouteState message="这个角色名单链接缺少有效条目编号。" />;
   }
 
+  const charactersStatus = loadStatus(charactersQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title }} />
-      {charactersQuery.isPending ? (
+      {charactersStatus.isPending ? (
         <AppState title="正在读取角色资料" text={`${title}名单加载中。`} />
-      ) : charactersQuery.isError && !charactersQuery.data ? (
+      ) : charactersStatus.isError && !charactersQuery.data ? (
         <AppState
           action={() => void charactersQuery.refetch()}
           title="角色资料读取失败"
@@ -58,7 +62,7 @@ export default function SubjectCharactersScreen() {
               <View style={styles.header}>
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.meta}>
-                  {charactersQuery.data.length} 个角色
+                  {charactersQuery.data?.length ?? 0} 个角色
                 </Text>
               </View>
             </>
@@ -172,21 +176,20 @@ export default function SubjectCharactersScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { gap: 12, paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 10, paddingTop: 14 },
+  content: { gap: SPACING.md, paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.md, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     flexDirection: 'row',
     minHeight: 158,
-    padding: 12,
+    padding: SPACING.md,
   },
   portrait: {
     alignItems: 'center',
@@ -197,33 +200,32 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 92,
   },
-  fallback: { color: colors.subtle, fontSize: 20, fontWeight: '700' },
-  main: { flex: 1, justifyContent: 'center', marginLeft: 14, width: 0 },
+  fallback: { color: colors.subtle, ...TYPE.title, fontWeight: '700' },
+  main: { flex: 1, justifyContent: 'center', marginLeft: SPACING.lg, width: 0 },
   nameLine: { alignItems: 'center', flexDirection: 'row' },
   nameButton: { flex: 1, minWidth: 0, overflow: 'hidden' },
-  name: { color: colors.ink, fontSize: 17, fontWeight: '800' },
+  name: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   roleBadge: {
     backgroundColor: colors.accentSoft,
     borderRadius: 9,
     flexShrink: 0,
-    marginLeft: 8,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
+    marginLeft: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  roleText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
+  roleText: { color: colors.accent, ...TYPE.micro, fontWeight: '800' },
   summary: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 9,
+    ...TYPE.caption,
+    marginTop: SPACING.sm,
   },
   actors: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 9,
+    marginTop: SPACING.sm,
   },
-  actorLabel: { color: colors.ink, fontSize: 12, fontWeight: '600' },
-  actor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  actorLabel: { color: colors.ink, ...TYPE.caption, fontWeight: '600' },
+  actor: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
+  pressed: { opacity: 0.62 },
 });

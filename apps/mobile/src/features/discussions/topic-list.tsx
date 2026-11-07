@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -82,33 +83,32 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  topicRow: { alignItems: 'center', flexDirection: 'row', paddingVertical: 16 },
+  topicRow: { alignItems: 'center', flexDirection: 'row', paddingVertical: SPACING.lg },
   topicBorder: {
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  pressed: { opacity: 0.56 },
-  topicMain: { flex: 1, paddingRight: 14 },
+  pressed: { opacity: 0.62 },
+  topicMain: { flex: 1, paddingRight: SPACING.lg },
   titleLine: { alignItems: 'center', flexDirection: 'row' },
   episodeBadge: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: 7,
-    marginRight: 7,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    marginRight: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  episodeBadgeText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  episodeBadgeText: { color: colors.muted, ...TYPE.micro, fontWeight: '800' },
   topicTitle: {
     color: colors.ink,
     flex: 1,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '700',
-    lineHeight: 22,
   },
-  topicPreview: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  topicMeta: { color: colors.subtle, fontSize: 12, marginTop: 8 },
+  topicPreview: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
+  topicMeta: { color: colors.subtle, ...TYPE.caption, marginTop: SPACING.sm },
   replyCount: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
@@ -116,12 +116,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
-  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
+  replyCountText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   emptyState: {
     alignItems: 'center',
-    padding: 28,
+    padding: SPACING.xxl,
   },
-  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  emptyText: { color: colors.muted, ...TYPE.body, lineHeight: 21 },
 });

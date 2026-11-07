@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -17,6 +18,7 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const TYPE_LABELS: Record<number, string> = {
   1: '书籍',
@@ -37,12 +39,14 @@ export default function SubjectRelationsScreen() {
     return <InvalidRouteState message="这个关联条目链接缺少有效编号。" />;
   }
 
+  const relationsStatus = loadStatus(relationsQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '关联条目' }} />
-      {relationsQuery.isPending ? (
+      {relationsStatus.isPending ? (
         <AppState title="正在读取关联条目" text="系列作品和音乐条目加载中。" />
-      ) : relationsQuery.isError ? (
+      ) : relationsStatus.isError ? (
         <AppState
           action={() => void relationsQuery.refetch()}
           title="关联条目读取失败"
@@ -60,7 +64,7 @@ export default function SubjectRelationsScreen() {
             <View style={styles.header}>
               <Text style={styles.title}>关联条目</Text>
               <Text style={styles.meta}>
-                {relationsQuery.data.length} 个相关作品
+                {relationsQuery.data?.length ?? 0} 个相关作品
               </Text>
             </View>
           }
@@ -136,23 +140,22 @@ export default function SubjectRelationsScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 20, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.xl, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 20,
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
     minHeight: 132,
-    padding: 12,
+    padding: SPACING.md,
   },
   cover: {
     alignItems: 'center',
@@ -163,22 +166,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 78,
   },
-  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '700' },
-  cardMain: { flex: 1, marginLeft: 14 },
-  badges: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  fallback: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '700' },
+  cardMain: { flex: 1, marginLeft: SPACING.lg },
+  badges: { alignItems: 'center', flexDirection: 'row', gap: SPACING.sm },
   relationBadge: {
     backgroundColor: colors.accentSoft,
     borderRadius: 9,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  relationText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
-  type: { color: colors.subtle, fontSize: 11, fontWeight: '700' },
+  relationText: { color: colors.accent, ...TYPE.micro, fontWeight: '800' },
+  type: { color: colors.subtle, ...TYPE.micro, fontWeight: '700' },
   name: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '800',
-    lineHeight: 21,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
 });

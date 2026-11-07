@@ -27,6 +27,7 @@ let mockAuth: { isLoading: boolean; session: { user: { id: number } } | null } =
   isLoading: false, session: { user: { id: 1 } },
 };
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() }, Stack: { Screen: () => null }, usePathname: () => '/directories',
 }));
@@ -117,6 +118,13 @@ test.each(pages)('$name keeps existing rows visible when a refresh pauses or fai
   await screen.rerender(<Component />);
   expect(screen.getByText(loaded)).toBeTruthy();
   expect(screen.queryByText('当前显示上次保存的内容')).toBeNull();
+});
+
+test('wiki rows stay inside Kaku and do not offer a web-only comparison', async () => {
+  Object.assign(mockWiki, { data: { items: [revision] }, isPending: false });
+  const screen = await render(<WikiScreen />);
+  expect(screen.getByRole('button', { name: `打开条目：${revision.title}` })).toBeTruthy();
+  expect(screen.queryByText('对比')).toBeNull();
 });
 
 test('a guest timeline waits for auth restoration, then offers login with a return destination', async () => {

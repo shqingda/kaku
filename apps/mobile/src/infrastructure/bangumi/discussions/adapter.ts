@@ -58,6 +58,7 @@ export function mapBangumiReplies(
           user?.avatar?.medium ??
           user?.avatar?.small ??
           user?.avatar?.large,
+        authorId: user?.id ?? reply.creatorID,
         authorUsername: user?.username,
         body,
         createdAt: formatActivityTime(reply.createdAt),
@@ -136,6 +137,7 @@ function mapBangumiTopicSummary(
 ): DiscussionTopic {
   return {
     author: topicAuthor(topic),
+    authorId: topic.creatorID,
     authorUsername: topic.creator?.username,
     createdAt: formatActivityTime(topic.createdAt),
     id: String(topic.id),

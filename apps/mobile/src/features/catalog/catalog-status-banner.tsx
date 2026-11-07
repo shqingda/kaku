@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 
 type CatalogStatusBannerProps = {
@@ -66,20 +66,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderRadius: 16,
     flexDirection: 'row',
-    marginBottom: 14,
-    padding: 14,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
   },
   errorBanner: { backgroundColor: colors.accentSoft },
   copy: { flex: 1 },
-  title: { color: colors.ink, fontSize: 13, fontWeight: '700' },
-  detail: { color: colors.muted, fontSize: 11, marginTop: 4 },
+  title: { color: colors.ink, ...TYPE.caption, fontWeight: '700' },
+  detail: { color: colors.muted, ...TYPE.micro, marginTop: SPACING.xs },
   retry: {
     backgroundColor: colors.surface,
     borderRadius: 11,
-    marginLeft: 12,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    marginLeft: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  retryText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.6 },
+  retryText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
+  pressed: { opacity: 0.62 },
 });

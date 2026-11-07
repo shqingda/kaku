@@ -9,6 +9,7 @@ import Animated, {
   type SharedValue,
   useAnimatedStyle,
 } from 'react-native-reanimated';
+import { SPACING, TYPE } from '@/constants/design';
 
 // iOS 惯例的行级左滑操作：内容随手势 1:1 平移，操作按钮按进度显现，
 // 松手后的回弹/停驻由 ReanimatedSwipeable 的弹簧物理接管（继承手势速度）。
@@ -117,10 +118,10 @@ const styles = StyleSheet.create({
   action: { justifyContent: 'center', overflow: 'hidden' },
   actionButton: {
     alignItems: 'center',
-    gap: 3,
+    gap: SPACING.xs,
     justifyContent: 'center',
     minWidth: ACTION_WIDTH,
   },
-  actionLabel: { fontSize: 12, fontWeight: '700' },
+  actionLabel: { ...TYPE.caption, fontWeight: '700' },
   panel: { flexDirection: 'row' },
 });

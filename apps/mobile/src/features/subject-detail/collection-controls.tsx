@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { router, usePathname } from 'expo-router';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
@@ -149,26 +149,6 @@ export function CollectionControls({
     );
   }
 
-  function openRemovalFlow() {
-    Alert.alert(
-      '在 Bangumi 取消收藏？',
-      'Bangumi 官方 API 暂未开放取消收藏，Kaku 需要打开原条目页面完成。返回 Kaku 后会自动重新读取收藏状态。',
-      [
-        { style: 'cancel', text: '保留' },
-        {
-          onPress: () => {
-            void Linking.openURL(`https://bgm.tv/subject/${item.id}`)
-              .then(() => setIsOpen(false))
-              .catch(() => {
-                Alert.alert('无法打开 Bangumi', '请稍后重试。');
-              });
-          },
-          text: '打开 Bangumi',
-        },
-      ],
-    );
-  }
-
   return (
     <>
       {variant === 'compact' ? (
@@ -305,7 +285,6 @@ export function CollectionControls({
           setIsOpen(false);
           onDismiss?.();
         }}
-        onRemove={openRemovalFlow}
         onSave={saveDraft}
         supportsProgress={supportsProgress}
         visible={isOpen}
@@ -424,5 +403,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   ratingLabel: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   unsetText: { color: colors.muted },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

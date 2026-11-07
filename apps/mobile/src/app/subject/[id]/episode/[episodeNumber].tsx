@@ -26,6 +26,7 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function EpisodeScreen() {
   const colors = useTheme();
@@ -95,10 +96,11 @@ export default function EpisodeScreen() {
     return <InvalidRouteState message="这个章节链接缺少有效编号。" />;
   }
 
+  const commentsStatus = loadStatus(commentsQuery);
   const screenTitle = `第 ${episodeNumber} ${isTrack ? '曲' : '集'}`;
   const itemNoun = isTrack ? '曲目' : '章节';
 
-  if (catalogQuery.isPending) {
+  if (loadStatus(catalogQuery).isPending) {
     return (
       <EpisodeScreenState
         screenTitle={screenTitle}
@@ -108,7 +110,7 @@ export default function EpisodeScreen() {
     );
   }
 
-  if (catalogQuery.isError && !catalogSubject) {
+  if (loadStatus(catalogQuery).isError && !catalogSubject) {
     return (
       <EpisodeScreenState
         onRetry={() => void catalogQuery.refetch()}
@@ -235,8 +237,8 @@ export default function EpisodeScreen() {
           {...scroll.listProps}
           scrollEventThrottle={16}
           ListEmptyComponent={
-            hiddenDiscussion || commentsQuery.isPending ||
-            (commentsQuery.isError && !commentsQuery.data) ? null : (
+            hiddenDiscussion || commentsStatus.isPending ||
+            (commentsStatus.isError && !commentsQuery.data) ? null : (
               <EpisodeEmptyDiscussion isTrack={isTrack} />
             )
           }
@@ -251,9 +253,9 @@ export default function EpisodeScreen() {
               }}
               comments={{
                 hasData: Boolean(commentsQuery.data),
-                isError: commentsQuery.isError,
+                isError: commentsStatus.isError,
                 isFetching: commentsQuery.isFetching,
-                isPending: commentsQuery.isPending,
+                isPending: commentsStatus.isPending,
                 refetch: () => void commentsQuery.refetch(),
               }}
               details={{
@@ -278,7 +280,7 @@ export default function EpisodeScreen() {
           }
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}

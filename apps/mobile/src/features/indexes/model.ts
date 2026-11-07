@@ -1,6 +1,7 @@
 export type PublicIndexSummary = {
   author: string;
   authorAvatarUrl?: string;
+  authorId?: number;
   authorUsername?: string;
   description?: string;
   id: number;

@@ -10,6 +10,9 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { FriendTimelineRow } from '@/features/timeline/friend-timeline-row';
 import { TimelineComposer } from '@/features/timeline/timeline-composer';
 import type { useFriendTimeline } from '@/features/timeline/use-friend-timeline';
+import { isBlockedUser } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
+import { loadStatus } from '@/lib/query-status';
 
 // 首页的好友动态预览：最多 4 条，读取中/失败/为空都有明确状态，刷新失败时保留旧内容。
 export function HomeTimelineSection({
@@ -20,7 +23,11 @@ export function HomeTimelineSection({
   const colors = useTheme();
   const styles = createStyles(colors);
   const [composerVisible, setComposerVisible] = useState(false);
-  const items = timelineQuery.data?.pages[0]?.items.slice(0, 4) ?? [];
+  const timelineStatus = loadStatus(timelineQuery);
+  const blockedIds = useBlockedUserIds();
+  const items = (timelineQuery.data?.pages[0]?.items ?? [])
+    .filter((item) => !isBlockedUser(item.user.id, blockedIds))
+    .slice(0, 4);
 
   return (
     <View style={styles.timelineSection}>
@@ -52,13 +59,13 @@ export function HomeTimelineSection({
         </Pressable>
       </View>
       <View style={styles.timelineCard}>
-        {timelineQuery.isPending ||
+        {timelineStatus.isPending ||
         (timelineQuery.isError && items.length === 0 && timelineQuery.isFetching) ? (
           <View style={styles.timelineInlineState}>
             <ActivityIndicator color={colors.accent} size="small" />
             <Text style={styles.timelineEmptyText}>正在读取好友动态</Text>
           </View>
-        ) : timelineQuery.isError && items.length === 0 ? (
+        ) : timelineStatus.isError && items.length === 0 ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => void timelineQuery.refetch()}

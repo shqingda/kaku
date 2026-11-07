@@ -1,5 +1,6 @@
 import { useAuthMutation } from '@/features/auth/use-auth-mutation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -20,6 +21,12 @@ export function useBlocklist() {
     queryKey: queryKeys.blocklist(session?.user.id),
     staleTime: 5 * 60 * 1000,
   });
+}
+
+// 未登录或名单读取失败时返回空集合：内容照常显示，不用空白页代替失败。
+export function useBlockedUserIds(): ReadonlySet<number> {
+  const { data } = useBlocklist();
+  return useMemo(() => new Set(data), [data]);
 }
 
 export function useSetUserBlocked(username: string) {

@@ -34,7 +34,10 @@ import { BangumiText } from '@/features/shared/bangumi-text';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function SubjectReviewScreen() {
   return <ReviewDiscussionScreen kind="review" />;
@@ -58,7 +61,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
     kind: 'review',
   });
   const review = reviewQuery.data;
-  const replies = review?.replies ?? [];
+  const blockedIds = useBlockedUserIds();
+  const replies = withoutBlockedReplies(review?.replies ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
@@ -136,8 +140,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
               ) : (
                 <DiscussionStatus
                   errorText={`${contentLabel}读取失败，请检查网络后重试。`}
-                  isError={reviewQuery.isError}
-                  isPending={reviewQuery.isPending}
+                  isError={loadStatus(reviewQuery).isError}
+                  isPending={loadStatus(reviewQuery).isPending}
                   loadingText={`正在读取${contentLabel}正文和回复…`}
                   onRetry={() => void reviewQuery.refetch()}
                 />
@@ -154,7 +158,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
                           params: { username: review.authorUsername },
                         }}
                       >
-                        <Pressable>
+                        <Pressable
+                          accessibilityLabel={`打开${review.author}的主页`}
+                          accessibilityRole="link"
+                          style={({ pressed }) => pressed && styles.pressed}
+                        >
                           <Text style={styles.reviewAuthor}>
                             {review.author}
                           </Text>
@@ -190,7 +198,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
@@ -268,4 +276,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: SPACING.xl,
     paddingTop: SPACING.lg,
   },
+  pressed: { opacity: 0.62 },
 });

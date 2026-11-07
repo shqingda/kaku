@@ -20,6 +20,8 @@ import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { DiscussionListStatus } from '@/features/discussions/discussion-list-status';
 import { TopicComposer } from '@/features/discussions/topic-composer';
 import { TopicList } from '@/features/discussions/topic-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useBangumiSubjectTopics } from '@/features/discussions/use-bangumi-discussions';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
@@ -38,10 +40,14 @@ export default function SubjectDiscussionsScreen() {
   const subjectId = parsePositiveIntegerRouteParam(id);
   const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const discussionQuery = useBangumiSubjectTopics(subjectId ?? 0, 30);
+  const blockedIds = useBlockedUserIds();
   const subjectTopics = useMemo(
     () =>
-      discussionQuery.data?.pages.flatMap((page) => page.topics) ?? [],
-    [discussionQuery.data],
+      withoutBlockedAuthors(
+        discussionQuery.data?.pages.flatMap((page) => page.topics) ?? [],
+        blockedIds,
+      ),
+    [blockedIds, discussionQuery.data],
   );
   const topicTotal = discussionQuery.data?.pages[0]?.total ?? 0;
   const showTopics = subjectTopics.length > 0 ||

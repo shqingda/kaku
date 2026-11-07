@@ -37,7 +37,10 @@ import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function GroupTopicScreen() {
   const colors = useTheme();
@@ -53,7 +56,8 @@ export default function GroupTopicScreen() {
     kind: 'group-topic',
   });
   const topic = topicQuery.data;
-  const replies = topic?.replies ?? [];
+  const blockedIds = useBlockedUserIds();
+  const replies = withoutBlockedReplies(topic?.replies ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
@@ -143,8 +147,8 @@ export default function GroupTopicScreen() {
               ) : (
                 <DiscussionStatus
                   errorText="话题读取失败，请检查网络后重试。"
-                  isError={topicQuery.isError}
-                  isPending={topicQuery.isPending}
+                  isError={loadStatus(topicQuery).isError}
+                  isPending={loadStatus(topicQuery).isPending}
                   loadingText="正在读取小组话题…"
                   onRetry={() => void topicQuery.refetch()}
                 />
@@ -174,7 +178,11 @@ export default function GroupTopicScreen() {
                           params: { name: topic.groupName },
                         }}
                       >
-                        <Pressable>
+                        <Pressable
+                          accessibilityLabel={`打开小组：${topic.groupTitle}`}
+                          accessibilityRole="link"
+                          style={({ pressed }) => pressed && styles.pressed}
+                        >
                           <Text style={styles.groupName}>
                             {topic.groupTitle}
                           </Text>
@@ -204,7 +212,7 @@ export default function GroupTopicScreen() {
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
@@ -276,4 +284,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: SPACING.md,
   },
   topicMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  pressed: { opacity: 0.62 },
 });

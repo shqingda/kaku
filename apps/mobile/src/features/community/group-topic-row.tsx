@@ -137,5 +137,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

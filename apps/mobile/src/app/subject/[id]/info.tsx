@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppState } from '@/features/shared/app-state';
 import {
@@ -21,6 +22,7 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CollectionStatus } from '@/features/watching/model';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const COLLECTION_STATUSES: CollectionStatus[] = [
   'wish',
@@ -52,10 +54,12 @@ export default function SubjectInfoScreen() {
     return <InvalidRouteState message="这个资料链接缺少有效条目编号。" />;
   }
 
+  const subjectStatus = loadStatus(subjectQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: `${subjectTypeLabel}资料` }} />
-      {subjectQuery.isPending ? (
+      {subjectStatus.isPending ? (
         <AppState title="正在读取条目资料" text="评分与基础资料加载中。" />
       ) : !subject ? (
         <AppState
@@ -192,19 +196,18 @@ function RatingDistribution({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 48, paddingHorizontal: 20 },
-  header: { paddingBottom: 20, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.lg, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.xl, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   ratingCard: {
     backgroundColor: colors.surface,
     borderRadius: 24,
-    padding: 20,
+    padding: SPACING.xl,
   },
   ratingSummary: {
     alignItems: 'flex-end',
@@ -213,18 +216,17 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   score: {
     color: colors.ink,
-    fontSize: 42,
+    ...TYPE.hero,
     fontWeight: '800',
-    letterSpacing: -1.5,
   },
-  scoreLabel: { color: colors.subtle, fontSize: 11, marginTop: 3 },
-  rankBlock: { alignItems: 'flex-end', paddingBottom: 3 },
-  rank: { color: colors.ink, fontSize: 20, fontWeight: '800' },
-  distribution: { gap: 7, marginTop: 22 },
+  scoreLabel: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
+  rankBlock: { alignItems: 'flex-end', paddingBottom: SPACING.xs },
+  rank: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
+  distribution: { gap: SPACING.sm, marginTop: SPACING.xl },
   distributionRow: { alignItems: 'center', flexDirection: 'row' },
   distributionScore: {
     color: colors.subtle,
-    fontSize: 10,
+    ...TYPE.micro,
     textAlign: 'right',
     width: 14,
   },
@@ -233,7 +235,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 99,
     flex: 1,
     height: 5,
-    marginHorizontal: 9,
+    marginHorizontal: SPACING.sm,
     overflow: 'hidden',
   },
   distributionFill: {
@@ -243,51 +245,51 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   distributionCount: {
     color: colors.subtle,
-    fontSize: 10,
+    ...TYPE.micro,
     textAlign: 'right',
     width: 34,
   },
-  section: { marginTop: 28 },
+  section: { marginTop: SPACING.xxl },
   sectionTitle: {
     color: colors.ink,
-    fontSize: 20,
+    ...TYPE.title,
     fontWeight: '800',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
   collectionCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 8,
-    paddingVertical: 19,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xl,
   },
   collectionItem: { alignItems: 'center', minWidth: 52 },
-  collectionValue: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-  collectionLabel: { color: colors.subtle, fontSize: 10, marginTop: 5 },
+  collectionValue: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
+  collectionLabel: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
   infoCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  infoRow: { flexDirection: 'row', paddingVertical: 16 },
+  infoRow: { flexDirection: 'row', paddingVertical: SPACING.lg },
   infoRowBorder: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  infoKey: { color: colors.subtle, fontSize: 12, width: 78 },
+  infoKey: { color: colors.subtle, ...TYPE.caption, width: 78 },
   infoValue: {
     color: colors.ink,
     flex: 1,
-    fontSize: 13,
+    ...TYPE.caption,
     lineHeight: 20,
   },
   emptyText: {
     color: colors.muted,
-    fontSize: 14,
-    paddingVertical: 24,
+    ...TYPE.body,
+    paddingVertical: SPACING.xl,
     textAlign: 'center',
   },
 });

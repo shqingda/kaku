@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
+import { SPACING, TYPE } from '@/constants/design';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
 import { useReduceMotion } from '@/lib/use-reduce-motion';
@@ -151,9 +152,9 @@ const styles = StyleSheet.create({
   },
   pill: {
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 18,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
-  label: { fontSize: 13, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  label: { ...TYPE.caption, fontWeight: '700' },
+  pressed: { opacity: 0.62 },
 });

@@ -100,6 +100,7 @@ const TITLED_SCREENS = [
   ['timeline', '好友动态'],
   ['account', '账户'],
   ['devices', '登录设备'],
+  ['blocked-users', '已屏蔽用户'],
   ['settings', '外观与同步'],
   ['app-icon', '应用图标'],
   ['about', '关于 Kaku'],

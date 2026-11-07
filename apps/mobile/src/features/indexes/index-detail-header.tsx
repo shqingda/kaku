@@ -54,7 +54,10 @@ export function IndexDetailHeader({
       </View>
       {onOpenAuthor ? (
         <Pressable
+          accessibilityLabel={`打开${index.author}的主页`}
+          accessibilityRole="link"
           onPress={onOpenAuthor}
+          style={({ pressed }) => pressed && styles.pressed}
         >
           <Text style={styles.author}>{index.author}</Text>
         </Pressable>

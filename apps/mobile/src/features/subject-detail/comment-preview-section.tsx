@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { SubjectComment } from '@/features/reviews/model';
@@ -69,6 +70,8 @@ export function CommentPreviewSection({
                     }}
                   >
                     <Pressable
+                      accessibilityLabel={`打开${comment.author}的主页`}
+                      accessibilityRole="link"
                       style={({ pressed }) => [
                         styles.authorButton,
                         pressed && styles.pressed,
@@ -117,23 +120,23 @@ export function CommentPreviewSection({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { marginBottom: 14, marginTop: 4 },
+  section: { marginBottom: SPACING.lg, marginTop: SPACING.xs },
   header: {
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
-  title: { color: colors.ink, fontSize: 18, fontWeight: '700' },
-  meta: { color: colors.subtle, fontSize: 12 },
+  title: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
+  meta: { color: colors.subtle, ...TYPE.caption },
   list: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  row: { paddingVertical: 16 },
+  row: { paddingVertical: SPACING.lg },
   rowBorder: {
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -145,24 +148,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   author: {
     color: colors.ink,
-    fontSize: 14,
+    ...TYPE.body,
     fontWeight: '800',
-    marginRight: 12,
+    marginRight: SPACING.md,
   },
   authorButton: { flex: 1 },
-  body: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
-  date: { color: colors.subtle, fontSize: 11, marginTop: 9 },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  body: { color: colors.muted, ...TYPE.body, marginTop: SPACING.sm },
+  date: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
+  empty: { alignItems: 'center', padding: SPACING.xxl },
+  emptyText: { color: colors.muted, ...TYPE.body, lineHeight: 21 },
   more: {
     alignItems: 'center',
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 13,
+    paddingVertical: SPACING.md,
   },
-  moreText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
-  chevron: { color: colors.subtle, fontSize: 25, fontWeight: '300' },
+  moreText: { color: colors.accent, ...TYPE.body, fontWeight: '700' },
+  chevron: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });

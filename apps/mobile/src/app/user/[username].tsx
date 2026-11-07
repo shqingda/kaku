@@ -39,6 +39,7 @@ import {
   usePublicUserFriends,
   usePublicUserTimeline,
 } from '@/features/users/use-public-user';
+import { loadStatus } from '@/lib/query-status';
 
 // Bangumi P1 的角色/人物收藏接口仍不稳定，暂时隐藏所有人的角色与人物
 // 收藏入口。相关页面、查询和接口均保留，待上游恢复后重新打开。
@@ -102,9 +103,9 @@ export default function PublicUserScreen() {
           ),
         }}
       />
-      {userQuery.isPending ? (
+      {loadStatus(userQuery).isPending ? (
         <AppState text="正在读取公开资料。" title="加载中" />
-      ) : userQuery.isError || !user ? (
+      ) : loadStatus(userQuery).isError || !user ? (
         <AppState
           action={() => void userQuery.refetch()}
           text="用户可能不存在，或网络暂时不可用。"
@@ -119,8 +120,7 @@ export default function PublicUserScreen() {
           ListEmptyComponent={
             <ProfileSectionStatus
               emptyText={`该用户没有公开${collectionSubjectTypeLabel}收藏。`}
-              isError={collectionsQuery.isError}
-              isPending={collectionsQuery.isPending}
+              {...loadStatus(collectionsQuery)}
               onRetry={() => void collectionsQuery.refetch()}
             />
           }
@@ -139,8 +139,8 @@ export default function PublicUserScreen() {
               <ProfileSectionHeader
                 title="好友"
                 meta={profileSectionMeta(
-                  friendsQuery.isPending,
-                  friendsQuery.isError,
+                  loadStatus(friendsQuery).isPending,
+                  loadStatus(friendsQuery).isError,
                   friends.length,
                   friendsPage?.total,
                 )}
@@ -181,16 +181,15 @@ export default function PublicUserScreen() {
               ) : (
                 <ProfileSectionStatus
                   emptyText="暂无公开好友。"
-                  isError={friendsQuery.isError}
-                  isPending={friendsQuery.isPending}
+                  {...loadStatus(friendsQuery)}
                   onRetry={() => void friendsQuery.refetch()}
                 />
               )}
               <ProfileSectionHeader
                 title="时间线"
                 meta={isOwnProfile ? undefined : (
-                  timelineQuery.isPending ? '读取中' :
-                  timelineQuery.isError ? '暂不可用' : `最近 ${timeline.length} 条`
+                  loadStatus(timelineQuery).isPending ? '读取中' :
+                  loadStatus(timelineQuery).isError ? '暂不可用' : `最近 ${timeline.length} 条`
                 )}
                 action={isOwnProfile ? (
                   <Pressable
@@ -221,8 +220,7 @@ export default function PublicUserScreen() {
                 {timeline.length === 0 ? (
                   <ProfileSectionStatus
                     emptyText="暂无公开动态。"
-                    isError={timelineQuery.isError}
-                    isPending={timelineQuery.isPending}
+                    {...loadStatus(timelineQuery)}
                     onRetry={() => void timelineQuery.refetch()}
                   />
                 ) : null}
@@ -259,8 +257,8 @@ export default function PublicUserScreen() {
               <ProfileSectionHeader
                 title="日志"
                 meta={profileSectionMeta(
-                  blogsQuery.isPending,
-                  blogsQuery.isError,
+                  loadStatus(blogsQuery).isPending,
+                  loadStatus(blogsQuery).isError,
                   blogs.length,
                   blogsPage?.total,
                   '最近 ',
@@ -283,8 +281,7 @@ export default function PublicUserScreen() {
                 {blogs.length === 0 ? (
                   <ProfileSectionStatus
                     emptyText="暂无公开日志。"
-                    isError={blogsQuery.isError}
-                    isPending={blogsQuery.isPending}
+                    {...loadStatus(blogsQuery)}
                     onRetry={() => void blogsQuery.refetch()}
                   />
                 ) : null}
@@ -305,8 +302,8 @@ export default function PublicUserScreen() {
               <ProfileSectionHeader
                 title={`${collectionSubjectTypeLabel}收藏`}
                 meta={profileSectionMeta(
-                  collectionsQuery.isPending,
-                  collectionsQuery.isError,
+                  loadStatus(collectionsQuery).isPending,
+                  loadStatus(collectionsQuery).isError,
                   collections.length,
                   collectionsPage?.total,
                 )}

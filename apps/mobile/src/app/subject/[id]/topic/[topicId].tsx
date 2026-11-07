@@ -35,7 +35,10 @@ import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function TopicScreen() {
   const colors = useTheme();
@@ -54,7 +57,8 @@ export default function TopicScreen() {
     kind: 'subject-topic',
   });
   const topic = topicQuery.data;
-  const replies = topic?.replies ?? [];
+  const blockedIds = useBlockedUserIds();
+  const replies = withoutBlockedReplies(topic?.replies ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);
@@ -132,8 +136,8 @@ export default function TopicScreen() {
                 <CachedDataNotice onRetry={() => void topicQuery.refetch()} retrying={topicQuery.isRefetching} />
               ) : (
                 <DiscussionStatus
-                  isError={topicQuery.isError}
-                  isPending={topicQuery.isPending}
+                  isError={loadStatus(topicQuery).isError}
+                  isPending={loadStatus(topicQuery).isPending}
                   onRetry={() => void topicQuery.refetch()}
                 />
               )}
@@ -163,7 +167,11 @@ export default function TopicScreen() {
                             params: { username: topic.authorUsername },
                           }}
                         >
-                          <Pressable>
+                          <Pressable
+                            accessibilityLabel={`打开${topic.author}的主页`}
+                            accessibilityRole="link"
+                            style={({ pressed }) => pressed && styles.pressed}
+                          >
                             <Text style={styles.topicAuthor}>
                               {topic.author}
                             </Text>
@@ -194,7 +202,7 @@ export default function TopicScreen() {
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}
@@ -262,4 +270,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topicMetaRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: SPACING.sm },
   topicAuthor: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   topicMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
+  pressed: { opacity: 0.62 },
 });

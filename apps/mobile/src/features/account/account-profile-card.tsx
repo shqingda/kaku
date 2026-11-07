@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -78,7 +79,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 28,
-    padding: 32,
+    padding: SPACING.xxl,
   },
   avatar: {
     alignItems: 'center',
@@ -91,20 +92,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   nickname: {
     color: colors.ink,
-    fontSize: 24,
+    ...TYPE.titleLarge,
     fontWeight: '800',
-    marginTop: 18,
+    marginTop: SPACING.lg,
   },
-  username: { color: colors.muted, fontSize: 14, marginTop: 4 },
+  username: { color: colors.muted, ...TYPE.body, marginTop: SPACING.xs },
   connectedBadge: {
     alignItems: 'center',
     backgroundColor: colors.background,
     borderRadius: 99,
     flexDirection: 'row',
-    gap: 7,
-    marginTop: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   connectedDot: {
     backgroundColor: '#34C759',
@@ -112,13 +113,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 8,
     width: 8,
   },
-  connectedText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  connectedText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   profileLink: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 3,
-    marginTop: 14,
+    gap: SPACING.xs,
+    marginTop: SPACING.lg,
   },
-  profileLinkText: { color: colors.subtle, fontSize: 12, fontWeight: '600' },
+  profileLinkText: { color: colors.subtle, ...TYPE.caption, fontWeight: '600' },
   pressed: { opacity: 0.62 },
 });

@@ -54,6 +54,7 @@ test('Bangumi comments and reviews map into separate domain models', () => {
 
   assert.deepEqual(comments.items[0], {
     author: 'alice',
+    authorId: 1,
     authorUsername: 'alice',
     body: '好看',
     id: '2',
@@ -62,6 +63,7 @@ test('Bangumi comments and reviews map into separate domain models', () => {
   });
   assert.deepEqual(reviews.items[0], {
     author: 'alice',
+    authorId: 1,
     authorUsername: 'alice',
     id: '3',
     replyCount: 4,

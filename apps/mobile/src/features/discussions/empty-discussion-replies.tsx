@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -24,15 +25,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 20,
-    marginBottom: 10,
-    padding: 28,
+    marginBottom: SPACING.md,
+    padding: SPACING.xxl,
   },
-  emptyTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+  emptyTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
   emptyText: {
     color: colors.muted,
-    fontSize: 13,
+    ...TYPE.caption,
     lineHeight: 20,
-    marginTop: 6,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });

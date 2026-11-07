@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SPACING, TYPE } from '@/constants/design';
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -173,7 +173,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: MIN_TOUCH_SIZE,
     minWidth: 78,
     paddingHorizontal: SPACING.lg,
   },

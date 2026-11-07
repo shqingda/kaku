@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import type { CatalogSubject } from '@/features/catalog/model';
 import { getSubjectTypeLabel } from '@/features/catalog/subject-types';
@@ -173,23 +174,22 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    marginBottom: 14,
-    padding: 20,
+    marginBottom: SPACING.lg,
+    padding: SPACING.xl,
   },
   metrics: { alignItems: 'center', flexDirection: 'row' },
   metric: { alignItems: 'center', flex: 1 },
   metricValue: {
     color: colors.ink,
-    fontSize: 21,
+    ...TYPE.title,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
-    letterSpacing: -0.4,
   },
   metricLabel: {
     color: colors.subtle,
-    fontSize: 10,
+    ...TYPE.micro,
     fontWeight: '600',
-    marginTop: 5,
+    marginTop: SPACING.xs,
   },
   metricDivider: {
     backgroundColor: colors.track,
@@ -199,45 +199,45 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   divider: {
     backgroundColor: colors.track,
     height: StyleSheet.hairlineWidth,
-    marginVertical: 18,
+    marginVertical: SPACING.lg,
   },
-  facts: { flexDirection: 'row', gap: 10 },
+  facts: { flexDirection: 'row', gap: SPACING.md },
   fact: { flex: 1 },
-  factLabel: { color: colors.subtle, fontSize: 10, fontWeight: '600' },
+  factLabel: { color: colors.subtle, ...TYPE.micro, fontWeight: '600' },
   factValue: {
     color: colors.ink,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginTop: 5,
+    marginTop: SPACING.xs,
   },
   originalTitleRow: {
     alignItems: 'center',
     backgroundColor: colors.surfaceSoft,
     borderRadius: 12,
     flexDirection: 'row',
-    marginTop: 17,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   originalTitleLabel: {
     color: colors.subtle,
-    fontSize: 11,
+    ...TYPE.micro,
     fontWeight: '600',
-    marginRight: 10,
+    marginRight: SPACING.md,
   },
   originalTitleValue: {
     color: colors.muted,
     flex: 1,
-    fontSize: 13,
+    ...TYPE.caption,
     fontWeight: '600',
   },
-  tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 14 },
+  tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.lg },
   tag: {
     backgroundColor: colors.accentSoft,
     borderRadius: 10,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  tagPressed: { opacity: 0.6 },
-  tagText: { color: colors.accent, fontSize: 11, fontWeight: '700' },
+  tagPressed: { opacity: 0.62 },
+  tagText: { color: colors.accent, ...TYPE.micro, fontWeight: '700' },
 });

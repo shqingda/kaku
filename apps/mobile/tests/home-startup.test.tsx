@@ -15,6 +15,7 @@ import { getPublicUserCollections } from '@/infrastructure/bangumi/users/provide
 import { queryKeys } from '@/lib/query-keys';
 import { startupTiming } from '@/lib/startup-timing';
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('@/lib/startup-timing', () => ({ startupTiming: { markHomeReady: jest.fn() } }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), prefetch: jest.fn() } }));
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: mockSession, isLoading: false }) }));

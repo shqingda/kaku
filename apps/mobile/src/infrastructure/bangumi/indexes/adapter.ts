@@ -15,6 +15,7 @@ export function toPublicIndexSummary(
   return {
     author:
       index.user?.nickname || index.user?.username || '未知用户',
+    authorId: index.user?.id,
     authorUsername: index.user?.username,
     id: index.id,
     itemCount: index.total,

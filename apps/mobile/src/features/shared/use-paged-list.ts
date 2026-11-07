@@ -39,7 +39,10 @@ const LIST_TUNING = {
 // 以及 FlatList 的平台调优参数。
 // 屏幕仍然自己声明 renderItem / keyExtractor / ListHeaderComponent 等；
 // 需要覆盖调优参数时，在 {...listProps} 之后重新显式传入即可。
-export function usePagedList<TItem>(query: PagedQuery<TItem>) {
+export function usePagedList<TItem>(
+  query: PagedQuery<TItem>,
+  selectVisible?: (items: TItem[]) => TItem[],
+) {
   const listRef = useScrollToTopButton<FlatList<TItem>>();
   const {
     fetchNextPage,
@@ -53,10 +56,10 @@ export function usePagedList<TItem>(query: PagedQuery<TItem>) {
   } = query;
 
   const pages = query.data?.pages;
-  const items = useMemo(
-    () => (pages ?? []).flatMap((page) => page.items ?? []),
-    [pages],
-  );
+  const items = useMemo(() => {
+    const loaded = (pages ?? []).flatMap((page) => page.items ?? []);
+    return selectVisible ? selectVisible(loaded) : loaded;
+  }, [pages, selectVisible]);
   const total = pages?.[0]?.total;
 
   // 暂停时 isFetchingNextPage 为 false，必须检查整个请求状态，

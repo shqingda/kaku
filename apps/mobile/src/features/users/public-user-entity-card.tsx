@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 
@@ -52,7 +53,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 20,
     flex: 1,
     overflow: 'hidden',
-    padding: 10,
+    padding: SPACING.md,
   },
   portrait: {
     alignItems: 'center',
@@ -63,15 +64,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: '100%',
   },
-  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
+  fallback: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '800' },
   name: {
     color: colors.ink,
-    fontSize: 14,
+    ...TYPE.body,
     fontWeight: '800',
-    lineHeight: 19,
-    marginTop: 10,
+    marginTop: SPACING.md,
     minHeight: 38,
   },
-  subtitle: { color: colors.subtle, fontSize: 11, marginTop: 4 },
+  subtitle: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.xs },
   pressed: { opacity: 0.62, transform: [{ scale: 0.985 }] },
 });

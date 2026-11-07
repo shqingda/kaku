@@ -12,6 +12,7 @@ let mockQuery: {
   isRefetching: boolean;
 };
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ id: '1' }),

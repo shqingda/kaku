@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSelectionHaptic } from '@/lib/haptics';
@@ -283,23 +284,23 @@ const createStyles = (colors: ThemeColors) =>
     toolbar: {
       alignItems: 'center',
       flexDirection: 'row',
-      gap: 4,
+      gap: SPACING.xs,
       minHeight: 32,
     },
     toggleButton: {
       alignItems: 'center',
       borderRadius: 9,
       flexDirection: 'row',
-      gap: 4,
+      gap: SPACING.xs,
       minHeight: 32,
-      paddingHorizontal: 8,
+      paddingHorizontal: SPACING.sm,
     },
     toggleButtonActive: {
       backgroundColor: colors.surfaceSoft,
     },
     toggleText: {
       color: colors.muted,
-      fontSize: 12,
+      ...TYPE.caption,
       fontWeight: '600',
     },
     toggleTextActive: {
@@ -308,19 +309,19 @@ const createStyles = (colors: ThemeColors) =>
     hint: {
       color: colors.subtle,
       flex: 1,
-      fontSize: 11,
+      ...TYPE.micro,
       textAlign: 'right',
     },
-    imageForm: { paddingBottom: 10, paddingTop: 14 },
-    imageInputRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+    imageForm: { paddingBottom: SPACING.md, paddingTop: SPACING.lg },
+    imageInputRow: { alignItems: 'center', flexDirection: 'row', gap: SPACING.md },
     imageInput: {
       backgroundColor: colors.surfaceSoft,
       borderRadius: 12,
       color: colors.ink,
       flex: 1,
-      fontSize: 14,
+      ...TYPE.body,
       minHeight: 44,
-      paddingHorizontal: 12,
+      paddingHorizontal: SPACING.md,
     },
     insertButton: {
       alignItems: 'center',
@@ -328,32 +329,32 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 12,
       justifyContent: 'center',
       minHeight: 44,
-      paddingHorizontal: 16,
+      paddingHorizontal: SPACING.lg,
     },
-    insertButtonText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-    imageHelp: { color: colors.subtle, fontSize: 11, lineHeight: 17, marginTop: 8 },
-    imageError: { color: colors.accent, fontSize: 11, lineHeight: 17, marginTop: 8 },
+    insertButtonText: { color: colors.surface, ...TYPE.body, fontWeight: '700' },
+    imageHelp: { color: colors.subtle, ...TYPE.micro, lineHeight: 17, marginTop: SPACING.sm },
+    imageError: { color: colors.accent, ...TYPE.micro, lineHeight: 17, marginTop: SPACING.sm },
     picker: {
       flex: 1,
     },
     tabs: {
       flexDirection: 'row',
-      gap: 8,
-      paddingBottom: 2,
-      paddingTop: 4,
+      gap: SPACING.sm,
+      paddingBottom: SPACING.xs,
+      paddingTop: SPACING.xs,
     },
     tab: {
       backgroundColor: colors.surfaceSoft,
       borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
     },
     tabSelected: {
       backgroundColor: colors.accentSoft,
     },
     tabText: {
       color: colors.muted,
-      fontSize: 12,
+      ...TYPE.caption,
       fontWeight: '600',
     },
     tabTextSelected: {
@@ -363,8 +364,8 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
     },
     gridContent: {
-      paddingBottom: 8,
-      paddingHorizontal: 2,
+      paddingBottom: SPACING.sm,
+      paddingHorizontal: SPACING.xs,
     },
     gridInner: {
       flexDirection: 'row',
@@ -374,7 +375,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       aspectRatio: 1,
       justifyContent: 'center',
-      padding: 3,
+      padding: SPACING.xs,
       width: `${100 / GRID_COLUMNS}%`,
     },
     cellPressed: {

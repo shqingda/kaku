@@ -19,6 +19,7 @@ export function mapBangumiComments(
   return {
     items: response.data.map((comment) => ({
       author: comment.user.nickname || comment.user.username,
+      authorId: comment.user.id,
       authorUsername: comment.user.username,
       body: comment.comment,
       id: String(comment.id),
@@ -40,6 +41,7 @@ export function mapBangumiReviews(
   return {
     items: response.data.map((review) => ({
       author: review.user.nickname || review.user.username,
+      authorId: review.user.id,
       authorUsername: review.user.username,
       id: String(review.entry.id),
       replyCount: review.entry.replies,
@@ -60,6 +62,7 @@ export function mapBangumiReviewDetail(
 ): SubjectReviewDetail {
   return {
     author: blog.user.nickname || blog.user.username,
+    authorId: blog.user.id,
     authorUsername: blog.user.username,
     body,
     id: String(blog.id),

@@ -80,6 +80,7 @@ const timelineSchema = z.object({
   user: z
     .object({
       avatar: z.object({ small: z.string().optional() }),
+      id: z.number().int().positive().optional(),
       nickname: z.string(),
       username: z.string(),
     })
@@ -324,6 +325,7 @@ function toFriendTimelineItems(
     const user = item.user
       ? {
           avatarUrl: item.user.avatar.small || undefined,
+          id: item.user.id,
           nickname: item.user.nickname,
           username: item.user.username,
         }

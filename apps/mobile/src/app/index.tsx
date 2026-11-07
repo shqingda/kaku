@@ -31,6 +31,7 @@ import {
   usePublicUserCollections,
 } from '@/features/users/use-public-user';
 import { startupTiming } from '@/lib/startup-timing';
+import { loadStatus } from '@/lib/query-status';
 
 export default function HomeScreen() {
   const colors = useTheme();
@@ -122,9 +123,9 @@ function HomeContent() {
         ) : session ? (
           <>
             <HomeMediaSection
-              error={selectedQuery.isError}
+              error={loadStatus(selectedQuery).isError}
               items={selectedQuery.data?.pages[0]?.items.slice(0, 8) ?? []}
-              loading={selectedQuery.isPending}
+              loading={loadStatus(selectedQuery).isPending}
               onRetry={() => void selectedQuery.refetch()}
               onSubjectTypeChange={(type) => {
                 setSelectedTrackingType(type);

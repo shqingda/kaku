@@ -10,9 +10,12 @@ export type DiscussionReply = {
   id: string;
   author: string;
   authorAvatarUrl?: string;
+  authorId?: number;
   authorUsername?: string;
   body: string;
   createdAt: string;
+  // 隐藏屏蔽用户后保留原楼层号；未设置时楼层就是列表位置。
+  floor?: number;
   replyTo?: ReplyReference;
   segments?: RichTextBlock[];
 };
@@ -23,6 +26,7 @@ export type DiscussionTopic = {
   episodeNumber?: number;
   title: string;
   author: string;
+  authorId?: number;
   authorUsername?: string;
   body?: string;
   createdAt: string;
