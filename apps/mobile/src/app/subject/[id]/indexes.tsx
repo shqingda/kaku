@@ -14,6 +14,8 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 import { formatActivityTime } from '@/lib/format-activity-time';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
@@ -52,7 +54,8 @@ export default function SubjectIndexesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const indexesQuery = useSubjectIndexes(subjectId ?? 0);
-  const indexes = usePagedList(indexesQuery);
+  const blockedIds = useBlockedUserIds();
+  const indexes = usePagedList(indexesQuery, (items) => withoutBlockedAuthors(items, blockedIds));
   const total = indexes.total ?? 0;
   const openIndex = useCallback((indexId: number) => {
     router.push({

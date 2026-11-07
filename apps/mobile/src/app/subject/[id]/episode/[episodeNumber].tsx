@@ -280,7 +280,7 @@ export default function EpisodeScreen() {
           }
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}

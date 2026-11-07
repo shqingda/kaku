@@ -194,7 +194,7 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
           scrollEventThrottle={80}
           renderItem={({ index, item }) => (
             <ReplyListItem
-              floor={index + 1}
+              floor={item.floor ?? index + 1}
               isHighlighted={item.id === replyNavigation.highlightedReplyId}
               onDelete={confirmDeleteReply}
               onEdit={composer.openEdit}

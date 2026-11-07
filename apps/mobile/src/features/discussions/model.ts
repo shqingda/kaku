@@ -14,6 +14,8 @@ export type DiscussionReply = {
   authorUsername?: string;
   body: string;
   createdAt: string;
+  // 隐藏屏蔽用户后保留原楼层号；未设置时楼层就是列表位置。
+  floor?: number;
   replyTo?: ReplyReference;
   segments?: RichTextBlock[];
 };
