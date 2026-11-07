@@ -172,7 +172,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   watchedStatusBadge: { backgroundColor: colors.accent },
-  pressedStatusBadge: { opacity: 0.65 },
+  pressedStatusBadge: { opacity: 0.62 },
   statusText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
   watchedStatusText: { color: colors.surface },
   airDate: { color: colors.subtle, ...TYPE.caption },

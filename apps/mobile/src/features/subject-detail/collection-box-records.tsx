@@ -326,5 +326,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.subtle,
     ...TYPE.caption,
   },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

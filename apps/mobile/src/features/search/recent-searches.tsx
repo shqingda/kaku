@@ -90,5 +90,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   itemText: { color: colors.ink, ...TYPE.caption, fontWeight: '600' },
   clearButton: { minHeight: MIN_TOUCH_SIZE, minWidth: MIN_TOUCH_SIZE, justifyContent: 'center', alignItems: 'center' },
   disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
 });

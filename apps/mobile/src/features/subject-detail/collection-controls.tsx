@@ -403,5 +403,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   ratingLabel: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   unsetText: { color: colors.muted },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

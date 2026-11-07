@@ -20,5 +20,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   title: { ...TYPE.body, color: colors.ink, fontWeight: '600' },
   description: { ...TYPE.caption, color: colors.muted, marginTop: SPACING.sm },
   error: { ...TYPE.caption, color: colors.accent, marginTop: SPACING.sm },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
 });

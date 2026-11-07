@@ -176,7 +176,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   author: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
   body: { color: colors.muted, ...TYPE.body, marginTop: SPACING.md },
   footer: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.md },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
   state: { alignItems: 'center', padding: SPACING.xxl },
   stateTitle: { color: colors.ink, ...TYPE.heading, fontWeight: '800' },
   stateText: {

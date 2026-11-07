@@ -69,6 +69,8 @@ export function CommentPreviewSection({
                     }}
                   >
                     <Pressable
+                      accessibilityLabel={`打开${comment.author}的主页`}
+                      accessibilityRole="link"
                       style={({ pressed }) => [
                         styles.authorButton,
                         pressed && styles.pressed,

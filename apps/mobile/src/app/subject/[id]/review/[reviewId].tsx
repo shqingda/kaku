@@ -158,7 +158,11 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
                           params: { username: review.authorUsername },
                         }}
                       >
-                        <Pressable>
+                        <Pressable
+                          accessibilityLabel={`打开${review.author}的主页`}
+                          accessibilityRole="link"
+                          style={({ pressed }) => pressed && styles.pressed}
+                        >
                           <Text style={styles.reviewAuthor}>
                             {review.author}
                           </Text>
@@ -272,4 +276,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: SPACING.xl,
     paddingTop: SPACING.lg,
   },
+  pressed: { opacity: 0.62 },
 });

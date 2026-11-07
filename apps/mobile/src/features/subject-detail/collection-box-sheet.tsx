@@ -424,5 +424,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   saveButton: { backgroundColor: colors.accent },
   saveText: { color: colors.surface, ...TYPE.body, fontWeight: '800' },
   disabledButton: { opacity: 0.46 },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

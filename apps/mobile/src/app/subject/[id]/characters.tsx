@@ -228,5 +228,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   actorLabel: { color: colors.ink, fontSize: 12, fontWeight: '600' },
   actor: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

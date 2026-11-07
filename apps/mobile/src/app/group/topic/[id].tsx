@@ -178,7 +178,11 @@ export default function GroupTopicScreen() {
                           params: { name: topic.groupName },
                         }}
                       >
-                        <Pressable>
+                        <Pressable
+                          accessibilityLabel={`打开小组：${topic.groupTitle}`}
+                          accessibilityRole="link"
+                          style={({ pressed }) => pressed && styles.pressed}
+                        >
                           <Text style={styles.groupName}>
                             {topic.groupTitle}
                           </Text>
@@ -280,4 +284,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: SPACING.md,
   },
   topicMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize, marginTop: SPACING.sm },
+  pressed: { opacity: 0.62 },
 });
