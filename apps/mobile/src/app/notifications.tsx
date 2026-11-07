@@ -104,7 +104,12 @@ export default function NotificationsScreen() {
               <CachedDataNotice onRetry={() => void notificationsQuery.refetch()} retrying={notificationsQuery.isRefetching} />
             ) : null}
             {markRead.isError ? (
-              <AppState title="标记已读失败" text="请检查网络后重试，未读状态已恢复。" />
+              <AppState
+                action={() => markRead.mutate(markRead.variables)}
+                actionAccessibilityLabel="重试标记已读"
+                text="未读状态已恢复，请检查网络后重试。"
+                title="标记已读失败"
+              />
             ) : null}
             <View style={styles.filterRow}>
               <NotificationFilterChip
