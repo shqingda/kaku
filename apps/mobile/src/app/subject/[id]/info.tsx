@@ -21,6 +21,7 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { CollectionStatus } from '@/features/watching/model';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const COLLECTION_STATUSES: CollectionStatus[] = [
   'wish',
@@ -52,10 +53,12 @@ export default function SubjectInfoScreen() {
     return <InvalidRouteState message="这个资料链接缺少有效条目编号。" />;
   }
 
+  const subjectStatus = loadStatus(subjectQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: `${subjectTypeLabel}资料` }} />
-      {subjectQuery.isPending ? (
+      {subjectStatus.isPending ? (
         <AppState title="正在读取条目资料" text="评分与基础资料加载中。" />
       ) : !subject ? (
         <AppState

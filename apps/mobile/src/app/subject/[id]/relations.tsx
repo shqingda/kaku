@@ -17,6 +17,7 @@ import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { useSubjectRelations } from '@/features/subject-extras/use-subject-extras';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const TYPE_LABELS: Record<number, string> = {
   1: '书籍',
@@ -37,12 +38,14 @@ export default function SubjectRelationsScreen() {
     return <InvalidRouteState message="这个关联条目链接缺少有效编号。" />;
   }
 
+  const relationsStatus = loadStatus(relationsQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title: '关联条目' }} />
-      {relationsQuery.isPending ? (
+      {relationsStatus.isPending ? (
         <AppState title="正在读取关联条目" text="系列作品和音乐条目加载中。" />
-      ) : relationsQuery.isError ? (
+      ) : relationsStatus.isError ? (
         <AppState
           action={() => void relationsQuery.refetch()}
           title="关联条目读取失败"
@@ -60,7 +63,7 @@ export default function SubjectRelationsScreen() {
             <View style={styles.header}>
               <Text style={styles.title}>关联条目</Text>
               <Text style={styles.meta}>
-                {relationsQuery.data.length} 个相关作品
+                {relationsQuery.data?.length ?? 0} 个相关作品
               </Text>
             </View>
           }

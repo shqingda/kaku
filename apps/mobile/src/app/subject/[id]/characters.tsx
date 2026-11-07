@@ -13,6 +13,7 @@ import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { useSubjectCharacters } from '@/features/subject-extras/use-subject-extras';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function SubjectCharactersScreen() {
   const colors = useTheme();
@@ -28,12 +29,14 @@ export default function SubjectCharactersScreen() {
     return <InvalidRouteState message="这个角色名单链接缺少有效条目编号。" />;
   }
 
+  const charactersStatus = loadStatus(charactersQuery);
+
   return (
     <SafeAreaView edges={['bottom']} style={styles.screen}>
       <Stack.Screen options={{ title }} />
-      {charactersQuery.isPending ? (
+      {charactersStatus.isPending ? (
         <AppState title="正在读取角色资料" text={`${title}名单加载中。`} />
-      ) : charactersQuery.isError && !charactersQuery.data ? (
+      ) : charactersStatus.isError && !charactersQuery.data ? (
         <AppState
           action={() => void charactersQuery.refetch()}
           title="角色资料读取失败"
@@ -58,7 +61,7 @@ export default function SubjectCharactersScreen() {
               <View style={styles.header}>
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.meta}>
-                  {charactersQuery.data.length} 个角色
+                  {charactersQuery.data?.length ?? 0} 个角色
                 </Text>
               </View>
             </>

@@ -4,6 +4,7 @@ import { withoutBlockedAuthors } from '@/features/users/blocked-content';
 import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { CommentPreviewSection } from './comment-preview-section';
 import { ReviewPreviewSection } from './review-preview-section';
+import { loadStatus } from '@/lib/query-status';
 
 export function CommentsPreview({
   onOpenMore,
@@ -14,7 +15,9 @@ export function CommentsPreview({
   refreshToken: number;
   subjectId: number;
 }) {
-  const { data, isError, isPending, refetch } = useSubjectComments(subjectId);
+  const commentsQuery = useSubjectComments(subjectId);
+  const { data, refetch } = commentsQuery;
+  const { isError, isPending } = loadStatus(commentsQuery);
   const blockedIds = useBlockedUserIds();
   const appliedRefreshToken = useRef(refreshToken);
 
@@ -49,7 +52,9 @@ export function ReviewsPreview({
   refreshToken: number;
   subjectId: number;
 }) {
-  const { data, isError, isPending, refetch } = useSubjectReviews(subjectId);
+  const reviewsQuery = useSubjectReviews(subjectId);
+  const { data, refetch } = reviewsQuery;
+  const { isError, isPending } = loadStatus(reviewsQuery);
   const blockedIds = useBlockedUserIds();
   const appliedRefreshToken = useRef(refreshToken);
 

@@ -20,6 +20,7 @@ import type { StaffCredit } from '@/features/staff/model';
 import { useSubjectStaff } from '@/features/staff/use-subject-staff';
 import { useTheme } from '@/features/theme/theme-provider';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 const COLLAPSED_COUNT = 3;
 const ROLE_PRIORITY = [
@@ -179,6 +180,7 @@ export default function StaffScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const subjectId = parsePositiveIntegerRouteParam(id);
   const staffQuery = useSubjectStaff(subjectId ?? 0);
+  const staffStatus = loadStatus(staffQuery);
   const subjectQuery = useCatalogSubject(subjectId ?? 0);
   const labels = getSubjectDetailLabels(subjectQuery.data?.type ?? 2);
   const title = labels.credits.label;
@@ -219,12 +221,12 @@ export default function StaffScreen() {
           title,
         }}
       />
-      {staffQuery.isPending ? (
+      {staffStatus.isPending ? (
         <View style={styles.state}>
           <Text style={styles.stateTitle}>正在读取{title}</Text>
           <Text style={styles.stateText}>名单较长，请稍候。</Text>
         </View>
-      ) : staffQuery.isError && !staffQuery.data ? (
+      ) : staffStatus.isError && !staffQuery.data ? (
         <View style={styles.state}>
           <Text style={styles.stateTitle}>{title}读取失败</Text>
           <Text style={styles.stateText}>网络恢复后可以重新获取。</Text>

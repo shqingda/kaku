@@ -37,6 +37,7 @@ import { useTheme } from '@/features/theme/theme-provider';
 import { withoutBlockedReplies } from '@/features/users/blocked-content';
 import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function SubjectReviewScreen() {
   return <ReviewDiscussionScreen kind="review" />;
@@ -139,8 +140,8 @@ export function ReviewDiscussionScreen({ kind }: { kind: 'blog' | 'review' }) {
               ) : (
                 <DiscussionStatus
                   errorText={`${contentLabel}读取失败，请检查网络后重试。`}
-                  isError={reviewQuery.isError}
-                  isPending={reviewQuery.isPending}
+                  isError={loadStatus(reviewQuery).isError}
+                  isPending={loadStatus(reviewQuery).isPending}
                   loadingText={`正在读取${contentLabel}正文和回复…`}
                   onRetry={() => void reviewQuery.refetch()}
                 />

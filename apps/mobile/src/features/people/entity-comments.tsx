@@ -29,6 +29,7 @@ import { withoutBlockedReplies } from '@/features/users/blocked-content';
 import { useBlockedUserIds } from '@/features/users/use-blocklist';
 
 import { useEntityComments } from './use-public-entity';
+import { loadStatus } from '@/lib/query-status';
 
 export function EntityComments({
   children,
@@ -145,9 +146,9 @@ export function EntityComments({
             <Text style={styles.publishText}>发布</Text>
           </Pressable>
         </View>
-        {commentsQuery.isPending ? (
+        {loadStatus(commentsQuery).isPending ? (
           <Text style={styles.commentsState}>正在读取评论…</Text>
-        ) : commentsQuery.isError ? (
+        ) : loadStatus(commentsQuery).isError ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => void commentsQuery.refetch()}

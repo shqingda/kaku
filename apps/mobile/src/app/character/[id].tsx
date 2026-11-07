@@ -4,6 +4,7 @@ import { EntityDetailScreen } from '@/features/people/entity-detail-screen';
 import { useCharacter } from '@/features/people/use-public-entity';
 import { InvalidRouteState } from '@/features/shared/invalid-route-state';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
+import { loadStatus } from '@/lib/query-status';
 
 export default function CharacterScreen() {
   const { id, replyId } = useLocalSearchParams<{
@@ -21,8 +22,7 @@ export default function CharacterScreen() {
     <EntityDetailScreen
       data={characterQuery.data}
       initialReplyId={replyId}
-      isError={characterQuery.isError}
-      isPending={characterQuery.isPending}
+      {...loadStatus(characterQuery)}
       isRefreshing={characterQuery.isRefetching && !characterQuery.isPending}
       kind="角色"
       onRetry={() => void characterQuery.refetch()}
