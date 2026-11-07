@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -190,15 +191,15 @@ const createStyles = (colors: ThemeColors) =>
     screen: { backgroundColor: colors.background, flex: 1 },
     content: {
       alignItems: 'stretch',
-      gap: 10,
-      padding: 20,
-      paddingBottom: 44,
+      gap: SPACING.md,
+      padding: SPACING.xl,
+      paddingBottom: SPACING.xxl + SPACING.md,
     },
     hero: {
       alignItems: 'center',
       flexDirection: 'row',
-      paddingBottom: 12,
-      paddingTop: 2,
+      paddingBottom: SPACING.md,
+      paddingTop: SPACING.xs,
     },
     portrait: {
       alignItems: 'center',
@@ -209,43 +210,41 @@ const createStyles = (colors: ThemeColors) =>
       overflow: 'hidden',
       width: 112,
     },
-    fallback: { color: colors.subtle, fontSize: 24, fontWeight: '800' },
-    heroMain: { flex: 1, marginLeft: 20 },
+    fallback: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '800' },
+    heroMain: { flex: 1, marginLeft: SPACING.xl },
     name: {
       color: colors.ink,
-      fontSize: 27,
+      ...TYPE.display,
       fontWeight: '800',
-      letterSpacing: -0.6,
-      lineHeight: 34,
     },
-    kind: { color: colors.muted, fontSize: 13, marginTop: 8 },
-    stats: { color: colors.subtle, fontSize: 11, marginTop: 6 },
+    kind: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
+    stats: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
     panel: {
       backgroundColor: colors.surface,
       borderRadius: 22,
-      marginTop: 4,
-      padding: 18,
+      marginTop: SPACING.xs,
+      padding: SPACING.lg,
     },
     panelTitle: {
       color: colors.ink,
-      fontSize: 17,
+      ...TYPE.heading,
       fontWeight: '800',
-      marginBottom: 12,
+      marginBottom: SPACING.md,
     },
-    summary: { color: colors.muted, fontSize: 14, lineHeight: 23 },
+    summary: { color: colors.muted, ...TYPE.body, lineHeight: 23 },
     metadataRow: {
       flexDirection: 'row',
-      paddingVertical: 10,
+      paddingVertical: SPACING.md,
     },
     rowBorder: {
       borderTopColor: colors.divider,
       borderTopWidth: StyleSheet.hairlineWidth,
     },
-    metadataLabel: { color: colors.subtle, fontSize: 13, width: 78 },
+    metadataLabel: { color: colors.subtle, ...TYPE.caption, width: 78 },
     metadataValue: {
       color: colors.ink,
       flex: 1,
-      fontSize: 13,
+      ...TYPE.caption,
       lineHeight: 20,
     },
     pressed: { opacity: 0.62 },

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import { playSuccessHaptic } from '@/lib/haptics';
@@ -130,10 +130,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     borderRadius: 17,
     flexDirection: 'row',
-    gap: 6,
+    gap: SPACING.sm,
     justifyContent: 'center',
     minHeight: 34,
-    paddingHorizontal: 13,
+    paddingHorizontal: SPACING.md,
   },
   addButton: { backgroundColor: colors.accent },
   friendButton: {
@@ -146,9 +146,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.track,
     borderWidth: StyleSheet.hairlineWidth,
     minWidth: 34,
-    paddingHorizontal: 0,
+    paddingHorizontal: SPACING.none,
   },
-  label: { color: colors.surface, fontSize: 13, fontWeight: '700' },
+  label: { color: colors.surface, ...TYPE.caption, fontWeight: '700' },
   friendLabel: { color: colors.muted },
   pressed: { opacity: 0.62 },
 });

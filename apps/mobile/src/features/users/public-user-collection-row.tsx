@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import {
   getCollectionStatusLabel,
@@ -86,7 +87,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 98,
-    paddingVertical: 11,
+    paddingVertical: SPACING.md,
   },
   divider: {
     borderTopColor: colors.divider,
@@ -103,25 +104,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   coverFallback: {
     color: colors.subtle,
-    fontSize: 14,
+    ...TYPE.body,
     fontWeight: '700',
   },
-  main: { flex: 1, marginLeft: 13 },
+  main: { flex: 1, marginLeft: SPACING.md },
   title: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 21,
   },
   meta: {
     color: colors.muted,
-    fontSize: 12,
-    marginTop: 7,
+    ...TYPE.caption,
+    marginTop: SPACING.sm,
   },
   chevron: {
     color: colors.subtle,
-    fontSize: 24,
-    marginLeft: 8,
+    ...TYPE.titleLarge,
+    marginLeft: SPACING.sm,
   },
   pressed: { opacity: 0.62 },
 });

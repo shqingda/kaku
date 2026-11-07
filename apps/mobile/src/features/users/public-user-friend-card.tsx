@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserFriend } from './model';
@@ -56,7 +57,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 18,
-    padding: 11,
+    padding: SPACING.md,
     width: 104,
   },
   compactCard: { width: 92 },
@@ -69,18 +70,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 48,
   },
-  fallback: { color: colors.subtle, fontSize: 15, fontWeight: '800' },
+  fallback: { color: colors.subtle, ...TYPE.body, fontWeight: '800' },
   nickname: {
     color: colors.ink,
-    fontSize: 12,
+    ...TYPE.caption,
     fontWeight: '700',
-    marginTop: 8,
+    marginTop: SPACING.sm,
     maxWidth: 82,
   },
   username: {
     color: colors.subtle,
-    fontSize: 10,
-    marginTop: 3,
+    ...TYPE.micro,
+    marginTop: SPACING.xs,
     maxWidth: 82,
   },
   pressed: { opacity: 0.62 },

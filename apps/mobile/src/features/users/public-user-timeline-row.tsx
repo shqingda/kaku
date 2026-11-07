@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { BangumiText } from '@/features/shared/bangumi-text';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -47,13 +48,13 @@ export function PublicUserTimelineRow({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  row: { paddingVertical: 14 },
+  row: { paddingVertical: SPACING.lg },
   divider: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  text: { color: colors.ink, fontSize: 14, lineHeight: 20 },
+  text: { color: colors.ink, ...TYPE.body, lineHeight: 20 },
   subjectTitle: { color: colors.accentRich, fontWeight: '700' },
-  meta: { color: colors.subtle, fontSize: 11, marginTop: 8 },
+  meta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });

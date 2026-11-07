@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { usePrefetchSubject } from '@/features/catalog/use-catalog-subject';
 import { useTheme } from '@/features/theme/theme-provider';
@@ -237,13 +238,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingTop: 20,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.xl,
   },
-  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
-  sectionMeta: { color: colors.subtle, fontSize: 12 },
-  empty: { alignItems: 'center', alignSelf: 'stretch', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14 },
+  sectionTitle: { color: colors.ink, ...TYPE.title, fontWeight: '800' },
+  sectionMeta: { color: colors.subtle, ...TYPE.caption },
+  empty: { alignItems: 'center', alignSelf: 'stretch', padding: SPACING.xxl },
+  emptyText: { color: colors.muted, ...TYPE.body },
   peerRow: {
     alignItems: 'center',
     alignSelf: 'stretch',
@@ -251,7 +252,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 92,
-    padding: 10,
+    padding: SPACING.md,
     width: '100%',
   },
   peerPortrait: {
@@ -264,19 +265,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexShrink: 0,
     width: 58,
   },
-  peerMain: { flex: 1, marginLeft: 13, minWidth: 0 },
-  peerName: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  peerMain: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
+  peerName: { color: colors.ink, ...TYPE.body, fontWeight: '800' },
   appearance: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
+    ...TYPE.caption,
+    marginTop: SPACING.xs,
   },
   moreAppearances: {
     color: colors.accent,
-    fontSize: 11,
+    ...TYPE.micro,
     fontWeight: '700',
-    marginTop: 4,
+    marginTop: SPACING.xs,
   },
   subjectRow: {
     alignItems: 'center',
@@ -285,7 +285,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 18,
     flexDirection: 'row',
     minHeight: 88,
-    padding: 10,
+    padding: SPACING.md,
     width: '100%',
   },
   cover: {
@@ -298,13 +298,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexShrink: 0,
     width: 48,
   },
-  fallback: { color: colors.subtle, fontSize: 14, fontWeight: '700' },
-  subjectMain: { flex: 1, marginLeft: 13, minWidth: 0 },
+  fallback: { color: colors.subtle, ...TYPE.body, fontWeight: '700' },
+  subjectMain: { flex: 1, marginLeft: SPACING.md, minWidth: 0 },
   subjectTitle: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 21,
   },
-  relation: { color: colors.muted, fontSize: 12, marginTop: 5 },
+  relation: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
 });
