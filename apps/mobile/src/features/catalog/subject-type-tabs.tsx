@@ -77,7 +77,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   selectedTab: { backgroundColor: colors.ink },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
   tabText: {
     color: colors.muted,
     fontSize: TYPE.caption.fontSize,

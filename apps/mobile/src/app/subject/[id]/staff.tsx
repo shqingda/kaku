@@ -372,7 +372,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 11,
   },
   expandText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
   state: {
     alignItems: 'center',
     flex: 1,

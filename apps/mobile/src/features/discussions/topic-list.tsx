@@ -89,7 +89,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  pressed: { opacity: 0.56 },
+  pressed: { opacity: 0.62 },
   topicMain: { flex: 1, paddingRight: 14 },
   titleLine: { alignItems: 'center', flexDirection: 'row' },
   episodeBadge: {

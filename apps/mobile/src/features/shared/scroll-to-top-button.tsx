@@ -155,5 +155,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   label: { fontSize: 13, fontWeight: '700' },
-  pressed: { opacity: 0.58 },
+  pressed: { opacity: 0.62 },
 });

@@ -81,5 +81,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 7,
   },
   retryText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
 });

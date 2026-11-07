@@ -46,5 +46,5 @@ const styles = StyleSheet.create({
   copy: { ...TYPE.caption },
   retry: { minHeight: MIN_TOUCH_SIZE, minWidth: MIN_TOUCH_SIZE, justifyContent: 'center', alignSelf: 'flex-start', paddingHorizontal: SPACING.md, borderRadius: 12 },
   action: { ...TYPE.caption, fontWeight: '600' },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.62 },
 });

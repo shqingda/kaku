@@ -238,6 +238,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  tagPressed: { opacity: 0.6 },
+  tagPressed: { opacity: 0.62 },
   tagText: { color: colors.accent, fontSize: 11, fontWeight: '700' },
 });

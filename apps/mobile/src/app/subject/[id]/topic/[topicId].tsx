@@ -167,7 +167,11 @@ export default function TopicScreen() {
                             params: { username: topic.authorUsername },
                           }}
                         >
-                          <Pressable>
+                          <Pressable
+                            accessibilityLabel={`打开${topic.author}的主页`}
+                            accessibilityRole="link"
+                            style={({ pressed }) => pressed && styles.pressed}
+                          >
                             <Text style={styles.topicAuthor}>
                               {topic.author}
                             </Text>
@@ -266,4 +270,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topicMetaRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: SPACING.sm },
   topicAuthor: { color: colors.accent, fontSize: TYPE.caption.fontSize, fontWeight: '700' },
   topicMeta: { color: colors.subtle, fontSize: TYPE.caption.fontSize },
+  pressed: { opacity: 0.62 },
 });
