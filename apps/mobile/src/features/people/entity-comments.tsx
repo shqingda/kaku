@@ -163,7 +163,7 @@ export function EntityComments({
             {comments.slice(0, 3).map((reply, index) => (
               <ReplyListItem
                 embedded
-                floor={index + 1}
+                floor={reply.floor ?? index + 1}
                 hasDivider={index > 0}
                 key={reply.id}
                 onDelete={confirmDeleteReply}
@@ -256,7 +256,7 @@ export function EntityComments({
             refreshing={commentsQuery.isRefetching}
             renderItem={({ index, item }) => (
               <ReplyListItem
-                floor={index + 1}
+                floor={item.floor ?? index + 1}
                 isHighlighted={replyNavigation.highlightedReplyId === item.id}
                 onDelete={confirmDeleteReply}
                 onEdit={composer.openEdit}

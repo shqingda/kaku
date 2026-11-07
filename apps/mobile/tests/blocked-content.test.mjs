@@ -33,6 +33,7 @@ test('hiding a reply also removes quotes of it but keeps other quotes', () => {
   const visible = withoutBlockedReplies(replies, new Set([1]));
 
   assert.deepEqual(visible.map((item) => item.id), ['2', '3']);
+  assert.deepEqual(visible.map((item) => item.floor), [2, 3]);
   assert.equal(visible[0].replyTo, undefined);
   assert.equal(visible[1].replyTo?.replyId, '2');
   assert.equal(JSON.stringify(visible).includes('被屏蔽的原文'), false);

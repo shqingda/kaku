@@ -30,11 +30,13 @@ export function withoutBlockedReplies(
   );
   if (hiddenIds.size === 0) return replies;
 
-  return replies
-    .filter((reply) => !hiddenIds.has(reply.id))
-    .map((reply) =>
-      reply.replyTo && hiddenIds.has(reply.replyTo.replyId)
-        ? { ...reply, replyTo: undefined }
-        : reply,
-    );
+  return replies.flatMap((reply, index) => {
+    if (hiddenIds.has(reply.id)) return [];
+    const quotesHidden = reply.replyTo && hiddenIds.has(reply.replyTo.replyId);
+    return [{
+      ...reply,
+      floor: index + 1,
+      replyTo: quotesHidden ? undefined : reply.replyTo,
+    }];
+  });
 }
