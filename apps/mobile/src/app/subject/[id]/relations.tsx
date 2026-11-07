@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
@@ -139,23 +140,22 @@ export default function SubjectRelationsScreen() {
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  content: { paddingBottom: 44, paddingHorizontal: 20 },
-  header: { paddingBottom: 20, paddingTop: 14 },
+  content: { paddingBottom: SPACING.xxl + SPACING.md, paddingHorizontal: SPACING.xl },
+  header: { paddingBottom: SPACING.xl, paddingTop: SPACING.lg },
   title: {
     color: colors.ink,
-    fontSize: 28,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.7,
   },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  meta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
   card: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 20,
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
     minHeight: 132,
-    padding: 12,
+    padding: SPACING.md,
   },
   cover: {
     alignItems: 'center',
@@ -166,22 +166,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     width: 78,
   },
-  fallback: { color: colors.subtle, fontSize: 24, fontWeight: '700' },
-  cardMain: { flex: 1, marginLeft: 14 },
-  badges: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  fallback: { color: colors.subtle, ...TYPE.titleLarge, fontWeight: '700' },
+  cardMain: { flex: 1, marginLeft: SPACING.lg },
+  badges: { alignItems: 'center', flexDirection: 'row', gap: SPACING.sm },
   relationBadge: {
     backgroundColor: colors.accentSoft,
     borderRadius: 9,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
-  relationText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
-  type: { color: colors.subtle, fontSize: 11, fontWeight: '700' },
+  relationText: { color: colors.accent, ...TYPE.micro, fontWeight: '800' },
+  type: { color: colors.subtle, ...TYPE.micro, fontWeight: '700' },
   name: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '800',
-    lineHeight: 21,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
 });

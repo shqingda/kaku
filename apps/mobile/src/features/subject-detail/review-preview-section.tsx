@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { DiscussionStatus } from '@/features/discussions/discussion-status';
 import type { SubjectReview } from '@/features/reviews/model';
@@ -103,36 +104,35 @@ export function ReviewPreviewSection({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  section: { marginBottom: 14, marginTop: 4 },
+  section: { marginBottom: SPACING.lg, marginTop: SPACING.xs },
   header: {
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
-  title: { color: colors.ink, fontSize: 18, fontWeight: '700' },
-  meta: { color: colors.subtle, fontSize: 12 },
+  title: { color: colors.ink, ...TYPE.heading, fontWeight: '700' },
+  meta: { color: colors.subtle, ...TYPE.caption },
   list: {
     backgroundColor: colors.surface,
     borderRadius: 22,
     overflow: 'hidden',
-    paddingHorizontal: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  row: { alignItems: 'center', flexDirection: 'row', paddingVertical: 16 },
+  row: { alignItems: 'center', flexDirection: 'row', paddingVertical: SPACING.lg },
   rowBorder: {
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  main: { flex: 1, paddingRight: 14 },
+  main: { flex: 1, paddingRight: SPACING.lg },
   reviewTitle: {
     color: colors.ink,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '700',
-    lineHeight: 22,
   },
-  summary: { color: colors.muted, fontSize: 13, marginTop: 6 },
-  reviewMeta: { color: colors.subtle, fontSize: 12, marginTop: 8 },
+  summary: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.sm },
+  reviewMeta: { color: colors.subtle, ...TYPE.caption, marginTop: SPACING.sm },
   replyCount: {
     alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
@@ -140,20 +140,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     minHeight: 26,
     minWidth: 32,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
-  replyCountText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-  empty: { alignItems: 'center', padding: 28 },
-  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  replyCountText: { color: colors.muted, ...TYPE.caption, fontWeight: '700' },
+  empty: { alignItems: 'center', padding: SPACING.xxl },
+  emptyText: { color: colors.muted, ...TYPE.body, lineHeight: 21 },
   more: {
     alignItems: 'center',
     borderTopColor: colors.track,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 13,
+    paddingVertical: SPACING.md,
   },
-  moreText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
-  chevron: { color: colors.subtle, fontSize: 25, fontWeight: '300' },
+  moreText: { color: colors.accent, ...TYPE.body, fontWeight: '700' },
+  chevron: { color: colors.subtle, ...TYPE.display, fontWeight: '300' },
   pressed: { opacity: 0.62 },
 });

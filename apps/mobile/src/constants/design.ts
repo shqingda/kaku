@@ -12,6 +12,7 @@ export const SPACING = {
 // 字号阶梯（Apple 排版原则：字距随字号变化，大字号收紧、小字号微放）。
 // 中文字形本身自带字面间距，因此只对 20pt 以上收紧、13pt 以下微放。
 export const TYPE = {
+  hero: { fontSize: 42, lineHeight: 48, letterSpacing: -1.5 },
   display: { fontSize: 30, lineHeight: 36, letterSpacing: -0.8 },
   titleLarge: { fontSize: 22, lineHeight: 28, letterSpacing: -0.4 },
   title: { fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
