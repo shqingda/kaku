@@ -113,6 +113,8 @@ export default function BrowseScreen() {
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.content}
         data={browse.items}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           browseQuery.fetchStatus === 'paused' ? (
