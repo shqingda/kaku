@@ -43,14 +43,14 @@ export function ProfileOverflow({
 
   function confirmBlock() {
     if (isBlocked) {
-      Alert.alert('取消屏蔽？', `恢复接收 ${nickname} 的通知。`, [
+      Alert.alert('取消屏蔽？', `恢复显示 ${nickname} 的内容和通知。`, [
         { style: 'cancel', text: '取消' },
         { onPress: () => applyBlock(false), text: '取消屏蔽' },
       ]);
       return;
     }
 
-    Alert.alert('屏蔽该用户？', `屏蔽后不再收到 ${nickname} 的通知，对方发布的内容仍会显示。`, [
+    Alert.alert('屏蔽该用户？', `屏蔽后隐藏 ${nickname} 的回复、吐槽、评论、话题和动态，也不再收到对方的通知。`, [
       { style: 'cancel', text: '取消' },
       { onPress: () => applyBlock(true), style: 'destructive', text: '屏蔽' },
     ]);

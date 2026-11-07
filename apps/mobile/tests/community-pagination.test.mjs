@@ -32,6 +32,7 @@ test('group topic page keeps its offset and group context', () => {
   assert.deepEqual(page.items[0], {
     author: 'Alice',
     authorAvatarUrl: 'https://lain.bgm.tv/avatar.jpg',
+    authorId: 1,
     authorUsername: 'alice',
     groupName: 'anime',
     groupTitle: '补旧番',

@@ -29,6 +29,7 @@ export function toPublicGroupTopic(
       `用户 ${topic.creatorID}`,
     authorAvatarUrl:
       topic.creator?.avatar?.medium || topic.creator?.avatar?.small,
+    authorId: topic.creatorID,
     authorUsername: topic.creator?.username,
     groupName: topic.group?.name,
     groupTitle: topic.group?.title,

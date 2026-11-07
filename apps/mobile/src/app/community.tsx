@@ -26,6 +26,8 @@ import { PagedListFooter } from '@/features/shared/paged-list-footer';
 import { CachedDataNotice } from '@/features/shared/cached-data-notice';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { usePagedList } from '@/features/shared/use-paged-list';
+import { withoutBlockedAuthors } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { useTheme } from '@/features/theme/theme-provider';
 
 const compactNumber = new Intl.NumberFormat('zh-CN', {
@@ -38,7 +40,8 @@ export default function CommunityScreen() {
   const styles = createStyles(colors);
   const communityQuery = usePublicCommunity();
   const topicsQuery = usePublicCommunityTopics();
-  const topics = usePagedList(topicsQuery);
+  const blockedIds = useBlockedUserIds();
+  const topics = usePagedList(topicsQuery, (items) => withoutBlockedAuthors(items, blockedIds));
   const community = communityQuery.data;
   const topicTotal = topics.total ?? 0;
   const isRefreshing =

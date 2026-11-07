@@ -20,6 +20,7 @@ let mockComments = makeQuery<SubjectCommentPage>();
 let mockReviews = makeQuery<SubjectReviewPage>();
 let mockIndexes = makeQuery<PublicIndexPage>();
 
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => new Set() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() }, Stack: { Screen: () => null }, useLocalSearchParams: () => ({ id: '1' }),
 }));

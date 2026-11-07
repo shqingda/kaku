@@ -37,6 +37,8 @@ import { HeaderShareButton } from '@/features/shared/header-share-button';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { parsePositiveIntegerRouteParam } from '@/lib/route-params';
 
 export default function GroupTopicScreen() {
@@ -53,7 +55,8 @@ export default function GroupTopicScreen() {
     kind: 'group-topic',
   });
   const topic = topicQuery.data;
-  const replies = topic?.replies ?? [];
+  const blockedIds = useBlockedUserIds();
+  const replies = withoutBlockedReplies(topic?.replies ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(replies);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const appliedReplyRef = useRef(false);

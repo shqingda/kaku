@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ThemeColors } from '@/constants/theme';
-import { HIT_SLOP } from '@/constants/design';
+import { HIT_SLOP, SPACING, TYPE } from '@/constants/design';
 import { useAuth } from '@/features/auth/auth-provider';
 import { DiscussionReplyComposer } from '@/features/discussions/discussion-reply-composer';
 import type { DiscussionReply } from '@/features/discussions/model';
@@ -25,6 +25,8 @@ import { AppSheet } from '@/features/shared/app-sheet';
 import { ScrollToTopButton } from '@/features/shared/scroll-to-top-button';
 import { useScrollToTopButton } from '@/features/shared/use-scroll-to-top-button';
 import { useTheme } from '@/features/theme/theme-provider';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 
 import { useEntityComments } from './use-public-entity';
 
@@ -60,7 +62,8 @@ export function EntityComments({
     id: entityId,
     kind: entityKind,
   });
-  const comments = commentsQuery.data ?? [];
+  const blockedIds = useBlockedUserIds();
+  const comments = withoutBlockedReplies(commentsQuery.data ?? [], blockedIds);
   const replyNavigation = useReplyNavigation(comments);
   const scrollToTop = useScrollToTopButton(replyNavigation.listRef);
   const pendingReplyIdRef = useRef<string | undefined>(undefined);
@@ -285,32 +288,31 @@ export function EntityComments({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    commentsSection: { marginTop: 10 },
+    commentsSection: { marginTop: SPACING.md },
     commentsHeader: {
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingBottom: 10,
-      paddingHorizontal: 4,
-      paddingTop: 12,
+      paddingBottom: SPACING.md,
+      paddingHorizontal: SPACING.xs,
+      paddingTop: SPACING.md,
     },
     commentsHeaderTitle: {
       color: colors.ink,
-      fontSize: 20,
+      ...TYPE.title,
       fontWeight: '800',
-      letterSpacing: -0.35,
     },
-    commentsHeaderMeta: { color: colors.muted, fontSize: 12, marginTop: 3 },
+    commentsHeaderMeta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
     publishButton: {
       alignItems: 'center',
       backgroundColor: colors.surfaceAlt,
       borderCurve: 'continuous',
       borderRadius: 12,
       flexDirection: 'row',
-      gap: 5,
+      gap: SPACING.xs,
       height: 34,
       justifyContent: 'center',
-      paddingHorizontal: 12,
+      paddingHorizontal: SPACING.md,
     },
     publishButtonPressed: { backgroundColor: colors.track },
     publishIcon: {
@@ -321,18 +323,17 @@ const createStyles = (colors: ThemeColors) =>
     },
     publishText: {
       color: colors.ink,
-      fontSize: 14,
+      ...TYPE.caption,
       fontWeight: '700',
       includeFontPadding: false,
-      lineHeight: 18,
       textAlignVertical: 'center',
     },
     commentsCard: {
       backgroundColor: colors.surface,
       borderRadius: 22,
-      marginTop: 4,
+      marginTop: SPACING.xs,
       overflow: 'hidden',
-      paddingHorizontal: 18,
+      paddingHorizontal: SPACING.lg,
     },
     commentsAllButton: {
       alignItems: 'center',
@@ -341,32 +342,32 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       minHeight: 50,
-      paddingHorizontal: 2,
+      paddingHorizontal: SPACING.xs,
     },
-    commentsAllText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+    commentsAllText: { color: colors.accent, ...TYPE.caption, fontWeight: '700' },
     commentsState: {
       backgroundColor: colors.surface,
       borderRadius: 18,
       color: colors.muted,
-      fontSize: 13,
-      padding: 18,
+      ...TYPE.caption,
+      padding: SPACING.lg,
     },
     commentsSheetBody: { flexShrink: 1 },
     commentsModalHeader: {
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingBottom: 14,
-      paddingTop: 12,
+      paddingBottom: SPACING.md,
+      paddingTop: SPACING.md,
     },
     commentsHeaderTapTarget: {
       flex: 1,
       justifyContent: 'center',
       minHeight: 44,
-      paddingRight: 12,
+      paddingRight: SPACING.md,
     },
-    commentsModalTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' },
-    commentsModalMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
+    commentsModalTitle: { color: colors.ink, ...TYPE.titleLarge, fontWeight: '800' },
+    commentsModalMeta: { color: colors.muted, ...TYPE.caption, marginTop: SPACING.xs },
     commentsClose: {
       alignItems: 'center',
       backgroundColor: colors.surfaceSoft,
@@ -376,6 +377,6 @@ const createStyles = (colors: ThemeColors) =>
       width: 36,
     },
     commentsList: { flex: 1 },
-    commentsContent: { paddingBottom: 12 },
+    commentsContent: { paddingBottom: SPACING.md },
     pressed: { opacity: 0.62 },
   });

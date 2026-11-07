@@ -10,6 +10,7 @@ export type DiscussionReply = {
   id: string;
   author: string;
   authorAvatarUrl?: string;
+  authorId?: number;
   authorUsername?: string;
   body: string;
   createdAt: string;
@@ -23,6 +24,7 @@ export type DiscussionTopic = {
   episodeNumber?: number;
   title: string;
   author: string;
+  authorId?: number;
   authorUsername?: string;
   body?: string;
   createdAt: string;

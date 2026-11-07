@@ -3,6 +3,8 @@ import { useSpoilerPreference } from '@/features/preferences/spoiler-preference'
 import { supportsWatchProgress } from '@/features/catalog/subject-types';
 import { useCatalogSubject } from '@/features/catalog/use-catalog-subject';
 import { usePersonalCollection, useSavePersonalCollection } from '@/features/collections/use-personal-collection';
+import { withoutBlockedReplies } from '@/features/users/blocked-content';
+import { useBlockedUserIds } from '@/features/users/use-blocklist';
 import { shouldHideEpisodeDiscussion } from './spoiler-policy';
 import { useBangumiEpisodeComments } from './use-bangumi-discussions';
 
@@ -34,6 +36,7 @@ export function useEpisodeDiscussion(subjectId: number, episodeNumber: number, u
     revealed: reveal.scope === discussionScope && reveal.visible,
   });
   const commentsQuery = useBangumiEpisodeComments(catalogEpisode?.id, !hiddenDiscussion);
+  const blockedIds = useBlockedUserIds();
   const episodeUnit = isTrack ? '曲' : '集';
   const episodeList = useMemo(
     () =>
@@ -57,7 +60,7 @@ export function useEpisodeDiscussion(subjectId: number, episodeNumber: number, u
     catalogSubject, catalogEpisode, personalCollection,
     isTrack, tracksWatchProgress, isValidEpisode, episodeUnit,
     previousEpisode, nextEpisode, hiddenDiscussion,
-    replies: hiddenDiscussion ? [] : commentsQuery.data ?? [],
+    replies: hiddenDiscussion ? [] : withoutBlockedReplies(commentsQuery.data ?? [], blockedIds),
     revealDiscussion: () => setReveal({ scope: discussionScope, visible: true }),
   };
 }

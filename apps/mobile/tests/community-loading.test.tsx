@@ -16,6 +16,7 @@ function makeQuery<TData>() {
 let mockCommunity = makeQuery<PublicCommunity>();
 let mockGroup = makeQuery<PublicGroupDetail>();
 let mockTopics = makeQuery<{ pages: PublicGroupTopicPage[] }>();
+let mockBlockedIds = new Set<number>();
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() }, Stack: { Screen: () => null },
@@ -24,6 +25,7 @@ jest.mock('expo-router', () => ({
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('@/features/auth/auth-provider', () => ({ useAuth: () => ({ session: null }) }));
 jest.mock('@/lib/use-connectivity', () => ({ useIsOffline: () => false }));
+jest.mock('@/features/users/use-blocklist', () => ({ useBlockedUserIds: () => mockBlockedIds }));
 jest.mock('@/features/discussions/topic-composer', () => ({ TopicComposer: () => null }));
 jest.mock('@/features/community/use-community', () => ({
   usePublicCommunity: () => mockCommunity,
@@ -49,10 +51,25 @@ const pages = [
 
 beforeEach(() => {
   mockCommunity = makeQuery(); mockGroup = makeQuery(); mockTopics = makeQuery();
+  mockBlockedIds = new Set();
   Object.assign(mockTopics, {
-    data: { pages: [{ items: [{ id: 1, title: '保留的话题', author: '作者', replyCount: 2, updatedAt: Date.now() }], total: 1 }] },
+    data: { pages: [{ items: [{ id: 1, title: '保留的话题', author: '作者', authorId: 7, replyCount: 2, updatedAt: Date.now() }], total: 1 }] },
     isPending: false, fetchStatus: 'idle',
   });
+});
+
+test('blocking an author hides their topics and unblocking restores them without a refetch', async () => {
+  const screen = await render(<CommunityScreen />);
+  expect(screen.getByText('保留的话题')).toBeTruthy();
+
+  mockBlockedIds = new Set([7]);
+  await screen.rerender(<CommunityScreen />);
+  expect(screen.queryByText('保留的话题')).toBeNull();
+
+  mockBlockedIds = new Set();
+  await screen.rerender(<CommunityScreen />);
+  expect(screen.getByText('保留的话题')).toBeTruthy();
+  expect(mockTopics.refetch).not.toHaveBeenCalled();
 });
 
 test.each(pages)('$name metadata shows a paused request and retries only that request', async ({ Component, getQuery, loading, paused, error, retry }) => {
