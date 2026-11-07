@@ -71,6 +71,16 @@ export function AccountSettingsMenu() {
             onPress={() => router.push('/devices')}
           />
         ) : null}
+        {session ? (
+          <AccountMenuRow
+            colors={colors}
+            description="查看和取消屏蔽的用户"
+            hasDivider
+            icon={{ android: 'visibility_off', ios: 'eye.slash', web: 'visibility_off' }}
+            label="已屏蔽用户"
+            onPress={() => router.push('/blocked-users')}
+          />
+        ) : null}
         <AccountMenuRow
           colors={colors}
           description="深色、浅色与云端同步"
