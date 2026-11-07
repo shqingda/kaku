@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { takeReturnTo } from '@/lib/auth-redirect';
@@ -73,37 +74,35 @@ export function AccountSignInPanel() {
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  intro: { alignItems: 'center', marginBottom: 32 },
+  intro: { alignItems: 'center', marginBottom: SPACING.xxl },
   logoMark: {
     borderRadius: 20,
     height: 76,
-    marginBottom: 22,
+    marginBottom: SPACING.xl,
     width: 76,
   },
   title: {
     color: colors.ink,
-    fontSize: 30,
+    ...TYPE.display,
     fontWeight: '800',
-    letterSpacing: -0.8,
   },
   description: {
     color: colors.muted,
-    fontSize: 15,
+    ...TYPE.body,
     lineHeight: 23,
-    marginTop: 12,
+    marginTop: SPACING.md,
     maxWidth: 320,
     textAlign: 'center',
   },
   errorCard: {
     backgroundColor: colors.accentSoft,
     borderRadius: 16,
-    marginBottom: 14,
-    padding: 14,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
   },
   errorText: {
     color: colors.accent,
-    fontSize: 14,
-    lineHeight: 20,
+    ...TYPE.body,
     textAlign: 'center',
   },
   primaryButton: {
@@ -115,16 +114,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   primaryButtonText: {
     color: colors.surface,
-    fontSize: 16,
+    ...TYPE.heading,
     fontWeight: '800',
   },
   privacyText: {
     color: colors.subtle,
-    fontSize: 12,
-    marginTop: 14,
+    ...TYPE.caption,
+    marginTop: SPACING.lg,
     textAlign: 'center',
   },
-  aboutLink: { alignSelf: 'center', marginTop: 10, padding: 10 },
-  aboutLinkText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
+  aboutLink: { alignSelf: 'center', marginTop: SPACING.md, padding: SPACING.md },
+  aboutLinkText: { color: colors.muted, ...TYPE.caption, fontWeight: '600' },
   pressed: { opacity: 0.62 },
 });

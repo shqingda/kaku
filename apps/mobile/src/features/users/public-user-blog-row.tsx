@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/features/theme/theme-provider';
 import type { PublicUserBlog } from './model';
@@ -42,23 +43,21 @@ export function PublicUserBlogRow({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  row: { paddingVertical: 15 },
+  row: { paddingVertical: SPACING.lg },
   divider: {
     borderTopColor: colors.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   title: {
     color: colors.ink,
-    fontSize: 15,
+    ...TYPE.body,
     fontWeight: '700',
-    lineHeight: 21,
   },
   summary: {
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
+    ...TYPE.caption,
+    marginTop: SPACING.sm,
   },
-  meta: { color: colors.subtle, fontSize: 11, marginTop: 8 },
+  meta: { color: colors.subtle, ...TYPE.micro, marginTop: SPACING.sm },
   pressed: { opacity: 0.62 },
 });
