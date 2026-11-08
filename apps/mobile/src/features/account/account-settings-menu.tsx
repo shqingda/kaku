@@ -74,7 +74,7 @@ export function AccountSettingsMenu() {
         {session ? (
           <AccountMenuRow
             colors={colors}
-            description="查看和取消屏蔽的用户"
+            description="在 Bangumi 绝交、内容已隐藏的用户"
             hasDivider
             icon={{ android: 'visibility_off', ios: 'eye.slash', web: 'visibility_off' }}
             label="已屏蔽用户"

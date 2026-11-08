@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HIT_SLOP, MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
+import { MIN_TOUCH_SIZE, SPACING, TYPE } from '@/constants/design';
 import type { ThemeColors } from '@/constants/theme';
 import { AccountSignInPanel } from '@/features/account/account-sign-in-panel';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -10,11 +10,11 @@ import { AppRefreshControl } from '@/features/shared/app-refresh-control';
 import { AppState } from '@/features/shared/app-state';
 import { useTheme } from '@/features/theme/theme-provider';
 import { type BlockedUserName, readBlockedUserNames } from '@/features/users/blocked-user-names';
-import { useBlocklist, useSetUserBlocked } from '@/features/users/use-blocklist';
-import { playSuccessHaptic } from '@/lib/haptics';
+import { useBlocklist } from '@/features/users/use-blocklist';
 import { loadStatus } from '@/lib/query-status';
-import { userErrorMessage } from '@/lib/user-error-message';
 
+// 只读名单：来自用户在 Bangumi 网页上的“绝交”。Kaku 内无法屏蔽或取消，
+// 因为 Bangumi P1 的写入接口返回 500（bangumi/server-private#1787）。
 export default function BlockedUsersScreen() {
   const colors = useTheme();
   const styles = createStyles(colors);
@@ -48,12 +48,12 @@ export default function BlockedUsersScreen() {
               text="请检查网络后重试。"
             />
           ) : (
-            <AppState title="还没有屏蔽任何人" text="在用户主页的“⋯”菜单里可以屏蔽对方。" />
+            <AppState title="还没有屏蔽任何人" text="在 Bangumi 网页上与某人绝交后，Kaku 会隐藏对方的内容，并在这里列出。" />
           )
         }
         ListHeaderComponent={
           blockedIds.length > 0 ? (
-            <Text style={styles.intro}>这些用户的回复、吐槽、评论、话题和动态不会显示，也不会给你发通知。</Text>
+            <Text style={styles.intro}>你在 Bangumi 网页上绝交的用户。Kaku 不显示他们的回复、吐槽、评论、话题和动态，Bangumi 也不会给你发对方的通知。</Text>
           ) : undefined
         }
         refreshControl={
@@ -92,21 +92,12 @@ function BlockedUserRow({
   styles: ReturnType<typeof createStyles>;
   userId: number;
 }) {
-  // 没设置用户名的账号，用户名就是数字 ID，所以名字未知时仍可以尝试取消。
-  const setBlocked = useSetUserBlocked(name?.username ?? String(userId));
   const label = name?.nickname ?? `用户 ${userId}`;
-
-  function unblock() {
-    setBlocked.mutate(false, {
-      onError: (error) => Alert.alert('没有取消屏蔽', userErrorMessage(error)),
-      onSuccess: () => playSuccessHaptic(),
-    });
-  }
 
   const copy = (
     <View style={styles.rowCopy}>
       <Text numberOfLines={1} style={styles.rowTitle}>{label}</Text>
-      {name ? null : <Text style={styles.rowMeta}>在其他设备屏蔽</Text>}
+      {name ? null : <Text style={styles.rowMeta}>打开过对方主页后会显示昵称</Text>}
     </View>
   );
 
@@ -131,17 +122,6 @@ function BlockedUserRow({
       ) : (
         <View style={styles.rowMain}>{copy}</View>
       )}
-      <Pressable
-        accessibilityLabel={`取消屏蔽${label}`}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: setBlocked.isPending }}
-        disabled={setBlocked.isPending}
-        hitSlop={HIT_SLOP}
-        onPress={unblock}
-        style={({ pressed }) => [styles.action, (pressed || setBlocked.isPending) && styles.pressed]}
-      >
-        <Text style={styles.actionText}>{setBlocked.isPending ? '处理中' : '取消屏蔽'}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -164,7 +144,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   rowCopy: { gap: SPACING.xs },
   rowTitle: { color: colors.ink, ...TYPE.body, fontWeight: '700' },
   rowMeta: { color: colors.subtle, ...TYPE.micro },
-  action: { justifyContent: 'center', marginLeft: SPACING.md, minHeight: MIN_TOUCH_SIZE },
-  actionText: { color: colors.accent, ...TYPE.caption, fontWeight: '800' },
   pressed: { opacity: 0.62 },
 });
