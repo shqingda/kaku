@@ -127,6 +127,31 @@ export async function getBangumiBlocklist({
   return bangumiBlocklistSchema.parse(await response.json());
 }
 
+// 诊断用：上游 5xx 时记录状态码与错误内容，便于定位 Bangumi 侧故障。
+// 不记录 token；正文中出现的目标用户名替换为占位符，正文最多保留 500 字。
+async function logUpstreamFailure(
+  action: string,
+  response: Response,
+  username?: string,
+) {
+  if (response.status < 500) return;
+  let body = '';
+  try {
+    body = (await response.text()).slice(0, 500);
+  } catch {
+    body = '<unreadable>';
+  }
+  if (username) body = body.split(username).join('<user>');
+  console.error(
+    JSON.stringify({
+      action,
+      body,
+      event: 'bangumi_relationship_upstream_error',
+      status: response.status,
+    }),
+  );
+}
+
 // 屏蔽/取消屏蔽：PUT 加入、DELETE 移除，均返回更新后的屏蔽列表。
 export async function setBangumiBlocked({
   accessToken,
@@ -152,6 +177,11 @@ export async function setBangumiBlocked({
   );
 
   if (!response.ok) {
+    await logUpstreamFailure(
+      shouldBlock ? 'block' : 'unblock',
+      response,
+      username,
+    );
     throw new BangumiFriendsError(
       response.status,
       friendsErrorMessage(response.status),
