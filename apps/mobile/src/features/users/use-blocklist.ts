@@ -1,12 +1,8 @@
-import { useAuthMutation } from '@/features/auth/use-auth-mutation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
-import {
-  getBlocklist,
-  setUserBlocked,
-} from '@/infrastructure/kaku/friends-client';
+import { getBlocklist } from '@/infrastructure/kaku/friends-client';
 import { queryKeys } from '@/lib/query-keys';
 import { PRIVATE_QUERY_META } from '@/lib/query-persistence';
 
@@ -27,18 +23,4 @@ export function useBlocklist() {
 export function useBlockedUserIds(): ReadonlySet<number> {
   const { data } = useBlocklist();
   return useMemo(() => new Set(data), [data]);
-}
-
-export function useSetUserBlocked(username: string) {
-  const { session } = useAuth();
-  const queryClient = useQueryClient();
-  const queryKey = queryKeys.blocklist(session?.user.id);
-
-  return useAuthMutation<number[], Error, boolean>({
-    mutationFn: (shouldBlock: boolean, request) =>
-      setUserBlocked(request, username.trim(), shouldBlock),
-    onSuccess: (blocklist) => {
-      queryClient.setQueryData(queryKey, blocklist);
-    },
-  });
 }

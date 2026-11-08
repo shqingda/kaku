@@ -1,7 +1,7 @@
 import type { DiscussionReply } from '../discussions/model.ts';
 
 // Bangumi 的屏蔽名单只拦截通知，内容隐藏由 Kaku 在显示时完成。
-// 这里不改查询缓存，所以取消屏蔽后内容立刻恢复，不需要重新请求。
+// 这里不改查询缓存，名单刷新后（例如网页上解除绝交）内容立刻恢复，不需要重新请求列表。
 export function isBlockedUser(
   userId: number | undefined,
   blockedIds: ReadonlySet<number>,

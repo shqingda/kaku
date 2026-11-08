@@ -1,4 +1,3 @@
-import { userErrorMessage } from '@/lib/user-error-message';
 import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, StyleSheet } from 'react-native';
@@ -11,10 +10,11 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useTheme } from '@/features/theme/theme-provider';
 
 import { rememberBlockedUserName } from './blocked-user-names';
-import { useBlocklist, useSetUserBlocked } from './use-blocklist';
+import { useBlocklist } from './use-blocklist';
 
-// 用户主页的溢出菜单：管理类操作（屏蔽、举报）收进"⋯"，
-// 与加好友的胶囊并排，避免在头像旁堆叠过多按钮。
+// 用户主页的溢出菜单：举报收进"⋯"，与加好友的胶囊并排。
+// 不提供屏蔽：Bangumi P1 写入屏蔽名单返回 500（bangumi/server-private#1787），
+// 只读取用户在 Bangumi 网页上的“绝交”名单来隐藏内容。
 export function ProfileOverflow({
   nickname,
   userId,
@@ -27,45 +27,18 @@ export function ProfileOverflow({
   const colors = useTheme();
   const styles = createStyles(colors);
   const blocklistQuery = useBlocklist();
-  const setBlocked = useSetUserBlocked(username);
   const [reportVisible, setReportVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const isBlocked = blocklistQuery.data?.includes(userId) ?? false;
   const { session } = useAuth();
   const ownerId = session?.user.id;
 
-  // 屏蔽成功或打开已屏蔽用户的主页时记下名字，管理页才能显示和取消。
+  // 打开已绝交用户的主页时记下名字，名单页才能显示昵称并跳回主页。
   useEffect(() => {
     if (isBlocked && ownerId) {
       rememberBlockedUserName(ownerId, userId, { nickname, username });
     }
   }, [isBlocked, nickname, ownerId, userId, username]);
-
-  function applyBlock(shouldBlock: boolean) {
-    setBlocked.mutate(shouldBlock, {
-      onError: (error) => {
-        Alert.alert(
-          shouldBlock ? '没有屏蔽该用户' : '没有取消屏蔽',
-          userErrorMessage(error),
-        );
-      },
-    });
-  }
-
-  function confirmBlock() {
-    if (isBlocked) {
-      Alert.alert('取消屏蔽？', `恢复显示 ${nickname} 的内容和通知。`, [
-        { style: 'cancel', text: '取消' },
-        { onPress: () => applyBlock(false), text: '取消屏蔽' },
-      ]);
-      return;
-    }
-
-    Alert.alert('屏蔽该用户？', `屏蔽后隐藏 ${nickname} 的回复、吐槽、评论、话题和动态，也不再收到对方的通知。`, [
-      { style: 'cancel', text: '取消' },
-      { onPress: () => applyBlock(true), style: 'destructive', text: '屏蔽' },
-    ]);
-  }
 
   function openMenu() {
     setMenuVisible(true);
@@ -94,18 +67,6 @@ export function ProfileOverflow({
             label: '举报该用户',
             onPress: () => setReportVisible(true),
             symbol: { android: 'flag', ios: 'flag', web: 'flag' },
-          },
-          {
-            id: 'block-user',
-            label: isBlocked ? '取消屏蔽' : '屏蔽该用户',
-            onPress: confirmBlock,
-            symbol: isBlocked
-              ? { android: 'visibility', ios: 'eye', web: 'visibility' }
-              : {
-                  android: 'visibility_off',
-                  ios: 'eye.slash',
-                  web: 'visibility_off',
-                },
           },
         ]}
         onClose={() => setMenuVisible(false)}

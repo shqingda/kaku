@@ -37,23 +37,6 @@ export async function getBlocklist(
   return blocklistSchema.parse(await response.json()).blocklist;
 }
 
-export async function setUserBlocked(
-  request: (path: string, init?: RequestInit) => Promise<Response>,
-  username: string,
-  shouldBlock: boolean,
-): Promise<number[]> {
-  const response = await request(
-    `/me/blocklist/${encodeURIComponent(username)}`,
-    { method: shouldBlock ? 'PUT' : 'DELETE' },
-  );
-
-  if (!response.ok) {
-    throw new KakuApiError(await readErrorMessage(response), response.status);
-  }
-
-  return blocklistSchema.parse(await response.json()).blocklist;
-}
-
 export async function setUserFriend(
   request: (path: string, init?: RequestInit) => Promise<Response>,
   username: string,

@@ -3,8 +3,8 @@ import Storage from 'expo-sqlite/kv-store';
 export type BlockedUserName = { nickname: string; username: string };
 type BlockedUserNames = Record<string, BlockedUserName>;
 
-// Bangumi 的屏蔽名单只有数字 ID，取消屏蔽却要用户名。这里按账号记下
-// 在 Kaku 里见过的被屏蔽用户，让管理页能显示名字。
+// Bangumi 的绝交名单只有数字 ID。这里按账号记下在 Kaku 里见过的
+// 被绝交用户，让名单页能显示昵称并跳回对方主页。
 const storageKey = (ownerId: number) => `kaku:blocked-user-names:v1:${ownerId}`;
 
 export function readBlockedUserNames(ownerId: number): BlockedUserNames {

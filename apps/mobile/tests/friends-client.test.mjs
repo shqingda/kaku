@@ -4,7 +4,6 @@ import test from 'node:test';
 import {
   getBlocklist,
   getUserFriendship,
-  setUserBlocked,
   setUserFriend,
 } from '../src/infrastructure/kaku/friends-client.ts';
 import { KakuApiError } from '../src/infrastructure/kaku/auth-client.ts';
@@ -71,42 +70,6 @@ test('getBlocklist forwards the abort signal', async () => {
   await getBlocklist(request, controller.signal);
 
   assert.equal(receivedSignal, controller.signal);
-});
-
-test('setUserBlocked sends PUT to block and DELETE to unblock', async () => {
-  const calls = [];
-  const request = async (path, init) => {
-    calls.push({ path, init });
-    return Response.json({ blocklist: [5] });
-  };
-
-  const blocklist = await setUserBlocked(request, 'spam-bot', true);
-
-  assert.deepEqual(calls, [
-    {
-      path: '/me/blocklist/spam-bot',
-      init: { method: 'PUT' },
-    },
-  ]);
-  assert.deepEqual(blocklist, [5]);
-
-  await setUserBlocked(request, 'spam-bot', false);
-
-  assert.deepEqual(calls[1], {
-    path: '/me/blocklist/spam-bot',
-    init: { method: 'DELETE' },
-  });
-});
-
-test('setUserBlocked throws KakuApiError on failure', async () => {
-  const request = async () =>
-    new Response('boom', { status: 503 });
-
-  await assert.rejects(() => setUserBlocked(request, 'spam-bot', true), {
-    name: 'KakuApiError',
-    status: 503,
-    message: 'Kaku 服务返回了 503',
-  });
 });
 
 test('setUserFriend sends PUT with JSON headers and DELETE to remove', async () => {

@@ -173,6 +173,8 @@ export function registerFriendRoutes(
     }
   });
 
+  // 写入屏蔽名单目前会被 Bangumi P1 以 500 拒绝（bangumi/server-private#1787），
+  // 新客户端不再调用；保留路由兼容 1.1.26 及更早的客户端。
   app.put('/me/blocklist/:username', (context) =>
     withAuthenticatedRelation(context, ({ accessToken, username }) =>
       setBangumiBlocked({ accessToken, fetcher, shouldBlock: true, username }),
