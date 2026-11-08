@@ -178,3 +178,53 @@ test('unblocking a user DELETEs and returns the updated list', async () => {
 
   assert.deepEqual(result, { blocklist: [42] });
 });
+
+test('an upstream block failure logs its status and body without the username', async () => {
+  const logged = [];
+  const originalError = console.error;
+  console.error = (message) => logged.push(message);
+  try {
+    await assert.rejects(
+      setBangumiBlocked({
+        accessToken,
+        fetcher: async () =>
+          Response.json(
+            { message: 'unexpected not found: user spammer' },
+            { status: 500 },
+          ),
+        shouldBlock: true,
+        username: 'spammer',
+      }),
+      (error) => error instanceof BangumiFriendsError && error.status === 500,
+    );
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(logged.length, 1);
+  const entry = JSON.parse(logged[0]);
+  assert.equal(entry.event, 'bangumi_relationship_upstream_error');
+  assert.equal(entry.action, 'block');
+  assert.equal(entry.status, 500);
+  assert.match(entry.body, /unexpected not found: user <user>/);
+  assert.doesNotMatch(logged[0], /spammer|bangumi-access-token/);
+});
+
+test('a client-side block failure is not logged', async () => {
+  const logged = [];
+  const originalError = console.error;
+  console.error = (message) => logged.push(message);
+  try {
+    await assert.rejects(
+      setBangumiBlocked({
+        accessToken,
+        fetcher: async () => new Response('{}', { status: 404 }),
+        shouldBlock: true,
+        username: 'spammer',
+      }),
+    );
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(logged.length, 0);
+});
