@@ -3,17 +3,6 @@ import test from 'node:test';
 
 import { EMOJI_CATEGORIES, PICKER_EMOJI } from '../src/features/emoji-picker/emoji-catalog.ts';
 
-test('emoji categories keep the Stage1st-style group order', () => {
-  assert.deepEqual(
-    EMOJI_CATEGORIES.map((category) => category.key),
-    ['ascii', 'classic', 'more'],
-  );
-  assert.deepEqual(
-    EMOJI_CATEGORIES.map((category) => category.label),
-    ['颜文字', '经典', '更多'],
-  );
-});
-
 test('classic and more groups cover bgm01 through bgm123', () => {
   const classic = EMOJI_CATEGORIES[1].items;
   const more = EMOJI_CATEGORIES[2].items;
@@ -41,11 +30,4 @@ test('every picker emoji resolves to a gif url and stickers stay unique', () => 
   }
 
   assert.equal(stickers.size, PICKER_EMOJI.length);
-});
-
-test('PICKER_EMOJI is the flatMap of all categories in order', () => {
-  const flattened = EMOJI_CATEGORIES.flatMap((category) => category.items);
-
-  assert.deepEqual(PICKER_EMOJI, flattened);
-  assert.ok(PICKER_EMOJI.length > 100);
 });

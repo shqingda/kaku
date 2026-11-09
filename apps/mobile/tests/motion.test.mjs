@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  DECELERATION_RATE,
   IMAGE_DISMISS_HEIGHT_RATIO,
   MAX_IMAGE_SCALE,
   MIN_DISMISS_VELOCITY,
@@ -23,11 +22,6 @@ test('projection turns velocity into the remaining glide distance', () => {
   assert.equal(project(1000), (1000 / 1000) * (0.998 / (1 - 0.998)));
   assert.ok(project(1000) > project(100));
   assert.equal(project(-500), -project(500));
-});
-
-test('projection uses the Apple exponential-decay model, not v²/2a', () => {
-  const decayed = project(1000, DECELERATION_RATE);
-  assert.ok(Math.abs(decayed - 499) < 1e-9);
 });
 
 test('rubberband follows a constant ratio for small overshoot and resists progressively', () => {

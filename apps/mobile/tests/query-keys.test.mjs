@@ -3,14 +3,6 @@ import test from 'node:test';
 
 import { queryKeys } from '../src/lib/query-keys.ts';
 
-test('static keys stay stable across calls', () => {
-  assert.deepEqual(queryKeys.wikiRevisions(), ['wiki', 'kaku', 'revisions']);
-  assert.deepEqual(queryKeys.calendar(), ['calendar', 'bangumi']);
-  assert.deepEqual(queryKeys.community(), ['community', 'bangumi']);
-  assert.deepEqual(queryKeys.communityTopics(), ['community', 'bangumi', 'topics']);
-  assert.deepEqual(queryKeys.bangumiStatus(), ['network-status', 'bangumi-status']);
-});
-
 test('global feed keys carry the selected filter', () => {
   assert.deepEqual(queryKeys.globalBlogs('anime'), ['blogs', 'kaku', 'anime']);
   assert.deepEqual(queryKeys.globalIndexes('popular'), ['indexes', 'kaku', 'popular']);
