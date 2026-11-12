@@ -25,8 +25,8 @@
 
 - D1 远端 `migrations list`：无待迁移；不修改 schema。
 - API 已先部署：Worker 版本 `70d0d905-a6fd-4f57-8005-b7ac99a65509`。无代理 curl 验证 `/health`、`/config` 返回 200，`/auth/sessions`、`/me/timeline` 无登录返回 401。Python urllib 首次探测返回 403，与 curl 结果不同，未据此更改服务。
-- APK 已构建：61,144,385 字节，包名 `com.shqingda.kaku`，versionName `1.1.8`，versionCode `1`，仅 arm64-v8a；minSdk 24、targetSdk 36。Sentry DSN 已确认嵌入，但未模拟真实崩溃上报。
+- APK 已构建：61,144,385 字节，包名 `com.shqingda.kaku`，versionName `1.1.8`，versionCode `1`，仅 arm64-v8a；minSdk 24、targetSdk 36。
 - APK SHA-256：`02387fc6504d7c33e54256fdd369258b63bdc97ae6fa71cb1b6e7e13b7bff604`。
 - 新包与 GitHub `v1.1.7` 下载包的签名 SHA-256 均为 `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`；签名校验通过。未实机覆盖安装。
 - 发布源码提交：`ed974a5`；GitHub CI `35365708186` 全部通过。[GitHub v1.1.8](https://github.com/shqingda/kaku/releases/tag/v1.1.8) 已于 2026-09-19 发布，非草稿；远端 APK 大小与 SHA-256 与本地一致。
-- 双真机推送、Android APK 冷启动/Sentry/覆盖安装、真实多账号授权、VoiceOver 实际读屏与新 React profiler 采样尚未完成；TODO 保留原因。
+- 双真机推送、Android APK 冷启动/覆盖安装、真实多账号授权、VoiceOver 实际读屏与新 React profiler 采样尚未完成；TODO 保留原因。

@@ -10,7 +10,6 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_DIR"
 export CI=1
 export EXPO_PUBLIC_KAKU_API_URL="${EXPO_PUBLIC_KAKU_API_URL:-https://kaku-api.shqingda.workers.dev}"
-export SENTRY_DISABLE_AUTO_UPLOAD=true
 
 run() {
   printf '\n>>> %s\n' "$*"
@@ -24,7 +23,8 @@ run() {
 run pnpm install --frozen-lockfile
 if [[ "$GROUP" != html ]]; then
   run pnpm --filter @kaku/mobile exec expo install --check
-  (cd apps/mobile && run pnpm dlx expo-doctor)
+  # 1.21.7 发布包缺少 @expo/env；固定已验证的诊断版本。
+  (cd apps/mobile && run pnpm dlx expo-doctor@1.21.6)
   run pnpm typecheck
   run pnpm --filter @kaku/shared test
   run pnpm test:tooling

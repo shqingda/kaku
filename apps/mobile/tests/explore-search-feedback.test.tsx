@@ -36,6 +36,7 @@ const mockHistory = {
 };
 let client: QueryClient;
 
+jest.mock('@/features/auth/login-device', () => ({ getLoginDevice: async () => ({ deviceName: 'iPhone', deviceKey: 'a'.repeat(64) }) }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), prefetch: jest.fn() }, Stack: { Screen: () => null },
   useLocalSearchParams: () => mockParams, useFocusEffect: () => {},

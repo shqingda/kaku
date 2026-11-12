@@ -10,6 +10,7 @@ import { setUserFriend } from '@/infrastructure/kaku/friends-client';
 import { PRIVATE_QUERY_META, PUBLIC_QUERY_META } from '@/lib/query-persistence';
 import { queryKeys } from '@/lib/query-keys';
 
+jest.mock('@/features/auth/login-device', () => ({ getLoginDevice: async () => ({ deviceName: 'iPhone', deviceKey: 'a'.repeat(64) }) }));
 jest.unmock('@/features/preferences/preferences-provider');
 jest.mock('@/features/auth/login-proof', () => ({
   createLoginProof: jest.fn(),

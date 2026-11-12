@@ -46,7 +46,7 @@ base64 -i "$DIR/rotation.lineage" | gh secret set KAKU_SIGNING_ROTATION_LINEAGE_
 
 ## 纯本地构建（实机测试默认）
 
-前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。若要保留运行时崩溃上报，在 `apps/mobile/.env` 配置 `EXPO_PUBLIC_SENTRY_DSN`；纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
+前置：Node / pnpm、Android SDK（`ANDROID_HOME`）、JDK 17、Python 3。原生目录由 Expo prebuild 生成，不入库。纯构建不要求 Expo / EAS 或 GitHub 登录，也不需要发版说明。
 
 从 v1.1.20 起，正式包最低 Android 10 / API 29，并使用正式签名轮换。还需 Android build-tools 37.0.0 及主仓库的签名目录 `.secrets/android-signing/`（worktree 中运行也读取主仓库这一份），可用 `KAKU_SIGNING_DIR` 指定其他安全目录。必须包含 `legacy-debug.keystore`、`release.p12`、`release-password.txt`、`rotation.lineage`；缺失时停止，不回退到旧签名。签名脚本分 API 29 / 32 / 33 / 36 核对证书并检查 16 KB 对齐，全部通过后才替换最终 APK。`debug` 独立包仍使用开发证书。
 
@@ -74,13 +74,13 @@ bash scripts/build-split-apks.sh --build-only
 | release + `--optimized` | `com.shqingda.kaku` | `kaku-release-optimized.apk` |
 | release + `--no-optimize` | `com.shqingda.kaku` | `kaku-release-unoptimized.apk` |
 
-纯构建生成原生工程、打包、报告体积并归档本地产物记录，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。使用 `SENTRY_DISABLE_AUTO_UPLOAD=true` 禁止本地上传 source map，运行时 Sentry 保留。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
+纯构建生成原生工程、打包、报告体积并归档本地产物记录，不改受版本控制的文件、不更新日志、不提交、不推送、不创建 Release，也不清空其他候选产物。构建不上传 source map。`expo run:android` / `expo run:ios` 则是日常开发客户端入口。
 
 ### 发行产物与 source map
 
 纯构建结束后，`record-android-artifact.py` 在 `dist-split/<APK 名>-<完整 SHA-256>.sources/` 保存 `manifest.json`、同次 Gradle 的 Hermes bundle / 组合 source map 以及本轮启用 R8 时的 mapping（非裁剪构建不收录旧文件）。先比较 APK 内 bundle 与构建目录中的 bundle，失败则停止归档；记录版本、构建时 Git 提交、工作区是否有未提交修改及每个文件的摘要。相同 APK 再构建时校验并复用既有记录。
 
-整个目录沿用 `dist-split/` 的 Git 忽略规则，发布前与验收 APK 一起保留，发布后按下节清理。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；工具测试也不代表真实 Sentry 上报验收。脚本不上传任何文件，发布时仍只上传已验证 APK。实现与检查边界见 [产物追溯记录](../test-records/2026-10-25-reliability-slimming-performance.md)。
+整个目录沿用 `dist-split/` 的 Git 忽略规则，发布前与验收 APK 一起保留，发布后按下节清理。缺少的文件明确写入 `missing`，不声称此类堆栈已可还原。历史 APK 未随包保存的 map 不能用今天重新导出的 map 冒充；工具测试也不代表真实设备堆栈还原验收。脚本不上传任何文件，发布时仍只上传已验证 APK。实现与检查边界见 [产物追溯记录](../test-records/2026-10-25-reliability-slimming-performance.md)。
 
 ### 正式发布后的本地产物清理
 
@@ -125,7 +125,7 @@ v1.1.14 是早期裁剪包，v1.1.15 首次发布未裁剪，后按用户要求�
 
 - 正式包 Android 13+ 使用新证书及旧→新轮换证明；Android 10–12L 保留旧证书兼容。后续继续使用同一 lineage 并递增构建号，不能给已换签的安装回退到仅旧签名包。
 - 只构建 arm64-v8a，不支持 32 位机和 x86 模拟器；ABI 参数是 `-PreactNativeArchitectures=arm64-v8a`。
-- 本地归档 source map 与产物对应关系，但不上传；真实 Sentry 堆栈还原仍待凭据和设备验收。
+- 本地归档 source map 与产物对应关系，但不上传；设备堆栈还原需使用对应版本的归档文件。
 - 构建完成只证明可编译，发布前仍要核对签名、版本和权限；实际设备安装、运行及未验范围另行记录。
 
 ## 线上上传行为

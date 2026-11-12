@@ -71,8 +71,6 @@
 
 ## 环境问题（未进仓库）
 
-- 重启后 `~/Library/Caches/sentry-react-native/` 被系统清掉，`Pods/sentry-xcframeworks` 的软链接失效，
-  iOS 构建报 `Sentry/Sentry.h` 找不到；`LANG=en_US.UTF-8 pod install` 重新下载后恢复。本地 Debug 构建同样受影响，现已恢复。
 - 用户中断过一次前台测量命令，之后改在后台运行。
 
 ## 边界

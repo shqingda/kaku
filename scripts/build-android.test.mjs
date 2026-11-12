@@ -26,7 +26,6 @@ fs.appendFileSync(process.env.KAKU_TEST_COMMAND_LOG, JSON.stringify({
   profile: process.env.KAKU_BUILD_PROFILE,
   optimization: process.env.KAKU_OPTIMIZE_NATIVE,
   updateChannel: process.env.KAKU_UPDATE_CHANNEL,
-  sentryUploadDisabled: process.env.SENTRY_DISABLE_AUTO_UPLOAD,
   apiUrl: process.env.EXPO_PUBLIC_KAKU_API_URL,
 }) + '\\n');
 if (command === 'apksigner') {
@@ -81,7 +80,6 @@ function assertBuild(fixture, result, { profile, optimization, artifact }) {
   assert.equal(prebuild.profile, profile);
   assert.equal(prebuild.optimization, optimization);
   assert.equal(prebuild.updateChannel, 'github');
-  assert.equal(prebuild.sentryUploadDisabled, 'true');
   assert.equal(prebuild.apiUrl, 'https://kaku-api.shqingda.workers.dev');
   const gradle = commands.find(entry => entry.command === 'gradlew');
   assert.equal(gradle.optimization, optimization);

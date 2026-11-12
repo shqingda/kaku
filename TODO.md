@@ -4,7 +4,7 @@
 
 ## 稳定版收尾（停止新增功能）
 
-本轮检查与清理见 [11-12 记录](docs/test-records/2026-11-12-stability.md)。类型、逻辑、组件、双平台 JS 导出与官网构建通过；完整预检仍受 Expo 配套补丁未满 24 小时及 expo-doctor 加载失败阻塞。依赖版本未改，需解决后复验，再交付本地 Android 测试包。下列设备与外部待验项继续保留。
+本轮检查、依赖更新与清理见 [11-12 记录](docs/test-records/2026-11-12-stability.md)。Expo 配套补丁已按用户授权更新，诊断工具固定到可正常运行版本；类型、逻辑、组件、双平台 JS 导出与官网构建通过。原生客户端需重建后再做设备验收，下列设备与外部待验项继续保留。
 
 ## 已完成维护轮次
 
@@ -43,7 +43,7 @@
 日常验证默认本地 `pnpm build:android`，交付 APK 或绝对路径后等用户安装，再测设备。仅明确发版才运行 Android CI（包括 `build_only`），本地失败不自动改用 CI。构建检查与设备验证分开报告，详见 [测试指南](docs/development/testing.md) 和 [发版指南](docs/deployment/release.md)。
 
 - [ ] 签名迁移：Android 16 首次覆盖、登录与本机设置已有证据；补草稿、完整历史、连续升级与密钥异地加密备份。Android 10–12L 保持旧签名兼容，不安装旧模拟器，见 [迁移记录](docs/test-records/2026-10-17-signing-migration.md)。
-- [ ] 核心导航 E2E 与相关设备路径验收（不再维护全量逐页冒烟）；Release 冷启动、登录/深链、通知权限、真实 Sentry 上报与匹配 source map 还原、同签名覆盖及不同签名安装路径。
+- [ ] 核心导航 E2E 与相关设备路径验收（不再维护全量逐页冒烟）；Release 冷启动、登录/深链、通知权限、匹配 source map 的堆栈还原、同签名覆盖及不同签名安装路径。
 - [ ] 应用内更新下载/取消、安装授权、实际覆盖安装与失败返回；安装器返回不视为安装成功，静态包检查不替代安装验收。
 
 ## 外部条件与兼容跟踪
@@ -53,7 +53,7 @@
 - [ ] 原生推送：FCM 凭据、D1 迁移与 Worker 已上线，待小米 13 Ultra 连续覆盖、实际送达与点击验收；APNs 凭据及正式环境暂缓，见 [推送指南](docs/deployment/native-push.md)。
 - [ ] 角色/人物收藏与删除自己的动态：用专用账号复核凭据适用性、真实写入/删除与读回，记录上游错误和列表刷新；不以接口文档代替真实可用证据。
 - [ ] 跟踪构建/测试链的 deepmerge（无修复版）、minimatch（修复需 11.x）和 glob（修复需 14.x）审计项，等待兼容上游更新，不强制跨大版本或忽略告警。node-forge 已升 1.4.2 并撤本地补丁，原签名回归通过。
-- [ ] 移动端 Web 的 expo-sqlite OPFS 存储问题、Sentry 可选 Router 路径、quick-actions TypeScript peer 警告随依赖版本复核，见 [兼容记录](docs/test-records/2026-10-26-compat-gaps.md)。iOS/Android 仍为产品目标，独立官网正常；不通过忽略规则掩盖。
+- [ ] 移动端 Web 的 expo-sqlite OPFS 存储问题、quick-actions TypeScript peer 警告随依赖版本复核，见 [兼容记录](docs/test-records/2026-10-26-compat-gaps.md)。iOS/Android 仍为产品目标，独立官网正常；不通过忽略规则掩盖。
 
 ## 本轮不做
 

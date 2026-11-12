@@ -10,15 +10,22 @@ overrides:
   # reuse the esbuild drizzle-kit already ships instead of the vulnerable 0.18 copy.
   '@esbuild-kit/core-utils>esbuild': 0.25.12
   # October 2026 Node.js security release. Keep each undici major on its patched release.
-  "undici@>=6.0.0 <6.29.1": 6.29.1
   "undici@>=7.0.0 <7.30.1": 7.30.1
 
 minimumReleaseAge: 1440
 minimumReleaseAgeExcludePrune: true
+# 用户于 2026-11-12 授权本轮补丁提前安装；满 24 小时后自动清除。
+minimumReleaseAgeExclude:
+  - "expo@58.0.24"
+  - "@expo/cli@58.1.20"
+  - "@expo/router-server@58.0.22"
+  - "expo-asset@58.0.21"
+  - "expo-linking@58.0.17"
+  - "expo-notifications@58.1.9"
+  - "expo-router@58.0.31"
 
 allowBuilds:
   '@parcel/watcher': true
-  '@sentry/cli': true
   dtrace-provider: false
   esbuild: true
   unrs-resolver: true

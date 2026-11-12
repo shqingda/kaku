@@ -7,7 +7,6 @@ import { StatusBar } from 'expo-status-bar';
 import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import '@/lib/sentry';
 import { AppUpdateProvider } from '@/features/app-update/update-provider';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { RecentSubjectsProvider } from '@/features/history/recent-subjects-provider';

@@ -19,21 +19,6 @@ const apnsEnvironment = process.env.KAKU_APNS_ENVIRONMENT || (isProduction ? 'pr
 if (!['sandbox', 'production'].includes(apnsEnvironment)) throw new Error('KAKU_APNS_ENVIRONMENT 必须为 sandbox 或 production');
 const channel = isProduction ? 'production' : 'debug';
 const defaultIcon = appIconFiles(DEFAULT_APP_ICON, channel);
-const sentryPlugin =
-  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG
-    ? [
-        [
-          '@sentry/react-native',
-          {
-            url: 'https://sentry.io',
-            project: 'kaku',
-            organization: process.env.SENTRY_ORG,
-            authToken: process.env.SENTRY_AUTH_TOKEN,
-          },
-        ],
-      ]
-    : [];
-
 module.exports = {
   expo: {
     name: 'Kaku',
@@ -92,6 +77,7 @@ module.exports = {
       ['expo-alternate-app-icons', alternateIconPluginEntries(channel)],
       'expo-image',
       'expo-font',
+      'expo-status-bar',
       'expo-web-browser',
       [
         'expo-splash-screen',
@@ -146,7 +132,6 @@ module.exports = {
       ],
       'expo-secure-store',
       'expo-sqlite',
-      ...sentryPlugin,
     ],
     experiments: {
       typedRoutes: true,

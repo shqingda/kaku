@@ -1,4 +1,4 @@
-# 兼容缺口复核：移动端 Web、Sentry Router、quick-actions（2026-10-26）
+# 兼容缺口复核：移动端 Web、quick-actions（2026-10-26）
 
 接续 [SDK 58 记录](2026-10-24-expo-58.md) 的已知限制。不需要实机；未改动指定 iOS 模拟器。
 
@@ -39,18 +39,6 @@
 
 另：线上 API 未对 `localhost` 来源放行 CORS，`/config` 请求被浏览器拦截。这是 API 的安全
 边界，本次不放开。移动端 Web 仍不是产品目标；独立官网不受影响。
-
-## Sentry 可选 Expo Router 集成
-
-- Sentry 8.28 与最新的 8.32 都 `require('expo-router/build/global-state/router-store')`；
-  expo-router 58 已删除该文件。Expo SDK 58 配套版本为 `~8.28.0`。
-- 该 require 包在 try/catch 中，失败时返回 null：只影响默认 `expoRouterIntegration` 给导航
-  span 和路由错误边界附加路由名，崩溃与错误捕获不受影响。本应用未显式使用这两项。
-- 上游 [getsentry/sentry-react-native#6901](https://github.com/getsentry/sentry-react-native/issues/6901)
-  仍为 OPEN。不加 Metro 别名掩盖警告，等上游修复后升级。
-- 同仓库还有一个 OPEN 的
-  [getsentry/sentry-react-native#6918](https://github.com/getsentry/sentry-react-native/issues/6918)
-  （Android release 包致命 JS 错误未刷新即丢失），与 O1 真实上报验收相关，需在设备验收时留意。
 
 ## expo-quick-actions TypeScript peer 警告
 

@@ -49,7 +49,7 @@ test('default, all and verify run each test group once without native builds', (
         assert.ok(commands.some(c => c.args.includes(gate)), gate);
       }
       assert.deepEqual(commands.filter(c => c.args.includes('export')).map(c => c.args[c.args.indexOf('--platform') + 1]), ['ios', 'android']);
-      assert.equal(commands.find(c => c.args.includes('expo-doctor')).cwd, join(f.root, 'apps/mobile'));
+      assert.equal(commands.find(c => c.args.includes('expo-doctor@1.21.6')).cwd, join(f.root, 'apps/mobile'));
       assert.ok(commands.every(c => c.ci === '1'));
       assert.ok(commands.every(c => !c.args.includes('build:android')));
     } finally { f.cleanup(); }

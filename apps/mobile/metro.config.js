@@ -1,10 +1,9 @@
-const { getSentryExpoConfig } = require('@sentry/react-native/metro');
+const { getDefaultConfig } = require('expo/metro-config');
 const path = require('node:path');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
-// 原生客户端没有启用网页会话回放；使用 SDK 官方裁剪，保留错误和性能上报。
-const config = getSentryExpoConfig(projectRoot, { includeWebReplay: false });
+const config = getDefaultConfig(projectRoot);
 
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [

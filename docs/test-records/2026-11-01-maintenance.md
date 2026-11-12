@@ -43,10 +43,10 @@
 | node-forge | 1.4.0 → 1.4.2，移除本地 patch 和空补丁目录，保留攻击样本签名回归。维护者确认官方 1.4.1 通过规范化 DigestInfo 修复，1.4.2 发布于 10-27，超过 24 小时等待期 |
 | 官网 React / react-dom | 19.3.0 → 19.3.1，10-14 发布的稳定补丁；官网构建通过。官方说明主要涉及 RSC transport，本官网不使用 RSC，不宣称性能或功能收益 |
 | Workers 类型 | 5.20261030.1 → 5.20261031.1（10-31 00:56 UTC 发布）；API 类型检查和 Wrangler types 生成通过，生成声明语义无变化；11-01 当日新版本不跨等待期采用 |
-| SDK 58 | 移动端继续 React 19.3.0 / Sentry 8.28.0 / Worklets 0.13.0 / Gesture Handler 3.3.0 / Safe Area 5.10.1，按安装的 `bundledNativeModules.json` 配套，未逐包追最新或加兼容忽略 |
+| SDK 58 | 移动端继续 React 19.3.0 / Worklets 0.13.0 / Gesture Handler 3.3.0 / Safe Area 5.10.1，按安装的 `bundledNativeModules.json` 配套，未逐包追最新或加兼容忽略 |
 | 依赖分类 | 官网 Vite、React 构建插件、仅类型引用的 shared 移入 devDependencies；这是职责分类，不是安装包体积收益 |
 | 发布时间规则 | 显式 `minimumReleaseAge: 1440` 与 `minimumReleaseAgeExcludePrune: true`；292 条旧精确豁免中删除锁文件未用的 240 条及已超过 24 小时的 37 条，保留此前已授权、最终复核时（11-01 10:18 UTC）未满 24 小时的 15 条 Expo 补丁；未加通配放行 |
-| override | 删除无依赖路径的 Undici 8.x 规则；保留实际用于 Miniflare 的 sharp 0.35.5、Sentry CLI 的 Undici 6.29.1、Miniflare 的 Undici 7.30.1、esbuild-kit 的 esbuild 0.25.12，以及 React DOM 类型一致性约束 |
+| override | 删除无依赖路径的 Undici 8.x 规则；保留实际用于 Miniflare 的 sharp 0.35.5、Miniflare 的 Undici 7.30.1、esbuild-kit 的 esbuild 0.25.12，以及 React DOM 类型一致性约束 |
 
 锁文件的新增 peer 快照逐项核对，包本体只增加本组目标版本；mobile importer 完全不变。
 实际模块解析：mobile React/DOM 19.3.0，web React/DOM 19.3.1。保留 Miniflare 测试运行时、
@@ -72,8 +72,6 @@ quick-actions 构建插件链的旧 `@expo/require-utils` 声明 TypeScript 5.x�
 
 ## 上游兼容复核
 
-- Sentry Router 路径问题已由上游 8.33.0 修复（[#6901](https://github.com/getsentry/sentry-react-native/issues/6901)），
-  本仓仍跟随 SDK 58 的 `~8.28.0`，没有把“上游修好”当作本应用已经采用；可选集成警告继续保留。
 - expo-sqlite 已是 58.0.15，Web `open_v2` 仍使用异步 cwrap 的栈字符串参数模式；本轮仅复核源码，
   未重新清空 OPFS 或复现运行时存储故障。历史推断与独立官网边界仍以 [原记录](2026-10-26-compat-gaps.md) 为准。
 - quick-actions 仍为 6.0.2，其构建插件与旧 TypeScript peer 声明继续跟踪，未增加 ignore。
@@ -97,7 +95,7 @@ quick-actions 构建插件链的旧 `@expo/require-utils` 声明 TypeScript 5.x�
 | Maestro 静态检查 | 35 份 YAML 与子流程引用通过；不等同于设备执行 |
 | 文档链接 | 14 份修改/新增文档，203 个本地链接与 1 个锚点均有效 |
 
-导出仍出现 SDK 58 Router `build/hooks`、Sentry `router-store` 导出路径的兼容回退警告；
+导出仍出现 SDK 58 Router `build/hooks` 导出路径的兼容回退警告；
 构建成功不表示这些上游警告已消失。没有降低覆盖门槛或追加忽略规则。
 预检后仅再删除刚满 24 小时的 3 条精确版本豁免；锁文件无变化，供应链策略与冻结安装复核通过，未重复执行无关测试。
 

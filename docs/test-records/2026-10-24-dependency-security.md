@@ -65,5 +65,5 @@ fast-uri 3.1.9、js-yaml 4.3.2、brace-expansion 1.1.21 / 5.0.12、
 - 冻结锁文件安装通过（复用本机缓存，关闭安装脚本）。
 - 既有 expo-quick-actions 工具链对 TypeScript 5 的 peer 警告仍在。
 
-未执行原生重建、设备冒烟或真实 Sentry 上报；本次没有升级应用原生模块。
+未执行原生重建、设备冒烟；本次没有升级应用原生模块。
 日志位于本机 `/tmp/kaku-security-*`，不提交生成物或环境配置。

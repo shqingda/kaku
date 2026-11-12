@@ -52,6 +52,6 @@ M4 中相互独立的测试整理仍分小提交；M6 一次只改一类列表�
 
 iOS 先列出设备，仅使用 iPhone 18 Pro / iOS 27.0（`A395E274-D899-42DA-BE4C-416A9F89F671`）；不新建、克隆、抹除、卸载、退出或清数据，PosterBoard 保持禁用。下次启动提醒用户重新登录，由用户完成。需要新游客环境、持久草稿、真实发送或破坏性清理的路径跳过并报告。模拟器启动与允许的输入恢复按 [模拟器指南](../development/ios-simulator.md) 和 [Argent 指南](../development/argent-usage.md)。
 
-Android 日常验证使用本地 Release APK，先交付 APK 或绝对路径并等待用户安装。只有明确发版才运行 Android CI（包括 build_only）；本地构建失败不能自动切到 CI。实际 OAuth、双设备、推送、Sentry、连续升级及商店条件仍按 TODO 待验。
+Android 日常验证使用本地 Release APK，先交付 APK 或绝对路径并等待用户安装。只有明确发版才运行 Android CI（包括 build_only）；本地构建失败不能自动切到 CI。实际 OAuth、双设备、推送、连续升级及商店条件仍按 TODO 待验。
 
 每片完成后检查完整 diff，排除生成物、敏感文件，自动提交并报告提交及分支；未经明确请求不推送、部署或发布。正式发版及本地产物清理沿用 [发版指南](../deployment/release.md)，持续保留 v1.1.24 及之后的更新日志和已核验正式版本的 `.sources/`。
