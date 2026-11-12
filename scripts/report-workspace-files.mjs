@@ -6,10 +6,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 // 白名单只用于盘点，不能据此判断某个目录可以删除。
 const ROOTS = {
   source: [
-    'apps/mobile/src', 'apps/mobile/assets', 'apps/mobile/config', 'apps/mobile/plugins',
-    'apps/api/src', 'apps/api/migrations', 'apps/web/src',
+    'apps/mobile/src', 'apps/mobile/assets', 'apps/mobile/config',
+    'apps/api/src', 'apps/api/drizzle', 'apps/web/src',
     'apps/web/public/robots.txt', 'apps/web/public/sitemap.xml',
-    'packages/shared/src', 'scripts', 'patches', 'docs',
+    'packages/shared/src', 'scripts', 'docs',
   ],
   artifact: [
     'apps/mobile/.expo', 'apps/mobile/android/.gradle', 'apps/mobile/android/app/.cxx',

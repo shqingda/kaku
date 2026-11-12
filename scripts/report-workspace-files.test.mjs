@@ -20,6 +20,7 @@ function fixture(t) {
 test('the report separates allowlisted sources, artifacts and dependencies without including protected files', t => {
   const { root, write } = fixture(t);
   write('apps/mobile/src/index.ts', 'source');
+  write('apps/api/drizzle/0001.sql', 'migration');
   write('apps/web/dist/index.html', 'built');
   write('node_modules/package/index.js', 'dependency');
   const protectedPaths = [
@@ -36,6 +37,7 @@ test('the report separates allowlisted sources, artifacts and dependencies witho
     path: entry.path, category: entry.category, files: entry.files, bytes: entry.logicalBytes,
   })), [
     { path: 'apps/mobile/src', category: 'source', files: 1, bytes: 6 },
+    { path: 'apps/api/drizzle', category: 'source', files: 1, bytes: 9 },
     { path: 'apps/web/dist', category: 'artifact', files: 1, bytes: 5 },
     { path: 'node_modules', category: 'dependency', files: 1, bytes: 10 },
   ]);

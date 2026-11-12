@@ -16,7 +16,7 @@ export const DISMISS_HEIGHT_RATIO = 0.35;
 // 橡皮筋阻力系数：越往边界外拉，跟随比例越小。
 export const RUBBERBAND_CONSTANT = 0.55;
 // 与滚动减速一致的指数衰减率（Apple 样本值 0.998）。
-export const DECELERATION_RATE = 0.998;
+const DECELERATION_RATE = 0.998;
 
 // Apple 的动量投影：v/1000 · d/(1-d)，把释放速度换算成最终还会滑行的距离。
 // 注意：worklet 序列化不会捕获默认参数表达式里的模块常量，默认值必须放在

@@ -1,8 +1,12 @@
 # Kaku 待办
 
-> 更新：2026-11-05。最近一次发布记录为 [v1.1.26](docs/test-records/2026-11-05-release-1.1.26.md)，Android versionCode 13；随版本升级 Expo SDK 58 补丁与 TanStack Query 等依赖。最终 APK 未完成 Android 实机验收，未上架 App Store / Google Play。不能把源码检查当作已发布包验证。
+> 更新：2026-11-12。最近一次发布记录为 [v1.1.26](docs/test-records/2026-11-05-release-1.1.26.md)，Android versionCode 13；随版本升级 Expo SDK 58 补丁与 TanStack Query 等依赖。最终 APK 未完成 Android 实机验收，未上架 App Store / Google Play。不能把源码检查当作已发布包验证。
 
-## 本轮实施
+## 稳定版收尾（停止新增功能）
+
+本轮检查与清理见 [11-12 记录](docs/test-records/2026-11-12-stability.md)。类型、逻辑、组件、双平台 JS 导出与官网构建通过；完整预检仍受 Expo 配套补丁未满 24 小时及 expo-doctor 加载失败阻塞。依赖版本未改，需解决后复验，再交付本地 Android 测试包。下列设备与外部待验项继续保留。
+
+## 已完成维护轮次
 
 按 [维护、结构整理与体验打磨计划](docs/plans/2026-11-01-maintenance.md) 逐片实施；代码、自动化与依赖决策见 [11-01 验收记录](docs/test-records/2026-11-01-maintenance.md)。当前进度只维护在本文；计划记录实施决定，历史记录保留当时证据。保留现有用户功能，`tutorial/` 完全排除。每片检查后自动提交；推送、部署、发布另需明确请求。
 
