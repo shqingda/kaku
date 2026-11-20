@@ -16,13 +16,9 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExcludePrune: true
 # 用户于 2026-11-12 授权本轮补丁提前安装；满 24 小时后自动清除。
 minimumReleaseAgeExclude:
-  - "expo@58.0.24"
-  - "@expo/cli@58.1.20"
-  - "@expo/router-server@58.0.22"
   - "expo-asset@58.0.21"
   - "expo-linking@58.0.17"
   - "expo-notifications@58.1.9"
-  - "expo-router@58.0.31"
 
 allowBuilds:
   '@parcel/watcher': true
