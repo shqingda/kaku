@@ -18,14 +18,14 @@
   "dependencies": {
     "@kaku/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.19",
+    "hono": "^4.13.21",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261120.1",
+    "@cloudflare/workers-types": "^5.20261123.1",
     "drizzle-kit": "^0.31.11",
     "miniflare": "4.20260730.0",
     "typescript": "~7.0.2",
-    "wrangler": "^4.165.0"
+    "wrangler": "^4.166.0"
   }
 }
